@@ -1397,5 +1397,6 @@
   "confirm_sheet_hint": "Wann hast du tatsächlich eingenommen? Vorausgefüllt mit der geplanten Zykluszeit.",
   "confirm_sheet_time_label": "Uhrzeit",
   "verpasst": "Verpasst",
-  "dose_mark_taken": "Doch eingenommen"
+  "dose_mark_taken": "Doch eingenommen",
+  "confirm_sheet_dose_label": "Menge"
 }

@@ -1249,5 +1249,6 @@
   "confirm_sheet_hint": "실제로 언제 복용했나요? 계획된 주기 시간이 미리 입력되어 있습니다.",
   "confirm_sheet_time_label": "시간",
   "verpasst": "놓침",
-  "dose_mark_taken": "결국 복용함"
+  "dose_mark_taken": "결국 복용함",
+  "confirm_sheet_dose_label": "용량"
 }

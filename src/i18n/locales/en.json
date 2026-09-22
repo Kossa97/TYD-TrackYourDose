@@ -1397,5 +1397,6 @@
   "confirm_sheet_hint": "When did you actually take it? Pre-filled with the planned cycle time.",
   "confirm_sheet_time_label": "Time",
   "verpasst": "Missed",
-  "dose_mark_taken": "Taken after all"
+  "dose_mark_taken": "Taken after all",
+  "confirm_sheet_dose_label": "Amount"
 }

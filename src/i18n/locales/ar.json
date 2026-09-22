@@ -1254,5 +1254,6 @@
   "confirm_sheet_hint": "متى تناولتها فعليًا؟ مُعبَّأ مسبقًا بوقت الدورة المخطط له.",
   "confirm_sheet_time_label": "الوقت",
   "verpasst": "فائتة",
-  "dose_mark_taken": "تم تناولها بالفعل"
+  "dose_mark_taken": "تم تناولها بالفعل",
+  "confirm_sheet_dose_label": "الكمية"
 }

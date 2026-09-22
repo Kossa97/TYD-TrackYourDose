@@ -1018,6 +1018,55 @@ describe('Dashboard normalized timeline path', () => {
     expect(url.searchParams.get('scheduledAt')).toBe('2026-09-18T06:00:00.000Z')
   })
 
+  it('bestaetigt Zeit UND Menge in einem Sheet, ohne den Umweg ueber die Gruppe', async () => {
+    // Der Punkt: vorher brauchte es fuer beide Korrekturen zwei
+    // verschiedene Sheets -- „Eingenommen" fuer die Uhrzeit, „Einmalige
+    // Dosisaenderung" (das groessere Gruppen-Sheet) fuer die Menge. Jetzt
+    // steht das Mengenfeld direkt im Zeit-Sheet.
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: '09:30' } })
+    fireEvent.change(screen.getByLabelText('Menge'), { target: { value: '30' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        dose: 30, unit: 'mg', logged_at: '2026-09-18T07:30:00.000Z',
+      })],
+    }))
+  })
+
+  it('laesst eine ungueltige Menge nicht durch und verwirft nichts', async () => {
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.change(screen.getByLabelText('Menge'), { target: { value: '0' } })
+    const knopf = screen.getByRole('button', { name: 'Eingenommen' }) as HTMLButtonElement
+    expect(knopf.disabled).toBe(true)
+    fireEvent.click(knopf)
+    expect(client.rpc).not.toHaveBeenCalled()
+
+    // Eine leere Menge ebenso -- die Substanz traegt eine Menge, „nichts"
+    // ist keine gueltige Antwort darauf.
+    fireEvent.change(screen.getByLabelText('Menge'), { target: { value: '' } })
+    expect((screen.getByRole('button', { name: 'Eingenommen' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('zeigt kein Mengenfeld fuer eine Intake-Only-Substanz', async () => {
+    const fixtures = startFixFixture()
+    fixtures.stack_items[0]!.tracking_level = 'intake_only'
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    await openSingle()
+    expect(screen.queryByLabelText('Menge')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ dose: null, unit: null })],
+    }))
+  })
+
   it.each([false, true])('confirms a normalized single intake through exact RPC (pending=%s)', async pending => {
     const fixtures = startFixFixture()
     if (pending) fixtures.dose_logs = [pendingLog(false)]

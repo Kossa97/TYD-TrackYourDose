@@ -1249,5 +1249,6 @@
   "confirm_sheet_hint": "你实际是什么时候服用的？已预填计划的周期时间。",
   "confirm_sheet_time_label": "时间",
   "verpasst": "已错过",
-  "dose_mark_taken": "其实已服用"
+  "dose_mark_taken": "其实已服用",
+  "confirm_sheet_dose_label": "剂量"
 }

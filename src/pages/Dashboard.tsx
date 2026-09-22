@@ -34,6 +34,7 @@ import { localDateTimeKey, resolveCycleAt, resolveCycleAtLocalSlot, type CycleTi
 import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
+import { buildOneOffActualDose, dosePlanCapabilities } from '../features/my-stack/lib/dosePlan'
 import {
   buildConfirmationEntry,
   groupRoutineIntakes,
@@ -351,6 +352,19 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
+  // Menge im selben Sheet wie die Uhrzeit -- vorher brauchte es dafuer den
+  // Umweg ueber „Einmalige Dosisaenderung", ein zweites, groesseres Sheet.
+  // `confirmUnit` ist zugleich das Signal, ob die Substanz ueberhaupt eine
+  // Menge fuehrt (`null` heisst: Intake-Only, kein Feld noetig).
+  const [confirmDoseText, setConfirmDoseText] = useState('')
+  const [confirmUnit, setConfirmUnit] = useState<string | null>(null)
+  const confirmDoseWert = confirmDoseText.trim() === '' ? null : Number(confirmDoseText)
+  // Dieselbe Regel wie im Gruppen-Sheet: eine Menge ist entweder unveraendert
+  // (kein Feld -- `confirmUnit` null) oder eine positive Zahl. Alles
+  // dazwischen (leer, null, 0, negativ) blockiert den Bestaetigen-Knopf,
+  // statt eine ungueltige Menge an die RPC zu schicken.
+  const confirmDoseUngueltig = confirmUnit != null
+    && (confirmDoseWert == null || !Number.isFinite(confirmDoseWert) || confirmDoseWert <= 0)
   const [completedExpanded, setCompletedExpanded] = useState(false)
   /** Welche Einnahme aufgeklappt ist.
    *
@@ -1215,7 +1229,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     toast.success(t('dose_reopen_success', { defaultValue: 'Einnahme wieder geöffnet' }))
   }
 
-  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog, geplanterSchluessel?: string) => {
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog, geplanterSchluessel?: string, tatsaechlicheMenge?: number | null) => {
     if (!user) return
     if (FEATURES.planTimelineV2 && !timelineReady) throw new Error('Timeline is not current')
     let quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
@@ -1275,23 +1289,35 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         cycle = dashboardCycleFromTimeline(timeline!, resolved.planVersion, stackItemById.get(cycle.stack_item_id), timeZone)
         quantity = resolveDashboardCycleQuantity(cycle, selectedDay, [], null)
       }
+      const geplanteEintragung = buildConfirmationEntry(buildDashboardRoutineIntake({
+        key: slotSchluessel,
+        cycleId: cycle.id,
+        planVersionId: resolved.planVersion.id,
+        pendingLogId: pendingLog?.id ?? null,
+        stackItemId: cycle.stack_item_id,
+        stackItemName: cycle.stack_items.display_name,
+        trackingLevel: cycle.stack_items.tracking_level,
+        routineGroup: routineGroupFromMinutes(new Date(scheduledAt).getHours() * 60 + new Date(scheduledAt).getMinutes()),
+        minutes: 0,
+        scheduledAt,
+        dose: quantity.dose,
+        unit: quantity.unit,
+        method: cycle.method,
+      }))
+      // Dieselbe Pruefung wie im Gruppen-Sheet (`buildOneOffActualDose`):
+      // positive Menge. Die Einheit kommt bewusst aus `quantity.unit` --
+      // derselben Quelle, aus der `geplanteEintragung` seine eigene Einheit
+      // hat -- statt aus dem Sheet-Zustand: bei Bei-Bedarf-Substanzen loest
+      // der PRN-Zweig oben `cycle`/`quantity` gerade erst neu auf, und die
+      // Einheit, mit der das Sheet urspruenglich geoeffnet wurde, kann zu
+      // diesem Zeitpunkt schon veraltet sein. Ohne Abweichung bleibt die
+      // geplante Menge stehen.
+      const eintragung = tatsaechlicheMenge != null && quantity.unit
+        ? buildOneOffActualDose(geplanteEintragung, { dose: tatsaechlicheMenge, unit: quantity.unit })
+        : geplanteEintragung
       const [gespeicherteZeile] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
-        [{ ...buildConfirmationEntry(buildDashboardRoutineIntake({
-          key: slotSchluessel,
-          cycleId: cycle.id,
-          planVersionId: resolved.planVersion.id,
-          pendingLogId: pendingLog?.id ?? null,
-          stackItemId: cycle.stack_item_id,
-          stackItemName: cycle.stack_items.display_name,
-          trackingLevel: cycle.stack_items.tracking_level,
-          routineGroup: routineGroupFromMinutes(new Date(scheduledAt).getHours() * 60 + new Date(scheduledAt).getMinutes()),
-          minutes: 0,
-          scheduledAt,
-          dose: quantity.dose,
-          unit: quantity.unit,
-          method: cycle.method,
-        })), actualLoggedAt }],
+        [{ ...eintragung, actualLoggedAt }],
       )
       const doseLogId = gespeicherteZeile?.id
       const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
@@ -1354,6 +1380,17 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     }
     setConfirmTime(defaultTime)
+    // Vorausgefuellt mit der geplanten Menge dieses Slots -- derselbe
+    // Resolver, den `confirmCycleDose` selbst benutzt, damit hier steht,
+    // was tatsaechlich gilt (Eskalation, Slot-eigene Menge), nicht geraten.
+    if (cycle && dosePlanCapabilities(cycle.stack_items.tracking_level).oneOff) {
+      const geplant = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
+      setConfirmDoseText(geplant.dose != null ? String(geplant.dose) : '')
+      setConfirmUnit(geplant.unit)
+    } else {
+      setConfirmDoseText('')
+      setConfirmUnit(null)
+    }
     setConfirmSheet({ cycle, log, slotDose, scheduledAt, slotKey })
   }
 
@@ -1373,13 +1410,15 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     if (!confirmSheet) return
     if (FEATURES.planTimelineV2) {
       if (!timelineReady) return
+      if (confirmDoseUngueltig) return
       try {
         const [hours, minutes] = confirmTime.split(':').map(Number)
         const actualAt = new Date(selectedDay)
         actualAt.setHours(hours, minutes, 0, 0)
         if (confirmSheet.cycle) {
           await confirmCycleDose(confirmSheet.cycle, true, actualAt.toISOString(),
-            confirmSheet.slotDose ?? null, confirmSheet.scheduledAt, confirmSheet.log, confirmSheet.slotKey)
+            confirmSheet.slotDose ?? null, confirmSheet.scheduledAt, confirmSheet.log, confirmSheet.slotKey,
+            confirmUnit != null ? confirmDoseWert : null)
         } else if (confirmSheet.log) {
           await confirmDose(confirmSheet.log, true, actualAt.toISOString())
         }
@@ -2396,16 +2435,43 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                 type="time"
                 value={confirmTime}
                 onChange={e => setConfirmTime(e.target.value)}
-                className="mb-5 w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors"
+                className={`w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors ${confirmUnit != null ? 'mb-4' : 'mb-5'}`}
                 style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
               />
+              {confirmUnit != null && (
+                <>
+                  {/* Dieselbe Menge, dieselbe Uhrzeit, dasselbe Sheet -- vorher
+                      brauchte eine Aenderung an beidem zwei separate Wege:
+                      „Eingenommen" fuer die Uhrzeit, „Einmalige
+                      Dosisaenderung" fuer die Menge, mit dem groesseren
+                      Gruppen-Sheet dahinter. */}
+                  <label className="mb-2 block text-[0.6rem] font-bold uppercase tracking-widest text-slate-500">
+                    {t('confirm_sheet_dose_label', { defaultValue: 'Menge' })}
+                  </label>
+                  <div className="mb-5 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputMode="decimal"
+                      aria-label={String(t('confirm_sheet_dose_label', { defaultValue: 'Menge' }))}
+                      value={confirmDoseText}
+                      onChange={e => setConfirmDoseText(e.target.value)}
+                      className="min-w-0 flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors"
+                      style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
+                    />
+                    <span className="text-sm font-bold text-slate-300">{confirmUnit}</span>
+                  </div>
+                </>
+              )}
               <div className="flex gap-3">
                 <button onClick={() => setConfirmSheet(null)} data-app-back-close className="btn-secondary flex-1">
                   {t('cancel', { defaultValue: 'Abbrechen' })}
                 </button>
                 <button
                   onClick={() => void handleConfirmSheet()}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  disabled={confirmDoseUngueltig}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Check size={14} /> {t('eingenommen', { defaultValue: 'Eingenommen' })}
                 </button>

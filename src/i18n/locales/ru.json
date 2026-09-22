@@ -1252,5 +1252,6 @@
   "confirm_sheet_hint": "Когда вы приняли на самом деле? Предзаполнено запланированным временем цикла.",
   "confirm_sheet_time_label": "Время",
   "verpasst": "Пропущено",
-  "dose_mark_taken": "Всё же принято"
+  "dose_mark_taken": "Всё же принято",
+  "confirm_sheet_dose_label": "Количество"
 }

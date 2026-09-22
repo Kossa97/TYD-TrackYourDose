@@ -1250,5 +1250,6 @@
   "confirm_sheet_hint": "Kapan kamu benar-benar mengonsumsinya? Terisi otomatis dengan waktu siklus yang direncanakan.",
   "confirm_sheet_time_label": "Waktu",
   "verpasst": "Terlewat",
-  "dose_mark_taken": "Ternyata diminum"
+  "dose_mark_taken": "Ternyata diminum",
+  "confirm_sheet_dose_label": "Jumlah"
 }

@@ -1250,5 +1250,6 @@
   "confirm_sheet_hint": "Quand l'avez-vous réellement prise ? Pré-rempli avec l'heure prévue du cycle.",
   "confirm_sheet_time_label": "Heure",
   "verpasst": "Manquée",
-  "dose_mark_taken": "Finalement prise"
+  "dose_mark_taken": "Finalement prise",
+  "confirm_sheet_dose_label": "Quantité"
 }
