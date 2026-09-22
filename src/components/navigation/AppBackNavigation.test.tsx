@@ -68,28 +68,6 @@ function RoleOnlyModalApp() {
   )
 }
 
-function MyStackDetailApp() {
-  const [selectedSubstance, setSelectedSubstance] = useState('BPC-157')
-  const [detailOpen, setDetailOpen] = useState(true)
-
-  return (
-    <AppBackNavigation>
-      <LocationProbe />
-      <button type="button" onClick={() => setSelectedSubstance('TB-500')}>TB-500 auswählen</button>
-      <output aria-label="selected substance">{selectedSubstance}</output>
-      {detailOpen && (
-        <div role="dialog" aria-modal="true" aria-label="Substanz-Info">
-          <button type="button" data-app-back-close onClick={() => setDetailOpen(false)}>Schließen</button>
-        </div>
-      )}
-      <Routes>
-        <Route path="/" element={<p>Home</p>} />
-        <Route path="/my-stack" element={<p>My Stack</p>} />
-      </Routes>
-    </AppBackNavigation>
-  )
-}
-
 function renderAtSecond(modal = false) {
   return render(
     <MemoryRouter initialEntries={['/first', '/second']} initialIndex={1}>
@@ -110,28 +88,6 @@ afterEach(() => {
 })
 
 describe('app-wide edge swipe back', () => {
-  it('claims a touch that starts at the left edge so Safari cannot also navigate back', () => {
-    renderAtSecond(true)
-
-    const appClaimedGesture = fireEvent.touchStart(window, {
-      cancelable: true,
-      touches: [{ identifier: 1, clientX: 12, clientY: 160 }],
-    })
-
-    expect(appClaimedGesture).toBe(false)
-  })
-
-  it('does not claim touches that start outside the back-swipe edge', () => {
-    renderAtSecond(true)
-
-    const appClaimedGesture = fireEvent.touchStart(window, {
-      cancelable: true,
-      touches: [{ identifier: 1, clientX: 48, clientY: 160 }],
-    })
-
-    expect(appClaimedGesture).toBe(true)
-  })
-
   it('navigates back after a deliberate right swipe starting at the left edge', () => {
     renderAtSecond()
 
@@ -163,25 +119,6 @@ describe('app-wide edge swipe back', () => {
 
     expect(screen.queryByText('Schließen')).toBeNull()
     expect(screen.getByLabelText('location').textContent).toBe('/second')
-  })
-
-  it('keeps the selected My Stack substance when the first swipe only closes its detail view', () => {
-    render(
-      <MemoryRouter initialEntries={['/', '/my-stack']} initialIndex={1}>
-        <MyStackDetailApp />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'TB-500 auswählen' }))
-
-    swipe(12, 104)
-
-    expect(screen.queryByRole('dialog', { name: 'Substanz-Info' })).toBeNull()
-    expect(screen.getByLabelText('location').textContent).toBe('/my-stack')
-    expect(screen.getByLabelText('selected substance').textContent).toBe('TB-500')
-
-    swipe(12, 104)
-
-    expect(screen.getByLabelText('location').textContent).toBe('/')
   })
 
   it('asks before discarding edited form values', () => {

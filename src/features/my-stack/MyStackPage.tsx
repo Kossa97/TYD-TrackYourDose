@@ -140,6 +140,14 @@ type PeptideSortKey =
   | 'recon_asc' | 'recon_desc'
   | 'stock_asc' | 'stock_desc'
 
+const MY_STACK_DETAIL_HISTORY_KEY = 'myStackDetailId'
+
+function historyStateRecord(state: unknown): Record<string, unknown> {
+  return state !== null && typeof state === 'object' && !Array.isArray(state)
+    ? state as Record<string, unknown>
+    : {}
+}
+
 // Jede Gruppe sagt, welche Angabe sie braucht. Fehlt sie im offenen Reiter,
 // wird die Gruppe nicht angeboten — eine Sortierung, die nichts bewegt, sieht
 // aus wie ein Fehler.
@@ -580,6 +588,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   // Das Rechteck des angetippten Objekts — der Startpunkt des Flugs.
   const [detailUrsprung, setDetailUrsprung] = useState<DOMRect | null>(null)
+  const detailHistoryPeptideId = typeof historyStateRecord(location.state)[MY_STACK_DETAIL_HISTORY_KEY] === 'string'
+    ? historyStateRecord(location.state)[MY_STACK_DETAIL_HISTORY_KEY] as string
+    : null
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
   // Stage light bypasses React entirely: each vial registers an imperative
@@ -2077,7 +2088,19 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       return
     }
     const objekt = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
-    if (objekt) setDetailUrsprung(objekt.getBoundingClientRect())
+    const peptide = stagePeptides[index]
+    if (!objekt || !peptide) return
+
+    setDetailUrsprung(objekt.getBoundingClientRect())
+    navigate(
+      { pathname: location.pathname, search: location.search, hash: location.hash },
+      {
+        state: {
+          ...historyStateRecord(location.state),
+          [MY_STACK_DETAIL_HISTORY_KEY]: peptide.id,
+        },
+      },
+    )
   }
   const handleVialCarouselItemKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
     if (e.key !== 'Enter' && e.key !== ' ') return
@@ -2093,6 +2116,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (vialWheelCooldownRef.current !== null) window.clearTimeout(vialWheelCooldownRef.current)
     }
   }, [])
+
+  const closeStageDetail = () => {
+    if (detailHistoryPeptideId) {
+      navigate(-1)
+      return
+    }
+    setDetailUrsprung(null)
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -2265,7 +2296,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           type="button"
                           aria-label={`${String(t('aktiv_badge'))} ${activeCycle.name} ${String(t('zyklus'))}`}
                           onClick={() => {
-                            setDetailUrsprung(null)
+                            closeStageDetail()
                             setCycleManagerPeptide(activePeptide)
                           }}
                           className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
@@ -2288,10 +2319,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           type="button"
                           onClick={() => {
                             if (pCycles.length > 0) {
-                              setDetailUrsprung(null)
+                              closeStageDetail()
                               setCycleManagerPeptide(activePeptide)
                               return
                             }
+                            closeStageDetail()
                             openNewCycle(activePeptide)
                           }}
                           className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/35"
@@ -3433,10 +3465,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           wird an seinem Platz im Karussell gemessen und fliegt von dort an
           seine Stelle hier oben, dabei verkleinert. Waehrend des Flugs ist die
           Fluessigkeitsphysik still. */}
-      {detailUrsprung && activePeptide && (
+      {detailUrsprung && activePeptide && detailHistoryPeptideId === activePeptide.id && (
         <StageDetailSheet
           originRect={detailUrsprung}
-          onClose={() => setDetailUrsprung(null)}
+          onClose={closeStageDetail}
           onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
           title={activePeptide.name}
           stage={(
