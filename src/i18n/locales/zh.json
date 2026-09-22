@@ -1273,5 +1273,7 @@
   "my_stack_plan_effective_too_early": "请选择{{date}}或之后的日期。",
   "my_stack_plan_effective_required": "请选择日期。",
   "my_stack_plan_effective_too_late": "周期于{{date}}结束。请选择更早的日期。",
-  "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。"
+  "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。",
+  "my_stack_plan_time_short": "时间",
+  "my_stack_plan_quantity_short": "用量"
 }

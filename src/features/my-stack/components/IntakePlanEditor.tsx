@@ -263,14 +263,19 @@ export function IntakePlanEditor({
   // Menge und Einheit gehoeren nebeneinander: man tippt „500" und liest gleich
   // daneben „mg". Die Einheit gilt fuer den ganzen Plan, es gibt sie also nur
   // einmal — an der ersten Karte zum Eingeben, an weiteren nur noch zu lesen.
-  const mengeUndEinheit = (index: number) => (
-    <div>
-      <div className="flex min-w-0 items-end gap-2">
+  // `kompakt`: in der Einnahme-Karte, neben der Uhrzeit. Dort steht nur
+  // „Menge" darueber; der volle Name bleibt der Name des Feldes.
+  const mengeUndEinheit = (index: number, kompakt = false) => (
+    <div className="min-w-0">
+      <div className={`flex min-w-0 items-end ${kompakt ? 'gap-1.5' : 'gap-2'}`}>
         <div className="min-w-0 flex-1">
-          <label htmlFor={`stack-plan-quantity-${index}`} className="mb-2 block text-sm font-semibold text-slate-200">
-            {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
+          <label htmlFor={`stack-plan-quantity-${index}`} className={kompakt ? 'mb-1.5 block text-xs font-semibold text-slate-400' : 'mb-2 block text-sm font-semibold text-slate-200'}>
+            {kompakt
+              ? t('my_stack_plan_quantity_short', { defaultValue: 'Menge' })
+              : t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
           </label>
           <input
+            aria-label={kompakt ? String(t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })) : undefined}
             id={`stack-plan-quantity-${index}`}
             type="number"
             inputMode="decimal"
@@ -286,7 +291,7 @@ export function IntakePlanEditor({
         </div>
         {index === 0 ? (
           <div className="w-24 shrink-0">
-            <label htmlFor="stack-plan-unit" className="mb-2 block text-sm font-semibold text-slate-200">
+            <label htmlFor="stack-plan-unit" className={kompakt ? 'mb-1.5 block text-xs font-semibold text-slate-400' : 'mb-2 block text-sm font-semibold text-slate-200'}>
               {t('my_stack_plan_unit', { defaultValue: 'Einheit' })}
             </label>
             <input
@@ -666,19 +671,7 @@ export function IntakePlanEditor({
             </div>
           </div>
           {sichtbareSlots.map(({ slot, index }) => (
-        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-          {sichtbareSlots.length > 1 && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => removeSlot(index)}
-                aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
-                className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-              >
-                <Trash2 aria-hidden="true" size={18} />
-              </button>
-            </div>
-          )}
+        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
           <fieldset
             data-field={`plan.slots.${index}.routineGroup`}
             tabIndex={-1}
@@ -686,7 +679,9 @@ export function IntakePlanEditor({
             aria-describedby={errors.slots?.[index] ? `stack-plan-routine-${index}-error` : undefined}
             className="min-w-0"
           >
-            <legend className="mb-2 text-sm font-semibold text-slate-200">
+            {/* Aufschrift und Papierkorb in einer Zeile: die Legende schwimmt
+                links, der Knopf rechts, die Tageszeiten beginnen darunter. */}
+            <legend className="float-left flex min-h-11 items-center text-sm font-semibold text-slate-200">
               {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
                   einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
                   „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
@@ -694,11 +689,23 @@ export function IntakePlanEditor({
                 ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
                 : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
             </legend>
-            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+            {sichtbareSlots.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeSlot(index)}
+                aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
+                className="float-right -mr-1.5 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+              >
+                <Trash2 aria-hidden="true" size={18} />
+              </button>
+            )}
+            {/* Drei Tageszeiten nebeneinander. Die Auswahl zeigt die Kachel;
+                das Optionsfeld bleibt fuer Tastatur und Vorleser da. */}
+            <div className="clear-both grid min-w-0 grid-cols-3 gap-1.5 pt-1">
               {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
                 <label
                   key={value}
-                  className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
+                  className={`flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-[13px] font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
                     ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
                     : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
                   }`}
@@ -710,10 +717,10 @@ export function IntakePlanEditor({
                     checked={slot.routineGroup === value}
                     onChange={() => changeSlot(index, { routineGroup: value })}
                     required
-                    className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
+                    className="sr-only"
                   />
-                  <Icon aria-hidden="true" size={18} className="shrink-0" />
-                  <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
+                  <Icon aria-hidden="true" size={16} className="shrink-0" />
+                  <span className="min-w-0 truncate">{t(labelKey, { defaultValue })}</span>
                 </label>
               ))}
             </div>
@@ -728,22 +735,27 @@ export function IntakePlanEditor({
             )}
           </fieldset>
 
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor={`stack-plan-time-${index}`} className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <Clock aria-hidden="true" size={17} className="text-slate-400" />
-                {t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' })}
+          {/* Uhrzeit, Menge und Einheit in einer Zeile. `appearance-none`:
+              iOS gibt dem Uhrzeitfeld sonst eine Mindestbreite, und es ragt
+              ueber die Karte hinaus. Das Uhrsymbol von Chrome faellt weg — es
+              schnitt „08:00 AM" ab; ein Tipp ins Feld oeffnet die Auswahl. */}
+          <div className={`grid min-w-0 items-start gap-2 ${tracksQuantity ? 'grid-cols-[6.75rem_minmax(0,1fr)]' : 'grid-cols-1'}`}>
+            <div className="min-w-0">
+              <label htmlFor={`stack-plan-time-${index}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                <Clock aria-hidden="true" size={13} />
+                {t('my_stack_plan_time_short', { defaultValue: 'Uhrzeit' })}
               </label>
               <input
                 id={`stack-plan-time-${index}`}
+                aria-label={String(t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' }))}
                 type="time"
                 value={slot.time ?? ''}
                 onChange={event => changeSlot(index, { time: event.target.value || null })}
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                className="input block min-h-11 w-full min-w-0 max-w-full appearance-none px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 [&::-webkit-calendar-picker-indicator]:hidden"
               />
             </div>
 
-            {tracksQuantity && mengeUndEinheit(index)}
+            {tracksQuantity && mengeUndEinheit(index, true)}
           </div>
             </div>
           ))}

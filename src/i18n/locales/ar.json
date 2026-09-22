@@ -1278,5 +1278,7 @@
   "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا.",
   "my_stack_plan_effective_required": "اختر تاريخًا.",
   "my_stack_plan_effective_too_late": "تنتهي الدورة في {{date}}. اختر تاريخًا أبكر.",
-  "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر."
+  "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر.",
+  "my_stack_plan_time_short": "الوقت",
+  "my_stack_plan_quantity_short": "الكمية"
 }

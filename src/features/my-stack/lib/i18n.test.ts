@@ -275,6 +275,8 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_routine_required',
   'my_stack_plan_time',
   'my_stack_plan_quantity',
+  'my_stack_plan_time_short',
+  'my_stack_plan_quantity_short',
   'my_stack_plan_quantity_required',
   'my_stack_plan_unit',
   'my_stack_plan_unit_required',

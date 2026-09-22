@@ -1274,5 +1274,7 @@
   "my_stack_plan_effective_too_early": "{{date}}以降の日付を選んでください。",
   "my_stack_plan_effective_required": "日付を選んでください。",
   "my_stack_plan_effective_too_late": "サイクルは{{date}}に終了します。それより前の日付を選んでください。",
-  "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。"
+  "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。",
+  "my_stack_plan_time_short": "時刻",
+  "my_stack_plan_quantity_short": "量"
 }

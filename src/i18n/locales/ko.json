@@ -1273,5 +1273,7 @@
   "my_stack_plan_effective_too_early": "{{date}} 이후 날짜를 선택하세요.",
   "my_stack_plan_effective_required": "날짜를 선택하세요.",
   "my_stack_plan_effective_too_late": "주기가 {{date}}에 끝납니다. 더 이른 날짜를 선택하세요.",
-  "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요."
+  "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요.",
+  "my_stack_plan_time_short": "시간",
+  "my_stack_plan_quantity_short": "양"
 }

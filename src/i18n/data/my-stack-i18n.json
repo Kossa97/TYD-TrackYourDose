@@ -385,7 +385,9 @@
     "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا.",
     "my_stack_plan_effective_required": "اختر تاريخًا.",
     "my_stack_plan_effective_too_late": "تنتهي الدورة في {{date}}. اختر تاريخًا أبكر.",
-    "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر."
+    "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر.",
+    "my_stack_plan_time_short": "الوقت",
+    "my_stack_plan_quantity_short": "الكمية"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -773,7 +775,9 @@
     "my_stack_plan_effective_too_early": "Elige una fecha a partir del {{date}}.",
     "my_stack_plan_effective_required": "Elige una fecha.",
     "my_stack_plan_effective_too_late": "El ciclo termina el {{date}}. Elige una fecha anterior.",
-    "my_stack_plan_effective_taken": "Ya empieza una etapa ese día. Elige otro día."
+    "my_stack_plan_effective_taken": "Ya empieza una etapa ese día. Elige otro día.",
+    "my_stack_plan_time_short": "Hora",
+    "my_stack_plan_quantity_short": "Cantidad"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1161,7 +1165,9 @@
     "my_stack_plan_effective_too_early": "Choisis une date à partir du {{date}}.",
     "my_stack_plan_effective_required": "Choisis une date.",
     "my_stack_plan_effective_too_late": "Le cycle se termine le {{date}}. Choisis une date antérieure.",
-    "my_stack_plan_effective_taken": "Une étape commence déjà ce jour-là. Choisis un autre jour."
+    "my_stack_plan_effective_taken": "Une étape commence déjà ce jour-là. Choisis un autre jour.",
+    "my_stack_plan_time_short": "Heure",
+    "my_stack_plan_quantity_short": "Quantité"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1549,7 +1555,9 @@
     "my_stack_plan_effective_too_early": "{{date}} या उसके बाद की तारीख चुनें।",
     "my_stack_plan_effective_required": "एक तारीख चुनें।",
     "my_stack_plan_effective_too_late": "चक्र {{date}} को समाप्त होता है। पहले की तारीख चुनें।",
-    "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।"
+    "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।",
+    "my_stack_plan_time_short": "समय",
+    "my_stack_plan_quantity_short": "मात्रा"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1937,7 +1945,9 @@
     "my_stack_plan_effective_too_early": "Pilih tanggal mulai {{date}}.",
     "my_stack_plan_effective_required": "Pilih tanggal.",
     "my_stack_plan_effective_too_late": "Siklus berakhir pada {{date}}. Pilih tanggal lebih awal.",
-    "my_stack_plan_effective_taken": "Sudah ada tahap yang dimulai pada hari ini. Pilih hari lain."
+    "my_stack_plan_effective_taken": "Sudah ada tahap yang dimulai pada hari ini. Pilih hari lain.",
+    "my_stack_plan_time_short": "Waktu",
+    "my_stack_plan_quantity_short": "Jumlah"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2325,7 +2335,9 @@
     "my_stack_plan_effective_too_early": "Scegli una data dal {{date}} in poi.",
     "my_stack_plan_effective_required": "Scegli una data.",
     "my_stack_plan_effective_too_late": "Il ciclo termina il {{date}}. Scegli una data precedente.",
-    "my_stack_plan_effective_taken": "In questo giorno inizia già una fase. Scegli un altro giorno."
+    "my_stack_plan_effective_taken": "In questo giorno inizia già una fase. Scegli un altro giorno.",
+    "my_stack_plan_time_short": "Ora",
+    "my_stack_plan_quantity_short": "Quantità"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2713,7 +2725,9 @@
     "my_stack_plan_effective_too_early": "{{date}}以降の日付を選んでください。",
     "my_stack_plan_effective_required": "日付を選んでください。",
     "my_stack_plan_effective_too_late": "サイクルは{{date}}に終了します。それより前の日付を選んでください。",
-    "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。"
+    "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。",
+    "my_stack_plan_time_short": "時刻",
+    "my_stack_plan_quantity_short": "量"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3101,7 +3115,9 @@
     "my_stack_plan_effective_too_early": "{{date}} 이후 날짜를 선택하세요.",
     "my_stack_plan_effective_required": "날짜를 선택하세요.",
     "my_stack_plan_effective_too_late": "주기가 {{date}}에 끝납니다. 더 이른 날짜를 선택하세요.",
-    "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요."
+    "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요.",
+    "my_stack_plan_time_short": "시간",
+    "my_stack_plan_quantity_short": "양"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3489,7 +3505,9 @@
     "my_stack_plan_effective_too_early": "Escolha uma data a partir de {{date}}.",
     "my_stack_plan_effective_required": "Escolha uma data.",
     "my_stack_plan_effective_too_late": "O ciclo termina em {{date}}. Escolha uma data anterior.",
-    "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia."
+    "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia.",
+    "my_stack_plan_time_short": "Hora",
+    "my_stack_plan_quantity_short": "Quantidade"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3877,7 +3895,9 @@
     "my_stack_plan_effective_too_early": "Выберите дату не раньше {{date}}.",
     "my_stack_plan_effective_required": "Выберите дату.",
     "my_stack_plan_effective_too_late": "Цикл заканчивается {{date}}. Выберите более раннюю дату.",
-    "my_stack_plan_effective_taken": "В этот день уже начинается этап. Выберите другой день."
+    "my_stack_plan_effective_taken": "В этот день уже начинается этап. Выберите другой день.",
+    "my_stack_plan_time_short": "Время",
+    "my_stack_plan_quantity_short": "Количество"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4265,7 +4285,9 @@
     "my_stack_plan_effective_too_early": "{{date}} veya sonrası bir tarih seç.",
     "my_stack_plan_effective_required": "Bir tarih seç.",
     "my_stack_plan_effective_too_late": "Döngü {{date}} tarihinde bitiyor. Daha erken bir tarih seç.",
-    "my_stack_plan_effective_taken": "Bu gün zaten bir aşama başlıyor. Başka bir gün seç."
+    "my_stack_plan_effective_taken": "Bu gün zaten bir aşama başlıyor. Başka bir gün seç.",
+    "my_stack_plan_time_short": "Saat",
+    "my_stack_plan_quantity_short": "Miktar"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4653,6 +4675,8 @@
     "my_stack_plan_effective_too_early": "请选择{{date}}或之后的日期。",
     "my_stack_plan_effective_required": "请选择日期。",
     "my_stack_plan_effective_too_late": "周期于{{date}}结束。请选择更早的日期。",
-    "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。"
+    "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。",
+    "my_stack_plan_time_short": "时间",
+    "my_stack_plan_quantity_short": "用量"
   }
 }

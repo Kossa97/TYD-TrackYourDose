@@ -1274,5 +1274,7 @@
   "my_stack_plan_effective_too_early": "Escolha uma data a partir de {{date}}.",
   "my_stack_plan_effective_required": "Escolha uma data.",
   "my_stack_plan_effective_too_late": "O ciclo termina em {{date}}. Escolha uma data anterior.",
-  "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia."
+  "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia.",
+  "my_stack_plan_time_short": "Hora",
+  "my_stack_plan_quantity_short": "Quantidade"
 }
