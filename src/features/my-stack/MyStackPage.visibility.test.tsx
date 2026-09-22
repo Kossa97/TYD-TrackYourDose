@@ -547,7 +547,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
   })
 
-  it('shows the active cycle as one quiet entry and reveals its details after tapping it', async () => {
+  it('shows the active cycle as one status-marked entry and reveals its details after tapping it', async () => {
     const vialCycle = { ...activeCycle, stack_item_id: 'vial-1' }
     const cyclesEq = vi.fn(async () => ({ data: [vialCycle], error: null }))
     const stackDataClient = {
@@ -565,8 +565,9 @@ describe('MyStackPage non-vial visibility', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
     const cycleSection = dialog.querySelector<HTMLElement>('[data-stack-detail="zyklus"]')
     expect(cycleSection).not.toBeNull()
-    const cycleButton = within(cycleSection!).getByRole('button', { name: '• Abendplan zyklus' })
-    expect(cycleSection?.textContent).toBe('• Abendplan zyklus')
+    const cycleButton = within(cycleSection!).getByRole('button', { name: 'aktiv_badge Abendplan zyklus' })
+    expect(cycleButton.querySelector('[data-active-cycle-indicator]')).not.toBeNull()
+    expect(cycleSection?.textContent).toBe('Abendplan zyklus')
     expect(within(cycleSection!).queryByRole('button', { name: 'deaktivieren_title' })).toBeNull()
 
     fireEvent.click(cycleButton)
@@ -575,6 +576,62 @@ describe('MyStackPage non-vial visibility', () => {
     expect(await screen.findByText('zyklen_verwalten')).not.toBeNull()
     expect(screen.getByText('100 mg')).not.toBeNull()
     expect(screen.getByText('daily')).not.toBeNull()
+  })
+
+  it('puts the newest currently active V2 cycle before paused, planned, and ended cycles', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const now = new Date()
+    const row = (
+      id: string,
+      startedAt: Date,
+      changes: Record<string, unknown> = {},
+    ) => timelineRow(
+      id,
+      [normalizedVersion(`${id}-version`, id, {
+        effective_local_date: format(startedAt, 'yyyy-MM-dd'),
+      })],
+      { stack_item_id: 'vial-1', started_at: startedAt.toISOString(), ...changes },
+    )
+    const planned = row('cycle-planned', addDays(now, 10))
+    const ended = row('cycle-ended', addDays(now, -20), {
+      ended_at: addDays(now, -10).toISOString(),
+    })
+    const activeOlder = row('cycle-active-older', addDays(now, -5))
+    const paused = row('cycle-paused', addDays(now, -3), {
+      pauses: [{
+        id: 'pause-current',
+        cycle_id: 'cycle-paused',
+        paused_at: addDays(now, -1).toISOString(),
+        ends_at: null,
+      }],
+    })
+    const activeNewest = row('cycle-active-newest', addDays(now, -1))
+    const vialCycle = { ...activeCycle, id: 'legacy-vial-cycle', stack_item_id: 'vial-1' }
+    const { client } = v2Client({
+      timelineResults: [{
+        data: [planned, ended, activeOlder, paused, activeNewest],
+        error: null,
+      }],
+      legacyCycles: [vialCycle],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Existing Premium Vial' }))
+    const detail = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+    fireEvent.click(within(detail.querySelector<HTMLElement>('[data-stack-detail="zyklus"]')!).getByRole('button'))
+
+    const sections = await screen.findAllByTestId(/^plan-management-/)
+    expect(sections.map(section => section.dataset.testid)).toEqual([
+      'plan-management-cycle-active-newest',
+      'plan-management-cycle-active-older',
+      'plan-management-cycle-paused',
+      'plan-management-cycle-planned',
+      'plan-management-cycle-ended',
+    ])
   })
 
 
@@ -1181,8 +1238,8 @@ describe('MyStackPage non-vial visibility', () => {
     const stageButton = (await screen.findAllByRole('button', { name: qaName }))
       .find(button => button.hasAttribute('data-vial-index'))!
     fireEvent.click(stageButton)
-    if (!screen.queryByRole('button', { name: '• Abendplan zyklus' })) fireEvent.click(stageButton)
-    fireEvent.click(await screen.findByRole('button', { name: '• Abendplan zyklus' }))
+    if (!screen.queryByRole('button', { name: 'aktiv_badge Abendplan zyklus' })) fireEvent.click(stageButton)
+    fireEvent.click(await screen.findByRole('button', { name: 'aktiv_badge Abendplan zyklus' }))
     const managerChoices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
     expect(managerChoices).toHaveLength(2)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-manager-kept')).getByRole('button', {
