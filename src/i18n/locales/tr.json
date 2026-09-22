@@ -1276,5 +1276,6 @@
   "my_stack_plan_effective_too_late": "Döngü {{date}} tarihinde bitiyor. Daha erken bir tarih seç.",
   "my_stack_plan_effective_taken": "Bu gün zaten bir aşama başlıyor. Başka bir gün seç.",
   "my_stack_plan_time_short": "Saat",
-  "my_stack_plan_quantity_short": "Miktar"
+  "my_stack_plan_quantity_short": "Miktar",
+  "my_stack_plan_optional": "isteğe bağlı"
 }

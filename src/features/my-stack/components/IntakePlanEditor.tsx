@@ -1,4 +1,4 @@
-import { BellRing, CalendarDays, CalendarRange, Clock, HandHelping, Minus, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
+import { BellRing, CalendarDays, CalendarRange, Check, Clock, HandHelping, Minus, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -263,19 +263,27 @@ export function IntakePlanEditor({
   // Menge und Einheit gehoeren nebeneinander: man tippt „500" und liest gleich
   // daneben „mg". Die Einheit gilt fuer den ganzen Plan, es gibt sie also nur
   // einmal — an der ersten Karte zum Eingeben, an weiteren nur noch zu lesen.
-  // `kompakt`: in der Einnahme-Karte, neben der Uhrzeit. Dort steht nur
-  // „Menge" darueber; der volle Name bleibt der Name des Feldes.
-  const mengeUndEinheit = (index: number, kompakt = false) => (
+  // `kompakt`: in der Einnahme-Karte, neben der Uhrzeit. Sichtbar steht nur
+  // „Menge" darueber; der volle Satz folgt fuer Vorleser im selben Label, so
+  // beginnt der Name des Feldes mit dem, was man sieht.
+  const mengeUndEinheit = (index: number, kompakt = false) => {
+    const labelClass = kompakt
+      ? 'mb-1.5 block text-xs font-semibold text-slate-400'
+      : 'mb-2 block text-sm font-semibold text-slate-200'
+    const mengenName = t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })
+    return (
     <div className="min-w-0">
       <div className={`flex min-w-0 items-end ${kompakt ? 'gap-1.5' : 'gap-2'}`}>
         <div className="min-w-0 flex-1">
-          <label htmlFor={`stack-plan-quantity-${index}`} className={kompakt ? 'mb-1.5 block text-xs font-semibold text-slate-400' : 'mb-2 block text-sm font-semibold text-slate-200'}>
-            {kompakt
-              ? t('my_stack_plan_quantity_short', { defaultValue: 'Menge' })
-              : t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
+          <label htmlFor={`stack-plan-quantity-${index}`} className={labelClass}>
+            {kompakt ? (
+              <>
+                {t('my_stack_plan_quantity_short', { defaultValue: 'Menge' })}
+                <span className="sr-only"> – {mengenName}</span>
+              </>
+            ) : mengenName}
           </label>
           <input
-            aria-label={kompakt ? String(t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })) : undefined}
             id={`stack-plan-quantity-${index}`}
             type="number"
             inputMode="decimal"
@@ -291,7 +299,7 @@ export function IntakePlanEditor({
         </div>
         {index === 0 ? (
           <div className="w-24 shrink-0">
-            <label htmlFor="stack-plan-unit" className={kompakt ? 'mb-1.5 block text-xs font-semibold text-slate-400' : 'mb-2 block text-sm font-semibold text-slate-200'}>
+            <label htmlFor="stack-plan-unit" className={labelClass}>
               {t('my_stack_plan_unit', { defaultValue: 'Einheit' })}
             </label>
             <input
@@ -328,7 +336,14 @@ export function IntakePlanEditor({
           {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
         </p>
       )}
-      {canSuggestFractions && (
+      {!kompakt && bruchteile(index)}
+    </div>
+    )
+  }
+
+  // Tabletten-Bruchteile. In der kompakten Karte stehen sie unter der ganzen
+  // Zeile — in der schmalen Mengenspalte stuende jeder in einer eigenen.
+  const bruchteile = (index: number) => canSuggestFractions && (
         <div className="mt-2 flex min-w-0 flex-wrap gap-2">
           {TABLET_FRACTIONS.map(fraction => (
             <button
@@ -344,8 +359,6 @@ export function IntakePlanEditor({
             </button>
           ))}
         </div>
-      )}
-    </div>
   )
 
   return (
@@ -673,39 +686,43 @@ export function IntakePlanEditor({
           {sichtbareSlots.map(({ slot, index }) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
           <fieldset
+            aria-labelledby={`stack-plan-slot-title-${index}`}
             data-field={`plan.slots.${index}.routineGroup`}
             tabIndex={-1}
             aria-invalid={Boolean(errors.slots?.[index]) || undefined}
             aria-describedby={errors.slots?.[index] ? `stack-plan-routine-${index}-error` : undefined}
             className="min-w-0"
           >
-            {/* Aufschrift und Papierkorb in einer Zeile: die Legende schwimmt
-                links, der Knopf rechts, die Tageszeiten beginnen darunter. */}
-            <legend className="float-left flex min-h-11 items-center text-sm font-semibold text-slate-200">
-              {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
-                  einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
-                  „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
-              {plan.slots.length > 1
-                ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
-                : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
-            </legend>
-            {sichtbareSlots.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeSlot(index)}
-                aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
-                className="float-right -mr-1.5 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-              >
-                <Trash2 aria-hidden="true" size={18} />
-              </button>
-            )}
-            {/* Drei Tageszeiten nebeneinander. Die Auswahl zeigt die Kachel;
-                das Optionsfeld bleibt fuer Tastatur und Vorleser da. */}
-            <div className="clear-both grid min-w-0 grid-cols-3 gap-1.5 pt-1">
+            {/* Aufschrift und Papierkorb in einer Zeile. */}
+            <div className="flex min-h-11 items-center justify-between gap-2">
+              <span id={`stack-plan-slot-title-${index}`} className="text-sm font-semibold text-slate-200">
+                {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
+                    einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
+                    „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
+                {plan.slots.length > 1
+                  ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
+                  : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
+              </span>
+              {sichtbareSlots.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeSlot(index)}
+                  aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
+                  className="-mr-1.5 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+                >
+                  <Trash2 aria-hidden="true" size={18} />
+                </button>
+              )}
+            </div>
+            {/* Drei Tageszeiten nebeneinander, Symbol ueber dem Wort, damit
+                auch lange Namen (Mezzogiorno) auf schmalen Handys ganz
+                bleiben. Die Auswahl zeigt die Kachel mit Haken — nicht nur
+                die Farbe; das Optionsfeld bleibt fuer Tastatur und Vorleser. */}
+            <div className="grid min-w-0 grid-cols-3 gap-1.5">
               {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
                 <label
                   key={value}
-                  className={`flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-[13px] font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
+                  className={`relative flex min-h-11 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-xs font-semibold leading-tight transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
                     ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
                     : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
                   }`}
@@ -719,8 +736,11 @@ export function IntakePlanEditor({
                     required
                     className="sr-only"
                   />
+                  {slot.routineGroup === value && (
+                    <Check aria-hidden="true" size={12} strokeWidth={3} className="absolute right-1.5 top-1.5" />
+                  )}
                   <Icon aria-hidden="true" size={16} className="shrink-0" />
-                  <span className="min-w-0 truncate">{t(labelKey, { defaultValue })}</span>
+                  <span className="min-w-0 max-w-full break-words">{t(labelKey, { defaultValue })}</span>
                 </label>
               ))}
             </div>
@@ -737,26 +757,33 @@ export function IntakePlanEditor({
 
           {/* Uhrzeit, Menge und Einheit in einer Zeile. `appearance-none`:
               iOS gibt dem Uhrzeitfeld sonst eine Mindestbreite, und es ragt
-              ueber die Karte hinaus. Das Uhrsymbol von Chrome faellt weg — es
-              schnitt „08:00 AM" ab; ein Tipp ins Feld oeffnet die Auswahl. */}
-          <div className={`grid min-w-0 items-start gap-2 ${tracksQuantity ? 'grid-cols-[6.75rem_minmax(0,1fr)]' : 'grid-cols-1'}`}>
+              ueber die Karte hinaus. Auf Touch-Geraeten faellt Chromes
+              Uhrsymbol weg — es schnitt „08:00 AM" ab, und ein Tipp ins Feld
+              oeffnet die Auswahl ohnehin; am Desktop bleibt es der Weg dorthin.
+              Unter 360 px stehen Uhrzeit und Menge untereinander. */}
+          <div className={`grid min-w-0 items-start gap-2 ${tracksQuantity
+            ? 'grid-cols-1 min-[360px]:grid-cols-[6.75rem_minmax(0,1fr)] sm:grid-cols-[9rem_minmax(0,1fr)]'
+            : 'grid-cols-1'}`}>
             <div className="min-w-0">
-              <label htmlFor={`stack-plan-time-${index}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                <Clock aria-hidden="true" size={13} />
+              <label htmlFor={`stack-plan-time-${index}`} className="mb-1.5 block text-xs font-semibold text-slate-400">
                 {t('my_stack_plan_time_short', { defaultValue: 'Uhrzeit' })}
+                {' '}
+                <span className="font-normal text-slate-500">
+                  {t('my_stack_plan_optional', { defaultValue: 'optional' })}
+                </span>
               </label>
               <input
                 id={`stack-plan-time-${index}`}
-                aria-label={String(t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' }))}
                 type="time"
                 value={slot.time ?? ''}
                 onChange={event => changeSlot(index, { time: event.target.value || null })}
-                className="input block min-h-11 w-full min-w-0 max-w-full appearance-none px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 [&::-webkit-calendar-picker-indicator]:hidden"
+                className="input block min-h-11 w-full min-w-0 max-w-full appearance-none px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 [@media(pointer:coarse)]:[&::-webkit-calendar-picker-indicator]:hidden"
               />
             </div>
 
             {tracksQuantity && mengeUndEinheit(index, true)}
           </div>
+          {tracksQuantity && bruchteile(index)}
             </div>
           ))}
 

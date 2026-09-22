@@ -1499,7 +1499,7 @@ describe('MyStackPage non-vial visibility', () => {
     const section = await screen.findByTestId('plan-management-cycle-real-wizard')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
-    const dose = screen.getByLabelText('my_stack_plan_quantity')
+    const dose = screen.getByLabelText(/my_stack_plan_quantity$/)
     fireEvent.change(dose, { target: { value: '125' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
     expect(await screen.findByText('my_stack_save_error')).toBeTruthy()
@@ -1509,11 +1509,11 @@ describe('MyStackPage non-vial visibility', () => {
     expect(requestedDoses).toEqual([125])
 
     fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
-    await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
+    await waitFor(() => expect(screen.queryByLabelText(/my_stack_plan_quantity$/)).toBeNull())
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
-    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '150' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '150' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
-    await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
+    await waitFor(() => expect(screen.queryByLabelText(/my_stack_plan_quantity$/)).toBeNull())
 
     expect(requestedDoses).toEqual([125, 150])
     expect(requestedKeys[1]).not.toBe(requestedKeys[0])
@@ -1552,7 +1552,7 @@ describe('MyStackPage non-vial visibility', () => {
     const date = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' })
     expect(date.value > today).toBe(true)
-    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '175' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '175' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(calls).toHaveLength(1))

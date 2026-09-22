@@ -1276,5 +1276,6 @@
   "my_stack_plan_effective_too_late": "Il ciclo termina il {{date}}. Scegli una data precedente.",
   "my_stack_plan_effective_taken": "In questo giorno inizia già una fase. Scegli un altro giorno.",
   "my_stack_plan_time_short": "Ora",
-  "my_stack_plan_quantity_short": "Quantità"
+  "my_stack_plan_quantity_short": "Quantità",
+  "my_stack_plan_optional": "facoltativo"
 }

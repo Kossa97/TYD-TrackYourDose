@@ -1280,5 +1280,6 @@
   "my_stack_plan_effective_too_late": "تنتهي الدورة في {{date}}. اختر تاريخًا أبكر.",
   "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر.",
   "my_stack_plan_time_short": "الوقت",
-  "my_stack_plan_quantity_short": "الكمية"
+  "my_stack_plan_quantity_short": "الكمية",
+  "my_stack_plan_optional": "اختياري"
 }

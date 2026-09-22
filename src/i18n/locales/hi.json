@@ -1276,5 +1276,6 @@
   "my_stack_plan_effective_too_late": "चक्र {{date}} को समाप्त होता है। पहले की तारीख चुनें।",
   "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।",
   "my_stack_plan_time_short": "समय",
-  "my_stack_plan_quantity_short": "मात्रा"
+  "my_stack_plan_quantity_short": "मात्रा",
+  "my_stack_plan_optional": "वैकल्पिक"
 }

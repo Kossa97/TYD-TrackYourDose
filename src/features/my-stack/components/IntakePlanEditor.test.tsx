@@ -155,7 +155,7 @@ describe('IntakePlanEditor', () => {
     const zweiteKarte = document.querySelector('[data-plan-slot="1"]')!
     // Sie steht IN der ersten Karte, in derselben Zeile wie deren Menge.
     expect(ersteKarte.contains(einheit)).toBe(true)
-    const menge = within(ersteKarte as HTMLElement).getByLabelText('Geplante Menge pro Einnahme')
+    const menge = within(ersteKarte as HTMLElement).getByLabelText(/Geplante Menge pro Einnahme$/)
     expect(menge.parentElement?.parentElement).toBe(einheit.parentElement?.parentElement)
     // Die zweite Karte bekommt kein zweites Eingabefeld, nur den Text.
     expect(within(zweiteKarte as HTMLElement).queryByLabelText('Einheit')).toBeNull()
@@ -305,12 +305,12 @@ describe('IntakePlanEditor', () => {
     expect(screen.getByText('Einnahme 1')).toBeTruthy()
     expect(screen.getByText('Einnahme 2')).toBeTruthy()
 
-    const uhrzeiten = screen.getAllByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement[]
+    const uhrzeiten = screen.getAllByLabelText('Uhrzeit optional') as HTMLInputElement[]
     expect(uhrzeiten).toHaveLength(2)
 
     // Jeder Zeitpunkt haelt seine eigene Uhrzeit.
     fireEvent.change(uhrzeiten[1], { target: { value: '20:00' } })
-    const danach = screen.getAllByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement[]
+    const danach = screen.getAllByLabelText('Uhrzeit optional') as HTMLInputElement[]
     expect(danach[0].value).toBe('')
     expect(danach[1].value).toBe('20:00')
   })
@@ -323,7 +323,7 @@ describe('IntakePlanEditor', () => {
     />)
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(0)
-    expect(screen.queryByLabelText('Genaue Uhrzeit (optional)')).toBeNull()
+    expect(screen.queryByLabelText('Uhrzeit optional')).toBeNull()
     expect(document.querySelector('[data-plan-on-demand]')?.textContent)
       .toContain('nichts gilt als verpasst')
   })
@@ -602,7 +602,7 @@ describe('IntakePlanEditor', () => {
   it('omits planned quantity for intake-only tracking', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 
-    expect(screen.queryByLabelText('Geplante Menge pro Einnahme')).toBeNull()
+    expect(screen.queryByLabelText(/Geplante Menge pro Einnahme$/)).toBeNull()
     expect(screen.queryByLabelText('Einheit')).toBeNull()
     expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
   })
@@ -610,7 +610,7 @@ describe('IntakePlanEditor', () => {
   it.each(['with_amount', 'complete'] as const)('shows quantity and unit for %s', trackingLevel => {
     render(<PlanHarness trackingLevel={trackingLevel} dosageForm="tablet" />)
 
-    expect(screen.getByLabelText('Geplante Menge pro Einnahme')).toBeTruthy()
+    expect(screen.getByLabelText(/Geplante Menge pro Einnahme$/)).toBeTruthy()
     expect(screen.getByLabelText('Einheit')).toBeTruthy()
     if (trackingLevel === 'complete') expect(screen.queryByLabelText('Stärke')).toBeNull()
   })
@@ -619,7 +619,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
 
     expect((screen.getByRole('radio', { name: 'Morgens' }) as HTMLInputElement).required).toBe(true)
-    expect((screen.getByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement).required).toBe(false)
+    expect((screen.getByLabelText('Uhrzeit optional') as HTMLInputElement).required).toBe(false)
     // Statt eines Satzes „kann später eingerichtet werden" stehen hier jetzt
     // die drei Vorlaufzeiten, die der Push-Cron ohnehin kennt.
     expect(document.querySelector('[data-plan-reminders]')).not.toBeNull()
@@ -643,7 +643,7 @@ describe('IntakePlanEditor', () => {
 
   it('sets tablet fractions and never suggests splitting capsules', () => {
     const { rerender } = render(<PlanHarness trackingLevel="with_amount" dosageForm="tablet" />)
-    const quantity = screen.getByLabelText('Geplante Menge pro Einnahme') as HTMLInputElement
+    const quantity = screen.getByLabelText(/Geplante Menge pro Einnahme$/) as HTMLInputElement
 
     fireEvent.click(screen.getByRole('button', { name: '1/2 Tablette' }))
     expect(quantity.value).toBe('0.5')
@@ -653,7 +653,7 @@ describe('IntakePlanEditor', () => {
     expect(quantity.value).toBe('0.25')
 
     rerender(<PlanHarness trackingLevel="with_amount" dosageForm="capsule" />)
-    const capsuleQuantity = screen.getByLabelText('Geplante Menge pro Einnahme') as HTMLInputElement
+    const capsuleQuantity = screen.getByLabelText(/Geplante Menge pro Einnahme$/) as HTMLInputElement
     fireEvent.change(capsuleQuantity, { target: { value: '0.75' } })
     expect(capsuleQuantity.value).toBe('0.75')
     expect(screen.queryByRole('button', { name: /Kapsel/ })).toBeNull()
@@ -691,11 +691,11 @@ describe('IntakePlanEditor', () => {
   it('adapts quantity labels and controls to liquids and injectables', () => {
     const { rerender } = render(<PlanHarness trackingLevel="with_amount" dosageForm="drops" />)
 
-    expect(screen.getByLabelText('Flüssigkeitsmenge pro Einnahme')).toBeTruthy()
+    expect(screen.getByLabelText(/Flüssigkeitsmenge pro Einnahme$/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Tablette/ })).toBeNull()
 
     rerender(<PlanHarness trackingLevel="with_amount" dosageForm="vial" />)
-    expect(screen.getByLabelText('Injektionsmenge pro Einnahme')).toBeTruthy()
+    expect(screen.getByLabelText(/Injektionsmenge pro Einnahme$/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Tablette/ })).toBeNull()
   })
 

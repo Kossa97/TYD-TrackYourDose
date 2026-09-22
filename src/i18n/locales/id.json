@@ -1276,5 +1276,6 @@
   "my_stack_plan_effective_too_late": "Siklus berakhir pada {{date}}. Pilih tanggal lebih awal.",
   "my_stack_plan_effective_taken": "Sudah ada tahap yang dimulai pada hari ini. Pilih hari lain.",
   "my_stack_plan_time_short": "Waktu",
-  "my_stack_plan_quantity_short": "Jumlah"
+  "my_stack_plan_quantity_short": "Jumlah",
+  "my_stack_plan_optional": "opsional"
 }

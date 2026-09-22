@@ -176,7 +176,7 @@ function completeCustomFlow(name = 'Custom Product'): void {
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
   setMethodIfAsked()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   advanceToReview()
 }
@@ -393,7 +393,7 @@ function completeCatalogFlow(): void {
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   advanceToPlanStep()
   setMethodIfAsked()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   advanceToReview()
 }
@@ -406,7 +406,7 @@ function reachExistingReview(changeForm = false): void {
   }
   advanceToPlanStep()
   setMethodIfAsked()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: changeForm ? 'ml' : 'capsule' } })
   advanceToReview()
 }
@@ -606,7 +606,7 @@ describe('StackItemWizard interactions', () => {
     expect(onSavePlanChange).not.toHaveBeenCalled()
 
     fireEvent.change(boundaryDate, { target: { value: '2099-10-02' } })
-    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '10000' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '10000' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
@@ -675,7 +675,7 @@ describe('StackItemWizard interactions', () => {
     } as Partial<StackItemWizardProps>)
 
     // Uhrzeit zurueck auf die der Stufe davor: uebrig bleibt eine reine Dosisaenderung.
-    fireEvent.change(screen.getByLabelText('my_stack_plan_time'), { target: { value: '08:30' } })
+    fireEvent.change(screen.getByLabelText('my_stack_plan_time_short my_stack_plan_optional'), { target: { value: '08:30' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
@@ -837,7 +837,7 @@ describe('StackItemWizard interactions', () => {
 
     expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
     expect(screen.queryByRole('group', { name: 'my_stack_tracking_question' })).toBeNull()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_time'), { target: { value: '08:30' } })
+    fireEvent.change(screen.getByLabelText('my_stack_plan_time_short my_stack_plan_optional'), { target: { value: '08:30' } })
     fireEvent.click(screen.getByRole('checkbox', { name: 'my_stack_pk_method_confirm' }))
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
@@ -1136,7 +1136,7 @@ describe('StackItemWizard interactions', () => {
   fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
   continueWizard()
 
-  expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull()
+  expect(screen.queryByLabelText(/my_stack_plan_quantity$/)).toBeNull()
   setMethodIfAsked()
   continueWizard()
 
@@ -1238,7 +1238,7 @@ describe('StackItemWizard interactions', () => {
 
     continueWizard()
     setMethodIfAsked()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
     continueWizard()
 
@@ -1274,7 +1274,7 @@ describe('StackItemWizard interactions', () => {
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_with_amount_title/ }))
     continueWizard()
     setMethodIfAsked()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
     continueWizard()
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
