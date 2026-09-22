@@ -16341,7 +16341,7 @@
       "file_type": "code",
       "norm_label": "stubserviceworker()",
       "source_file": "src/lib/usePushNotifications.test.ts",
-      "source_location": "L30"
+      "source_location": "L42"
     },
     {
       "id": "src_lib_usepushnotifications_test_updatespy",
@@ -16353,7 +16353,7 @@
       "file_type": "code",
       "norm_label": "updatespy()",
       "source_file": "src/lib/usePushNotifications.test.ts",
-      "source_location": "L23"
+      "source_location": "L32"
     },
     {
       "id": "src_lib_usepushnotifications_urlbase64toarraybuffer",
@@ -84363,7 +84363,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/lib/usePushNotifications.ts",
-      "source_location": "L111",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -84375,7 +84375,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/lib/usePushNotifications.ts",
-      "source_location": "L136",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -84387,7 +84387,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/lib/usePushNotifications.ts",
-      "source_location": "L216",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -84399,7 +84399,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/lib/usePushNotifications.ts",
-      "source_location": "L217",
+      "source_location": "L223",
       "weight": 1.0
     },
     {
@@ -88983,7 +88983,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/lib/usePushNotifications.ts",
-      "source_location": "L112",
+      "source_location": "L118",
       "weight": 1.0
     },
     {
@@ -195500,7 +195500,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/usePushNotifications.test.ts",
-      "source_location": "L23",
+      "source_location": "L32",
       "weight": 1.0
     },
     {
@@ -195511,7 +195511,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/usePushNotifications.test.ts",
-      "source_location": "L30",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -204342,5 +204342,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "71383ac94081354ae48d129971b09aa92ee9894e"
+  "built_at_commit": "72a5ff6f6160ee0efc48535f7c2e632d6bf105e1"
 }
