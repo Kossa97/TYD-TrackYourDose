@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { addDays, format } from 'date-fns'
 import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
@@ -443,6 +443,15 @@ function LocationProbe() {
   return <span data-testid="location-search">{location.search}</span>
 }
 
+function BrowserBackButton() {
+  const navigate = useNavigate()
+  return <button type="button" onClick={() => navigate(-1)}>Browser zurück</button>
+}
+
+function PathProbe() {
+  return <output aria-label="current path">{useLocation().pathname}</output>
+}
+
 function versionedCycle(effectiveFrom: string) {
   const segment = {
     frequency: activeCycle.frequency,
@@ -545,6 +554,31 @@ describe('MyStackPage non-vial visibility', () => {
     expect(within(product!).getByRole('heading', { name: 'Rekonstitution' })).not.toBeNull()
     expect(substance?.querySelector('[data-stack-detail-field="analyse"]')?.className).not.toContain('col-span-2')
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
+  })
+
+  it('uses the first browser-back step to close substance details without leaving My Stack', async () => {
+    render(
+      <MemoryRouter initialEntries={['/', '/my-stack']} initialIndex={1}>
+        <PathProbe />
+        <Routes>
+          <Route path="/" element={<p>Home route</p>} />
+          <Route path="/my-stack" element={<><MyStackPage /><BrowserBackButton /></>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    const stackObject = await screen.findByRole('button', { name: 'Existing Premium Vial' })
+    fireEvent.click(stackObject)
+    expect(await screen.findByRole('dialog', { name: 'Existing Premium Vial' })).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Browser zurück' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Existing Premium Vial' })).toBeNull())
+    expect(screen.getByLabelText('current path').textContent).toBe('/my-stack')
+    expect(screen.getByRole('button', { name: 'Existing Premium Vial' })).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Browser zurück' }))
+
+    await waitFor(() => expect(screen.getByLabelText('current path').textContent).toBe('/'))
   })
 
   it('shows the active cycle as one status-marked entry and reveals its details after tapping it', async () => {
