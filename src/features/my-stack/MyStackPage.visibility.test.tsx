@@ -382,14 +382,6 @@ vi.mock('./components/StackArchive', () => ({
   StackArchive: () => null,
 }))
 
-vi.mock('./extensions/peptide/VialTrackingEditor', () => ({
-  VialTrackingEditor: () => null,
-  emptyVialTrackingDraft: () => ({
-    name: '',
-    pk_profile_id: '',
-  }),
-}))
-
 vi.mock('./services/stackItems', async importOriginal => {
   const original = await importOriginal<typeof import('./services/stackItems')>()
   return {

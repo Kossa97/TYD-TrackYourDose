@@ -140,11 +140,8 @@ describe('My Stack page vial view', () => {
   })
 
   test('nennt in „Verwalten" jede Tür beim Namen', () => {
-    // „Bearbeiten" fuehrt in den Assistenten, „Vial-Tracking" in das aeltere
-    // Formular — zwei Tueren in denselben Raum, die in verschiedene Spalten
-    // schreiben. Ein Zahnrad ohne Wort verschweigt den Unterschied. Und das
-    // Vial-Tracking nur dort, wo es etwas tut: `openTrackingDetails` steigt
-    // bei einer Form ohne Buehnenobjekt sofort wieder aus.
+    // Eine Tuer zum Bearbeiten — der Assistent. Das aeltere Vial-Tracking-
+    // Formular ist entfernt.
     const text = source()
     const verwalten = text.slice(
       text.indexOf('data-stack-detail="verwalten"'),
@@ -153,13 +150,12 @@ describe('My Stack page vial view', () => {
     const platz = (s: string) => verwalten.indexOf(s)
 
     expect(verwalten).toContain('<Pencil size={14} /> Bearbeiten')
-    expect(verwalten).toContain('<SlidersHorizontal size={14} /> Vial-Tracking')
-    expect(verwalten).toContain('isStageRenderable(activePeptide.dosage_form) && (')
+    expect(verwalten).not.toContain('Vial-Tracking</')
+    expect(verwalten).not.toContain('> Vial-Tracking')
     expect(verwalten).toContain('<Trash2 size={14} /> Substanz löschen')
     expect(verwalten).not.toContain('> Edit')
     // Das Löschen abgesetzt und zuletzt.
     expect(platz('Substanz löschen')).toBeGreaterThan(platz('Bearbeiten'))
-    expect(platz('Substanz löschen')).toBeGreaterThan(platz('Vial-Tracking'))
   })
 
   test('liest die Angaben durch die Leseschicht, nicht aus den Altspalten', () => {
@@ -957,19 +953,16 @@ describe('My Stack modular integration', () => {
     expect(text).toContain('const stageRenderable = isStageRenderable(p.dosage_form)')
   })
 
-  test('preserves the vial-specific tracking editor alongside the generic wizard', () => {
+  test('has one way to edit an entry: the wizard, not the old vial-tracking form', () => {
     const text = source()
-    expect(text).toContain('<VialTrackingEditor')
-    expect(text).toContain("from './extensions/peptide/VialTrackingEditor'")
-    expect(text).toContain('showTrackingForm')
-    expect(text).toContain('openTrackingDetails')
-    expect(text).toContain('if (!isStageRenderable(p.dosage_form)) return')
-    expect(text).toContain('saveVialTracking(supabase as never, editingPeptideId')
+    expect(text).not.toContain('VialTrackingEditor')
+    expect(text).not.toContain('openTrackingDetails')
+    expect(text).not.toContain('saveVialTracking')
   })
 
   test('uses persisted item colors before the stable palette fallback', () => {
     const text = source()
-    expect(text.match(/p\.color_hex \?\? getStableStackItemColor\(p\.id\)/g)).toHaveLength(3)
+    expect(text.match(/p\.color_hex \?\? getStableStackItemColor\(p\.id\)/g)).toHaveLength(2)
   })
 
   test('migrates active and archived local colors once, then reloads persisted active rows', () => {

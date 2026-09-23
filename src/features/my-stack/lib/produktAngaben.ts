@@ -11,10 +11,12 @@ import type { StackItem } from '../types'
  *   `stack_items` an, die Zutaten in `stack_item_ingredients` und den Bestand
  *   in `stack_item_inventory`.
  *
- *   Die Tracking-Details (`saveVialTracking`, nur bei buehnenfaehigen Formen)
- *   schreiben stattdessen die flachen Altspalten auf `stack_items` —
- *   `vial_amount_mg`, `reconstitution_ml`, `batch_number` … — und eine Zeile
- *   in `inventory_items`.
+ *   Das fruehere Vial-Tracking-Formular (inzwischen entfernt) schrieb
+ *   stattdessen die flachen Altspalten auf `stack_items` — `vial_amount_mg`,
+ *   `reconstitution_ml`, `batch_number` … — und eine Zeile in
+ *   `inventory_items`. Diese Werte liegen in Bestandsdaten weiter; die
+ *   Leseschicht zeigt sie an, aendern laesst sie sich nur noch dort, wo
+ *   der Assistent eine Entsprechung hat.
  *
  * Das Vollbild las bisher NUR den zweiten. Wer eine Substanz ueber den
  * Assistenten anlegte, sah deshalb ueberall „Nicht gesetzt", obwohl die

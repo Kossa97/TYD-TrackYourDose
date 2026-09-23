@@ -31,7 +31,7 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
@@ -46,7 +46,6 @@ import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { DoseUnitControl } from './components/DoseUnitControl'
-import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
@@ -543,8 +542,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // ── Inventar ─────────────────────────────────────────────────────────────
   const [inventory, setInventory]             = useState<InventoryItem[]>([])
-  const [pkProfileCatalog, setPkProfileCatalog] = useState<PkProfileOption[]>([])
-  const [pkSuggestOpen, setPkSuggestOpen] = useState(false)
 
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
@@ -570,12 +567,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [wizardNeuerZyklus, setWizardNeuerZyklus] = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
-  const [showTrackingForm, setShowTrackingForm] = useState(false)
-  const [pForm, setPForm] = useState<VialTrackingDraft>(emptyVialTrackingDraft())
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [savingPeptide, setSavingPeptide] = useState(false)
-  const [batchFile, setBatchFile] = useState<File | null>(null)
-  const [uploadingFile, setUploadingFile] = useState(false)
   const [searchOpen, setSearchOpen]           = useState(false)
   const [filterOpen, setFilterOpen]           = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
@@ -856,40 +847,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     return () => window.cancelAnimationFrame(frame)
   }, [cycleTimelines, loading, location.pathname, location.search, navigate, peptides, timelineLoadError, timelineLoading])
 
-  useEffect(() => {
-    if (!showTrackingForm) return
-    supabase.from('pk_profiles').select('id, name, aliases').order('name')
-      .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
-  }, [showTrackingForm])
-
-  const pepPkSuggestions = useMemo(() => {
-    const q = pForm.name.trim().toLowerCase()
-    if (!q) return []
-    return pkProfileCatalog
-      .filter(profile => profile.name.toLowerCase().includes(q)
-        || profile.aliases.some(alias => alias.toLowerCase().includes(q)))
-      .slice(0, 5)
-  }, [pForm.name, pkProfileCatalog])
-
-  const pepLinkedPkProfile = useMemo(
-    () => pkProfileCatalog.find(profile => profile.id === pForm.pk_profile_id) ?? null,
-    [pkProfileCatalog, pForm.pk_profile_id],
-  )
-
-  const handlePepNameChange = (value: string) => {
-    setPForm(form => ({ ...form, name: value }))
-    setPkSuggestOpen(true)
-    if (pForm.pk_profile_id && pepLinkedPkProfile && value.trim().toLowerCase() !== pepLinkedPkProfile.name.toLowerCase()) {
-      setPForm(form => ({ ...form, pk_profile_id: '' }))
-    }
-  }
-
-  const selectPepPkProfile = (profile: PkProfileOption) => {
-    setPForm(form => ({ ...form, name: profile.name, pk_profile_id: profile.id }))
-    setPkSuggestOpen(false)
-  }
-
-
   const activePeptideIds = useMemo(
     () => new Set(cycles.filter(c => c.active).map(c => c.stack_item_id)),
     [cycles],
@@ -1001,105 +958,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     setWizardIntent(undefined)
     setWizardInitialColor('')
     setShowPeptideForm(true)
-  }
-
-  const openTrackingDetails = (p: Peptide) => {
-    if (!isStageRenderable(p.dosage_form)) return
-    setEditingPeptideId(p.id)
-    setPForm({
-      inventory_item_id: p.inventory_item_id ?? '',
-      pk_profile_id: p.pk_profile_id ?? '',
-      name: p.name,
-      default_method: p.default_method,
-      vial_amount_mg: p.vial_amount_mg?.toString() ?? '',
-      vial_amount_unit: p.vial_amount_unit ?? 'mg',
-      reconstitution_ml: p.reconstitution_ml?.toString() ?? '',
-      syringe_ml: p.syringe_type?.split(':')[0] ?? '1',
-      syringe_units: p.syringe_type?.split(':')[1] ?? '100',
-      notes: p.notes ?? '',
-      vials_in_stock: (inventory.find(item => item.id === p.inventory_item_id)?.vials_count ?? 0).toString(),
-      reconstitution_date: p.reconstitution_date ?? '',
-      expiry_days: p.expiry_days?.toString() ?? '',
-      batch_number: p.batch_number ?? '',
-      batch_source: p.batch_source ?? '',
-      batch_file_url: p.batch_file_url ?? '',
-      color_hex: p.color_hex ?? getStableStackItemColor(p.id),
-    })
-    setBatchFile(null)
-    setPkSuggestOpen(false)
-    setShowTrackingForm(true)
-  }
-
-  const saveTrackingDetails = async () => {
-    if (!editingPeptideId || !pForm.name.trim()) return
-    const existing = peptides.find(item => item.id === editingPeptideId)
-    if (!existing) return
-    setSavingPeptide(true)
-    try {
-      let fileUrl = pForm.batch_file_url
-      if (batchFile) {
-        setUploadingFile(true)
-        const extension = batchFile.name.split('.').pop()?.toLowerCase()
-        const path = `${user!.id}/${Date.now()}.${extension}`
-        const { error } = await supabase.storage.from('batch-files').upload(path, batchFile)
-        if (error) toast.error(t('datei_upload_fehler'))
-        else fileUrl = supabase.storage.from('batch-files').getPublicUrl(path).data.publicUrl
-        setUploadingFile(false)
-      }
-
-      const rawReserve = parseFloat(pForm.vials_in_stock) || 0
-      let inventoryItemId = pForm.inventory_item_id || null
-      if (pForm.vial_amount_mg) {
-        const vialAmount = parseFloat(pForm.vial_amount_mg)
-        const inventoryPayload = {
-          user_id: user!.id,
-          name: pForm.name.trim(),
-          mg_per_vial: pForm.vial_amount_unit === 'mcg' ? vialAmount / 1000 : vialAmount,
-          vials_count: rawReserve,
-          vials_initial: rawReserve,
-          batch_number: pForm.batch_number || null,
-          batch_source: pForm.batch_source || null,
-          batch_file_url: fileUrl || null,
-          pk_profile_id: pForm.pk_profile_id || null,
-        }
-        if (inventoryItemId) {
-          await supabase.from('inventory_items').update(inventoryPayload).eq('id', inventoryItemId)
-        } else {
-          const { data } = await supabase.from('inventory_items').insert(inventoryPayload).select('id').single()
-          inventoryItemId = data?.id ?? null
-        }
-      }
-
-      await saveVialTracking(supabase as never, editingPeptideId, {
-        display_name: pForm.name.trim(),
-        name: pForm.name.trim(),
-        default_method: pForm.default_method || 'Subkutan',
-        vial_amount_mg: pForm.vial_amount_mg ? parseFloat(pForm.vial_amount_mg) : null,
-        vial_amount_unit: pForm.vial_amount_mg ? pForm.vial_amount_unit : null,
-        reconstitution_ml: pForm.reconstitution_ml ? parseFloat(pForm.reconstitution_ml) : null,
-        syringe_type: pForm.syringe_ml && pForm.syringe_units ? `${pForm.syringe_ml}:${pForm.syringe_units}` : null,
-        notes: pForm.notes || null,
-        vials_in_stock: existing.vials_in_stock ?? 1,
-        vials_initial: existing.vials_initial ?? 1,
-        reconstitution_date: pForm.reconstitution_date || null,
-        expiry_days: pForm.expiry_days ? parseInt(pForm.expiry_days) : null,
-        batch_number: pForm.batch_number || null,
-        batch_source: pForm.batch_source || null,
-        batch_file_url: fileUrl || null,
-        inventory_item_id: inventoryItemId,
-        pk_profile_id: pForm.pk_profile_id || null,
-        color_hex: pForm.color_hex || null,
-      })
-      toast.success(t('peptid_aktualisiert'))
-      setShowTrackingForm(false)
-      setBatchFile(null)
-      await Promise.all([loadPeptides(), loadInventory()])
-    } catch {
-      toast.error(t('fehler_speichern'))
-    } finally {
-      setUploadingFile(false)
-      setSavingPeptide(false)
-    }
   }
 
   const handleSaveStackItem = async (
@@ -2412,32 +2270,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     <RefreshCw size={14} /> Erneut anmischen
                   </button>
                   )}
-                  {/* Zwei Tueren in denselben Raum: „Bearbeiten" fuehrt in den
-                      Assistenten, „Vial-Tracking" in das aeltere Formular, und
-                      die beiden schreiben in verschiedene Spalten (siehe
-                      `produktAngaben.ts`). Solange das so ist, heisst hier
-                      jede, was sie oeffnet — ein Zahnrad ohne Wort verschweigt
-                      den Unterschied bloss. Das Vial-Tracking nur dort, wo es
-                      ueberhaupt etwas tut: `openTrackingDetails` steigt bei
-                      einer Form ohne Buehnenobjekt sofort wieder aus. */}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEditPeptide(activePeptide)}
-                      className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
-                    >
-                      <Pencil size={14} /> Bearbeiten
-                    </button>
-                    {isStageRenderable(activePeptide.dosage_form) && (
-                      <button
-                        type="button"
-                        onClick={() => openTrackingDetails(activePeptide)}
-                        className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/5 px-2 text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-500/10"
-                      >
-                        <SlidersHorizontal size={14} /> Vial-Tracking
-                      </button>
-                    )}
-                  </div>
+                  {/* Eine Tuer zum Bearbeiten: der Assistent. Das aeltere
+                      Vial-Tracking-Formular ist entfernt; was es geschrieben
+                      hat, zeigt die Leseschicht weiter an (`produktAngaben.ts`). */}
+                  <button
+                    type="button"
+                    onClick={() => openEditPeptide(activePeptide)}
+                    className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
+                  >
+                    <Pencil size={14} /> Bearbeiten
+                  </button>
                   {/* Abgesetzt und zuletzt. Es stand einmal ganz oben, direkt
                       unter dem Daumen. */}
                   <button
@@ -3573,27 +3415,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}
-        />
-      )}
-
-      {showTrackingForm && (
-        <VialTrackingEditor
-          editingPeptideId={editingPeptideId}
-          pForm={pForm}
-          setPForm={setPForm}
-          batchFile={batchFile}
-          setBatchFile={setBatchFile}
-          savingPeptide={savingPeptide}
-          uploadingFile={uploadingFile}
-          onClose={() => setShowTrackingForm(false)}
-          onSave={saveTrackingDetails}
-          pkSuggestOpen={pkSuggestOpen}
-          setPkSuggestOpen={setPkSuggestOpen}
-          pepPkSuggestions={pepPkSuggestions}
-          selectPepPkProfile={selectPepPkProfile}
-          handlePepNameChange={handlePepNameChange}
-          showDropdown={showDropdown}
-          setShowDropdown={setShowDropdown}
         />
       )}
 
