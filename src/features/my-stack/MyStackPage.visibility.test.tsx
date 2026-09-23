@@ -656,7 +656,11 @@ describe('MyStackPage non-vial visibility', () => {
     )
     fireEvent.click(await screen.findByRole('button', { name: 'Existing Premium Vial' }))
     const detail = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
-    fireEvent.click(within(detail.querySelector<HTMLElement>('[data-stack-detail="zyklus"]')!).getByRole('button'))
+    // Mit der Plan-Zeitleiste fuehrt die Plan-Karte oben im Vollbild zur Uebersicht.
+    const summary = detail.querySelector<HTMLElement>('[data-plan-summary]')!
+    expect(summary.dataset.planSummary).toBe('active')
+    expect(detail.querySelector('[data-stack-detail="zyklus"]')).toBeNull()
+    fireEvent.click(within(summary).getByRole('button', { name: 'my_stack_plan_open_overview' }))
 
     const sections = await screen.findAllByTestId(/^plan-management-/)
     expect(sections.map(section => section.dataset.testid)).toEqual([
@@ -1273,8 +1277,8 @@ describe('MyStackPage non-vial visibility', () => {
     const stageButton = (await screen.findAllByRole('button', { name: qaName }))
       .find(button => button.hasAttribute('data-vial-index'))!
     fireEvent.click(stageButton)
-    if (!screen.queryByRole('button', { name: 'aktiv_badge Abendplan zyklus' })) fireEvent.click(stageButton)
-    fireEvent.click(await screen.findByRole('button', { name: 'aktiv_badge Abendplan zyklus' }))
+    if (!screen.queryByRole('button', { name: 'my_stack_plan_open_overview' })) fireEvent.click(stageButton)
+    fireEvent.click(await screen.findByRole('button', { name: 'my_stack_plan_open_overview' }))
     const managerChoices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
     expect(managerChoices).toHaveLength(2)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-manager-kept')).getByRole('button', {

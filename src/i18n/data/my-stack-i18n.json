@@ -388,7 +388,13 @@
     "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر.",
     "my_stack_plan_time_short": "الوقت",
     "my_stack_plan_quantity_short": "الكمية",
-    "my_stack_plan_optional": "اختياري"
+    "my_stack_plan_optional": "اختياري",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -779,7 +785,13 @@
     "my_stack_plan_effective_taken": "Ya empieza una etapa ese día. Elige otro día.",
     "my_stack_plan_time_short": "Hora",
     "my_stack_plan_quantity_short": "Cantidad",
-    "my_stack_plan_optional": "opcional"
+    "my_stack_plan_optional": "opcional",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1170,7 +1182,13 @@
     "my_stack_plan_effective_taken": "Une étape commence déjà ce jour-là. Choisis un autre jour.",
     "my_stack_plan_time_short": "Heure",
     "my_stack_plan_quantity_short": "Quantité",
-    "my_stack_plan_optional": "facultatif"
+    "my_stack_plan_optional": "facultatif",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1561,7 +1579,13 @@
     "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।",
     "my_stack_plan_time_short": "समय",
     "my_stack_plan_quantity_short": "मात्रा",
-    "my_stack_plan_optional": "वैकल्पिक"
+    "my_stack_plan_optional": "वैकल्पिक",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1952,7 +1976,13 @@
     "my_stack_plan_effective_taken": "Sudah ada tahap yang dimulai pada hari ini. Pilih hari lain.",
     "my_stack_plan_time_short": "Waktu",
     "my_stack_plan_quantity_short": "Jumlah",
-    "my_stack_plan_optional": "opsional"
+    "my_stack_plan_optional": "opsional",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2343,7 +2373,13 @@
     "my_stack_plan_effective_taken": "In questo giorno inizia già una fase. Scegli un altro giorno.",
     "my_stack_plan_time_short": "Ora",
     "my_stack_plan_quantity_short": "Quantità",
-    "my_stack_plan_optional": "facoltativo"
+    "my_stack_plan_optional": "facoltativo",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2734,7 +2770,13 @@
     "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。",
     "my_stack_plan_time_short": "時刻",
     "my_stack_plan_quantity_short": "量",
-    "my_stack_plan_optional": "任意"
+    "my_stack_plan_optional": "任意",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3125,7 +3167,13 @@
     "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요.",
     "my_stack_plan_time_short": "시간",
     "my_stack_plan_quantity_short": "양",
-    "my_stack_plan_optional": "선택"
+    "my_stack_plan_optional": "선택",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3516,7 +3564,13 @@
     "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia.",
     "my_stack_plan_time_short": "Hora",
     "my_stack_plan_quantity_short": "Quantidade",
-    "my_stack_plan_optional": "opcional"
+    "my_stack_plan_optional": "opcional",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3907,7 +3961,13 @@
     "my_stack_plan_effective_taken": "В этот день уже начинается этап. Выберите другой день.",
     "my_stack_plan_time_short": "Время",
     "my_stack_plan_quantity_short": "Количество",
-    "my_stack_plan_optional": "необязательно"
+    "my_stack_plan_optional": "необязательно",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4298,7 +4358,13 @@
     "my_stack_plan_effective_taken": "Bu gün zaten bir aşama başlıyor. Başka bir gün seç.",
     "my_stack_plan_time_short": "Saat",
     "my_stack_plan_quantity_short": "Miktar",
-    "my_stack_plan_optional": "isteğe bağlı"
+    "my_stack_plan_optional": "isteğe bağlı",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4689,6 +4755,12 @@
     "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。",
     "my_stack_plan_time_short": "时间",
     "my_stack_plan_quantity_short": "用量",
-    "my_stack_plan_optional": "可选"
+    "my_stack_plan_optional": "可选",
+    "my_stack_plan_open_overview": "Open plan & history",
+    "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+    "my_stack_plan_next_step": "Next step",
+    "my_stack_plan_last_period": "Last: {{period}}",
+    "my_stack_plan_start_new": "Start new cycle",
+    "my_stack_plan_view_history": "View history"
   }
 }

@@ -1277,5 +1277,11 @@
   "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।",
   "my_stack_plan_time_short": "समय",
   "my_stack_plan_quantity_short": "मात्रा",
-  "my_stack_plan_optional": "वैकल्पिक"
+  "my_stack_plan_optional": "वैकल्पिक",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }

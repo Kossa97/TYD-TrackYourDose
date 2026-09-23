@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, Plus, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
+import { CalendarDays, Clock, Flag, Pause, Pencil, Play, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
+import { findNextTimelineIntake } from '../../../lib/intakeSchedule'
 import {
   localDateTimeKey,
   resolveCycleAt,
@@ -10,23 +10,20 @@ import {
   type CycleTimeline,
 } from '../../../lib/planTimeline'
 import { planVersionSegments } from '../lib/planSegments'
-import {
-  WEEKDAY_KEYS,
-  isOnDemandRhythm,
-  rhythmFromStorage,
-  rhythmSummary,
-  rhythmText,
-} from '../lib/intakeRhythm'
-import type { IntakeRhythm } from '../types'
+import { isOnDemandRhythm } from '../lib/intakeRhythm'
 import { laterLocalDay, shiftLocalDay } from '../lib/localDays'
+import { cyclePeriod, inclusiveDayCount, planStepRows } from '../lib/planCard'
+import { CurrentSlotRow, StepSlotRow } from './planCardParts'
 import {
-  cyclePeriod,
-  inclusiveDayCount,
-  planCardSlots,
-  planStepRows,
-  type PlanCardSlot,
-  type PlanStepRow,
-} from '../lib/planCard'
+  dateLabel,
+  durationLabel,
+  rhythmLabel,
+  slotCountLabel,
+  stepKindLabel,
+  timelineForIntakeResolution,
+  versionRhythm,
+  versionSlots,
+} from '../lib/planLabels'
 
 export interface PlanManagementSectionProps {
   timeline: CycleTimeline
@@ -54,98 +51,6 @@ type DialogState =
   | { kind: 'pause_end' }
   | { kind: 'remove'; version: CyclePlanVersion }
   | { kind: 'end' }
-
-type Translate = (key: string, options?: Record<string, unknown>) => unknown
-
-function versionRhythm(version: CyclePlanVersion): IntakeRhythm {
-  const legacyFrequency: Record<string, string> = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }
-  return rhythmFromStorage({
-    frequency: legacyFrequency[version.frequency] ?? version.frequency,
-    x_days_interval: version.x_days_interval,
-    interval_unit: version.interval_unit,
-    cycle_on_days: version.cycle_on_days,
-    cycle_off_days: version.cycle_off_days,
-    schedule_days: version.schedule_days,
-  })
-}
-
-function rhythmLabel(version: CyclePlanVersion, t: Translate): string {
-  return rhythmText(rhythmSummary(versionRhythm(version)), t)
-}
-
-/** „Bei Bedarf" hat keine Einnahmezeiten — die gespeicherte Tageszeit bedeutet dort nichts. */
-function versionSlots(version: CyclePlanVersion): PlanCardSlot[] {
-  return isOnDemandRhythm(versionRhythm(version)) ? [] : planCardSlots(version)
-}
-
-function slotDoseLabel(slot: PlanCardSlot): string | null {
-  if (slot.dose == null) return null
-  return `${slot.dose} ${slot.unit ?? ''}`.trim()
-}
-
-// Ein beliebiger Montag (UTC), um Wochentagsnamen in der App-Sprache zu bilden.
-const WEEKDAY_REFERENCE_UTC = Date.UTC(2026, 0, 5)
-
-function weekdayLabel(day: string, language: string): string {
-  const index = WEEKDAY_KEYS.indexOf(day as (typeof WEEKDAY_KEYS)[number])
-  if (index < 0) return day
-  return new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' })
-    .format(new Date(WEEKDAY_REFERENCE_UTC + index * 86_400_000))
-    .replace(/\.$/, '')
-}
-
-const ROUTINE_LABEL: Record<ResolvedRoutineGroup, { key: string; defaultValue: string }> = {
-  morning: { key: 'my_stack_routine_morning', defaultValue: 'Morgens' },
-  midday: { key: 'my_stack_routine_midday', defaultValue: 'Mittags' },
-  evening: { key: 'my_stack_routine_evening', defaultValue: 'Abends' },
-}
-
-function RoutineIcon({ group }: { group: ResolvedRoutineGroup }) {
-  if (group === 'morning') return <Sunrise size={16} aria-hidden="true" className="shrink-0 text-amber-300" />
-  if (group === 'midday') return <Sun size={16} aria-hidden="true" className="shrink-0 text-yellow-200" />
-  return <Moon size={16} aria-hidden="true" className="shrink-0 text-indigo-300" />
-}
-
-function routineLabel(slot: PlanCardSlot, t: Translate): string {
-  const label = ROUTINE_LABEL[slot.routineGroup]
-  return String(t(label.key, { defaultValue: label.defaultValue }))
-}
-
-
-function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
-  const legacyFrequencies: Record<string, string> = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }
-  return {
-    ...timeline,
-    versions: timeline.versions.map(version => ({
-      ...version,
-      frequency: legacyFrequencies[version.frequency] ?? version.frequency,
-    })),
-  }
-}
-
-function dateLabel(value: string, language: string, timeZone: string): string {
-  const instant = value.includes('|')
-    ? new Date(`${value.slice(0, 10)}T00:00:00.000Z`)
-    : new Date(value)
-  return new Intl.DateTimeFormat(language, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: value.includes('|') ? 'UTC' : timeZone,
-  }).format(instant)
-}
 
 function wallClockToIso(value: string, timeZone: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
@@ -184,147 +89,6 @@ function wallClockToIso(value: string, timeZone: string): string {
     if (candidateWallClock === target) return new Date(candidate).toISOString()
   }
   throw new Error(`Local date-time does not exist in ${timeZone}`)
-}
-
-// Einzahl und Mehrzahl waehlt der Code, nicht i18next: Sprachen mit mehr
-// Pluralformen (ru, ar) faenden sonst keinen Schluessel und zeigten ihn roh.
-function durationLabel(days: number, t: Translate): string {
-  return String(days === 1
-    ? t('my_stack_plan_duration_single', { days, defaultValue: '{{days}} Tag' })
-    : t('my_stack_plan_duration_multiple', { days, defaultValue: '{{days}} Tage' }))
-}
-
-function slotCountLabel(slots: number, t: Translate): string {
-  return String(slots === 1
-    ? t('my_stack_plan_slot_count_single', { slots, defaultValue: '{{slots}} Einnahmezeit' })
-    : t('my_stack_plan_slot_count_multiple', { slots, defaultValue: '{{slots}} Einnahmezeiten' }))
-}
-
-function stepKindLabel(version: CyclePlanVersion, t: Translate): string {
-  const copy = {
-    initial: { key: 'my_stack_plan_step_start', defaultValue: 'Start' },
-    dose: { key: 'my_stack_plan_step_dose', defaultValue: 'Dosis' },
-    schedule: { key: 'my_stack_plan_step_schedule', defaultValue: 'Plan' },
-    titration: { key: 'my_stack_plan_step_titration', defaultValue: 'Titration' },
-  }[version.change_kind]
-  return String(t(copy.key, { defaultValue: copy.defaultValue }))
-}
-
-/**
- * Kurze Beschriftung fuer die Tages-Chips. Zwei Zeichen der Kurzform, solange
- * das die Tage unterscheidet („Mo", „Di"); sonst die schmale Form — im
- * Arabischen etwa beginnt jeder Kurzname mit demselben Artikel.
- */
-function chipLabels(language: string): string[] {
-  const kurz = WEEKDAY_KEYS.map(day => weekdayLabel(day, language).slice(0, 2))
-  if (new Set(kurz).size === kurz.length) return kurz
-  const schmal = new Intl.DateTimeFormat(language, { weekday: 'narrow', timeZone: 'UTC' })
-  return WEEKDAY_KEYS.map((_, index) => schmal.format(new Date(WEEKDAY_REFERENCE_UTC + index * 86_400_000)))
-}
-
-function DayChips({ days, language }: { days: string[]; language: string }) {
-  const labels = chipLabels(language)
-  return (
-    <span aria-hidden="true" className="mt-1.5 flex flex-wrap gap-0.5">
-      {WEEKDAY_KEYS.map((day, index) => {
-        const active = days.includes(day)
-        return (
-          <span
-            key={day}
-            className={`grid h-5 min-w-5 place-items-center rounded-full px-0.5 text-[10px] font-bold ${active
-              ? 'bg-cyan-300/15 text-cyan-100'
-              : 'border border-white/10 text-slate-600'}`}
-          >
-            {labels[index]}
-          </span>
-        )
-      })}
-    </span>
-  )
-}
-
-function CurrentSlotRow({ slot, language, t }: { slot: PlanCardSlot; language: string; t: Translate }) {
-  const dose = slotDoseLabel(slot)
-  return (
-    <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
-      <RoutineIcon group={slot.routineGroup} />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-100">
-          {routineLabel(slot, t)} · {slot.time}
-        </p>
-        {slot.days.length > 0 && (
-          <span className="sr-only">{slot.days.map(day => weekdayLabel(day, language)).join(', ')}</span>
-        )}
-      </div>
-      {dose && <p className="whitespace-nowrap text-base font-bold text-white">{dose}</p>}
-      {slot.days.length > 0 && (
-        <div className="col-span-2 col-start-2 -mt-1.5">
-          <DayChips days={slot.days} language={language} />
-        </div>
-      )}
-    </li>
-  )
-}
-
-function ChangeMarker({ change, t }: { change: PlanStepRow['change']; t: Translate }) {
-  if (change === 'initial') return null
-  if (change === 'same') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/25 px-1.5 py-px text-[10.5px] font-semibold text-slate-400">
-        <span aria-hidden="true" className="text-xs leading-none">=</span>
-        {String(t('my_stack_plan_change_same', { defaultValue: 'gleich' }))}
-      </span>
-    )
-  }
-  const copy = {
-    increased: { text: t('my_stack_plan_change_increased', { defaultValue: 'erhöht' }), arrow: '↑', tone: 'bg-emerald-400/15 text-emerald-200' },
-    decreased: { text: t('my_stack_plan_change_decreased', { defaultValue: 'reduziert' }), arrow: '↓', tone: 'bg-amber-300/15 text-amber-100' },
-    changed: { text: t('my_stack_plan_change_changed', { defaultValue: 'geändert' }), arrow: '', tone: 'bg-violet-300/15 text-violet-100' },
-    new: { text: t('my_stack_plan_change_new', { defaultValue: 'neu' }), arrow: '', tone: 'bg-cyan-300/15 text-cyan-100' },
-    removed: { text: t('my_stack_plan_change_removed', { defaultValue: 'entfällt' }), arrow: '', tone: 'bg-rose-300/10 text-rose-200' },
-  }[change]
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10.5px] font-bold ${copy.tone}`}>
-      {copy.arrow && <span aria-hidden="true">{copy.arrow}</span>}
-      {String(copy.text)}
-    </span>
-  )
-}
-
-function StepSlotRow({ row, language, t }: { row: PlanStepRow; language: string; t: Translate }) {
-  const { slot, previous, change } = row
-  const quiet = change === 'same' || change === 'removed'
-  const dose = slotDoseLabel(slot)
-  const previousDose = previous ? slotDoseLabel(previous) : null
-  const doseMoved = previous != null && change !== 'removed' && previousDose !== dose
-  const timeMoved = previous != null && change !== 'removed' && previous.time !== slot.time
-  const days = slot.days.map(day => weekdayLabel(day, language)).join(', ')
-  return (
-    <li
-      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg border px-2.5 py-2 ${quiet
-        ? 'border-white/[0.04]'
-        : 'border-white/[0.08] bg-white/[0.045]'}`}
-    >
-      <RoutineIcon group={slot.routineGroup} />
-      <div className="min-w-0">
-        <p className={`text-[13px] font-semibold ${quiet ? 'text-slate-400' : 'text-slate-100'}`}>
-          {routineLabel(slot, t)} · {timeMoved && <span className="font-medium text-slate-500">{previous.time} → </span>}{slot.time}
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-slate-400">
-          {days && <span>{days}</span>}
-          <ChangeMarker change={change} t={t} />
-        </p>
-      </div>
-      {dose && (
-        <p className={`flex flex-col items-end whitespace-nowrap text-sm font-bold ${quiet ? 'text-slate-400' : 'text-white'} ${change === 'removed' ? 'line-through' : ''}`}>
-          {doseMoved && previousDose && (
-            <span className="text-[11px] font-medium text-slate-500">{previousDose} →</span>
-          )}
-          <span>{dose}</span>
-        </p>
-      )}
-    </li>
-  )
 }
 
 export function PlanManagementSection({

@@ -1277,5 +1277,11 @@
   "my_stack_plan_effective_taken": "In questo giorno inizia già una fase. Scegli un altro giorno.",
   "my_stack_plan_time_short": "Ora",
   "my_stack_plan_quantity_short": "Quantità",
-  "my_stack_plan_optional": "facoltativo"
+  "my_stack_plan_optional": "facoltativo",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }

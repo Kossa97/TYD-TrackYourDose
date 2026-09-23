@@ -1276,5 +1276,11 @@
   "my_stack_plan_effective_taken": "这一天已有阶段开始。请选择其他日期。",
   "my_stack_plan_time_short": "时间",
   "my_stack_plan_quantity_short": "用量",
-  "my_stack_plan_optional": "可选"
+  "my_stack_plan_optional": "可选",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }

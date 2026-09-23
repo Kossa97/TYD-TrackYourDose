@@ -1276,5 +1276,11 @@
   "my_stack_plan_effective_taken": "이 날에는 이미 단계가 시작됩니다. 다른 날을 선택하세요.",
   "my_stack_plan_time_short": "시간",
   "my_stack_plan_quantity_short": "양",
-  "my_stack_plan_optional": "선택"
+  "my_stack_plan_optional": "선택",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }

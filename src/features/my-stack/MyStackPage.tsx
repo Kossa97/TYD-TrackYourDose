@@ -49,6 +49,7 @@ import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
+import { PlanSummaryCard } from './components/PlanSummaryCard'
 import { CourseTimezoneReview } from './components/CourseTimezoneReview'
 import { resolveCycleCourseTimezone } from './services/planLifecycle'
 import {
@@ -2298,6 +2299,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         ein Klappknopf davor war eine Huerde ohne Gegenwert.
                         Die Darreichungsform entscheidet, welche Zeilen es
                         ueberhaupt gibt. */}
+                    {/* Der Plan zuerst: was gerade gilt, schaut man taeglich
+                        nach — Substanz und Rekonstitution selten. Ein Tipp
+                        oeffnet die volle Uebersicht. */}
+                    {FEATURES.planTimelineV2 && (
+                      <PlanSummaryCard
+                        timelines={timelinesOf(activePeptide.id)}
+                        now={new Date()}
+                        timeZone={timeZone}
+                        needsReview={activePeptide.configuration_status === 'needs_review'}
+                        onOpen={() => {
+                          closeStageDetail()
+                          setCycleManagerPeptide(activePeptide)
+                        }}
+                        onStartNew={() => {
+                          closeStageDetail()
+                          openNewCycle(activePeptide)
+                        }}
+                      />
+                    )}
                     {detailAbschnitte(form).map(abschnitt => (
                       <section key={abschnitt.id} data-stack-detail={abschnitt.id} className="mx-1 mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50">
                         <h3 className="border-b border-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -2321,16 +2341,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       </section>
                     ))}
 
-                    {/*
-                        Der Zyklus als KNOPF, nicht als Feld — und nach den
-                        Angaben, nicht davor: erst was das IST (Substanz,
-                        Zusammensetzung), dann was damit LAEUFT.
-                        
-                        Alles Weitere — Frequenz, Dosis, Laufzeit und Aktionen —
-                        zeigt erst der Zyklusverwalter nach dem Antippen. Die
-                        Uebersicht bleibt dadurch bei einem einzigen Einstieg.
-                    */}
-                    <div data-stack-detail="zyklus" className="mx-1 mt-2">
+                    {/* Alter Datenpfad: der Zyklus als Knopf nach den Angaben.
+                        Mit der Plan-Zeitleiste steht stattdessen die
+                        Plan-Karte oben (PlanSummaryCard). */}
+                    {!FEATURES.planTimelineV2 && <div data-stack-detail="zyklus" className="mx-1 mt-2">
                       {activeCycle ? (
                         <button
                           type="button"
@@ -2384,7 +2398,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             : <Plus size={16} className="shrink-0 text-violet-300" />}
                         </button>
                       )}
-                    </div>
+                    </div>}
 
                     {/* Verwalten zuletzt. Oben standen diese vier Knoepfe als
                         Erstes — mitsamt dem Loeschen, direkt unter dem Daumen,

@@ -1424,5 +1424,11 @@
   "my_stack_plan_effective_taken": "An diesem Tag beginnt schon eine Stufe. Wähle einen anderen Tag.",
   "my_stack_plan_time_short": "Uhrzeit",
   "my_stack_plan_quantity_short": "Menge",
-  "my_stack_plan_optional": "optional"
+  "my_stack_plan_optional": "optional",
+  "my_stack_plan_open_overview": "Plan & Verlauf öffnen",
+  "my_stack_plan_since_day": "seit {{date}} · Tag {{day}}",
+  "my_stack_plan_next_step": "Nächste Stufe",
+  "my_stack_plan_last_period": "Zuletzt: {{period}}",
+  "my_stack_plan_start_new": "Neuen Zyklus starten",
+  "my_stack_plan_view_history": "Verlauf ansehen"
 }

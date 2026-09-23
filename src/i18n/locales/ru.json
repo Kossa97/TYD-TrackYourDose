@@ -1279,5 +1279,11 @@
   "my_stack_plan_effective_taken": "В этот день уже начинается этап. Выберите другой день.",
   "my_stack_plan_time_short": "Время",
   "my_stack_plan_quantity_short": "Количество",
-  "my_stack_plan_optional": "необязательно"
+  "my_stack_plan_optional": "необязательно",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }

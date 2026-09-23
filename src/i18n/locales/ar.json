@@ -1281,5 +1281,11 @@
   "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر.",
   "my_stack_plan_time_short": "الوقت",
   "my_stack_plan_quantity_short": "الكمية",
-  "my_stack_plan_optional": "اختياري"
+  "my_stack_plan_optional": "اختياري",
+  "my_stack_plan_open_overview": "Open plan & history",
+  "my_stack_plan_since_day": "since {{date}} · Day {{day}}",
+  "my_stack_plan_next_step": "Next step",
+  "my_stack_plan_last_period": "Last: {{period}}",
+  "my_stack_plan_start_new": "Start new cycle",
+  "my_stack_plan_view_history": "View history"
 }
