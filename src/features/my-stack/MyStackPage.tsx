@@ -50,6 +50,7 @@ import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type 
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
+import { orderTimelines } from './lib/planLabels'
 import { CourseTimezoneReview } from './components/CourseTimezoneReview'
 import { resolveCycleCourseTimezone } from './services/planLifecycle'
 import {
@@ -1490,17 +1491,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     />
   )
   const planManagementSections = (p: Peptide, timelines: CycleTimeline[]) => {
-    const now = new Date()
-    const statusPriority = { active: 0, paused: 1, planned: 2, ended: 3 } as const
-    const orderedTimelines = timelines.map(timeline => ({
-      timeline,
-      status: resolveCycleAt(timeline, now, timeZone).status,
-    })).sort((left, right) => {
-      const statusOrder = statusPriority[left.status] - statusPriority[right.status]
-      if (statusOrder !== 0) return statusOrder
-      const startedOrder = String(right.timeline.cycle.started_at ?? '').localeCompare(String(left.timeline.cycle.started_at ?? ''))
-      return startedOrder !== 0 ? startedOrder : right.timeline.cycle.id.localeCompare(left.timeline.cycle.id)
-    }).map(entry => entry.timeline)
+    const orderedTimelines = orderTimelines(timelines, new Date(), timeZone).map(entry => entry.timeline)
     const reviewTimeline = orderedTimelines.find(timeline => timeline.cycle.timezone_review_required)
     return reviewTimeline
       ? planManagementSection(p, reviewTimeline)
@@ -2305,8 +2296,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     {FEATURES.planTimelineV2 && (
                       <PlanSummaryCard
                         timelines={timelinesOf(activePeptide.id)}
-                        now={new Date()}
                         timeZone={timeZone}
+                        loadState={timelineLoadError ? 'error' : timelineLoading ? 'loading' : 'ready'}
                         needsReview={activePeptide.configuration_status === 'needs_review'}
                         onOpen={() => {
                           closeStageDetail()

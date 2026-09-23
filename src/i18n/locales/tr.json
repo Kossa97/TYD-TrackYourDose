@@ -1283,5 +1283,6 @@
   "my_stack_plan_next_step": "Next step",
   "my_stack_plan_last_period": "Last: {{period}}",
   "my_stack_plan_start_new": "Start new cycle",
-  "my_stack_plan_view_history": "View history"
+  "my_stack_plan_view_history": "View history",
+  "my_stack_plan_loading": "Loading intake plan …"
 }

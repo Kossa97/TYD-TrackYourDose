@@ -1,5 +1,10 @@
-import type { ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
-import type { CyclePlanVersion, CycleTimeline } from '../../../lib/planTimeline'
+import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
+import {
+  resolveCycleAt,
+  type CycleLifecycleStatus,
+  type CyclePlanVersion,
+  type CycleTimeline,
+} from '../../../lib/planTimeline'
 import {
   WEEKDAY_KEYS,
   isOnDemandRhythm,
@@ -18,16 +23,23 @@ import { planCardSlots, type PlanCardSlot } from './planCard'
 
 export type Translate = (key: string, options?: Record<string, unknown>) => unknown
 
+// Plan-Versionen speichern die Frequenz als Schluessel ('daily'); die
+// Rhythmus- und Einnahmelogik kennt die alten deutschen Texte.
+const LEGACY_FREQUENCY: Readonly<Record<string, string>> = {
+  daily: 'Täglich',
+  weekdays: 'Wochentage wählen',
+  interval: 'Alle X Tage',
+  cycle: 'Im Wechsel',
+  on_demand: 'Bei Bedarf',
+}
+
+function legacyFrequency(frequency: string): string {
+  return Object.prototype.hasOwnProperty.call(LEGACY_FREQUENCY, frequency) ? LEGACY_FREQUENCY[frequency] : frequency
+}
+
 export function versionRhythm(version: CyclePlanVersion): IntakeRhythm {
-  const legacyFrequency: Record<string, string> = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }
   return rhythmFromStorage({
-    frequency: legacyFrequency[version.frequency] ?? version.frequency,
+    frequency: legacyFrequency(version.frequency),
     x_days_interval: version.x_days_interval,
     interval_unit: version.interval_unit,
     cycle_on_days: version.cycle_on_days,
@@ -74,20 +86,34 @@ export function routineLabel(slot: PlanCardSlot, t: Translate): string {
 
 
 export function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
-  const legacyFrequencies: Record<string, string> = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }
   return {
     ...timeline,
-    versions: timeline.versions.map(version => ({
-      ...version,
-      frequency: legacyFrequencies[version.frequency] ?? version.frequency,
-    })),
+    versions: timeline.versions.map(version => ({ ...version, frequency: legacyFrequency(version.frequency) })),
   }
+}
+
+const STATUS_PRIORITY: Record<CycleLifecycleStatus, number> = { active: 0, paused: 1, planned: 2, ended: 3 }
+
+/**
+ * Die Zyklen einer Substanz in der Reihenfolge, in der Uebersicht und
+ * Plan-Karte sie zeigen: laufend, pausiert, geplant, beendet; darin der
+ * neueste zuerst, bei Gleichstand nach Kennung.
+ */
+export function orderTimelines(timelines: CycleTimeline[], now: Date, timeZone: string) {
+  return timelines
+    .map(timeline => ({ timeline, resolved: resolveCycleAt(timeline, now, timeZone) }))
+    .sort((left, right) => (
+      STATUS_PRIORITY[left.resolved.status] - STATUS_PRIORITY[right.resolved.status]
+      || String(right.timeline.cycle.started_at ?? '').localeCompare(String(left.timeline.cycle.started_at ?? ''))
+      || right.timeline.cycle.id.localeCompare(left.timeline.cycle.id)
+    ))
+}
+
+/** Die naechste Einnahme — nur fuer laufende und geplante Zyklen. */
+export function nextIntakeFor(timeline: CycleTimeline, status: CycleLifecycleStatus, now: Date, timeZone: string) {
+  return status === 'active' || status === 'planned'
+    ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
+    : null
 }
 
 export function dateLabel(value: string, language: string, timeZone: string): string {

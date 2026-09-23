@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarDays, Clock, Flag, Pause, Pencil, Play, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { findNextTimelineIntake } from '../../../lib/intakeSchedule'
 import {
   localDateTimeKey,
   resolveCycleAt,
@@ -20,7 +19,7 @@ import {
   rhythmLabel,
   slotCountLabel,
   stepKindLabel,
-  timelineForIntakeResolution,
+  nextIntakeFor,
   versionRhythm,
   versionSlots,
 } from '../lib/planLabels'
@@ -148,9 +147,7 @@ export function PlanManagementSection({
     : null
   // Vor dem Start beendet: der Zyklus lief nie, es gibt keinen Zeitraum.
   const neverRan = period.last !== null && period.last < period.first
-  const nextIntake = resolved.status === 'active' || resolved.status === 'planned'
-    ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
-    : null
+  const nextIntake = nextIntakeFor(timeline, resolved.status, now, timeZone)
   const [dialog, setDialog] = useState<DialogState | null>(null)
   const [pauseEnd, setPauseEnd] = useState('')
   const [pending, setPending] = useState(false)

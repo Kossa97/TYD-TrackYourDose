@@ -54,7 +54,7 @@ function timeline(changes: Partial<CycleTimeline> = {}): CycleTimeline {
   }
 }
 
-function renderCard(timelines: CycleTimeline[], extra: { needsReview?: boolean } = {}) {
+function renderCard(timelines: CycleTimeline[], extra: { needsReview?: boolean; loadState?: 'ready' | 'loading' | 'error' } = {}) {
   const onOpen = vi.fn()
   const onStartNew = vi.fn()
   render(<PlanSummaryCard timelines={timelines} now={now} timeZone="Europe/Berlin" onOpen={onOpen} onStartNew={onStartNew} {...extra} />)
@@ -125,6 +125,37 @@ describe('PlanSummaryCard', () => {
     const { card } = renderCard([])
     expect(card.textContent).toContain('Noch kein Zyklus')
     expect(screen.queryByRole('button', { name: 'Verlauf ansehen' })).toBeNull()
+  })
+
+  it('does not name a new dose for a step that only moves the time', () => {
+    const moved = timeline({ versions: [
+      version('v1', '2026-05-31'),
+      version('v2', '2026-10-01', { intake_time_custom: '09:00,20:00', change_kind: 'schedule' }),
+    ] })
+    const { card } = renderCard([moved])
+    expect(card.textContent).toContain('01.10.2026 · Plan')
+    expect(card.textContent).not.toContain('01.10.2026 · 100 mcg')
+  })
+
+  it('says the plans are loading or failed instead of claiming there is no cycle', () => {
+    expect(renderCard([], { loadState: 'loading' }).card.textContent).toContain('Einnahmeplan wird geladen')
+    expect(screen.queryByRole('button', { name: 'Neuen Zyklus starten' })).toBeNull()
+    cleanup()
+
+    renderCard([], { loadState: 'error' })
+    expect(screen.getByRole('alert').textContent).toContain('konnten nicht geladen werden')
+    expect(screen.queryByRole('button', { name: 'Neuen Zyklus starten' })).toBeNull()
+  })
+
+  it('names no due intake while a cycle waits for its timezone', () => {
+    const review = timeline({ cycle: {
+      id: 'cycle-1', stack_item_id: 'stack-1', started_at: '2026-05-30T22:00:00.000Z', ended_at: null,
+      start_local_date: '2026-05-31', timezone_review_required: true,
+    } })
+    const { card } = renderCard([review])
+    expect(card.dataset.planSummary).toBe('review')
+    expect(card.textContent).toContain('Zeitzone')
+    expect(card.textContent).not.toContain('Nächste Einnahme')
   })
 
   it('points a plan in conflict to the overview instead of guessing', () => {

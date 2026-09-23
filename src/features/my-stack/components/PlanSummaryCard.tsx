@@ -1,17 +1,18 @@
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ChevronRight, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { findNextTimelineIntake } from '../../../lib/intakeSchedule'
-import { localDateTimeKey, resolveCycleAt, type CycleTimeline } from '../../../lib/planTimeline'
+import { localDateTimeKey, type CycleTimeline } from '../../../lib/planTimeline'
 import { planVersionSegments } from '../lib/planSegments'
 import { cyclePeriod, inclusiveDayCount, planStepRows } from '../lib/planCard'
 import {
   dateLabel,
   durationLabel,
+  nextIntakeFor,
+  orderTimelines,
   rhythmLabel,
   slotCountLabel,
   slotDoseLabel,
   stepKindLabel,
-  timelineForIntakeResolution,
   versionSlots,
   type Translate,
 } from '../lib/planLabels'
@@ -19,70 +20,144 @@ import { CurrentSlotRow } from './planCardParts'
 
 export interface PlanSummaryCardProps {
   timelines: CycleTimeline[]
-  now: Date
+  /** Fest vorgegeben nur in Tests; sonst laeuft die Karte mit der Uhr. */
+  now?: Date
   timeZone: string
+  /** Solange die Plaene laden oder nicht geladen werden konnten, sagt die Karte das — statt „kein Zyklus". */
+  loadState?: 'ready' | 'loading' | 'error'
   needsReview?: boolean
   /** Oeffnet die volle Plan-Uebersicht (Zyklusverwalter). */
   onOpen(): void
   onStartNew(): void
 }
 
-const STATUS_PRIORITY = { active: 0, paused: 1, planned: 2, ended: 3 } as const
-
-/**
- * Der Zyklus, um den es geht: der laufende vor dem pausierten vor dem
- * geplanten vor dem beendeten — dieselbe Reihenfolge wie im Zyklusverwalter.
- */
-function relevantTimeline(timelines: CycleTimeline[], now: Date, timeZone: string) {
-  return timelines
-    .map(timeline => ({ timeline, resolved: resolveCycleAt(timeline, now, timeZone) }))
-    .sort((left, right) => (
-      STATUS_PRIORITY[left.resolved.status] - STATUS_PRIORITY[right.resolved.status]
-      || String(right.timeline.cycle.started_at).localeCompare(String(left.timeline.cycle.started_at))
-    ))[0] ?? null
-}
-
-const CARD = 'mx-1 mt-2 flex flex-col gap-3 rounded-2xl border p-3.5'
+const MINUTE = 60_000
 const OPEN_BUTTON = 'flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-300/15'
 const QUIET_BUTTON = 'flex min-h-11 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 px-3 text-sm font-semibold text-slate-300 transition-colors hover:text-white'
+const TONE = {
+  active: 'border-emerald-400/35 bg-emerald-950/20',
+  neutral: 'border-white/10 bg-slate-900/55',
+  empty: 'border-dashed border-slate-500/30 bg-slate-900/40',
+  warning: 'border-amber-300/25 bg-amber-300/5',
+} as const
+
+/** Die Uhr der Karte: jede Minute neu, damit „Tag N" und die naechste Einnahme nicht stehen bleiben. */
+function useMinuteClock(fixed: Date | undefined): Date {
+  const [tick, setTick] = useState(() => Date.now())
+  useEffect(() => {
+    if (fixed) return
+    const timer = window.setInterval(() => setTick(Date.now()), MINUTE)
+    return () => window.clearInterval(timer)
+  }, [fixed])
+  return fixed ?? new Date(Math.floor(tick / MINUTE) * MINUTE)
+}
 
 /**
  * Der Plan in Kurzform, oben im Vollbild: was gerade gilt, wann die naechste
  * Einnahme ist und ob eine Stufe ansteht. Alles Weitere — Verlauf, Pause,
  * Aendern — steht in der vollen Uebersicht, ein Tipp entfernt.
  */
-export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false, onOpen, onStartNew }: PlanSummaryCardProps) {
+export function PlanSummaryCard({
+  timelines,
+  now: fixedNow,
+  timeZone,
+  loadState = 'ready',
+  needsReview = false,
+  onOpen,
+  onStartNew,
+}: PlanSummaryCardProps) {
   const { t, i18n } = useTranslation()
   const language = i18n?.language || 'de'
   const tr = t as Translate
-  const openLabel = t('my_stack_plan_open_overview', { defaultValue: 'Plan & Verlauf öffnen' })
+  const now = useMinuteClock(fixedNow)
+  const minute = now.getTime()
 
-  if (needsReview) {
-    return (
-      <section data-plan-summary="review" aria-label={String(t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' }))} className={`${CARD} border-amber-300/25 bg-amber-300/5`}>
-        <p className="text-sm font-bold text-amber-100">
-          {t('my_stack_plan_conflict_title', { defaultValue: 'Welcher Plan läuft wirklich?' })}
+  // Alles, was sich nur mit Plan und Minute aendert, einmal je Minute —
+  // die naechste Einnahme sucht bis zu einem Jahr voraus.
+  const plan = useMemo(() => {
+    const at = new Date(minute)
+    const best = orderTimelines(timelines, at, timeZone)[0] ?? null
+    if (!best || best.resolved.status === 'ended') return { kind: 'none' as const, best }
+    const segments = planVersionSegments(best.timeline, at, timeZone)
+    const version = best.resolved.planVersion ?? segments.find(segment => segment.status === 'future')?.version ?? null
+    if (!version) return { kind: 'none' as const, best }
+    const slots = versionSlots(version)
+    const nextStep = segments.find(segment => segment.status === 'future' && segment.version.id !== version.id) ?? null
+    return {
+      kind: 'running' as const,
+      status: best.resolved.status,
+      timeline: best.timeline,
+      version,
+      slots,
+      nextStep,
+      // Nur Einnahmen, deren MENGE sich aendert. Eine verschobene Uhrzeit
+      // bei gleicher Menge ist keine neue Dosis.
+      nextStepDoses: nextStep
+        ? new Set(planStepRows(nextStep.version, version)
+          .filter(row => row.change === 'new' || (row.previous !== null && row.change !== 'removed'
+            && slotDoseLabel(row.previous) !== slotDoseLabel(row.slot)))
+          .map(row => slotDoseLabel(row.slot))
+          .filter((dose): dose is string => dose !== null))
+        : null,
+      nextIntake: slots.length > 0 ? nextIntakeFor(best.timeline, best.resolved.status, at, timeZone) : null,
+    }
+  }, [timelines, minute, timeZone])
+
+  const title = String(t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' }))
+  const openButton = (
+    <button type="button" onClick={onOpen} className={OPEN_BUTTON}>
+      {t('my_stack_plan_open_overview', { defaultValue: 'Plan & Verlauf öffnen' })}
+      <ChevronRight size={16} aria-hidden="true" />
+    </button>
+  )
+  const card = (state: string, tone: keyof typeof TONE, body: ReactNode) => (
+    <section data-plan-summary={state} aria-label={title} className={`mx-1 mt-2 flex flex-col gap-3 rounded-2xl border p-3.5 ${TONE[tone]}`}>
+      {body}
+    </section>
+  )
+  const kicker = (
+    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-300">{title}</p>
+  )
+
+  if (loadState !== 'ready') {
+    return card(loadState, loadState === 'error' ? 'warning' : 'empty', (
+      <>
+        {kicker}
+        <p role={loadState === 'error' ? 'alert' : 'status'} className="text-sm text-slate-300">
+          {loadState === 'error'
+            ? t('my_stack_plan_load_error', { defaultValue: 'Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar.' })
+            : t('my_stack_plan_loading', { defaultValue: 'Einnahmeplan wird geladen …' })}
         </p>
-        <button type="button" onClick={onOpen} className={OPEN_BUTTON}>
-          {openLabel} <ChevronRight size={16} aria-hidden="true" />
-        </button>
-      </section>
-    )
+      </>
+    ))
   }
 
-  const best = relevantTimeline(timelines, now, timeZone)
-  const status = best?.resolved.status
+  // Ein Plan im Konflikt oder mit offener Zeitzone: die Uebersicht klaert
+  // das zuerst; bis dahin sind Einnahmen gesperrt — die Karte nennt keine.
+  const timezoneReview = timelines.some(timeline => timeline.cycle.timezone_review_required)
+  if (needsReview || timezoneReview) {
+    return card('review', 'warning', (
+      <>
+        <p className="text-sm font-bold text-amber-100">
+          {needsReview
+            ? t('my_stack_plan_conflict_title', { defaultValue: 'Welcher Plan läuft wirklich?' })
+            : t('my_stack_course_timezone_review', { defaultValue: 'Die ursprünglichen Start- und Enddaten benötigen eine Zeitzone. Bis zur Bestätigung bleiben Einnahmen und Erinnerungen gesperrt.' })}
+        </p>
+        {openButton}
+      </>
+    ))
+  }
 
-  if (!best || !status || status === 'ended') {
-    const period = best ? cyclePeriod(best.timeline, timeZone) : null
-    return (
-      <section data-plan-summary="none" aria-label={String(t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' }))} className={`${CARD} border-dashed border-slate-500/30 bg-slate-900/40`}>
+  if (plan.kind === 'none') {
+    const period = plan.best ? cyclePeriod(plan.best.timeline, timeZone) : null
+    return card('none', 'empty', (
+      <>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-300">
-            {t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' })}
-          </p>
+          {kicker}
           <p className="mt-1 text-sm font-semibold text-white">
-            {best ? t('kein_aktiver_zyklus', { defaultValue: 'Kein aktiver Zyklus' }) : t('noch_kein_zyklus', { defaultValue: 'Noch kein Zyklus' })}
+            {plan.best
+              ? t('kein_aktiver_zyklus', { defaultValue: 'Kein aktiver Zyklus' })
+              : t('noch_kein_zyklus', { defaultValue: 'Noch kein Zyklus' })}
           </p>
           <p className="mt-1 text-xs text-slate-400">
             {period?.last && period.last >= period.first
@@ -90,47 +165,31 @@ export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false,
                 defaultValue: 'Zuletzt: {{period}}',
                 period: `${dateLabel(`${period.first}|00:00:00`, language, timeZone)} – ${dateLabel(`${period.last}|00:00:00`, language, timeZone)} · ${durationLabel(inclusiveDayCount(period.first, period.last), tr)}`,
               })
-              : !best && t('noch_kein_zyklus_desc', { defaultValue: 'Lege einen Zyklus an, um Dosis, Frequenz und Reminder für diese Substanz zu planen.' })}
+              : !plan.best && t('noch_kein_zyklus_desc', { defaultValue: 'Lege einen Zyklus an, um Dosis, Frequenz und Reminder für diese Substanz zu planen.' })}
           </p>
         </div>
-        <div className={`grid gap-2 ${best ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div className={`grid gap-2 ${plan.best ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <button type="button" onClick={onStartNew} className={OPEN_BUTTON}>
             {t('my_stack_plan_start_new', { defaultValue: 'Neuen Zyklus starten' })}
           </button>
-          {best && (
+          {plan.best && (
             <button type="button" onClick={onOpen} className={QUIET_BUTTON}>
               {t('my_stack_plan_view_history', { defaultValue: 'Verlauf ansehen' })}
             </button>
           )}
         </div>
-      </section>
-    )
+      </>
+    ))
   }
 
-  const { timeline, resolved } = best
-  const segments = planVersionSegments(timeline, now, timeZone)
-  const version = resolved.planVersion ?? segments.find(segment => segment.status === 'future')?.version ?? null
-  if (!version) return null
-  const slots = versionSlots(version)
+  const { status, timeline, version, slots, nextStep, nextStepDoses, nextIntake } = plan
   const period = cyclePeriod(timeline, timeZone)
   const today = localDateTimeKey(now, timeZone).slice(0, 10)
-  const nextStep = segments.find(segment => segment.status === 'future' && segment.version.id !== version.id) ?? null
-  const nextIntake = resolved.status === 'paused'
-    ? null
-    : findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
-
   // Was die naechste Stufe aendert, in einem Wort: die neue Menge, wenn es
   // genau eine ist — sonst die Art der Stufe.
-  const nextStepText = nextStep
-    ? (() => {
-      const doses = new Set(planStepRows(nextStep.version, version)
-        .filter(row => row.change !== 'same' && row.change !== 'removed')
-        .map(row => slotDoseLabel(row.slot))
-        .filter((dose): dose is string => dose !== null))
-      return doses.size === 1 ? [...doses][0] : stepKindLabel(nextStep.version, tr)
-    })()
+  const nextStepText = nextStep && nextStepDoses
+    ? nextStepDoses.size === 1 ? [...nextStepDoses][0] : stepKindLabel(nextStep.version, tr)
     : null
-
   const isActive = status === 'active'
   const statusLabel = {
     active: t('aktiver_zyklus', { defaultValue: 'Aktiver Zyklus' }),
@@ -138,12 +197,8 @@ export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false,
     planned: t('my_stack_plan_status_planned', { defaultValue: 'Geplant' }),
   }[status]
 
-  return (
-    <section
-      data-plan-summary={resolved.status}
-      aria-label={String(t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' }))}
-      className={`${CARD} ${isActive ? 'border-emerald-400/35 bg-emerald-950/20' : 'border-white/10 bg-slate-900/55'}`}
-    >
+  return card(status, isActive ? 'active' : 'neutral', (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isActive
           ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-200'
@@ -152,7 +207,7 @@ export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false,
           {statusLabel}
         </span>
         <span className="text-xs text-slate-400">
-          {resolved.status === 'planned' || today < period.first
+          {status === 'planned' || today < period.first
             ? t('my_stack_plan_from_date', { defaultValue: 'Ab {{date}}', date: dateLabel(`${period.first}|00:00:00`, language, timeZone) })
             : t('my_stack_plan_since_day', {
               defaultValue: 'seit {{date}} · Tag {{day}}',
@@ -175,7 +230,7 @@ export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false,
       </div>
 
       <div className={`grid gap-2 ${nextStepText ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {resolved.status === 'paused' ? (
+        {status === 'paused' ? (
           <p className="rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-2 text-xs text-amber-100">
             {t('my_stack_plan_pause_neutral', { defaultValue: 'Während der Pause ist keine Einnahme fällig.' })}
           </p>
@@ -202,9 +257,7 @@ export function PlanSummaryCard({ timelines, now, timeZone, needsReview = false,
         )}
       </div>
 
-      <button type="button" onClick={onOpen} className={OPEN_BUTTON}>
-        {openLabel} <ChevronRight size={16} aria-hidden="true" />
-      </button>
-    </section>
-  )
+      {openButton}
+    </>
+  ))
 }

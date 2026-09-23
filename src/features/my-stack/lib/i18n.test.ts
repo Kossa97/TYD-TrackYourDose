@@ -213,6 +213,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_last_period',
   'my_stack_plan_start_new',
   'my_stack_plan_view_history',
+  'my_stack_plan_loading',
   'my_stack_plan_effective_too_early',
   'my_stack_plan_effective_required',
   'my_stack_plan_effective_too_late',

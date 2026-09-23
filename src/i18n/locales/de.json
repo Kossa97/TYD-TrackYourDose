@@ -1430,5 +1430,6 @@
   "my_stack_plan_next_step": "Nächste Stufe",
   "my_stack_plan_last_period": "Zuletzt: {{period}}",
   "my_stack_plan_start_new": "Neuen Zyklus starten",
-  "my_stack_plan_view_history": "Verlauf ansehen"
+  "my_stack_plan_view_history": "Verlauf ansehen",
+  "my_stack_plan_loading": "Einnahmeplan wird geladen …"
 }

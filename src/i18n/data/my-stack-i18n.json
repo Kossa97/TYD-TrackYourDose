@@ -394,7 +394,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -791,7 +792,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1188,7 +1190,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1585,7 +1588,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1982,7 +1986,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2379,7 +2384,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2776,7 +2782,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3173,7 +3180,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3570,7 +3578,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3967,7 +3976,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4364,7 +4374,8 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4761,6 +4772,7 @@
     "my_stack_plan_next_step": "Next step",
     "my_stack_plan_last_period": "Last: {{period}}",
     "my_stack_plan_start_new": "Start new cycle",
-    "my_stack_plan_view_history": "View history"
+    "my_stack_plan_view_history": "View history",
+    "my_stack_plan_loading": "Loading intake plan …"
   }
 }
