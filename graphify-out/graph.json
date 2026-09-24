@@ -56363,7 +56363,7 @@
       "file_type": "code",
       "norm_label": "pg_temp.zaehle()",
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L131"
+      "source_location": "L142"
     },
     {
       "id": "scripts_sql_my_stack_bestand_test_sql_stack_items",
@@ -56418,7 +56418,7 @@
       "file_type": "code",
       "norm_label": "zaehlung",
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L129"
+      "source_location": "L140"
     },
     {
       "id": "stack_item_inventory",
@@ -57065,7 +57065,7 @@
       "file_type": "code",
       "norm_label": "public.apply_inventory_confirmation()",
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L114"
+      "source_location": "L118"
     },
     {
       "id": "supabase_my_stack_bestand_public_reverse_inventory_confirmation",
@@ -57076,7 +57076,7 @@
       "file_type": "code",
       "norm_label": "public.reverse_inventory_confirmation()",
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L417"
+      "source_location": "L444"
     },
     {
       "id": "supabase_my_stack_bestand_sql_public_dose_logs",
@@ -173128,17 +173128,6 @@
     },
     {
       "source": "scripts_sql_my_stack_bestand_test",
-      "target": "scripts_sql_my_stack_bestand_test_zaehlung",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L129",
-      "weight": 1.0
-    },
-    {
-      "source": "scripts_sql_my_stack_bestand_test",
       "target": "scripts_sql_my_stack_bestand_test_auth_uid",
       "relation": "contains",
       "_origin": "ast",
@@ -173150,13 +173139,24 @@
     },
     {
       "source": "scripts_sql_my_stack_bestand_test",
+      "target": "scripts_sql_my_stack_bestand_test_zaehlung",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/sql/my-stack-bestand.test.sql",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_sql_my_stack_bestand_test",
       "target": "scripts_sql_my_stack_bestand_test_pg_temp_zaehle",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L131",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -205001,7 +205001,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L114",
+      "source_location": "L118",
       "weight": 1.0
     },
     {
@@ -205012,7 +205012,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L417",
+      "source_location": "L444",
       "weight": 1.0
     },
     {
@@ -206957,7 +206957,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L136",
+      "source_location": "L147",
       "weight": 1.0
     },
     {
@@ -206968,7 +206968,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L138",
+      "source_location": "L149",
       "weight": 1.0
     },
     {
@@ -206979,7 +206979,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L141",
+      "source_location": "L152",
       "weight": 1.0
     },
     {
@@ -206990,7 +206990,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L142",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -207001,7 +207001,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/sql/my-stack-bestand.test.sql",
-      "source_location": "L142",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -207122,7 +207122,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L141",
+      "source_location": "L146",
       "weight": 1.0
     },
     {
@@ -207133,7 +207133,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L174",
+      "source_location": "L184",
       "weight": 1.0
     },
     {
@@ -207144,7 +207144,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L368",
+      "source_location": "L386",
       "weight": 1.0
     },
     {
@@ -207155,7 +207155,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L440",
+      "source_location": "L467",
       "weight": 1.0
     },
     {
@@ -207166,7 +207166,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L447",
+      "source_location": "L474",
       "weight": 1.0
     },
     {
@@ -207177,7 +207177,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L454",
+      "source_location": "L481",
       "weight": 1.0
     },
     {
@@ -207188,7 +207188,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L472",
+      "source_location": "L499",
       "weight": 1.0
     },
     {
@@ -207199,7 +207199,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "supabase-my-stack-bestand.sql",
-      "source_location": "L521",
+      "source_location": "L551",
       "weight": 1.0
     },
     {
@@ -208563,5 +208563,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "48b6a572455b088d1bfc34bec8a11673189ee5ec"
+  "built_at_commit": "88db8865c4db30c461367072fa8b565815f3e1e2"
 }
