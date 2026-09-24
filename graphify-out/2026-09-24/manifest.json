@@ -5374,17 +5374,5 @@
     "seen": 1790125206.8516872,
     "ast_hash": "5cd002b3b6829a78188ede6b98b4426d",
     "semantic_hash": ""
-  },
-  "scripts/sql/my-stack-bestand.test.sql": {
-    "mtime": 1790289982.5462854,
-    "seen": 1790290017.2176392,
-    "ast_hash": "a03e77c4fa372b1fb0dd9dcc74f9d35d",
-    "semantic_hash": ""
-  },
-  "supabase-my-stack-bestand.sql": {
-    "mtime": 1790289765.002371,
-    "seen": 1790290017.2186875,
-    "ast_hash": "65ef76c877ac8918e5ce6663ee193a5d",
-    "semantic_hash": ""
   }
 }
