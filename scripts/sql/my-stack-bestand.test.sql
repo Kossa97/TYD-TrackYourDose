@@ -111,11 +111,22 @@ insert into stack_items (id, user_id, display_name, dosage_form, default_method,
 values
   ('15000000-0000-0000-0001-000000000020', '15000000-0000-0000-0000-000000000001', 'Tablette', 'tablet', 'Oral', null, null, null, 'complete'),
   ('15000000-0000-0000-0001-000000000021', '15000000-0000-0000-0000-000000000002', 'Nasenspray', 'nasal_spray', 'Nasal', 5, null, '15000000-0000-0000-0003-000000000001', 'complete'),
-  ('15000000-0000-0000-0001-000000000022', '15000000-0000-0000-0000-000000000003', 'Vial ohne Zusammensetzung', 'vial', 'Subkutan', 5, 1, null, 'with_amount');
+  ('15000000-0000-0000-0001-000000000022', '15000000-0000-0000-0000-000000000003', 'Vial ohne Zusammensetzung', 'vial', 'Subkutan', 5, 1, null, 'with_amount'),
+  ('15000000-0000-0000-0001-000000000023', '15000000-0000-0000-0000-000000000003', 'Mischvial', 'vial', 'Subkutan', 15, 2, null, 'complete');
 insert into stack_item_ingredients (stack_item_id, custom_name, amount_value, amount_unit, basis_value, basis_unit, position)
 values
   ('15000000-0000-0000-0001-000000000020', 'Wirkstoff', 50, 'mg', 1, 'tablet', 0),
-  ('15000000-0000-0000-0001-000000000021', 'Wirkstoff', 100, 'mcg', 1, 'spray', 0);
+  ('15000000-0000-0000-0001-000000000021', 'Wirkstoff', 100, 'mcg', 1, 'spray', 0),
+  ('15000000-0000-0000-0001-000000000023', 'Wirkstoff A', 10, 'mg', 1, 'vial', 0),
+  ('15000000-0000-0000-0001-000000000023', 'Wirkstoff B', 5, 'mg', 1, 'vial', 1);
+-- Nicht in Produktion, aber moeglich: Altzaehler ohne Anfangsstand, leeres
+-- Chargenfeld am Eintrag, 3 ml Fluessigkeit.
+insert into stack_items (id, user_id, display_name, dosage_form, default_method, vial_amount_mg, vial_amount_unit,
+  reconstitution_ml, vials_in_stock, vials_initial, batch_number, inventory_item_id)
+values ('15000000-0000-0000-0001-000000000024', '15000000-0000-0000-0000-000000000003', 'Altzaehler', 'vial', 'Subkutan', 10, 'mg',
+  3, 5, 0, '  ', '15000000-0000-0000-0003-000000000009');
+insert into stack_item_ingredients (stack_item_id, custom_name, amount_value, amount_unit, basis_value, basis_unit, position)
+values ('15000000-0000-0000-0001-000000000024', 'Wirkstoff', 10, 'mg', 1, 'vial', 0);
 insert into stack_item_inventory (user_id, stack_item_id, enabled, package_quantity, package_unit, remaining_quantity)
 values ('15000000-0000-0000-0000-000000000001', '15000000-0000-0000-0001-000000000020', true, 30, 'tablet', 12);
 
@@ -161,9 +172,9 @@ begin
   select * into eins from zaehlung where lauf = 'lauf 1';
   select * into zwei from zaehlung where lauf = 'lauf 2';
   assert vorher.bestaende = 1, 'vorher: nur der Tablettenbestand';
-  assert eins.vial_bestaende = 13, format('13 Vials uebernommen erwartet, %s', eins.vial_bestaende);
-  assert eins.bestaende = 14, 'Tablettenbestand bleibt, keine weiteren Zeilen';
-  assert eins.vorrat_summe = 67.57, format('Vorrat 67.57 erwartet, %s', eins.vorrat_summe);
+  assert eins.vial_bestaende = 14, format('14 Vials uebernommen erwartet, %s', eins.vial_bestaende);
+  assert eins.bestaende = 15, 'Tablettenbestand bleibt, keine weiteren Zeilen';
+  assert eins.vorrat_summe = 72.57, format('Vorrat 72.57 erwartet, %s', eins.vorrat_summe);
   assert (eins.bestaende, eins.vial_bestaende, eins.vorrat_summe) = (zwei.bestaende, zwei.vial_bestaende, zwei.vorrat_summe), 'zweiter Lauf aendert nichts';
   assert (vorher.stack_items, vorher.lager, vorher.vial_buchungen, vorher.altfelder_summe)
     = (zwei.stack_items, zwei.lager, zwei.vial_buchungen, zwei.altfelder_summe), 'Altdaten unberuehrt';
@@ -181,7 +192,10 @@ begin
   assert (select package_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000006') = 5, 'Packung mindestens so gross wie der Vorrat';
   assert (select batch_number from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000001') = 'L-1', 'Charge aus dem Lager, wenn am Eintrag leer';
   assert (select opened_at from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000012') is null, 'nicht angemischt bleibt leer';
-  assert not exists (select 1 from stack_item_inventory where stack_item_id in ('15000000-0000-0000-0001-000000000021', '15000000-0000-0000-0001-000000000022')), 'Nasenspray und Vial ohne Zusammensetzung nicht uebernommen';
+  assert not exists (select 1 from stack_item_inventory where stack_item_id in ('15000000-0000-0000-0001-000000000021', '15000000-0000-0000-0001-000000000022', '15000000-0000-0000-0001-000000000023')), 'Nasenspray, Vial ohne Zusammensetzung und Mischvial nicht uebernommen';
+  assert (select remaining_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000024') = 5, 'Altzaehler ohne Anfangsstand zaehlt alles';
+  assert (select package_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000010') = 8, 'Packung aus dem Anfangsstand des Eintrags';
+  assert (select batch_number from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000024') = 'L-9', 'leeres Feld am Eintrag verdeckt das Lager nicht';
   assert (select remaining_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000020') = 12, 'Tablettenbestand unveraendert';
 end $$;
 
@@ -239,9 +253,19 @@ begin
   -- Bestand korrigieren ist ein einfaches Update der eigenen Zeile.
   update stack_item_inventory set remaining_quantity = 0 where stack_item_id = '15000000-0000-0000-0001-000000000001';
   update dose_logs set taken = true where id = '15000000-0000-0000-0004-000000000003';
+  -- Leeres Vial: die Einnahme geht durch, gebucht wird nichts (wie bisher).
+  rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000003');
+  assert rest = 0, format('leer: 0 erwartet, %s', rest);
+  assert (select count(*) from stack_item_inventory_movements where source_dose_log_id = '15000000-0000-0000-0004-000000000003' and applied) = 0, 'leer: keine Buchung';
+  -- Leere Tablette meldet sich weiterhin.
+  update stack_item_inventory set remaining_quantity = 0 where stack_item_id = '15000000-0000-0000-0001-000000000020';
+  update dose_logs set taken = true where id = '15000000-0000-0000-0004-000000000007';
+  perform reverse_inventory_confirmation('15000000-0000-0000-0004-000000000007', 'undo');
+  update stack_item_inventory set remaining_quantity = 0 where stack_item_id = '15000000-0000-0000-0001-000000000020';
+  update dose_logs set taken = true where id = '15000000-0000-0000-0004-000000000007';
   begin
-    perform apply_inventory_confirmation('15000000-0000-0000-0004-000000000003');
-    assert false, 'leerer Bestand meldet sich';
+    perform apply_inventory_confirmation('15000000-0000-0000-0004-000000000007');
+    assert false, 'leere Tablette meldet sich';
   exception when raise_exception then
     assert sqlerrm = 'Insufficient inventory for confirmation', sqlerrm;
   end;
@@ -249,10 +273,21 @@ end $$;
 
 -- Vial ohne Bestandszeile: der alte Weg, unveraendert.
 select set_config('request.jwt.claim.sub', '15000000-0000-0000-0000-000000000003', false);
+insert into dose_logs (id, user_id, stack_item_id, dose, unit, method, logged_at, taken) values
+  ('15000000-0000-0000-0004-000000000008', '15000000-0000-0000-0000-000000000003', '15000000-0000-0000-0001-000000000024', 0.2, 'ml', 'Subkutan', now(), true),
+  ('15000000-0000-0000-0004-000000000009', '15000000-0000-0000-0000-000000000003', '15000000-0000-0000-0001-000000000023', 1, 'mg', 'Subkutan', now(), true);
 do $$
 declare
   rest numeric;
 begin
+  -- 0,2 ml aus 3 ml: auf vier Stellen gerundet.
+  rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000008');
+  assert rest = 4.9333, format('ml gerundet: 4.9333 erwartet, %s', rest);
+  -- Mischvial bleibt auf dem alten Weg und bucht 1/15 Vial vom Altfeld.
+  update stack_items set vials_in_stock = 1 where id = '15000000-0000-0000-0001-000000000023';
+  rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000009');
+  assert rest = 0.93, format('Mischvial: 0.93 erwartet (Altfeld numeric(8,2)), %s', rest);
+
   update stack_items set vials_in_stock = 1 where id = '15000000-0000-0000-0001-000000000022';
   rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000006');
   assert rest = 0.8, format('Altweg: 0.8 erwartet, %s', rest);

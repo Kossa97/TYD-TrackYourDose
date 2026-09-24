@@ -54,11 +54,12 @@ end $$;
 -- Vorrat eines Vials in Vials:
 --   neues Modell (vials_initial <= 1): vials_in_stock ist der Rest des
 --     angemischten Vials, inventory_items.vials_count die ungeoeffneten.
---   altes Modell (vials_initial > 1): vials_in_stock zaehlte schon alle Vials
---     und wurde bei jeder Einnahme heruntergezaehlt; vials_count ist dort das
---     nie fortgeschriebene Formularfeld.
--- Nur Vials mit Zusammensetzung pro Vial: ohne sie koennte das allgemeine
--- Modell keine Dosis umrechnen, dann bleibt der alte Weg zustaendig.
+--   altes Modell (vials_initial > 1 oder vials_in_stock > 1): vials_in_stock
+--     zaehlte schon alle Vials und wurde bei jeder Einnahme heruntergezaehlt;
+--     vials_count ist dort das nie fortgeschriebene Formularfeld.
+-- Nur Vials mit genau einem Wirkstoff pro Vial: ohne ihn koennte das
+-- allgemeine Modell keine Dosis umrechnen, bei Mischungen waere die mg-Angabe
+-- mehrdeutig. Fuer alle anderen bleibt der alte Weg zustaendig.
 insert into public.stack_item_inventory (
   user_id,
   stack_item_id,
@@ -78,12 +79,12 @@ select
   item.user_id,
   item.id,
   true,
-  greatest(coalesce(stock.vials_initial, 0), ceil(vorrat.rest), 1),
+  greatest(coalesce(item.vials_initial, 0), coalesce(stock.vials_initial, 0), ceil(vorrat.rest), 1),
   'vial',
   vorrat.rest,
-  nullif(btrim(coalesce(item.batch_number, stock.batch_number)), ''),
-  nullif(btrim(coalesce(item.batch_source, stock.batch_source)), ''),
-  nullif(btrim(coalesce(item.batch_file_url, stock.batch_file_url)), ''),
+  coalesce(nullif(btrim(item.batch_number), ''), nullif(btrim(stock.batch_number), '')),
+  coalesce(nullif(btrim(item.batch_source), ''), nullif(btrim(stock.batch_source), '')),
+  coalesce(nullif(btrim(item.batch_file_url), ''), nullif(btrim(stock.batch_file_url), '')),
   item.reconstitution_date,
   case when item.expiry_days between 1 and 3650 then item.expiry_days end,
   case when item.reconstitution_ml > 0 and item.reconstitution_ml <= 1000 then item.reconstitution_ml end,
@@ -95,7 +96,7 @@ left join public.inventory_items stock
 cross join lateral (
   select least(round(
     case
-      when coalesce(item.vials_initial, 0) > 1
+      when coalesce(item.vials_initial, 0) > 1 or coalesce(item.vials_in_stock, 0) > 1
         then greatest(coalesce(item.vials_in_stock, 0), 0)
       else greatest(coalesce(stock.vials_count, 0), 0)
         + least(greatest(coalesce(item.vials_in_stock, 0), 0), 1)
@@ -103,11 +104,14 @@ cross join lateral (
 ) vorrat
 where item.dosage_form = 'vial'
   and item.vial_amount_mg > 0
+  and (select count(*) from public.stack_item_ingredients ingredient where ingredient.stack_item_id = item.id) = 1
   and exists (
     select 1
     from public.stack_item_ingredients ingredient
     where ingredient.stack_item_id = item.id
       and ingredient.basis_unit = 'vial'
+      and ingredient.amount_value > 0
+      and ingredient.basis_value > 0
   )
 on conflict (stack_item_id) do nothing;
 
@@ -122,6 +126,7 @@ declare
   item public.stack_items;
   inventory_row public.stack_item_inventory;
   has_inventory boolean;
+  uses_vial_inventory boolean;
   movement public.stack_item_inventory_movements;
   vial_movement public.vial_stock_movements;
   ingredient_count integer;
@@ -166,9 +171,14 @@ begin
     and user_id = owner_id
   for update;
   has_inventory := found;
+  -- Ein Vial bucht ueber den Bestand, sobald es einen in Vials gefuehrten hat.
+  -- Wie der alte Weg unabhaengig von der Erfassungstiefe.
+  uses_vial_inventory := item.dosage_form = 'vial'
+    and has_inventory
+    and inventory_row.package_unit = 'vial';
 
-  -- Vials ohne Bestandszeile: der alte Weg, unveraendert.
-  if item.dosage_form = 'vial' and not has_inventory then
+  -- Alle anderen Vials: der alte Weg, unveraendert.
+  if item.dosage_form = 'vial' and not uses_vial_inventory then
     select *
     into vial_movement
     from public.vial_stock_movements
@@ -252,7 +262,7 @@ begin
     return item.vials_in_stock;
   end if;
 
-  if item.tracking_level <> 'complete' then
+  if item.tracking_level <> 'complete' and not uses_vial_inventory then
     return null;
   end if;
 
@@ -265,7 +275,7 @@ begin
 
   -- Vor der Umstellung gebucht, danach rueckgaengig gemacht und jetzt erneut
   -- bestaetigt: die alte Buchung wird wiederverwendet, jetzt auf den Bestand.
-  if item.dosage_form = 'vial' then
+  if uses_vial_inventory then
     select *
     into vial_movement
     from public.vial_stock_movements
@@ -276,9 +286,6 @@ begin
     if found then
       if vial_movement.applied then
         return inventory_row.remaining_quantity;
-      end if;
-      if inventory_row.package_unit <> 'vial' then
-        raise exception 'Inventory conversion is ambiguous or unsupported';
       end if;
 
       actual_vial_delta := least(inventory_row.remaining_quantity, vial_movement.delta_vials);
@@ -314,13 +321,23 @@ begin
     if movement.applied then
       return inventory_row.remaining_quantity;
     end if;
-    if inventory_row.remaining_quantity < movement.delta_quantity then
-      raise exception 'Insufficient inventory for confirmation';
+    if uses_vial_inventory then
+      -- Wie beim ersten Buchen: ein leeres Vial lehnt nicht ab, es bucht
+      -- hoechstens den Rest.
+      actual_delta := least(inventory_row.remaining_quantity, movement.delta_quantity);
+      if actual_delta <= 0 then
+        return inventory_row.remaining_quantity;
+      end if;
+    else
+      if inventory_row.remaining_quantity < movement.delta_quantity then
+        raise exception 'Insufficient inventory for confirmation';
+      end if;
+      actual_delta := movement.delta_quantity;
     end if;
 
     update public.stack_item_inventory
     set
-      remaining_quantity = remaining_quantity - movement.delta_quantity,
+      remaining_quantity = remaining_quantity - actual_delta,
       updated_at = now()
     where id = inventory_row.id
       and user_id = owner_id
@@ -329,6 +346,7 @@ begin
     update public.stack_item_inventory_movements
     set
       dose_log_id = p_dose_log_id,
+      delta_quantity = actual_delta,
       applied = true
     where id = movement.id
       and user_id = owner_id;
@@ -381,9 +399,18 @@ begin
     raise exception 'Inventory conversion is ambiguous or unsupported';
   end if;
 
-  actual_delta := least(inventory_row.remaining_quantity, minimum_delta);
-  if actual_delta <= 0 then
-    raise exception 'Insufficient inventory for confirmation';
+  if uses_vial_inventory then
+    -- Vials rechnen wie bisher auf vier Stellen und lassen eine Einnahme
+    -- aus leerem Bestand zu, statt sie abzulehnen.
+    actual_delta := least(inventory_row.remaining_quantity, round(minimum_delta, 4));
+    if actual_delta <= 0 then
+      return inventory_row.remaining_quantity;
+    end if;
+  else
+    actual_delta := least(inventory_row.remaining_quantity, minimum_delta);
+    if actual_delta <= 0 then
+      raise exception 'Insufficient inventory for confirmation';
+    end if;
   end if;
 
   insert into public.stack_item_inventory_movements (
@@ -478,13 +505,16 @@ begin
       raise exception 'Stack item not found';
     end if;
 
-    -- Hat das Vial inzwischen eine Bestandszeile, gehoert die Gutschrift dorthin:
-    -- deren Anfangsstand wurde aus dem schon belasteten Altfeld uebernommen.
+    -- Fuehrt das Vial inzwischen einen Bestand in Vials, gehoert die Gutschrift
+    -- dorthin: dessen Anfangsstand kam aus dem schon belasteten Altfeld, und
+    -- apply bucht erneute Bestaetigungen ebenfalls dort.
     select *
     into inventory_row
     from public.stack_item_inventory
     where stack_item_id = vial_item.id
       and user_id = owner_id
+      and package_unit = 'vial'
+      and vial_item.dosage_form = 'vial'
     for update;
 
     if vial_movement.applied then
