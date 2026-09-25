@@ -16,7 +16,8 @@ import {
   versionSlots,
   type Translate,
 } from '../lib/planLabels'
-import { CurrentSlotRow } from './planCardParts'
+import { CurrentSlotRow, SyringeNote } from './planCardParts'
+import type { SpritzenRechnung } from '../lib/bestand'
 
 export interface PlanSummaryCardProps {
   timelines: CycleTimeline[]
@@ -26,6 +27,8 @@ export interface PlanSummaryCardProps {
   /** Solange die Plaene laden oder nicht geladen werden konnten, sagt die Karte das — statt „kein Zyklus". */
   loadState?: 'ready' | 'loading' | 'error'
   needsReview?: boolean
+  /** Angemischtes Vial: je Einnahme die Einheiten auf der Spritze. */
+  syringe?: SpritzenRechnung | null
   /** Oeffnet die volle Plan-Uebersicht (Zyklusverwalter). */
   onOpen(): void
   onStartNew(): void
@@ -63,6 +66,7 @@ export function PlanSummaryCard({
   timeZone,
   loadState = 'ready',
   needsReview = false,
+  syringe = null,
   onOpen,
   onStartNew,
 }: PlanSummaryCardProps) {
@@ -224,9 +228,10 @@ export function PlanSummaryCard({
         </p>
         {slots.length > 0 && (
           <ul className="mt-2 space-y-1.5">
-            {slots.map(slot => <CurrentSlotRow key={slot.id} slot={slot} language={language} t={tr} />)}
+            {slots.map(slot => <CurrentSlotRow key={slot.id} slot={slot} language={language} t={tr} syringe={syringe} />)}
           </ul>
         )}
+        {slots.length > 0 && syringe && <div className="mt-2"><SyringeNote syringe={syringe} language={language} t={tr} /></div>}
       </div>
 
       <div className={`grid gap-2 ${nextStepText ? 'grid-cols-2' : 'grid-cols-1'}`}>

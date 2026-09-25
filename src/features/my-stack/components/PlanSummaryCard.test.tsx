@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CyclePlanVersion, CycleTimeline } from '../../../lib/planTimeline'
 import { PlanSummaryCard } from './PlanSummaryCard'
+import { spritzenRechnung, type SpritzenRechnung } from '../lib/bestand'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -54,7 +55,7 @@ function timeline(changes: Partial<CycleTimeline> = {}): CycleTimeline {
   }
 }
 
-function renderCard(timelines: CycleTimeline[], extra: { needsReview?: boolean; loadState?: 'ready' | 'loading' | 'error' } = {}) {
+function renderCard(timelines: CycleTimeline[], extra: { needsReview?: boolean; loadState?: 'ready' | 'loading' | 'error'; syringe?: SpritzenRechnung | null } = {}) {
   const onOpen = vi.fn()
   const onStartNew = vi.fn()
   render(<PlanSummaryCard timelines={timelines} now={now} timeZone="Europe/Berlin" onOpen={onOpen} onStartNew={onStartNew} {...extra} />)
@@ -162,5 +163,22 @@ describe('PlanSummaryCard', () => {
     const { card } = renderCard([timeline()], { needsReview: true })
     expect(card.textContent).toContain('Welcher Plan läuft wirklich?')
     expect(card.textContent).not.toContain('100 mcg')
+  })
+
+  it('shows the syringe units to draw for a mixed vial, with where they come from', () => {
+    // 50 mg auf 1,5 ml: 100 mcg = 0,003 ml = 0,3 E.
+    const syringe = spritzenRechnung([{
+      catalog_substance_id: null, custom_name: 'X', amount_value: 50, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial', position: 0,
+    }], 1.5, '1 mL (100 Einheiten)')
+    const { card } = renderCard([timeline({ versions: [version('v1', '2026-05-31', { dose: 1, unit: 'mg' })] })], { syringe })
+
+    expect(card.querySelectorAll('li')[0].textContent).toContain('1 mg')
+    expect(card.textContent).toContain('my_stack_plan_draw_units')
+    expect(card.textContent).toContain('my_stack_plan_units_note')
+  })
+
+  it('shows no syringe units without a mixed vial', () => {
+    const { card } = renderCard([timeline()])
+    expect(card.textContent).not.toContain('my_stack_plan_draw_units')
   })
 })

@@ -28,7 +28,7 @@ import {
   type DetailFeld,
 } from './lib/stackDetailSections'
 import { BestandCard, BestandSheet, type BestandActions } from './components/BestandSheet'
-import { anbruchArt } from './lib/bestand'
+import { anbruchArt, spritzenRechnung } from './lib/bestand'
 import {
   addInventoryPackage,
   openInventoryContainer,
@@ -1381,6 +1381,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
 
+  // Angemischtes Vial: die Plan-Ansichten zeigen je Einnahme die Einheiten
+  // auf der Spritze. Die Fluessigkeit kommt aus dem Bestand (`withVialInventory`).
+  const syringeOf = (p: Peptide) => (
+    anbruchArt(p.dosage_form) === 'vial'
+      ? spritzenRechnung(p.ingredients, p.reconstitution_ml, p.syringe_type)
+      : null
+  )
+
   const planManagementSection = (p: Peptide, timeline: CycleTimeline) => timeline.cycle.timezone_review_required ? (
     <CourseTimezoneReview key={timeline.cycle.id} timeZone={timeZone} onConfirm={async zone => {
       const mutation = lifecycleKey('resolve-timezone', `${p.id}:${zone}`)
@@ -1401,6 +1409,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     <PlanManagementSection
       key={timeline.cycle.id}
       timeline={timeline}
+      syringe={syringeOf(p)}
       now={new Date()}
       timeZone={timeZone}
       onAdjustPlan={() => openEditCycle(p, timeline.cycle.id)}
@@ -2223,6 +2232,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         oeffnet die volle Uebersicht. */}
                     {FEATURES.planTimelineV2 && (
                       <PlanSummaryCard
+                        syringe={syringeOf(activePeptide)}
                         timelines={timelinesOf(activePeptide.id)}
                         timeZone={timeZone}
                         loadState={timelineLoadError ? 'error' : timelineLoading ? 'loading' : 'ready'}

@@ -12,7 +12,8 @@ import { planVersionSegments } from '../lib/planSegments'
 import { isOnDemandRhythm } from '../lib/intakeRhythm'
 import { laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import { cyclePeriod, inclusiveDayCount, planStepRows } from '../lib/planCard'
-import { CurrentSlotRow, StepSlotRow } from './planCardParts'
+import { CurrentSlotRow, StepSlotRow, SyringeNote } from './planCardParts'
+import type { SpritzenRechnung } from '../lib/bestand'
 import {
   dateLabel,
   durationLabel,
@@ -43,6 +44,8 @@ export interface PlanManagementSectionProps {
   onRestart(sourceCycleId: string): Promise<void>
   needsReview?: boolean
   onResolveConflict?(): Promise<void>
+  /** Angemischtes Vial: je Einnahme die Einheiten auf der Spritze. */
+  syringe?: SpritzenRechnung | null
 }
 
 type DialogState =
@@ -105,6 +108,7 @@ export function PlanManagementSection({
   onRestart,
   needsReview = false,
   onResolveConflict,
+  syringe = null,
 }: PlanManagementSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || 'de'
@@ -452,10 +456,11 @@ export function PlanManagementSection({
               {panelSlots.length > 0 && (
                 <ul className="mt-3 space-y-2">
                   {panelSlots.map(slot => (
-                    <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} />
+                    <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} syringe={syringe} />
                   ))}
                 </ul>
               )}
+              {panelSlots.length > 0 && syringe && <div className="mt-2"><SyringeNote syringe={syringe} language={language} t={t} /></div>}
 
               {isEnded ? null : resolved.status === 'paused' ? (
                 <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-2.5 text-sm text-amber-100">
@@ -571,7 +576,7 @@ export function PlanManagementSection({
                       {rows.length > 0 && (
                         <ul className="mt-2 space-y-1.5">
                           {rows.map(row => (
-                            <StepSlotRow key={`${row.change}-${row.slot.id}`} row={row} language={language} t={t} />
+                            <StepSlotRow key={`${row.change}-${row.slot.id}`} row={row} language={language} t={t} syringe={syringe} />
                           ))}
                         </ul>
                       )}
