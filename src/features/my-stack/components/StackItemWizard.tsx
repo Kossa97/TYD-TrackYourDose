@@ -766,6 +766,7 @@ export function StackItemWizard({
             )}
             {!metadataOnly && <IntakePlanEditor
               scheduleOnly={Boolean(planEditContext)}
+              compactSchedule={isAddStep}
               trackingLevel={state.draft.trackingLevel}
               plan={state.draft.plan}
               dosageForm={state.draft.dosageForm}

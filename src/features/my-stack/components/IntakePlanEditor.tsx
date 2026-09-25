@@ -33,6 +33,12 @@ import type {
 
 export interface IntakePlanEditorProps {
   scheduleOnly?: boolean
+  /**
+   * Eine neue Dosisstufe: Methode und Tage stehen schon fest und aendern sich
+   * selten. Sie stehen dann als eine Zeile mit „Aendern" da, offen bleibt nur,
+   * was eine Stufe ausmacht — Tageszeit und Menge.
+   */
+  compactSchedule?: boolean
   trackingLevel: TrackingLevel
   plan: IntakePlanDraft
   dosageForm: DosageFormKey
@@ -115,6 +121,7 @@ function quantityLabel(form: ReturnType<typeof getDosageForm>): string {
 
 export function IntakePlanEditor({
   scheduleOnly = false,
+  compactSchedule = false,
   trackingLevel,
   plan,
   dosageForm,
@@ -131,6 +138,9 @@ export function IntakePlanEditor({
   const onDemand = rhythm.kind === 'on_demand'
   const methodChoices = methodChoicesFor(dosageForm)
   const einheit = plan.unit?.trim() ?? ''
+  const [scheduleOpen, setScheduleOpen] = useState(!compactSchedule)
+  // Ein Fehler in Methode oder Tagen muss sichtbar sein, auch zugeklappt.
+  const showSchedule = scheduleOpen || Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval)
 
   // Ein Reiter je gewaehltem Wochentag, in Wochenreihenfolge und hoechstens
   // sieben. Nur „Wochentage waehlen" kennt einzelne Tage — taeglich, im
@@ -367,7 +377,28 @@ export function IntakePlanEditor({
       {/* Die Route folgt fast immer aus der Form — eine Tablette wird
           geschluckt. Nur wo es wirklich mehrere gibt (was man spritzt, kann
           subkutan, intramuskulaer oder intravenoes gehen), bleibt die Wahl. */}
-      {methodChoices.length > 1 && (
+      {!showSchedule && (
+        <section data-plan-schedule-summary className="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {t('my_stack_plan_schedule_kept', { defaultValue: 'Bleibt wie bisher' })}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-slate-200">
+              {[methodChoices.length > 1 && plan.method ? methodLabel(t, plan.method) : null, rhythmText(rhythmSummary(rhythm), t)]
+                .filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setScheduleOpen(true)}
+            className="min-h-11 shrink-0 cursor-pointer rounded-lg px-2 text-sm font-semibold text-sky-300 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            {t('my_stack_plan_schedule_change', { defaultValue: 'Ändern' })}
+          </button>
+        </section>
+      )}
+
+      {showSchedule && methodChoices.length > 1 && (
         <section className="min-w-0">
           <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             {t('my_stack_plan_section_how', { defaultValue: 'Wie' })}
@@ -401,6 +432,7 @@ export function IntakePlanEditor({
       )}
 
       {/* ── AN WELCHEN TAGEN ────────────────────────────────────────────── */}
+      {showSchedule && (
       <section className="min-w-0 space-y-4">
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         {t('my_stack_plan_section_when', { defaultValue: 'An welchen Tagen' })}
@@ -560,6 +592,7 @@ export function IntakePlanEditor({
 
       </fieldset>
       </section>
+      )}
 
       {/* ── TAGESZEIT — direkt hinter den Tagen, denn die Zeitpunkte gehoeren
              zu ihnen und nicht hinter den Zeitraum. */}

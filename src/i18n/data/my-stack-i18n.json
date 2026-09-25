@@ -476,7 +476,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -955,7 +957,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1434,7 +1438,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1913,7 +1919,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2392,7 +2400,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2871,7 +2881,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3350,7 +3362,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3829,7 +3843,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4308,7 +4324,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4787,7 +4805,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5266,7 +5286,9 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5745,6 +5767,8 @@
     "my_stack_plan_draw_units": "= {{units}} U to draw",
     "my_stack_plan_units_short": "{{units}} U",
     "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-    "my_stack_product_only": "Product"
+    "my_stack_product_only": "Product",
+    "my_stack_plan_schedule_kept": "Stays as before",
+    "my_stack_plan_schedule_change": "Change"
   }
 }
