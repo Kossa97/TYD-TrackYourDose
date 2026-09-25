@@ -485,6 +485,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_draw_units',
   'my_stack_plan_units_short',
   'my_stack_plan_units_note',
+  'my_stack_product_only',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

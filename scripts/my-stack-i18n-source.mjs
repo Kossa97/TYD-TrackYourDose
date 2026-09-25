@@ -476,6 +476,7 @@ export const MY_STACK_EN = {
   my_stack_plan_draw_units: '= {{units}} U to draw',
   my_stack_plan_units_short: '{{units}} U',
   my_stack_plan_units_note: 'U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).',
+  my_stack_product_only: 'Product',
 }
 
 export const MY_STACK_DE = {
@@ -955,6 +956,7 @@ export const MY_STACK_DE = {
   my_stack_plan_draw_units: '= {{units}} E aufziehen',
   my_stack_plan_units_short: '{{units}} E',
   my_stack_plan_units_note: 'E = Einheiten auf der Spritze. Berechnet aus {{amount}} auf {{ml}} ml ({{perMl}}/ml).',
+  my_stack_product_only: 'Produkt',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

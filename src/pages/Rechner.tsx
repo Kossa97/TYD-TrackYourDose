@@ -4,6 +4,7 @@ import { Calculator, ChevronDown, FlaskConical, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
+import { rechnerVial, type RechnerQuelle, type RechnerVial } from '../lib/rechnerVial'
 
 // ─── Konstanten ───────────────────────────────────────────────────────────────
 const SYRINGE_PRESETS = [
@@ -15,12 +16,7 @@ const SYRINGE_PRESETS = [
 ]
 const DOSE_UNITS = ['mcg', 'mg', 'IU']
 
-interface StackItem {
-  id: string
-  display_name: string
-  vial_amount_mg: number | null
-  reconstitution_ml: number | null
-}
+type StackItem = RechnerVial
 
 // ─── Rechnung ─────────────────────────────────────────────────────────────────
 function calculate(
@@ -184,13 +180,22 @@ export function Rechner() {
 
   useEffect(() => {
     if (!user) return
+    // Vials aus dem Stack: Wirkstoff pro Vial und Fluessigkeit kommen aus dem
+    // Bestand bzw. der Zusammensetzung (`rechnerVial`), die Altspalten nur
+    // noch, wo es nichts Neueres gibt.
     supabase
       .from('stack_items')
-      .select('id, display_name, vial_amount_mg, reconstitution_ml')
+      .select('id, display_name, vial_amount_mg, vial_amount_unit, reconstitution_ml, inventory:stack_item_inventory(enabled, package_unit, reconstitution_ml), ingredients:stack_item_ingredients(amount_value, amount_unit, basis_value, basis_unit)')
       .eq('user_id', user.id)
-      .not('vial_amount_mg', 'is', null)
+      .eq('dosage_form', 'vial')
+      .eq('archived', false)
       .order('display_name')
-      .then(({ data }) => { if (data) setStackItems(data as StackItem[]) })
+      .then(({ data }) => {
+        if (!data) return
+        setStackItems((data as RechnerQuelle[])
+          .map(rechnerVial)
+          .filter((item): item is StackItem => item.vial_amount_mg != null))
+      })
   }, [user])
 
   const selectStackItem = (item: StackItem) => {

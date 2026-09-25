@@ -1511,5 +1511,6 @@
   "my_stack_stock_unit_hour_multiple": "{{n}} Stunden",
   "my_stack_plan_draw_units": "= {{units}} E aufziehen",
   "my_stack_plan_units_short": "{{units}} E",
-  "my_stack_plan_units_note": "E = Einheiten auf der Spritze. Berechnet aus {{amount}} auf {{ml}} ml ({{perMl}}/ml)."
+  "my_stack_plan_units_note": "E = Einheiten auf der Spritze. Berechnet aus {{amount}} auf {{ml}} ml ({{perMl}}/ml).",
+  "my_stack_product_only": "Produkt"
 }

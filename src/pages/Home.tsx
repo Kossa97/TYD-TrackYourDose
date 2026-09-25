@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
+import { expirySources, vialStockOverview, type LegacyInventoryItem, type StockOverviewItem } from '../lib/stockOverview'
 import {
   collectMissedIntakes,
   collectMissedTimelineIntakes,
@@ -455,7 +456,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               .gte('logged_at', logsSince)
               .order('logged_at', { ascending: false }),
             homeDataClient.from('stack_items')
-              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
+              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days, inventory_item_id, inventory:stack_item_inventory(enabled, package_unit, remaining_quantity, opened_at, use_within_days)')
               .eq('user_id', user!.id),
             homeDataClient.from('inventory_items')
               .select('id, vials_count')
@@ -486,7 +487,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               .gte('logged_at', logsSince)
               .order('logged_at', { ascending: false }),
             homeDataClient.from('stack_items')
-              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
+              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days, inventory_item_id, inventory:stack_item_inventory(enabled, package_unit, remaining_quantity, opened_at, use_within_days)')
               .eq('user_id', user!.id),
             homeDataClient.from('inventory_items')
               .select('id, vials_count')
@@ -632,12 +633,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
         setInjectionHero({ pins })
 
-        setExpiryAlerts(getPeptideExpiryAlerts(stackItemData.map(item => ({
-          id: item.id as string,
-          name: item.display_name as string,
-          reconstitution_date: item.reconstitution_date as string | null,
-          expiry_days: item.expiry_days as number | null,
-        }))))
+        const stockItems = stackItemData as unknown as StockOverviewItem[]
+        setExpiryAlerts(getPeptideExpiryAlerts(expirySources(stockItems)))
+        const vialStock = vialStockOverview(stockItems, inventoryData as unknown as LegacyInventoryItem[])
 
         setOverview({
           activeCycles: FEATURES.planTimelineV2 ? timelines.filter(timeline => {
@@ -645,9 +643,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             return status === 'active' || status === 'paused'
           }).length : cycles.length,
           peptides: (stackItemData ?? []).length,
-          inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
+          inventoryVials: vialStock.inventoryVials,
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
-          lowStock: (stackItemData ?? []).filter((item) => item.vials_in_stock != null && Number(item.vials_in_stock) <= 1).length,
+          lowStock: vialStock.lowStock,
         })
 
         // Auto-miss is secondary: today's slots must paint first. The lookback

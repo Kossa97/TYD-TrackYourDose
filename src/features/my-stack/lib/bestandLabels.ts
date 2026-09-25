@@ -1,6 +1,8 @@
 import type { Translate } from './planLabels'
 import { formatLocalDay } from './localDays'
-import type { Reichweite } from './bestand'
+import { getDosageForm } from './dosageForms'
+import { vorratTeile, type AnbruchArt, type Reichweite } from './bestand'
+import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
 
 /** Texte zum Bestand — Zahlen mit Einheit, Reichweite. */
 
@@ -55,5 +57,48 @@ export function reichweiteLabel(
       return String(t('my_stack_stock_range_unknown', { unit: unit ?? '' }))
     case 'leer':
       return String(t('my_stack_stock_empty'))
+  }
+}
+
+/** Einheiten, in denen ein Bestand zaehlen kann: die Bezuege der Zutaten zuerst. */
+export function stockUnitChoices(form: DosageFormKey, ingredients: readonly StackItemIngredient[]): string[] {
+  const ausZutaten = ingredients.map(zutat => zutat.basis_unit).filter((unit): unit is string => Boolean(unit))
+  return [...new Set([...ausZutaten, ...getDosageForm(form).basisUnits])]
+}
+
+/**
+ * Die Zahl oben: was noch da ist, in der Einheit der Packung. Beim Vial und bei
+ * geoeffneten Flaschen getrennt nach vollen und dem angebrochenen Behaelter.
+ */
+export function vorratZeilen(
+  t: Translate,
+  inventory: StackItemInventory,
+  art: AnbruchArt | null,
+  language: string,
+): { gross: string; klein: string | null; anteil: number } {
+  const teile = vorratTeile(inventory)
+  const einheit = inventory.package_unit
+  const packung = inventory.package_quantity
+  const anteil = packung && packung > 0 ? teile.rest / Math.max(packung, teile.rest) : teile.rest > 0 ? 1 : 0
+  if (art === 'vial' && einheit === 'vial') {
+    return {
+      gross: stockAmountLabel(t, teile.voll, 'vial', language),
+      klein: teile.angebrochenAnteil != null
+        ? String(t('my_stack_stock_mixed_extra', { percent: Math.round(teile.angebrochenAnteil * 100) }))
+        : null,
+      anteil,
+    }
+  }
+  if (art && teile.angebrochen > 0) {
+    return {
+      gross: stockAmountLabel(t, teile.rest, einheit, language),
+      klein: String(t('my_stack_stock_opened_extra', { amount: stockAmountLabel(t, teile.angebrochen, einheit, language) })),
+      anteil,
+    }
+  }
+  return {
+    gross: stockAmountLabel(t, teile.rest, einheit, language),
+    klein: packung ? String(t('my_stack_stock_package_line', { amount: stockAmountLabel(t, packung, einheit, language) })) : null,
+    anteil,
   }
 }

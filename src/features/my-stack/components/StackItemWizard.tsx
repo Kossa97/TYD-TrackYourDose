@@ -824,7 +824,11 @@ export function StackItemWizard({
                 wissen, wann die Packung leer ist — und was verbraucht wird,
                 steht im Plan darueber. Der Abschnitt ist zugeklappt, kostet
                 also eine Zeile, wenn er niemanden interessiert. */}
+            {/* Beim Bearbeiten nur noch die Marke: den Bestand pflegt die
+                Bestand-Ansicht im Vollbild. Der geladene Stand geht beim
+                Speichern unveraendert zurueck. */}
             <ProductInventorySection
+              showInventory={!existingItem}
               brand={state.draft.brand}
               inventory={state.draft.inventory}
               onBrandChange={brand => dispatch({ type: 'details_changed', changes: { brand } })}

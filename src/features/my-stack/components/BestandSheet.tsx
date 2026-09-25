@@ -11,10 +11,9 @@ import {
   type AnbruchArt,
   type Reichweite,
 } from '../lib/bestand'
-import { daysLabel, formatAmount, reichweiteLabel, stockAmountLabel, stockUnitName } from '../lib/bestandLabels'
+import { daysLabel, formatAmount, reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
 import { getDosageForm } from '../lib/dosageForms'
 import { formatLocalDay } from '../lib/localDays'
-import type { Translate } from '../lib/planLabels'
 import type { InventoryPatch } from '../services/stackInventory'
 import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
 
@@ -61,12 +60,6 @@ function zahl(text: string): number | null {
   return Number.isFinite(wert) ? wert : null
 }
 
-/** Einheiten, in denen ein Bestand zaehlen kann: die Bezuege der Zutaten zuerst. */
-export function stockUnitChoices(form: DosageFormKey, ingredients: readonly StackItemIngredient[]): string[] {
-  const ausZutaten = ingredients.map(zutat => zutat.basis_unit).filter((unit): unit is string => Boolean(unit))
-  return [...new Set([...ausZutaten, ...getDosageForm(form).basisUnits])]
-}
-
 function BarFill({ fraction }: { fraction: number }) {
   const tone = fraction <= 0.1 ? 'bg-rose-400' : fraction <= 0.3 ? 'bg-amber-300' : 'bg-emerald-400'
   return (
@@ -99,43 +92,6 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
       </div>
     </section>
   )
-}
-
-/**
- * Die Zahl oben: was noch da ist, in der Einheit der Packung. Beim Vial und bei
- * geoeffneten Flaschen getrennt nach vollen und dem angebrochenen Behaelter.
- */
-export function vorratZeilen(
-  t: Translate,
-  inventory: StackItemInventory,
-  art: AnbruchArt | null,
-  language: string,
-): { gross: string; klein: string | null; anteil: number } {
-  const teile = vorratTeile(inventory)
-  const einheit = inventory.package_unit
-  const packung = inventory.package_quantity
-  const anteil = packung && packung > 0 ? teile.rest / Math.max(packung, teile.rest) : teile.rest > 0 ? 1 : 0
-  if (art === 'vial' && einheit === 'vial') {
-    return {
-      gross: stockAmountLabel(t, teile.voll, 'vial', language),
-      klein: teile.angebrochenAnteil != null
-        ? String(t('my_stack_stock_mixed_extra', { percent: Math.round(teile.angebrochenAnteil * 100) }))
-        : null,
-      anteil,
-    }
-  }
-  if (art && teile.angebrochen > 0) {
-    return {
-      gross: stockAmountLabel(t, teile.rest, einheit, language),
-      klein: String(t('my_stack_stock_opened_extra', { amount: stockAmountLabel(t, teile.angebrochen, einheit, language) })),
-      anteil,
-    }
-  }
-  return {
-    gross: stockAmountLabel(t, teile.rest, einheit, language),
-    klein: packung ? String(t('my_stack_stock_package_line', { amount: stockAmountLabel(t, packung, einheit, language) })) : null,
-    anteil,
-  }
 }
 
 export function BestandSheet({

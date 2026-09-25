@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import type { InventoryDraft } from '../types'
 
 interface ProductInventorySectionProps {
+  /** Aus beim Bearbeiten: dort gehoert der Bestand in die Bestand-Ansicht. */
+  showInventory?: boolean
   brand: string
   inventory: InventoryDraft
   onBrandChange: (brand: string) => void
@@ -17,6 +19,7 @@ function numberValue(value: string): number | null {
 }
 
 export function ProductInventorySection({
+  showInventory = true,
   brand,
   inventory,
   onBrandChange,
@@ -37,7 +40,9 @@ export function ProductInventorySection({
       >
         <span className="flex items-center gap-2">
           <Package size={17} aria-hidden="true" className="text-sky-300" />
-          {t('my_stack_product_inventory', { defaultValue: 'Produkt & Bestand' })}
+          {showInventory
+            ? t('my_stack_product_inventory', { defaultValue: 'Produkt & Bestand' })
+            : t('my_stack_product_only')}
         </span>
         <ChevronDown
           size={17}
@@ -60,7 +65,7 @@ export function ProductInventorySection({
             />
           </div>
 
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm font-semibold text-slate-200">
+          {showInventory && <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm font-semibold text-slate-200">
             <input
               type="checkbox"
               aria-label={String(t('my_stack_inventory_enabled', { defaultValue: 'Bestand mitverfolgen' }))}
@@ -69,9 +74,9 @@ export function ProductInventorySection({
               className="h-5 w-5 cursor-pointer accent-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
             />
             {t('my_stack_inventory_enabled', { defaultValue: 'Bestand mitverfolgen' })}
-          </label>
+          </label>}
 
-          {inventory.enabled && (
+          {showInventory && inventory.enabled && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor={`${contentId}-package-quantity`} className="mb-2 block text-sm font-semibold text-slate-200">
