@@ -826,7 +826,12 @@ export function StackItemWizard({
                 also eine Zeile, wenn er niemanden interessiert. */}
             {/* Beim Bearbeiten nur noch die Marke: den Bestand pflegt die
                 Bestand-Ansicht im Vollbild. Der geladene Stand geht beim
-                Speichern unveraendert zurueck. */}
+                Speichern unveraendert zurueck.
+                Wer nur den Plan aendert (Stufe hinzufuegen, Plan anpassen),
+                sieht weder Produkt noch Notizen — die gehoeren zur Substanz,
+                nicht zu einer Dosisstufe; gespeichert wird dort ohnehin nur
+                der Plan. */}
+            {!planEditContext && (
             <ProductInventorySection
               showInventory={!existingItem}
               brand={state.draft.brand}
@@ -834,7 +839,9 @@ export function StackItemWizard({
               onBrandChange={brand => dispatch({ type: 'details_changed', changes: { brand } })}
               onInventoryChange={changes => dispatch({ type: 'inventory_changed', changes })}
             />
+            )}
 
+            {!planEditContext && (
             <div>
               <label htmlFor="stack-notes" className="mb-2 block text-sm font-semibold text-slate-200">
                 {t('my_stack_notes_optional', { defaultValue: 'Notizen (optional)' })}
@@ -847,6 +854,7 @@ export function StackItemWizard({
                 className="input min-h-11 w-full resize-y text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
               />
             </div>
+            )}
           </div>
         ) : null
       case 'review':

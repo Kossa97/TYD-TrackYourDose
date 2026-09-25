@@ -595,6 +595,9 @@ describe('StackItemWizard interactions', () => {
     } as Partial<StackItemWizardProps>)
 
     expect(screen.getByRole('heading', { name: 'my_stack_plan_add_step' })).toBeTruthy()
+    // Eine Dosisstufe ist nur Plan: Produkt, Marke und Notizen gehoeren zur Substanz.
+    expect(screen.queryByLabelText('my_stack_notes_optional')).toBeNull()
+    expect(screen.queryByRole('button', { name: /my_stack_product/ })).toBeNull()
     expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
     const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
     expect(boundaryDate.value).toBe('2099-10-08')
