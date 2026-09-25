@@ -3384,9 +3384,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1790118697.7903273,
-    "seen": 1790118939.7272003,
-    "ast_hash": "b1ee608a243a937e9b332b05e5b01795",
+    "mtime": 1790375800.8059337,
+    "seen": 1790375849.8260477,
+    "ast_hash": "679296b507c2a177cc71fceb6780eb08",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790374115.2317011,
-    "seen": 1790374154.1572545,
-    "ast_hash": "104bebaad98c0101ae131fbc8008bd41",
+    "mtime": 1790375829.612524,
+    "seen": 1790375849.8260503,
+    "ast_hash": "442286aa8432415f51b54dc5959fb0d9",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {

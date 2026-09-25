@@ -78966,7 +78966,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L1150",
+      "source_location": "L1158",
       "weight": 1.0
     },
     {
@@ -79278,7 +79278,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L1046",
+      "source_location": "L1054",
       "weight": 1.0
     },
     {
@@ -79326,7 +79326,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L870",
+      "source_location": "L878",
       "weight": 1.0
     },
     {
@@ -79338,7 +79338,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L928",
+      "source_location": "L936",
       "weight": 1.0
     },
     {
@@ -79350,7 +79350,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L928",
+      "source_location": "L936",
       "weight": 1.0
     },
     {
@@ -79362,7 +79362,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StackItemWizard.tsx",
-      "source_location": "L973",
+      "source_location": "L981",
       "weight": 1.0
     },
     {
@@ -212683,5 +212683,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3e7b3ea840711198448e4ee5a18230c9cf68caf6"
+  "built_at_commit": "1b7a502754f61313504751f4684f08983d32f9f1"
 }
