@@ -295,6 +295,42 @@ begin
   assert rest = 1, format('Altweg undo: 1 erwartet, %s', rest);
 end $$;
 
+-- Neue Packung und neues Vial: atomar auf dem aktuellen Stand.
+select set_config('request.jwt.claim.sub', '15000000-0000-0000-0000-000000000001', false);
+do $$
+declare
+  rest numeric;
+  inv uuid := (select id from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000002');
+begin
+  -- 3,96 Vials; eine Packung zu 6 dazu.
+  rest := add_inventory_package(inv, 6);
+  assert rest = 9.96, format('Packung: 9.96 erwartet, %s', rest);
+  -- Neues Vial, alter Rest (0,96) verworfen, neue Fluessigkeit.
+  rest := open_inventory_container(inv, date '2026-09-25', true, 1.5);
+  assert rest = 9, format('anmischen: 9 erwartet, %s', rest);
+  assert (select (opened_at, reconstitution_ml) = (date '2026-09-25', 1.5) from stack_item_inventory where id = inv), 'Datum und Fluessigkeit gesetzt';
+  -- Ohne Verwerfen bleibt der Stand.
+  rest := open_inventory_container(inv, date '2026-09-26', false);
+  assert rest = 9, 'ohne Verwerfen unveraendert';
+  assert (select reconstitution_ml from stack_item_inventory where id = inv) = 1.5, 'Fluessigkeit bleibt ohne neue Angabe';
+  begin
+    perform add_inventory_package(inv, 0);
+    assert false, 'Packung 0';
+  exception when raise_exception then
+    assert sqlerrm = 'Invalid package quantity', sqlerrm;
+  end;
+end $$;
+-- Flasche: Rest ueber vollen Flaschen zu 30 ml wird verworfen.
+do $$
+declare
+  rest numeric;
+  inv uuid := (select id from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000020');
+begin
+  update stack_item_inventory set package_unit = 'ml', package_quantity = 30, remaining_quantity = 36 where id = inv;
+  rest := open_inventory_container(inv, date '2026-09-25', true);
+  assert rest = 30, format('Flasche: 30 erwartet, %s', rest);
+end $$;
+
 -- Fremde Zeilen bleiben fremd.
 select set_config('request.jwt.claim.sub', '15000000-0000-0000-0000-000000000002', false);
 do $$
@@ -306,6 +342,12 @@ begin
     assert sqlerrm = 'Confirmed dose log not found', sqlerrm;
   end;
   assert (select count(*) from stack_item_inventory) = 3, format('RLS: 3 eigene Bestaende erwartet, %s', (select count(*) from stack_item_inventory));
+  begin
+    perform add_inventory_package((select id from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000002'), 1);
+    assert false, 'fremde Packung';
+  exception when raise_exception then
+    assert sqlerrm = 'Inventory not found', sqlerrm;
+  end;
 end $$;
 reset role;
 

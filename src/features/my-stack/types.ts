@@ -70,12 +70,22 @@ export interface StackItemIngredient {
 }
 
 export interface StackItemInventory {
+  /** Fehlt nur in alten Testdaten; aus der Datenbank kommt sie immer. */
+  id?: string
   enabled: boolean
   package_quantity: number | null
   package_unit: string | null
   remaining_quantity: number | null
   batch_number: string | null
   expires_at: string | null
+  batch_source?: string | null
+  batch_file_url?: string | null
+  /** Angebrochener Behaelter: angemischt bzw. geoeffnet am (`YYYY-MM-DD`). */
+  opened_at?: string | null
+  /** Haltbar nach Anbruch, in Tagen. */
+  use_within_days?: number | null
+  /** Vial: die zugefuegte Fluessigkeit in ml. */
+  reconstitution_ml?: number | null
 }
 
 export interface StackItem {

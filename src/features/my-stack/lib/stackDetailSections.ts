@@ -1,21 +1,16 @@
 import type { DosageFormDefinition } from './dosageForms'
 
 /**
- * Welche Angaben im Vollbild einer Substanz ueberhaupt Sinn ergeben.
+ * Welche Angaben im Vollbild einer Substanz stehen.
  *
- * Bisher zeigte das Vollbild fuer JEDE Form dieselben Felder. Bei einem
- * Pflaster standen dort vier Kacheln „Nicht gesetzt" — Fluessigkeit,
- * Rekonstitution, Haltbarkeit danach, Wirkstoff pro Vial —, weil ein Pflaster
- * nichts davon kennt. Das sieht nicht nach „nicht ausgefuellt" aus, sondern
- * nach kaputt.
+ * Das Vollbild zeigt, WAS eine Substanz ist und woraus sie besteht. Alles zur
+ * einzelnen Packung — Vorrat, Anmischen/Oeffnen, Haltbarkeit danach, Charge —
+ * liegt in der Bestand-Ansicht (`BestandSheet`), fuer jede Form nach dem,
+ * was sie kennt (`anbruchArt` in `bestand.ts`). So steht bei einem Pflaster
+ * auch keine Kachel „Zugefuegte Fluessigkeit: Nicht gesetzt" mehr.
  *
- * Entschieden wird das nicht hier neu, sondern aus dem, was die Form ohnehin
- * ueber sich sagt (`capabilities`, `strengthShape` in `dosageForms.ts`). Eine
- * zweite Liste, welche Form was kann, waere die zweite Wahrheit.
- *
- * Die Regel dabei: eine Angabe, die die FORM nicht kennt, faellt weg. Eine,
- * die sie kennt und die nur LEER ist, bleibt stehen — dort ist „Nicht
- * gesetzt" eine Aufforderung und keine Panne.
+ * Wie die Staerke heisst, sagt weiterhin die Form (`strengthShape` in
+ * `dosageForms.ts`, siehe `wirkstoffBezug`).
  */
 
 export type DetailFeld =
@@ -36,8 +31,8 @@ export type DetailFeld =
  * `substanz` sagt, WAS das ist — Kategorie, Methode, Herkunft. Das gilt fuer
  * jede Packung derselben Substanz gleich.
  *
- * `produkt` sagt, was DIESE Packung ist: angemischt, haltbar, wie viel noch da.
- * Wie der Abschnitt heisst, haengt an seinem Inhalt (siehe `produktTitel`).
+ * `produkt` sagt, woraus diese Darreichung besteht. Was DIESE Packung ist —
+ * angemischt, haltbar, wie viel noch da — steht in der Bestand-Ansicht.
  */
 export type AbschnittId = 'substanz' | 'produkt'
 
@@ -65,17 +60,15 @@ export function wirkstoffBezug(form: DosageFormDefinition | undefined): Wirkstof
   }
 }
 
-export function detailAbschnitte(form: DosageFormDefinition | undefined): DetailAbschnitt[] {
-  const kann = (faehigkeit: string) => form?.capabilities.includes(faehigkeit as never) ?? false
-
+export function detailAbschnitte(): DetailAbschnitt[] {
   // Die Wirkstoffmenge beschreibt die Zusammensetzung dieser Darreichung,
-  // nicht die Identitaet der Substanz. Beim Vial gehoert sie deshalb zur
-  // Rekonstitution, bei allen anderen Formen zur Zusammensetzung.
+  // nicht die Identitaet der Substanz.
+  //
+  // Was DIESE Packung betrifft — Vorrat, angemischt/geoeffnet am, Haltbarkeit
+  // danach, zugefuegte Fluessigkeit, Charge, Quelle, Analyse-Dokument — steht
+  // nicht mehr hier, sondern in der Bestand-Ansicht (`BestandSheet`). Das
+  // Vollbild zeigt davon nur die Kurzfassung als eigene Karte.
   const produkt: DetailFeld[] = ['wirkstoff']
-  // Aufloesen heisst: Pulver im Glas, das man selbst anmischt. Nur dort gibt es
-  // eine zugefuegte Fluessigkeit, ein Datum dafuer und eine Haltbarkeit DANACH.
-  if (kann('reconstitutable')) produkt.push('fluessigkeit', 'rekonstituiert_am', 'haltbarkeit')
-  if (kann('inventory_capable')) produkt.push('vorrat')
 
   // Kategorie und Marke standen bis eben in einer zweiten Darstellung
   // DARUEBER (`StackItemDetails`), zusammen mit Name, Zutaten und Notizen —
@@ -83,29 +76,11 @@ export function detailAbschnitte(form: DosageFormDefinition | undefined): Detail
   // dort einzigartig war, steht jetzt hier; die Darreichungsform nennt schon
   // die Ueberschrift des Wirkstoffs („Wirkstoff pro Pflaster"), und der Name
   // steht auf dem Objekt darueber.
-  const substanz: DetailFeld[] = [
-    'kategorie', 'applikation', 'marke',
-    'batch', 'quelle', 'analyse', 'notizen',
+  const substanz: DetailFeld[] = ['kategorie', 'applikation', 'marke', 'notizen']
+
+  // Zuerst WAS es ist, dann woraus es besteht.
+  return [
+    { id: 'substanz', felder: substanz },
+    { id: 'produkt', felder: produkt },
   ]
-
-  // Zuerst WAS es ist, dann was DIESE Packung ist.
-  const abschnitte: DetailAbschnitt[] = [{ id: 'substanz', felder: substanz }]
-  abschnitte.push({ id: 'produkt', felder: produkt })
-  return abschnitte
-}
-
-/**
- * Wie der Produktabschnitt heisst.
- *
- * Wo eine Fluessigkeit zugefuegt wird, beschreibt der Abschnitt die
- * Rekonstitution. Bei allen anderen Formen beschreibt er die Zusammensetzung:
- * die formgerechte Wirkstoffstaerke und, sofern erfasst, den Vorrat.
- */
-export function produktTitel(abschnitt: DetailAbschnitt): 'rekonstitution' | 'zusammensetzung' {
-  return abschnitt.felder.includes('fluessigkeit') ? 'rekonstitution' : 'zusammensetzung'
-}
-
-/** Kommt dieses Feld bei dieser Form vor? */
-export function zeigtFeld(form: DosageFormDefinition | undefined, feld: DetailFeld) {
-  return detailAbschnitte(form).some(abschnitt => abschnitt.felder.includes(feld))
 }

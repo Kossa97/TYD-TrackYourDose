@@ -184,12 +184,18 @@ export interface StackItemMutationClient {
 const STACK_ITEM_COLUMNS = `
   *,
   inventory:stack_item_inventory(
+    id,
     enabled,
     package_quantity,
     package_unit,
     remaining_quantity,
     batch_number,
-    expires_at
+    expires_at,
+    batch_source,
+    batch_file_url,
+    opened_at,
+    use_within_days,
+    reconstitution_ml
   ),
   ingredients:stack_item_ingredients(
     id,

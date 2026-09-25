@@ -596,6 +596,95 @@ begin
 end;
 $$;
 
+-- Neue Packung: in einem Schritt zum aktuellen Stand addiert, damit eine
+-- gleichzeitige Abbuchung nicht verloren geht.
+create or replace function public.add_inventory_package(p_inventory_id uuid, p_quantity numeric)
+returns numeric
+language plpgsql
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  remaining numeric;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+  if p_quantity is null or p_quantity <= 0 or p_quantity > '1000000000'::numeric then
+    raise exception 'Invalid package quantity';
+  end if;
+
+  update public.stack_item_inventory
+  set
+    remaining_quantity = least(coalesce(remaining_quantity, 0) + p_quantity, '1000000000'::numeric),
+    updated_at = now()
+  where id = p_inventory_id
+    and user_id = owner_id
+    and enabled
+  returning remaining_quantity into remaining;
+
+  if not found then
+    raise exception 'Inventory not found';
+  end if;
+  return remaining;
+end;
+$$;
+
+-- Neues Vial anmischen / neue Flasche oeffnen. Auf Wunsch wird der Rest im
+-- alten Behaelter verworfen: beim Vial der Nachkommateil, sonst der Rest
+-- ueber vollen Behaeltern der Packungsgroesse.
+create or replace function public.open_inventory_container(
+  p_inventory_id uuid,
+  p_opened_at date,
+  p_discard_rest boolean,
+  p_reconstitution_ml numeric default null
+)
+returns numeric
+language plpgsql
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  remaining numeric;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+  if p_opened_at is null then
+    raise exception 'Opening date required';
+  end if;
+  if p_reconstitution_ml is not null and not (p_reconstitution_ml > 0 and p_reconstitution_ml <= 1000) then
+    raise exception 'Invalid reconstitution volume';
+  end if;
+
+  update public.stack_item_inventory
+  set
+    opened_at = p_opened_at,
+    reconstitution_ml = coalesce(p_reconstitution_ml, reconstitution_ml),
+    remaining_quantity = case
+      when not coalesce(p_discard_rest, false) then remaining_quantity
+      when package_unit = 'vial' then trunc(remaining_quantity)
+      when package_quantity > 0 then remaining_quantity - mod(remaining_quantity, package_quantity)
+      else remaining_quantity
+    end,
+    updated_at = now()
+  where id = p_inventory_id
+    and user_id = owner_id
+    and enabled
+  returning remaining_quantity into remaining;
+
+  if not found then
+    raise exception 'Inventory not found';
+  end if;
+  return remaining;
+end;
+$$;
+
+revoke execute on function public.add_inventory_package(uuid, numeric) from public, anon;
+grant execute on function public.add_inventory_package(uuid, numeric) to authenticated;
+revoke execute on function public.open_inventory_container(uuid, date, boolean, numeric) from public, anon;
+grant execute on function public.open_inventory_container(uuid, date, boolean, numeric) to authenticated;
+
 commit;
 
 -- Nachzaehlen (nach dem Lauf, liest nur):

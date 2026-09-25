@@ -24,9 +24,18 @@ import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
 import { hapticTick } from '../../lib/haptics'
 import {
-  detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,
+  detailAbschnitte, wirkstoffBezug,
   type DetailFeld,
 } from './lib/stackDetailSections'
+import { BestandCard, BestandSheet, type BestandActions } from './components/BestandSheet'
+import { anbruchArt } from './lib/bestand'
+import {
+  addInventoryPackage,
+  openInventoryContainer,
+  startInventory,
+  updateInventory,
+  uploadBatchDocument,
+} from './services/stackInventory'
 import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
@@ -180,7 +189,7 @@ const vialCarouselItemGap = '0.75rem'
 
 function asPeptide(item: LoadedStackItem): Peptide {
   const legacy = item as LoadedStackItem & Partial<Peptide>
-  return {
+  const peptide: Peptide = {
     ...legacy,
     name: item.display_name,
     default_method: legacy.default_method ?? 'Andere',
@@ -197,6 +206,35 @@ function asPeptide(item: LoadedStackItem): Peptide {
     batch_file_url: legacy.batch_file_url ?? null,
     inventory_item_id: legacy.inventory_item_id ?? null,
     pk_profile_id: legacy.pk_profile_id ?? null,
+  }
+  return withVialInventory(peptide)
+}
+
+/**
+ * Fuehrt ein Vial seinen Bestand im neuen Modell (`stack_item_inventory` in
+ * Vials), sind die Altspalten eingefroren: die Datenbank bucht nur noch dort
+ * ab. Liste, Vial-Grafik, Sortierung und Haltbarkeitshinweis lesen weiter die
+ * Altnamen — hier bekommen sie die Werte aus dem Bestand.
+ *
+ * `vials_in_stock` zaehlt dann ALLE Vials (der Nachkommateil ist das
+ * angemischte), `vials_initial` die Packungsgroesse; `getVialFillPct` rechnet
+ * damit wie bisher. Die Lager-Verknuepfung (`inventory_items`) entfaellt —
+ * ihre ungeoeffneten Vials stecken im Bestand.
+ */
+function withVialInventory(p: Peptide): Peptide {
+  const inv = p.inventory
+  if (anbruchArt(p.dosage_form) !== 'vial' || !inv || inv.package_unit !== 'vial') return p
+  return {
+    ...p,
+    vials_in_stock: inv.enabled ? inv.remaining_quantity : null,
+    vials_initial: inv.enabled ? inv.package_quantity : null,
+    reconstitution_date: inv.opened_at ?? null,
+    expiry_days: inv.use_within_days ?? null,
+    reconstitution_ml: inv.reconstitution_ml ?? p.reconstitution_ml,
+    batch_number: inv.batch_number,
+    batch_source: inv.batch_source ?? null,
+    batch_file_url: inv.batch_file_url ?? null,
+    inventory_item_id: null,
   }
 }
 
@@ -607,6 +645,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
+  const [bestandPeptideId, setBestandPeptideId] = useState<string | null>(null)
   // Zyklus-Manager: welche inaktiven Karten / Dosisanpassungs-Sektionen sind aufgeklappt
   const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
   const [managerEscOpen, setManagerEscOpen]   = useState<Set<string>>(() => new Set())
@@ -904,6 +943,41 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const currentCycleManagerPeptide = cycleManagerPeptide
     ? peptides.find(peptide => peptide.id === cycleManagerPeptide.id) ?? cycleManagerPeptide
     : null
+
+  // ── Bestand (stack_item_inventory) ──────────────────────────────────────
+  // Die Ansicht ruft nur diese Aktionen; nach jeder wird neu geladen, damit
+  // Liste, Vial-Grafik und Karte denselben Stand zeigen. Fehler meldet sie
+  // hier und reicht sie weiter, damit der Editor offen bleibt.
+  const bestandActions = (p: Peptide): BestandActions => {
+    const inventoryId = () => {
+      if (!p.inventory?.id) throw new Error('Inventory missing')
+      return p.inventory.id
+    }
+    const guarded = async (work: () => PromiseLike<unknown>) => {
+      try {
+        await work()
+      } catch (error) {
+        toast.error(t('my_stack_stock_save_failed'))
+        throw error
+      }
+      await loadPeptides()
+    }
+    return {
+      start: input => guarded(() => startInventory(stackDataClient as never, { userId: user!.id, stackItemId: p.id, ...input })),
+      update: patch => guarded(() => updateInventory(stackDataClient as never, inventoryId(), patch)),
+      addPackage: quantity => guarded(() => addInventoryPackage(stackDataClient as never, inventoryId(), quantity)),
+      openContainer: input => guarded(() => openInventoryContainer(stackDataClient as never, inventoryId(), input)),
+      uploadDocument: async file => {
+        try {
+          return await uploadBatchDocument(supabase as never, user!.id, file)
+        } catch (error) {
+          toast.error(t('datei_upload_fehler'))
+          throw error
+        }
+      },
+    }
+  }
+  const bestandPeptide = bestandPeptideId ? peptides.find(peptide => peptide.id === bestandPeptideId) ?? null : null
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
   const adjustInventoryCount = async (id: string, delta: number, current: number) => {
@@ -2133,13 +2207,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     }
                     return { label: FELD_LABEL[feld], value: wert, wide }
                   }
-                  // Wie der Produktabschnitt heisst, folgt seinem INHALT —
-                  // „Rekonstitution", wo eine Fluessigkeit zugefuegt wird,
-                  // sonst „Zusammensetzung". Siehe `produktTitel`.
-                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'zusammensetzung', string> = {
+                  const ABSCHNITT_TITEL: Record<'substanz' | 'produkt', string> = {
                     substanz: 'Substanz',
-                    rekonstitution: 'Rekonstitution',
-                    zusammensetzung: 'Zusammensetzung',
+                    produkt: 'Zusammensetzung',
                   }
                   return (
                     <>
@@ -2167,10 +2237,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         }}
                       />
                     )}
-                    {detailAbschnitte(form).map(abschnitt => (
+                    {/* Was DIESE Packung betrifft — Vorrat, Anmischen,
+                        Charge — steht in der Bestand-Ansicht; hier nur die
+                        Kurzfassung. */}
+                    <BestandCard
+                      dosageForm={activePeptide.dosage_form}
+                      inventory={activePeptide.inventory ?? null}
+                      ingredients={activePeptide.ingredients}
+                      timelines={timelinesOf(activePeptide.id)}
+                      timeZone={timeZone}
+                      onOpen={() => {
+                        closeStageDetail()
+                        setBestandPeptideId(activePeptide.id)
+                      }}
+                    />
+                    {detailAbschnitte().map(abschnitt => (
                       <section key={abschnitt.id} data-stack-detail={abschnitt.id} className="mx-1 mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50">
                         <h3 className="border-b border-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                          {ABSCHNITT_TITEL[abschnitt.id === 'substanz' ? 'substanz' : produktTitel(abschnitt)]}
+                          {ABSCHNITT_TITEL[abschnitt.id]}
                         </h3>
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
                           {abschnitt.felder.map(feld => {
@@ -2257,19 +2341,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     <div data-stack-detail="verwalten" className="mt-3 border-t border-slate-800/70 px-1 pt-3">
                       <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Verwalten</h3>
                 <div className="flex flex-col gap-2 px-1 text-xs font-semibold">
-                  {/* Dieselbe Regel wie bei den Angaben: wer nicht anmischt,
-                      braucht auch keinen Knopf dafuer. Bei einem Pflaster stand
-                      er hier und war fuer immer ausgegraut. */}
-                  {zeigtFeld(form, 'fluessigkeit') && (
-                  <button
-                    type="button"
-                    onClick={() => handleRekonstitution(activePeptide)}
-                    disabled={!activePeptide.inventory_item_id}
-                    className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
-                  >
-                    <RefreshCw size={14} /> Erneut anmischen
-                  </button>
-                  )}
+                  {/* „Erneut anmischen" ist in die Bestand-Ansicht gezogen
+                      („Neues Vial anmischen"): dort stehen Rest, Fluessigkeit
+                      und Haltbarkeit gleich daneben. */}
                   {/* Eine Tuer zum Bearbeiten: der Assistent. Das aeltere
                       Vial-Tracking-Formular ist entfernt; was es geschrieben
                       hat, zeigt die Leseschicht weiter an (`produktAngaben.ts`). */}
@@ -3415,6 +3489,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}
+        />
+      )}
+
+      {bestandPeptide && (
+        <BestandSheet
+          itemName={bestandPeptide.name}
+          dosageForm={bestandPeptide.dosage_form}
+          inventory={bestandPeptide.inventory ?? null}
+          ingredients={bestandPeptide.ingredients}
+          timelines={timelinesOf(bestandPeptide.id)}
+          timeZone={timeZone}
+          // Vials mit Bestand in Vials bucht die Datenbank unabhaengig von der
+          // Erfassungstiefe ab, alle anderen nur mit Staerke.
+          deductsIntakes={anbruchArt(bestandPeptide.dosage_form) === 'vial'
+            ? (bestandPeptide.inventory?.package_unit ?? 'vial') === 'vial'
+            : bestandPeptide.tracking_level === 'complete'}
+          onClose={() => setBestandPeptideId(null)}
+          actions={bestandActions(bestandPeptide)}
         />
       )}
 

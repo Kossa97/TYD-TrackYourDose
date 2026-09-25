@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { OHNE_NEUE_ENTSPRECHUNG, produktAngaben, type AngabenQuellen } from './produktAngaben'
 import { detailAbschnitte } from './stackDetailSections'
-import { getDosageForm } from './dosageForms'
 import type { StackItem } from '../types'
 
 /**
@@ -173,11 +172,9 @@ describe('produktAngaben', () => {
     // `detailAbschnitte` zeigt, muss `produktAngaben` beantworten koennen.
     // Sonst steht irgendwo `undefined` in einer Kachel.
     const a = produktAngaben(ausDemAssistenten())
-    for (const key of ['vial', 'tablet', 'patch', 'pen', 'drops', 'gel', 'other'] as const) {
-      for (const abschnitt of detailAbschnitte(getDosageForm(key))) {
-        for (const feld of abschnitt.felder) {
-          expect(a[feld], `${key}/${feld}`).toBeDefined()
-        }
+    for (const abschnitt of detailAbschnitte()) {
+      for (const feld of abschnitt.felder) {
+        expect(a[feld], feld).toBeDefined()
       }
     }
   })

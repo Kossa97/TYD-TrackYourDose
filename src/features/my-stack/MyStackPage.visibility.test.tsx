@@ -533,7 +533,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
   })
 
-  it('groups strength with reconstruction and keeps the remaining detail grid balanced', async () => {
+  it('keeps strength in the composition and moves the package details into the stock card', async () => {
     await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
@@ -543,8 +543,12 @@ describe('MyStackPage non-vial visibility', () => {
 
     expect(substance?.querySelector('[data-stack-detail-field="wirkstoff"]')).toBeNull()
     expect(product?.querySelector('[data-stack-detail-field="wirkstoff"]')?.className).toContain('col-span-2')
-    expect(within(product!).getByRole('heading', { name: 'Rekonstitution' })).not.toBeNull()
-    expect(substance?.querySelector('[data-stack-detail-field="analyse"]')?.className).not.toContain('col-span-2')
+    expect(within(product!).getByRole('heading', { name: 'Zusammensetzung' })).not.toBeNull()
+    // Charge, Anmischen und Vorrat stehen in der Bestand-Ansicht.
+    for (const feld of ['analyse', 'batch', 'quelle', 'fluessigkeit', 'rekonstituiert_am', 'vorrat']) {
+      expect(dialog.querySelector(`[data-stack-detail-field="${feld}"]`), feld).toBeNull()
+    }
+    expect(dialog.querySelector('[data-stack-detail="bestand"]')).not.toBeNull()
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
   })
 

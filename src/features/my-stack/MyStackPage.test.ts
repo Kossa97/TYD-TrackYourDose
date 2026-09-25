@@ -130,8 +130,8 @@ describe('My Stack page vial view', () => {
     // was die Form ohnehin über sich sagt.
     const text = source()
 
-    expect(text).toContain('detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,')
-    expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
+    expect(text).toContain('detailAbschnitte, wirkstoffBezug,')
+    expect(text).toContain('detailAbschnitte().map(abschnitt => (')
     expect(text).toContain('data-stack-detail={abschnitt.id}')
     expect(text).toContain('data-stack-detail-field={feld}')
     // Und die Stärke heißt, wie die Form sie misst — „pro Vial" stimmt beim
@@ -189,14 +189,14 @@ describe('My Stack page vial view', () => {
     }
   })
 
-  test('bietet „Erneut anmischen" nur an, wo man anmischt', () => {
-    // Bei einem Pflaster stand der Knopf da und war für immer ausgegraut —
-    // dieselbe Regel wie bei den Angaben. Und ohne den Tippfehler von vorher
-    // („rekonstitutieren").
+  test('mischt ein neues Vial in der Bestand-Ansicht an, nicht im Vollbild', () => {
+    // „Erneut anmischen" stand im Vollbild und war ohne Lagerposten
+    // ausgegraut. Jetzt heißt es „Neues Vial anmischen" und steht im
+    // Bestand, neben Rest, Flüssigkeit und Haltbarkeit.
     const text = source()
 
-    expect(text).toContain("{zeigtFeld(form, 'fluessigkeit') && (")
-    expect(text).toContain('Erneut anmischen')
+    expect(text).not.toContain('> Erneut anmischen')
+    expect(text).toContain('<BestandCard')
     expect(text).not.toContain('rekonstitutieren')
   })
 
@@ -308,8 +308,8 @@ describe('My Stack page vial view', () => {
     // Substanz und Produkt kommen aus derselben Schleife — ihre Reihenfolge
     // untereinander liegt in `detailAbschnitte`, hier zählt, dass die
     // Schleife vor dem Zyklus steht.
-    expect(platz('detailAbschnitte(form).map')).toBeGreaterThan(-1)
-    expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
+    expect(platz('detailAbschnitte().map')).toBeGreaterThan(-1)
+    expect(platz('detailAbschnitte().map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
     expect(platz('data-stack-detail="zyklus"')).toBeLessThan(platz('data-stack-detail="verwalten"'))
   })
 
