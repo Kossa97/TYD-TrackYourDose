@@ -50,6 +50,12 @@ const HALTBAR_VORGABEN: Record<AnbruchArt, number[]> = {
   flasche: [30, 90, 180, 365],
 }
 
+/** „13.10." bzw. „10/13" — das Jahr ergibt sich aus dem Anmischdatum darueber. */
+function kurzesDatum(day: string, language: string): string {
+  return new Intl.DateTimeFormat(language, { day: '2-digit', month: '2-digit', timeZone: 'UTC' })
+    .format(new Date(`${day}T00:00:00.000Z`))
+}
+
 function heute(): string {
   return format(new Date(), 'yyyy-MM-dd')
 }
@@ -77,7 +83,7 @@ function Row({ label, value, muted, onClick }: { label: string; value: ReactNode
       className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-slate-800/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400"
     >
       <span className="flex-1 text-sm text-slate-300">{label}</span>
-      <span className={`max-w-[55%] truncate text-sm font-semibold ${muted ? 'text-slate-500' : 'text-slate-100'}`}>{value}</span>
+      <span className={`max-w-[60%] truncate text-sm font-semibold ${muted ? 'text-slate-500' : 'text-slate-100'}`}>{value}</span>
       <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-slate-600" />
     </button>
   )
@@ -230,7 +236,7 @@ export function BestandSheet({
                   <Row
                     label={String(t(art === 'vial' ? 'my_stack_stock_use_within_vial' : 'my_stack_stock_use_within'))}
                     value={aktiv.use_within_days
-                      ? [daysLabel(t, aktiv.use_within_days), bis ? String(t('my_stack_stock_until', { date: formatLocalDay(bis, language) })) : null].filter(Boolean).join(' · ')
+                      ? [daysLabel(t, aktiv.use_within_days), bis ? String(t('my_stack_stock_until', { date: kurzesDatum(bis, language) })) : null].filter(Boolean).join(' · ')
                       : notSet}
                     muted={!aktiv.use_within_days}
                     onClick={() => setEditor('use_within_days')}

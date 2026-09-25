@@ -17,7 +17,8 @@ import {
   type Translate,
 } from '../lib/planLabels'
 import { CurrentSlotRow, SyringeNote } from './planCardParts'
-import type { SpritzenRechnung } from '../lib/bestand'
+import { aufzuziehendeEinheiten, type SpritzenRechnung } from '../lib/bestand'
+import { formatAmount } from '../lib/bestandLabels'
 
 export interface PlanSummaryCardProps {
   timelines: CycleTimeline[]
@@ -96,12 +97,12 @@ export function PlanSummaryCard({
       nextStep,
       // Nur Einnahmen, deren MENGE sich aendert. Eine verschobene Uhrzeit
       // bei gleicher Menge ist keine neue Dosis.
-      nextStepDoses: nextStep
-        ? new Set(planStepRows(nextStep.version, version)
+      nextStepSlots: nextStep
+        ? planStepRows(nextStep.version, version)
           .filter(row => row.change === 'new' || (row.previous !== null && row.change !== 'removed'
             && slotDoseLabel(row.previous) !== slotDoseLabel(row.slot)))
-          .map(row => slotDoseLabel(row.slot))
-          .filter((dose): dose is string => dose !== null))
+          .map(row => row.slot)
+          .filter(slot => slotDoseLabel(slot) !== null)
         : null,
       nextIntake: slots.length > 0 ? nextIntakeFor(best.timeline, best.resolved.status, at, timeZone) : null,
     }
@@ -186,13 +187,20 @@ export function PlanSummaryCard({
     ))
   }
 
-  const { status, timeline, version, slots, nextStep, nextStepDoses, nextIntake } = plan
+  const { status, timeline, version, slots, nextStep, nextStepSlots, nextIntake } = plan
+  const nextStepDoses = nextStepSlots ? new Set(nextStepSlots.map(slot => slotDoseLabel(slot))) : null
+  // Beim angemischten Vial auch hier die Einheiten: „2 mg · 6 E".
+  const nextStepUnits = syringe && nextStepSlots?.[0] && nextStepDoses?.size === 1
+    ? aufzuziehendeEinheiten(nextStepSlots[0].dose, nextStepSlots[0].unit, syringe)
+    : null
   const period = cyclePeriod(timeline, timeZone)
   const today = localDateTimeKey(now, timeZone).slice(0, 10)
   // Was die naechste Stufe aendert, in einem Wort: die neue Menge, wenn es
   // genau eine ist — sonst die Art der Stufe.
   const nextStepText = nextStep && nextStepDoses
-    ? nextStepDoses.size === 1 ? [...nextStepDoses][0] : stepKindLabel(nextStep.version, tr)
+    ? nextStepDoses.size === 1
+      ? [[...nextStepDoses][0], nextStepUnits != null ? String(tr('my_stack_plan_units_short', { units: formatAmount(nextStepUnits, language) })) : null].filter(Boolean).join(' · ')
+      : stepKindLabel(nextStep.version, tr)
     : null
   const isActive = status === 'active'
   const statusLabel = {

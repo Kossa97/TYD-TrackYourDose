@@ -81,7 +81,7 @@ describe('BestandSheet', () => {
     expect(summary.textContent).toContain('my_stack_stock_range_no_plan')
     expect(screen.getByText('my_stack_stock_opened_vial')).not.toBeNull()
     expect(screen.getByText('15.09.2026')).not.toBeNull()
-    expect(screen.getByText('my_stack_stock_days_multiple(n=28) · my_stack_stock_until(date=13.10.2026)')).not.toBeNull()
+    expect(screen.getByText('my_stack_stock_days_multiple(n=28) · my_stack_stock_until(date=13.10.)')).not.toBeNull()
     expect(screen.getByText('C-1')).not.toBeNull()
   })
 
