@@ -598,6 +598,19 @@ describe('stack item service', () => {
     )
   })
 
+  it('leaves the stock out when saving an existing item — the stock sheet owns it', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      id: 'stack-item-1',
+      inventory: { ...completeSetupDraft.inventory, enabled: true, packageQuantity: 60, packageUnit: 'capsule', remainingQuantity: 42 },
+    }, setupTestKey)
+
+    const params = mockClient.rpc.mock.calls[0][1] as { p_item: Record<string, unknown> }
+    expect('inventory' in params.p_item).toBe(false)
+  })
+
   it('preserves the active plan id when saving an edit', async () => {
     const mockClient = setupRpcClient()
 

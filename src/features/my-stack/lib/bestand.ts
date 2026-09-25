@@ -36,6 +36,21 @@ export function anbruchArt(form: DosageFormKey | null | undefined): AnbruchArt |
 }
 
 /**
+ * Bucht dieses Vial ueber den Bestand? Dieselbe Regel wie
+ * `vial_uses_inventory` in der Datenbank: Bestand in Vials und genau ein
+ * Wirkstoff pro Vial. Sonst bleibt der alte Weg zustaendig, und der Bestand
+ * hier wird nicht abgebucht.
+ */
+export function vialBuchtUeberBestand(
+  inventory: StackItemInventory | null | undefined,
+  ingredients: readonly StackItemIngredient[],
+): boolean {
+  if (inventory?.package_unit !== 'vial' || ingredients.length !== 1) return false
+  const [zutat] = ingredients
+  return zutat.basis_unit === 'vial' && (zutat.amount_value ?? 0) > 0 && (zutat.basis_value ?? 0) > 0
+}
+
+/**
  * Wie viel ein einzelner Behaelter fasst, in Packungseinheiten. Beim Vial ist
  * die Packungseinheit das Vial selbst; sonst beschreibt die Packungsgroesse
  * einen Behaelter („eine Flasche mit 30 ml").
@@ -124,8 +139,10 @@ export function dosisInPackungseinheit(
     return null
   })
   if (deltas.some(delta => delta == null || !(delta > 0))) return null
-  const erste = deltas[0]!
-  if (deltas.some(delta => delta !== erste)) return null
+  // Gerundet verglichen: die Datenbank rechnet exakt (numeric), JavaScript in
+  // Gleitkomma — 0,2/0,3·3 und 0,2/0,1·1 sollen auch hier gleich sein.
+  const erste = rund(deltas[0]!, 9)
+  if (deltas.some(delta => rund(delta!, 9) !== erste)) return null
   return packung === 'vial' ? rund(erste) : erste
 }
 

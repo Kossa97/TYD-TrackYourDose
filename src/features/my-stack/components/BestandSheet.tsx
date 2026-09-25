@@ -245,7 +245,9 @@ export function BestandSheet({
                     <button
                       type="button"
                       onClick={() => setEditor('open_new')}
-                      disabled={(aktiv.remaining_quantity ?? 0) <= 0}
+                      // Ohne vollen Behaelter gibt es nichts anzubrechen — sonst
+                      // stuende ein Anmischdatum ueber einem leeren Bestand.
+                      disabled={vorratTeile(aktiv).voll < 1}
                       className="min-h-11 w-full rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-[13px] font-semibold text-emerald-100 disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
                     >
                       {oeffnenText}
@@ -254,34 +256,41 @@ export function BestandSheet({
                 </Group>
               )}
 
-              <Group title={String(t('my_stack_stock_batch'))}>
-                <Row label={String(t('my_stack_stock_batch_number'))} value={aktiv.batch_number || notSet} muted={!aktiv.batch_number} onClick={() => setEditor('batch_number')} />
-                <Row label={String(t('my_stack_stock_source'))} value={aktiv.batch_source || notSet} muted={!aktiv.batch_source} onClick={() => setEditor('batch_source')} />
-                <Row
-                  label={String(t('my_stack_stock_document'))}
-                  value={aktiv.batch_file_url ? decodeURIComponent(aktiv.batch_file_url.split('/').pop() ?? '') : notSet}
-                  muted={!aktiv.batch_file_url}
-                  onClick={() => setEditor('batch_file_url')}
-                />
-                <Row
-                  label={String(t('my_stack_stock_expires'))}
-                  value={aktiv.expires_at ? formatLocalDay(aktiv.expires_at, language) : notSet}
-                  muted={!aktiv.expires_at}
-                  onClick={() => setEditor('expires_at')}
-                />
-              </Group>
-
-              <div className="mx-4 mt-6 text-center">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => { void run(() => actions.update({ enabled: false })) }}
-                  className="min-h-11 px-3 text-xs font-semibold text-slate-500 hover:text-slate-300"
-                >
-                  {String(t('my_stack_stock_stop'))}
-                </button>
-              </div>
             </>
+          )}
+
+          {/* Die Charge gehoert zur Packung, nicht zum Zaehlen: sie bleibt
+              sichtbar, auch wenn der Bestand (noch) nicht verfolgt wird. */}
+          {inventory && (
+            <Group title={String(t('my_stack_stock_batch'))}>
+              <Row label={String(t('my_stack_stock_batch_number'))} value={inventory.batch_number || notSet} muted={!inventory.batch_number} onClick={() => setEditor('batch_number')} />
+              <Row label={String(t('my_stack_stock_source'))} value={inventory.batch_source || notSet} muted={!inventory.batch_source} onClick={() => setEditor('batch_source')} />
+              <Row
+                label={String(t('my_stack_stock_document'))}
+                value={inventory.batch_file_url ? decodeURIComponent(inventory.batch_file_url.split('/').pop() ?? '') : notSet}
+                muted={!inventory.batch_file_url}
+                onClick={() => setEditor('batch_file_url')}
+              />
+              <Row
+                label={String(t('my_stack_stock_expires'))}
+                value={inventory.expires_at ? formatLocalDay(inventory.expires_at, language) : notSet}
+                muted={!inventory.expires_at}
+                onClick={() => setEditor('expires_at')}
+              />
+            </Group>
+          )}
+
+          {aktiv && (
+            <div className="mx-4 mt-6 text-center">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => { void run(() => actions.update({ enabled: false })) }}
+                className="min-h-11 px-3 text-xs font-semibold text-slate-500 hover:text-slate-300"
+              >
+                {String(t('my_stack_stock_stop'))}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -342,10 +351,10 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
   })
   const [text, setText] = useState(() => {
     switch (editor) {
-      case 'batch_number': return inventory?.batch_number ?? ''
-      case 'batch_source': return inventory?.batch_source ?? ''
+      case 'batch_number': return inv?.batch_number ?? ''
+      case 'batch_source': return inv?.batch_source ?? ''
       case 'opened_at': return inventory?.opened_at ?? heute()
-      case 'expires_at': return inventory?.expires_at ?? ''
+      case 'expires_at': return inv?.expires_at ?? ''
       case 'open_new': return heute()
       default: return ''
     }
@@ -384,11 +393,9 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       break
     case 'add_package':
       gueltig = zahlWert != null && zahlWert > 0
-      speichern = async () => {
-        await actions.addPackage(zahlWert!)
-        // Die Menge, die man zuletzt nachgekauft hat, ist die naechste Vorgabe.
-        if (zahlWert !== inventory?.package_quantity) await actions.update({ package_quantity: zahlWert! })
-      }
+      // Nur addieren: die Packungsgroesse bleibt, wie sie ist. Bei Flaschen ist
+      // sie zugleich die Groesse EINES Behaelters (siehe `behaelterGroesse`).
+      speichern = () => actions.addPackage(zahlWert!)
       break
     case 'open_new':
       gueltig = Boolean(text) && (art !== 'vial' || menge.trim() === '' || (zahlWert != null && zahlWert > 0))
@@ -500,9 +507,9 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
             <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{datei ? datei.name : String(t('my_stack_stock_document_pick'))}</span>
             <input type="file" className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => setDatei(event.target.files?.[0] ?? null)} />
           </label>
-          {inventory?.batch_file_url && (
+          {inv?.batch_file_url && (
             <div className="flex items-center gap-3 text-xs">
-              <a className="flex-1 truncate text-sky-400 hover:underline" href={inventory.batch_file_url} target="_blank" rel="noopener noreferrer">
+              <a className="flex-1 truncate text-sky-400 hover:underline" href={inv.batch_file_url} target="_blank" rel="noopener noreferrer">
                 {String(t('my_stack_stock_document_show'))}
               </a>
               <button

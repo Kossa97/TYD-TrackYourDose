@@ -135,6 +135,7 @@ insert into dose_logs (id, user_id, stack_item_id, dose, unit, method, logged_at
 values ('15000000-0000-0000-0004-000000000001', '15000000-0000-0000-0000-000000000001', '15000000-0000-0000-0001-000000000001', 500, 'mcg', 'Subkutan', '2026-09-20 08:00+00', true);
 insert into vial_stock_movements (user_id, stack_item_id, dose_log_id, source_dose_log_id, delta_vials, applied)
 values ('15000000-0000-0000-0000-000000000001', '15000000-0000-0000-0001-000000000001', '15000000-0000-0000-0004-000000000001', '15000000-0000-0000-0004-000000000001', 0.05, true);
+update stack_items set batch_number = 'N-1' where id = '15000000-0000-0000-0001-000000000021';
 commit;
 
 create temp table zaehlung (lauf text, bestaende bigint, vial_bestaende bigint, uebernommen bigint, vorrat_summe numeric, stack_items bigint, lager bigint, vial_buchungen bigint, altfelder_summe numeric);
@@ -173,7 +174,9 @@ begin
   select * into zwei from zaehlung where lauf = 'lauf 2';
   assert vorher.bestaende = 1, 'vorher: nur der Tablettenbestand';
   assert eins.vial_bestaende = 14, format('14 Vials uebernommen erwartet, %s', eins.vial_bestaende);
-  assert eins.bestaende = 15, 'Tablettenbestand bleibt, keine weiteren Zeilen';
+  -- 14 Vials + Tablette + Charge-Zeile des Nasensprays.
+  assert eins.bestaende = 16, format('16 Bestaende erwartet, %s', eins.bestaende);
+  assert eins.uebernommen = 15, format('15 uebernommen erwartet, %s', eins.uebernommen);
   assert eins.vorrat_summe = 72.57, format('Vorrat 72.57 erwartet, %s', eins.vorrat_summe);
   assert (eins.bestaende, eins.vial_bestaende, eins.vorrat_summe) = (zwei.bestaende, zwei.vial_bestaende, zwei.vorrat_summe), 'zweiter Lauf aendert nichts';
   assert (vorher.stack_items, vorher.lager, vorher.vial_buchungen, vorher.altfelder_summe)
@@ -192,7 +195,10 @@ begin
   assert (select package_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000006') = 5, 'Packung mindestens so gross wie der Vorrat';
   assert (select batch_number from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000001') = 'L-1', 'Charge aus dem Lager, wenn am Eintrag leer';
   assert (select opened_at from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000012') is null, 'nicht angemischt bleibt leer';
-  assert not exists (select 1 from stack_item_inventory where stack_item_id in ('15000000-0000-0000-0001-000000000021', '15000000-0000-0000-0001-000000000022', '15000000-0000-0000-0001-000000000023')), 'Nasenspray, Vial ohne Zusammensetzung und Mischvial nicht uebernommen';
+  assert not exists (select 1 from stack_item_inventory where stack_item_id in ('15000000-0000-0000-0001-000000000022', '15000000-0000-0000-0001-000000000023')), 'Vial ohne Zusammensetzung und Mischvial nicht uebernommen';
+  -- Das Nasenspray hat Chargendaten: nur die Charge, ausgeschaltet.
+  assert (select (enabled, batch_number, package_unit) from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000021')
+    is not distinct from (false, 'N-1'::text, null::text), 'Charge des Nasensprays als ausgeschaltete Zeile';
   assert (select remaining_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000024') = 5, 'Altzaehler ohne Anfangsstand zaehlt alles';
   assert (select package_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000010') = 8, 'Packung aus dem Anfangsstand des Eintrags';
   assert (select batch_number from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000024') = 'L-9', 'leeres Feld am Eintrag verdeckt das Lager nicht';
@@ -287,6 +293,14 @@ begin
   update stack_items set vials_in_stock = 1 where id = '15000000-0000-0000-0001-000000000023';
   rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000009');
   assert rest = 0.93, format('Mischvial: 0.93 erwartet (Altfeld numeric(8,2)), %s', rest);
+  -- Auch mit einem Bestand in Vials bleibt das Mischvial auf dem alten Weg:
+  -- eine mg-Dosis laesst sich nicht eindeutig einem Wirkstoff zuordnen.
+  insert into stack_item_inventory (user_id, stack_item_id, enabled, package_quantity, package_unit, remaining_quantity)
+  values ('15000000-0000-0000-0000-000000000003', '15000000-0000-0000-0001-000000000023', true, 5, 'vial', 5);
+  assert not vial_uses_inventory('15000000-0000-0000-0001-000000000023'), 'Mischvial bucht nicht ueber den Bestand';
+  rest := reverse_inventory_confirmation('15000000-0000-0000-0004-000000000009', 'undo');
+  assert rest = 1, format('Mischvial undo auf dem Altfeld: 1 erwartet, %s', rest);
+  assert (select remaining_quantity from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000023') = 5, 'Bestand des Mischvials unberuehrt';
 
   update stack_items set vials_in_stock = 1 where id = '15000000-0000-0000-0001-000000000022';
   rest := apply_inventory_confirmation('15000000-0000-0000-0004-000000000006');
@@ -331,6 +345,23 @@ begin
   assert rest = 30, format('Flasche: 30 erwartet, %s', rest);
 end $$;
 
+-- Speichern ohne Bestandsangabe laesst den Bestand in Ruhe, mit
+-- ausgeschaltetem Bestand schaltet es ihn ab.
+select set_config('request.jwt.claim.sub', '15000000-0000-0000-0000-000000000001', false);
+do $$
+declare
+  item jsonb := jsonb_build_object(
+    'id', '15000000-0000-0000-0001-000000000002', 'display_name', 'Vial 2', 'category', 'peptide',
+    'tracking_level', 'complete', 'dosage_form', 'vial', 'brand', null, 'color_hex', null, 'notes', null, 'pk_profile_method', null);
+  zutaten jsonb := jsonb_build_array(jsonb_build_object(
+    'catalog_substance_id', null, 'custom_name', 'Wirkstoff', 'amount_value', 10, 'amount_unit', 'mg', 'basis_value', 1, 'basis_unit', 'vial', 'position', 0));
+begin
+  perform save_stack_item(item, zutaten);
+  assert (select enabled from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000002'), 'ohne Bestandsangabe bleibt der Bestand an';
+  perform save_stack_item(item || jsonb_build_object('inventory', jsonb_build_object('enabled', false)), zutaten);
+  assert not (select enabled from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000002'), 'ausdruecklich aus schaltet ab';
+end $$;
+
 -- Fremde Zeilen bleiben fremd.
 select set_config('request.jwt.claim.sub', '15000000-0000-0000-0000-000000000002', false);
 do $$
@@ -341,7 +372,8 @@ begin
   exception when raise_exception then
     assert sqlerrm = 'Confirmed dose log not found', sqlerrm;
   end;
-  assert (select count(*) from stack_item_inventory) = 3, format('RLS: 3 eigene Bestaende erwartet, %s', (select count(*) from stack_item_inventory));
+  -- drei Vials und die Charge-Zeile des Nasensprays
+  assert (select count(*) from stack_item_inventory) = 4, format('RLS: 4 eigene Bestaende erwartet, %s', (select count(*) from stack_item_inventory));
   begin
     perform add_inventory_package((select id from stack_item_inventory where stack_item_id = '15000000-0000-0000-0001-000000000002'), 1);
     assert false, 'fremde Packung';

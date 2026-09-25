@@ -28,7 +28,7 @@ import {
   type DetailFeld,
 } from './lib/stackDetailSections'
 import { BestandCard, BestandSheet, type BestandActions } from './components/BestandSheet'
-import { anbruchArt, spritzenRechnung } from './lib/bestand'
+import { anbruchArt, spritzenRechnung, vialBuchtUeberBestand } from './lib/bestand'
 import {
   addInventoryPackage,
   openInventoryContainer,
@@ -184,6 +184,7 @@ const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
   stock_desc: 'sort_option_stock_desc',
 }
 
+const NO_TIMELINES: CycleTimeline[] = []
 const vialCarouselItemWidth = 'min(17rem, 70vw)'
 const vialCarouselItemGap = '0.75rem'
 
@@ -223,7 +224,7 @@ function asPeptide(item: LoadedStackItem): Peptide {
  */
 function withVialInventory(p: Peptide): Peptide {
   const inv = p.inventory
-  if (anbruchArt(p.dosage_form) !== 'vial' || !inv || inv.package_unit !== 'vial') return p
+  if (anbruchArt(p.dosage_form) !== 'vial' || !inv || !vialBuchtUeberBestand(inv, p.ingredients)) return p
   return {
     ...p,
     vials_in_stock: inv.enabled ? inv.remaining_quantity : null,
@@ -937,9 +938,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         ? b.created_at.localeCompare(a.created_at)
         : (a.active ? -1 : 1))
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
-  const timelinesOf = (stackItemId: string) => cycleTimelines.filter(
-    timeline => timeline.cycle.stack_item_id === stackItemId,
-  )
+  // Je Eintrag EINE Liste, solange sich die Plaene nicht aendern: Bestand-Karte
+  // und -Ansicht rechnen die Reichweite nur neu, wenn sich ihre Liste aendert.
+  const timelinesByItem = useMemo(() => {
+    const byItem = new Map<string, CycleTimeline[]>()
+    for (const timeline of cycleTimelines) {
+      const list = byItem.get(timeline.cycle.stack_item_id)
+      if (list) list.push(timeline)
+      else byItem.set(timeline.cycle.stack_item_id, [timeline])
+    }
+    return byItem
+  }, [cycleTimelines])
+  const timelinesOf = (stackItemId: string) => timelinesByItem.get(stackItemId) ?? NO_TIMELINES
   const currentCycleManagerPeptide = cycleManagerPeptide
     ? peptides.find(peptide => peptide.id === cycleManagerPeptide.id) ?? cycleManagerPeptide
     : null
@@ -3510,10 +3520,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           ingredients={bestandPeptide.ingredients}
           timelines={timelinesOf(bestandPeptide.id)}
           timeZone={timeZone}
-          // Vials mit Bestand in Vials bucht die Datenbank unabhaengig von der
-          // Erfassungstiefe ab, alle anderen nur mit Staerke.
+          // Vials bucht die Datenbank ueber den Bestand ab, wenn die Umrechnung
+          // eindeutig ist (vial_uses_inventory), alle anderen nur mit Staerke.
           deductsIntakes={anbruchArt(bestandPeptide.dosage_form) === 'vial'
-            ? (bestandPeptide.inventory?.package_unit ?? 'vial') === 'vial'
+            ? vialBuchtUeberBestand(bestandPeptide.inventory, bestandPeptide.ingredients)
             : bestandPeptide.tracking_level === 'complete'}
           onClose={() => setBestandPeptideId(null)}
           actions={bestandActions(bestandPeptide)}

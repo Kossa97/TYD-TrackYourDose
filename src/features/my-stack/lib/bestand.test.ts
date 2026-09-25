@@ -9,6 +9,7 @@ import {
   reichweite,
   spritzenEinheitenProMl,
   spritzenRechnung,
+  vialBuchtUeberBestand,
   vorratTeile,
 } from './bestand'
 
@@ -171,5 +172,21 @@ describe('Spritzeneinheiten', () => {
   it('has no answer without liquid or for a blend', () => {
     expect(spritzenRechnung([ingredient()], null, null)).toBeNull()
     expect(spritzenRechnung([ingredient(), ingredient()], 2, null)).toBeNull()
+  })
+})
+
+describe('vialBuchtUeberBestand', () => {
+  it('matches the database rule: stock in vials and exactly one ingredient per vial', () => {
+    expect(vialBuchtUeberBestand(inventory(), [ingredient()])).toBe(true)
+    expect(vialBuchtUeberBestand(inventory({ package_unit: 'ml' }), [ingredient()])).toBe(false)
+    expect(vialBuchtUeberBestand(inventory(), [ingredient(), ingredient({ amount_value: 5 })])).toBe(false)
+    expect(vialBuchtUeberBestand(null, [ingredient()])).toBe(false)
+  })
+})
+
+describe('dosisInPackungseinheit mit Gleitkomma', () => {
+  it('treats deltas that are equal in exact arithmetic as equal', () => {
+    const blend = [ingredient({ amount_value: 0.3, basis_value: 3 }), ingredient({ amount_value: 0.1, basis_value: 1 })]
+    expect(dosisInPackungseinheit(0.2, 'mg', blend, inventory())).toBe(2)
   })
 })

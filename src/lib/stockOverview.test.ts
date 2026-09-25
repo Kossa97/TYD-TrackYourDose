@@ -29,10 +29,14 @@ describe('expirySources', () => {
     ])
   })
 
-  it('ignores stock that is switched off or counted in something else', () => {
+  it('also reads an opened pen or bottle from the stock', () => {
+    const pen = { ...legacy, inventory: [{ enabled: true, package_unit: 'ml', opened_at: '2026-09-20', use_within_days: 28 }] }
+    expect(expirySources([pen])[0]).toMatchObject({ reconstitution_date: '2026-09-20', expiry_days: 28 })
+  })
+
+  it('warns about nothing for a vial whose stock is switched off', () => {
     const off = { ...migrated, inventory: { ...migrated.inventory as object, enabled: false } }
-    const ml = { ...migrated, inventory: [{ enabled: true, package_unit: 'ml', opened_at: '2026-09-20', use_within_days: 14 }] }
-    expect(expirySources([off, ml]).map(row => row.reconstitution_date)).toEqual(['2026-09-01', '2026-09-01'])
+    expect(expirySources([off])[0]).toMatchObject({ reconstitution_date: null, expiry_days: null })
   })
 })
 
@@ -43,6 +47,11 @@ describe('vialStockOverview', () => {
       { id: 'lager-b', vials_count: 3 },
       { id: 'verwaist', vials_count: 1 },
     ])).toEqual({ inventoryVials: 2 + 3 + 1, lowStock: 1 })
+  })
+
+  it('counts nothing for a vial whose stock is switched off, and not its old warehouse row either', () => {
+    const off = { ...migrated, inventory: { ...migrated.inventory as object, enabled: false } }
+    expect(vialStockOverview([off], [{ id: 'lager-a', vials_count: 2 }])).toEqual({ inventoryVials: 0, lowStock: 0 })
   })
 
   it('marks a migrated vial with at most one left as low', () => {

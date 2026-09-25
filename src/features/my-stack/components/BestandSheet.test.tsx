@@ -119,6 +119,17 @@ describe('BestandSheet', () => {
     })))
   })
 
+  it('offers no new vial when no full one is left', () => {
+    renderSheet({ ...vial, remaining_quantity: 0.4 })
+    expect(screen.getByRole('button', { name: 'my_stack_stock_mix_new' })).toHaveProperty('disabled', true)
+  })
+
+  it('keeps the batch visible while stock is not tracked', () => {
+    renderSheet({ ...vial, enabled: false, package_unit: null, package_quantity: null, remaining_quantity: null, batch_number: 'N-1' })
+    expect(screen.getByText('my_stack_stock_not_tracked')).not.toBeNull()
+    expect(screen.getByText('N-1')).not.toBeNull()
+  })
+
   it('has no opened block for tablets', () => {
     renderSheet({ ...vial, package_unit: 'tablet', package_quantity: 60, remaining_quantity: 42, opened_at: null }, 'tablet')
 

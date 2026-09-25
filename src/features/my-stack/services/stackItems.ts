@@ -241,6 +241,17 @@ function ingredientForSave(ingredient: StackItemIngredient): SaveStackItemIngred
   }
 }
 
+/**
+ * Den Bestand schickt nur das Anlegen mit. Ein bestehender Eintrag pflegt ihn
+ * in der Bestand-Ansicht; ohne Angabe laesst `save_stack_item` ihn in Ruhe.
+ * Sonst ueberschriebe jedes Bearbeiten den Rest mit dem Stand von beim
+ * Oeffnen — oder schaltete ihn unterhalb von „Gruendlich" ganz ab.
+ */
+function inventoryForSave(draft: StackItemDraft | StackItemSetupDraft): StackItemSetupDraft['inventory'] | undefined {
+  if (draft.id || !('inventory' in draft)) return undefined
+  return draft.inventory
+}
+
 function itemParams(
   draft: StackItemDraft,
   pkProfileMethod: string | null = null,
@@ -477,7 +488,7 @@ export async function saveStackItem(
 
   const params: SaveStackItemRpcParams = {
     p_item: itemParams(draft, 'pkProfileMethod' in draft ? draft.pkProfileMethod : null,
-      'inventory' in draft ? draft.inventory : undefined),
+      inventoryForSave(draft)),
     p_ingredients: draft.ingredients.map(ingredientForSave),
   }
 
@@ -517,7 +528,7 @@ export async function saveStackItemSetup(
   }
 
   const params: SaveStackItemSetupRpcParams = {
-    p_item: itemParams(draft, draft.pkProfileMethod, draft.inventory),
+    p_item: itemParams(draft, draft.pkProfileMethod, inventoryForSave(draft)),
     p_ingredients: draft.ingredients.map(ingredientForSave),
     p_plan: { ...planParams(draft.plan, draft.trackingLevel), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
     p_idempotency_key: idempotencyKey,
