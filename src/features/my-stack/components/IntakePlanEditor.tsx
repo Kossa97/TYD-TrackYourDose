@@ -139,8 +139,12 @@ export function IntakePlanEditor({
   const methodChoices = methodChoicesFor(dosageForm)
   const einheit = plan.unit?.trim() ?? ''
   const [scheduleOpen, setScheduleOpen] = useState(!compactSchedule)
-  // Ein Fehler in Methode oder Tagen muss sichtbar sein, auch zugeklappt.
-  const showSchedule = scheduleOpen || Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval)
+  // Ein Fehler in Methode oder Tagen oeffnet den Abschnitt — und er bleibt
+  // offen, wenn der Fehler behoben ist; sonst klappte er mitten im
+  // Korrigieren wieder zu. Ohne Zusammenfassung ist er ohnehin offen.
+  const scheduleError = Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval)
+  if (!scheduleOpen && (scheduleError || !compactSchedule)) setScheduleOpen(true)
+  const showSchedule = scheduleOpen || scheduleError
 
   // Ein Reiter je gewaehltem Wochentag, in Wochenreihenfolge und hoechstens
   // sieben. Nur „Wochentage waehlen" kennt einzelne Tage — taeglich, im
