@@ -598,12 +598,6 @@ describe('StackItemWizard interactions', () => {
     // Eine Dosisstufe ist nur Plan: Produkt, Marke und Notizen gehoeren zur Substanz.
     expect(screen.queryByLabelText('my_stack_notes_optional')).toBeNull()
     expect(screen.queryByRole('button', { name: /my_stack_product/ })).toBeNull()
-    // Methode und Tage stehen fest: eine Zeile mit „Aendern" statt der Auswahl.
-    expect(document.querySelector('[data-plan-schedule-summary]')).not.toBeNull()
-    expect(screen.queryByText('my_stack_plan_section_when')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'my_stack_plan_schedule_change' }))
-    expect(screen.getByText('my_stack_plan_section_when')).toBeTruthy()
-    expect(document.querySelector('[data-plan-schedule-summary]')).toBeNull()
     expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
     const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
     expect(boundaryDate.value).toBe('2099-10-08')

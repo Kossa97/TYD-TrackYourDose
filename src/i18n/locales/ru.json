@@ -1367,7 +1367,5 @@
   "my_stack_plan_draw_units": "= {{units}} U to draw",
   "my_stack_plan_units_short": "{{units}} U",
   "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-  "my_stack_product_only": "Product",
-  "my_stack_plan_schedule_kept": "Stays as before",
-  "my_stack_plan_schedule_change": "Change"
+  "my_stack_product_only": "Product"
 }

@@ -1512,7 +1512,5 @@
   "my_stack_plan_draw_units": "= {{units}} E aufziehen",
   "my_stack_plan_units_short": "{{units}} E",
   "my_stack_plan_units_note": "E = Einheiten auf der Spritze. Berechnet aus {{amount}} auf {{ml}} ml ({{perMl}}/ml).",
-  "my_stack_product_only": "Produkt",
-  "my_stack_plan_schedule_kept": "Bleibt wie bisher",
-  "my_stack_plan_schedule_change": "Ändern"
+  "my_stack_product_only": "Produkt"
 }
