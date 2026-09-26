@@ -693,7 +693,6 @@ describe('StackItemWizard interactions', () => {
     const laterStep = {
       versionId: 'future-1',
       effectiveLocalDate: '2099-10-08',
-      effectiveAt: null,
       changeKind: 'titration' as const,
       snapshot: planScheduleSnapshot({ ...existingPlan, slots: [{ ...existingPlan.slots[0], dose: 7000 }] }, existingVitaminD.tracking_level),
     }
@@ -725,6 +724,11 @@ describe('StackItemWizard interactions', () => {
     expect(await screen.findByText('my_stack_plan_adopt_one')).toBeTruthy()
     expect(onSavePlanChange).not.toHaveBeenCalled()
 
+    // Zurueck auf die alte Uhrzeit: die Frage betrifft nichts mehr und verschwindet.
+    fireEvent.change(time, { target: { value: '08:30' } })
+    expect(screen.queryByText('my_stack_plan_adopt_one')).toBeNull()
+    fireEvent.change(time, { target: { value: '09:00' } })
+
     fireEvent.click(screen.getByRole('radio', { name: 'my_stack_plan_adopt_no' }))
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
     await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
@@ -745,7 +749,6 @@ describe('StackItemWizard interactions', () => {
         laterSteps: [{
           versionId: 'future-1',
           effectiveLocalDate: '2099-10-08',
-          effectiveAt: null,
           changeKind: 'titration',
           snapshot: planScheduleSnapshot(existingPlan, existingVitaminD.tracking_level),
         }],

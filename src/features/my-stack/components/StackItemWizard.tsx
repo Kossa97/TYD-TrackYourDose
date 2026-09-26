@@ -56,6 +56,11 @@ import { StrengthEditor } from './StrengthEditor'
 import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
 
+/** Welche Stufen eine Frage betrifft — zum Vergleich, ob sie noch gilt. */
+function adoptStepIds(steps: readonly LaterPlanStep[] | null): string {
+  return steps?.map(step => step.versionId).join() ?? ''
+}
+
 interface StackItemWizardBaseProps {
   catalogEntries: SubstanceCatalogEntry[]
   existingItems: StackItem[]
@@ -497,16 +502,17 @@ export function StackItemWizard({
     return null
   }
 
-  const laterStepsToAdopt = (): LaterPlanStep[] => (planEditContext?.laterSteps?.length
+  const adoptSteps: LaterPlanStep[] = planEditContext?.laterSteps?.length
     ? stepsToAdopt({
-      base: planScheduleSnapshot(planEditContext.snapshot, state.draft.trackingLevel),
+      edited: planScheduleSnapshot(planEditContext.snapshot, state.draft.trackingLevel),
       changed: planScheduleSnapshot(state.draft.plan, state.draft.trackingLevel),
       laterSteps: planEditContext.laterSteps,
       boundary: planEffective.kind === 'date' ? planEffective.localDate : null,
       exceptVersionId: planEditContext.target.versionId,
-      now: new Date(),
     })
-    : [])
+    : []
+  // Die Frage steht nur, solange sie noch dieselben Stufen betrifft.
+  const adoptQuestionOpen = adoptSteps.length > 0 && adoptStepIds(adoptSteps) === adoptStepIds(adoptAsked)
 
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
@@ -577,11 +583,11 @@ export function StackItemWizard({
       return
     }
 
-    const adoptSteps = planEditContext ? laterStepsToAdopt() : []
-    // Einmal fragen — und neu, wenn sich seither geaendert hat, welche Stufen es betrifft.
-    const stepIds = (steps: readonly LaterPlanStep[] | null) => steps?.map(step => step.versionId).join() ?? ''
-    if (adoptSteps.length > 0 && stepIds(adoptSteps) !== stepIds(adoptAsked)) {
+    // Einmal fragen — und neu, wenn sich seither geaendert hat, welche Stufen
+    // es betrifft; dann wieder mit „Uebernehmen" vorgewaehlt.
+    if (adoptSteps.length > 0 && !adoptQuestionOpen) {
       setAdoptAsked(adoptSteps)
+      setAdoptChoice('adopt')
       focusField('adoptPlan')
       return
     }
@@ -1292,20 +1298,20 @@ export function StackItemWizard({
             )
           )}
           {renderStep()}
-          {adoptAsked && adoptAsked.length > 0 && (
+          {adoptQuestionOpen && (
             <fieldset data-plan-adopt className="mt-5 rounded-2xl border border-sky-400/25 bg-sky-400/[0.06] p-4">
               <legend className="sr-only">
                 {t('my_stack_plan_adopt_legend', { defaultValue: 'Geplante Stufen' })}
               </legend>
               <p className="text-sm text-sky-50">
-                {adoptAsked.length === 1
+                {adoptSteps.length === 1
                   ? t('my_stack_plan_adopt_one', {
-                    date: formatLocalDay(adoptAsked[0].effectiveLocalDate ?? '', i18n.language),
+                    date: formatLocalDay(adoptSteps[0].effectiveLocalDate, i18n.language),
                     defaultValue: 'Am {{date}} ist eine Stufe geplant. Soll sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
                   })
                   : t('my_stack_plan_adopt_many', {
-                    n: adoptAsked.length,
-                    date: formatLocalDay(adoptAsked[0].effectiveLocalDate ?? '', i18n.language),
+                    n: adoptSteps.length,
+                    date: formatLocalDay(adoptSteps[0].effectiveLocalDate, i18n.language),
                     defaultValue: 'Ab {{date}} sind {{n}} Stufen geplant. Sollen sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
                   })}
               </p>

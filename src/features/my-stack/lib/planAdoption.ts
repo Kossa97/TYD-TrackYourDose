@@ -12,8 +12,8 @@ import type { PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTime
 
 export interface LaterPlanStep {
   versionId: string
-  effectiveLocalDate: string | null
-  effectiveAt: string | null
+  /** `YYYY-MM-DD` — geplante Stufen beginnen immer an einem Kalendertag. */
+  effectiveLocalDate: string
   changeKind: PlanChangeKind
   snapshot: PlanScheduleSnapshot
 }
@@ -30,44 +30,43 @@ export function sameSchedule(left: PlanScheduleSnapshot, right: PlanScheduleSnap
   ))
 }
 
-/** Beginnt die Stufe nach dem Stichtag? `boundary` ist `YYYY-MM-DD` oder null fuer „ab sofort". */
-function beginsAfter(step: LaterPlanStep, boundary: string | null, now: Date): boolean {
-  if (step.effectiveLocalDate) return boundary == null ? true : step.effectiveLocalDate > boundary
-  if (step.effectiveAt) {
-    const at = new Date(step.effectiveAt)
-    return boundary == null ? at > now : at.toISOString().slice(0, 10) > boundary
-  }
-  return false
-}
-
-function stepOrder(step: LaterPlanStep): string {
-  return step.effectiveLocalDate ?? step.effectiveAt ?? ''
-}
-
 /**
  * Welche spaeteren Stufen den neuen Plan uebernehmen sollten.
  *
- * Nur Stufen, die den ALTEN Plan tragen — also reine Mengenstufen darauf.
+ * Verglichen wird mit dem Plan, der am Stichtag bisher gegolten haette: dem
+ * der letzten Stufe davor, sonst dem, von dem das Formular ausging. Wird eine
+ * geplante Stufe selbst bearbeitet, ist es ihr alter Plan.
+ *
+ * Nur Stufen, die diesen ALTEN Plan tragen — also reine Mengenstufen darauf.
  * Die erste Stufe mit einem eigenen, anderen Plan ist eine bewusste
  * Planaenderung („ab Woche 4 zusaetzlich abends"): dort und dahinter bleibt
  * alles, wie es ist.
  */
 export function stepsToAdopt(input: {
-  base: PlanScheduleSnapshot
+  /** Der Plan, von dem das Formular ausging. */
+  edited: PlanScheduleSnapshot
   changed: PlanScheduleSnapshot
   laterSteps: readonly LaterPlanStep[]
   /** `YYYY-MM-DD` bei „ab Datum", null bei „ab sofort". */
   boundary: string | null
   exceptVersionId?: string | null
-  now: Date
 }): LaterPlanStep[] {
-  if (sameSchedule(input.base, input.changed)) return []
-  const later = input.laterSteps
-    .filter(step => step.versionId !== input.exceptVersionId && beginsAfter(step, input.boundary, input.now))
-    .sort((left, right) => stepOrder(left).localeCompare(stepOrder(right)))
+  const { boundary } = input
+  const editingStep = input.exceptVersionId != null
+    && input.laterSteps.some(step => step.versionId === input.exceptVersionId)
+  const others = input.laterSteps
+    .filter(step => step.versionId !== input.exceptVersionId)
+    .sort((left, right) => left.effectiveLocalDate.localeCompare(right.effectiveLocalDate))
+  const before = boundary == null || editingStep
+    ? undefined
+    : others.filter(step => step.effectiveLocalDate <= boundary).at(-1)
+  const base = before?.snapshot ?? input.edited
+
+  if (sameSchedule(base, input.changed)) return []
   const adopt: LaterPlanStep[] = []
-  for (const step of later) {
-    if (!sameSchedule(step.snapshot, input.base)) break
+  for (const step of others) {
+    if (boundary != null && step.effectiveLocalDate <= boundary) continue
+    if (!sameSchedule(step.snapshot, base)) break
     adopt.push(step)
   }
   return adopt
@@ -87,30 +86,38 @@ function slotIds(intakeTime: string | null): string[] {
   })
 }
 
+/** Die Menge an Stelle `index`; ohne `slot_doses` gilt ueberall `dose`. */
+function doseAt(snapshot: PlanScheduleSnapshot, index: number): string {
+  if (snapshot.slot_doses != null) return positions(snapshot.slot_doses)[index] ?? ''
+  return snapshot.dose != null ? String(snapshot.dose) : ''
+}
+
 /**
  * Die Stufe mit dem neuen Plan: Tage, Tageszeiten und Methode aus `plan`,
  * die Mengen aus `step`. Eine Einnahme, die es in der Stufe schon gab, behaelt
  * ihre Menge; eine neue bekommt die Menge aus dem neuen Plan (bei gleicher
  * Einheit), sonst die Grundmenge der Stufe.
+ *
+ * `dose` und `slot_doses` folgen denselben Regeln wie beim Speichern
+ * (`planScheduleSnapshot`): `dose` ist die erste Menge, `slot_doses` steht nur,
+ * wenn sich die Mengen unterscheiden.
  */
 export function adoptSchedule(plan: PlanScheduleSnapshot, step: PlanScheduleSnapshot): PlanScheduleSnapshot {
-  const planIds = slotIds(plan.intake_time)
-  const planDoses = positions(plan.slot_doses)
   const stepIds = slotIds(step.intake_time)
-  const stepDoses = positions(step.slot_doses)
   const sameUnit = plan.unit === step.unit
 
-  const doses = planIds.map((id, index) => {
+  const doses = slotIds(plan.intake_time).map((id, index) => {
     const inStep = stepIds.indexOf(id)
-    if (inStep >= 0) return stepDoses[inStep] ?? ''
-    if (!sameUnit) return ''
-    return planDoses[index] || (plan.dose != null ? String(plan.dose) : '')
+    if (inStep >= 0) return doseAt(step, inStep)
+    return sameUnit ? doseAt(plan, index) : doseAt(step, 0)
   })
 
   const merged: PlanScheduleSnapshot = { ...step }
   for (const field of SCHEDULE_FIELDS) {
     (merged as unknown as Record<string, unknown>)[field] = plan[field]
   }
-  merged.slot_doses = doses.some(dose => dose !== '') ? doses.join(',') : null
+  const lead = doses.find(dose => dose !== '')
+  merged.dose = lead != null ? Number(lead) : step.dose
+  merged.slot_doses = new Set(doses).size > 1 ? doses.join(',') : null
   return merged
 }

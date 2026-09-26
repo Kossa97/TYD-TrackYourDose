@@ -1194,19 +1194,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // Die geplanten Stufen, im Format, in dem der Assistent speichert — damit
   // der Vergleich „traegt die Stufe noch den alten Plan?" gleich rechnet.
-  const laterStepsOf = (p: Peptide, timeline: CycleTimeline): LaterPlanStep[] => (
-    planVersionSegments(timeline, new Date(), timeZone)
-      .filter(segment => segment.status === 'future'
-        && segment.version.effective_kind === 'local_date'
-        && Boolean(segment.version.effective_local_date))
-      .map(({ version }) => ({
+  const laterStepsOf = (
+    p: Peptide,
+    timeline: CycleTimeline,
+    segments = planVersionSegments(timeline, new Date(), timeZone),
+  ): LaterPlanStep[] => segments.flatMap(({ version, status }) => (
+    status === 'future' && version.effective_kind === 'local_date' && version.effective_local_date
+      ? [{
         versionId: version.id,
         effectiveLocalDate: version.effective_local_date,
-        effectiveAt: null,
         changeKind: version.change_kind,
         snapshot: planScheduleSnapshot(versionAsIntakePlanDraft(timeline, version, timeZone), p.tracking_level),
-      }))
-  )
+      }]
+      : []
+  ))
 
   const openEditCycle = (
     p: Peptide,
@@ -1222,7 +1223,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (!selectedVersion) return
       // Eine geplante Stufe wird an der Stufe DAVOR gemessen: was sie
       // gegenueber ihr aendert, bestimmt, ob sie Dosis- oder Planaenderung ist.
-      const ordered = planVersionSegments(timeline, new Date(), timeZone).map(segment => segment.version)
+      const segments = planVersionSegments(timeline, new Date(), timeZone)
+      const ordered = segments.map(segment => segment.version)
       const previous = versionId ? ordered[ordered.findIndex(version => version.id === versionId) - 1] : undefined
       openPlanWizard(p, {
         target: versionId
@@ -1237,7 +1239,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           : { kind: 'now', localDate: null },
         ...effectiveDateLimits(timeline, versionId ?? null),
         ...(previous ? { baseline: versionAsIntakePlanDraft(timeline, previous, timeZone) } : {}),
-        laterSteps: laterStepsOf(p, timeline),
+        laterSteps: laterStepsOf(p, timeline, segments),
       }, null)
     } else {
       if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
@@ -1310,22 +1312,29 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // Spaetere Stufen, die den neuen Plan uebernehmen sollen: je Stufe ein
     // eigener, wiederholbarer Schritt — schlaegt einer fehl, gelten die
     // schon gespeicherten weiter, und ein erneutes Speichern macht dort weiter.
-    for (const step of submission.adoptInto ?? []) {
-      const mutation = lifecycleKey('adopt-plan', `${identity}:${step.versionId}`)
-      if (!mutation.mutation.committed) {
-        const schedule = adoptSchedule(submission.snapshot, step.snapshot)
-        await replaceFuturePlanVersion(stackDataClient as never, {
-          versionId: step.versionId,
-          effectiveKind: 'local_date',
-          effectiveAt: null,
-          effectiveLocalDate: step.effectiveLocalDate ?? '',
-          changeKind: changeKindFor(submission.snapshot, schedule, step.changeKind === 'titration' ? 'titration' : 'dose'),
-          schedule,
-          timeZone: submission.timeZone,
-          idempotencyKey: mutation.mutation.key,
-        })
-        mutation.mutation.committed = true
+    // Der neue Plan steht dann schon: auch bei einem Fehler die Ansicht
+    // nachladen, damit sie nicht den alten zeigt.
+    try {
+      for (const step of submission.adoptInto ?? []) {
+        const mutation = lifecycleKey('adopt-plan', `${identity}:${step.versionId}`)
+        if (!mutation.mutation.committed) {
+          const schedule = adoptSchedule(submission.snapshot, step.snapshot)
+          await replaceFuturePlanVersion(stackDataClient as never, {
+            versionId: step.versionId,
+            effectiveKind: 'local_date',
+            effectiveAt: null,
+            effectiveLocalDate: step.effectiveLocalDate,
+            changeKind: changeKindFor(submission.snapshot, schedule, step.changeKind === 'titration' ? 'titration' : 'dose'),
+            schedule,
+            timeZone: submission.timeZone,
+            idempotencyKey: mutation.mutation.key,
+          })
+          mutation.mutation.committed = true
+        }
       }
+    } catch (error) {
+      await loadTimelines(true).catch(() => undefined)
+      throw error
     }
     await loadTimelines(true)
     for (const step of submission.adoptInto ?? []) {

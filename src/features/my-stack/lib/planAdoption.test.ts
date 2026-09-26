@@ -22,21 +22,20 @@ function snapshot(changes: Partial<PlanScheduleSnapshot> = {}): PlanScheduleSnap
 }
 
 function step(id: string, date: string, changes: Partial<PlanScheduleSnapshot> = {}): LaterPlanStep {
-  return { versionId: id, effectiveLocalDate: date, effectiveAt: null, changeKind: 'titration', snapshot: snapshot(changes) }
+  return { versionId: id, effectiveLocalDate: date, changeKind: 'titration', snapshot: snapshot(changes) }
 }
 
-const now = new Date('2026-09-26T08:00:00.000Z')
 const base = snapshot()
 const daily = snapshot({ frequency: 'Täglich', schedule_days: [] })
 
 describe('stepsToAdopt', () => {
   it('offers nothing when only amounts changed', () => {
-    expect(stepsToAdopt({ base, changed: snapshot({ dose: 500 }), laterSteps: [step('a', '2026-10-06', { dose: 500 })], boundary: null, now })).toEqual([])
+    expect(stepsToAdopt({ edited: base, changed: snapshot({ dose: 500 }), laterSteps: [step('a', '2026-10-06', { dose: 500 })], boundary: null })).toEqual([])
   })
 
   it('offers the later dose steps that still carry the old plan', () => {
     const laterSteps = [step('b', '2026-10-20', { dose: 750 }), step('a', '2026-10-06', { dose: 500 })]
-    expect(stepsToAdopt({ base, changed: daily, laterSteps, boundary: null, now }).map(s => s.versionId)).toEqual(['a', 'b'])
+    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: null }).map(s => s.versionId)).toEqual(['a', 'b'])
   })
 
   it('stops at the first step with a plan of its own', () => {
@@ -45,13 +44,25 @@ describe('stepsToAdopt', () => {
       step('b', '2026-10-20', { intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' }),
       step('c', '2026-11-03', { dose: 750 }),
     ]
-    expect(stepsToAdopt({ base, changed: daily, laterSteps, boundary: null, now }).map(s => s.versionId)).toEqual(['a'])
+    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: null }).map(s => s.versionId)).toEqual(['a'])
   })
 
   it('only looks behind the chosen day and never at the step being edited', () => {
     const laterSteps = [step('a', '2026-10-06'), step('b', '2026-10-20')]
-    expect(stepsToAdopt({ base, changed: daily, laterSteps, boundary: '2026-10-06', now }).map(s => s.versionId)).toEqual(['b'])
-    expect(stepsToAdopt({ base, changed: daily, laterSteps, boundary: '2026-10-01', exceptVersionId: 'a', now }).map(s => s.versionId)).toEqual(['b'])
+    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-06' }).map(s => s.versionId)).toEqual(['b'])
+    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-01', exceptVersionId: 'a' }).map(s => s.versionId)).toEqual(['b'])
+  })
+
+  it('compares with the plan that would have applied on the chosen day', () => {
+    // Heute Mo/Mi/Fr, ab 10.10. taeglich geplant, am 24.10. eine Mengenstufe darauf.
+    const laterSteps = [step('s', '2026-10-10', { frequency: 'Täglich', schedule_days: [] }), step('t', '2026-10-24', { frequency: 'Täglich', schedule_days: [], dose: 500 })]
+    const changed = snapshot({ frequency: 'Täglich', schedule_days: [], intake_time: 'abends', intake_time_custom: '20:00' })
+    expect(stepsToAdopt({ edited: base, changed, laterSteps, boundary: '2026-10-15' }).map(s => s.versionId)).toEqual(['t'])
+  })
+
+  it('measures an edited step against its own old plan', () => {
+    const laterSteps = [step('a', '2026-10-06'), step('b', '2026-10-20', { dose: 500 })]
+    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-06', exceptVersionId: 'a' }).map(s => s.versionId)).toEqual(['b'])
   })
 })
 
@@ -71,7 +82,14 @@ describe('adoptSchedule', () => {
   it('drops an intake the new plan no longer has', () => {
     const plan = snapshot({ intake_time: 'abends', intake_time_custom: '20:00' })
     const later = snapshot({ intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00', slot_doses: '500,300' })
-    expect(adoptSchedule(plan, later)).toMatchObject({ intake_time: 'abends', slot_doses: '300' })
+    // Die fuehrende Menge ist die der verbliebenen Einnahme, keine Liste fuer eine einzige.
+    expect(adoptSchedule(plan, later)).toMatchObject({ intake_time: 'abends', slot_doses: null, dose: 300 })
+  })
+
+  it('keeps a step with one amount for all intakes on that amount', () => {
+    const plan = snapshot({ intake_time: 'morgens,abends,mittags', intake_time_custom: '08:00,20:00,12:00', slot_doses: '250,250,100' })
+    const later = snapshot({ intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00', dose: 500 })
+    expect(adoptSchedule(plan, later)).toMatchObject({ slot_doses: '500,500,100', dose: 500 })
   })
 
   it('falls back to the step amount for a new intake in another unit', () => {

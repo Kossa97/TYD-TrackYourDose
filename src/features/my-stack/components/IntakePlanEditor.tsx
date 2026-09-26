@@ -142,9 +142,11 @@ export function IntakePlanEditor({
   // Ein Fehler in Tagen oder Methode oeffnet den Abschnitt — und er bleibt
   // offen, wenn der Fehler behoben ist; sonst klappte er mitten im
   // Korrigieren wieder zu.
-  const scheduleError = Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval)
+  // Auch ein Zeitpunkt an einem Tag, der nicht mehr gewaehlt ist: behoben wird
+  // das in der Tagesauswahl, also muss sie offen stehen.
+  const scheduleError = Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval
+    || errors.slots?.some(error => error === 'unknown_day'))
   if (!scheduleOpen && (scheduleError || !compactSchedule)) setScheduleOpen(true)
-  const showSchedule = scheduleOpen || scheduleError
 
   // Ein Reiter je gewaehltem Wochentag, in Wochenreihenfolge und hoechstens
   // sieben. Nur „Wochentage waehlen" kennt einzelne Tage — taeglich, im
@@ -843,7 +845,7 @@ export function IntakePlanEditor({
       {compactSchedule ? (
         <>
           {tageszeitenBereich}
-          {showSchedule ? zeitplanBereich : zeitplanZeile}
+          {scheduleOpen ? zeitplanBereich : zeitplanZeile}
         </>
       ) : (
         <>
