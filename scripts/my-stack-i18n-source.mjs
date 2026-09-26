@@ -477,6 +477,13 @@ export const MY_STACK_EN = {
   my_stack_plan_units_short: '{{units}} U',
   my_stack_plan_units_note: 'U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).',
   my_stack_product_only: 'Product',
+  my_stack_plan_schedule_title: 'Days & method',
+  my_stack_plan_schedule_change: 'Change',
+  my_stack_plan_adopt_legend: 'Planned steps',
+  my_stack_plan_adopt_one: 'A step is planned for {{date}}. Should it take over the new plan? Its amounts stay.',
+  my_stack_plan_adopt_many: '{{n}} steps are planned from {{date}}. Should they take over the new plan? Their amounts stay.',
+  my_stack_plan_adopt_yes: 'Take over',
+  my_stack_plan_adopt_no: 'Keep as is',
 }
 
 export const MY_STACK_DE = {
@@ -957,6 +964,13 @@ export const MY_STACK_DE = {
   my_stack_plan_units_short: '{{units}} E',
   my_stack_plan_units_note: 'E = Einheiten auf der Spritze. Berechnet aus {{amount}} auf {{ml}} ml ({{perMl}}/ml).',
   my_stack_product_only: 'Produkt',
+  my_stack_plan_schedule_title: 'Tage & Methode',
+  my_stack_plan_schedule_change: 'Ändern',
+  my_stack_plan_adopt_legend: 'Geplante Stufen',
+  my_stack_plan_adopt_one: 'Am {{date}} ist eine Stufe geplant. Soll sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
+  my_stack_plan_adopt_many: 'Ab {{date}} sind {{n}} Stufen geplant. Sollen sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
+  my_stack_plan_adopt_yes: 'Übernehmen',
+  my_stack_plan_adopt_no: 'Nicht übernehmen',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

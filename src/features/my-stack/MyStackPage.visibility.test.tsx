@@ -1548,8 +1548,9 @@ describe('MyStackPage non-vial visibility', () => {
     const section = await screen.findByTestId('plan-management-cycle-add-step')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_add_step' }))
 
-    expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
-    const date = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
+    // Dasselbe Formular wie „Plan anpassen", nur mit einem Tag vorbelegt.
+    expect((screen.getByRole('radio', { name: 'my_stack_plan_effective_now' }) as HTMLInputElement).checked).toBe(false)
+    const date = screen.getByLabelText('my_stack_plan_effective_date', { selector: 'input[type="date"]' }) as HTMLInputElement
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' })
     expect(date.value > today).toBe(true)
     fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '175' } })
@@ -1563,6 +1564,60 @@ describe('MyStackPage non-vial visibility', () => {
       p_change_kind: 'titration',
     })
     expect((calls[0].p_schedule as { dose: number }).dose).toBe(175)
+  })
+
+  it('lets a planned step take over a changed plan and keeps its amount', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    visibilityMocks.realWizard = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const currentVersion = normalizedVersion('version-current', 'cycle-adopt')
+    const futureVersion = normalizedVersion('version-future', 'cycle-adopt', {
+      change_kind: 'titration',
+      effective_local_date: '2099-10-01',
+      dose: 200,
+    })
+    const current = timelineRow('cycle-adopt', [currentVersion, futureVersion])
+    const calls: Array<[string, Record<string, unknown>]> = []
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      calls.push([name, params])
+      if (name === 'create_plan_version') return { data: normalizedVersion('version-new', 'cycle-adopt'), error: null }
+      if (name === 'replace_future_plan_version') return { data: futureVersion, error: null }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client } = v2Client({
+      timelineResults: [{ data: [current], error: null }, { data: [current], error: null }],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    const section = await screen.findByTestId('plan-management-cycle-adopt')
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
+
+    fireEvent.change(screen.getByLabelText('my_stack_plan_time_short my_stack_plan_optional'), { target: { value: '21:00' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    // Erst fragen, dann speichern.
+    expect(await screen.findByText('my_stack_plan_adopt_one')).toBeTruthy()
+    expect(calls).toHaveLength(0)
+    expect((screen.getByRole('radio', { name: 'my_stack_plan_adopt_yes' }) as HTMLInputElement).checked).toBe(true)
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(calls).toHaveLength(2))
+    expect(calls[0][0]).toBe('create_plan_version')
+    expect(calls[1][0]).toBe('replace_future_plan_version')
+    expect(calls[1][1]).toMatchObject({
+      p_version_id: 'version-future',
+      p_effective_kind: 'local_date',
+      p_effective_local_date: '2099-10-01',
+      // Gegenueber dem neuen Plan aendert die Stufe nur die Menge.
+      p_change_kind: 'titration',
+    })
+    expect(calls[1][1].p_schedule).toMatchObject({ intake_time_custom: '21:00', dose: 200 })
   })
 
   it('does not repeat a committed future removal when only canonical refresh failed', async () => {

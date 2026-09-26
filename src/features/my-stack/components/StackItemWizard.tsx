@@ -37,6 +37,7 @@ import {
   type PlanEffectiveDraft,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
+import { stepsToAdopt, type LaterPlanStep } from '../lib/planAdoption'
 import { formatLocalDay, laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
@@ -197,6 +198,10 @@ export function StackItemWizard({
   const [identityChoiceMade, setIdentityChoiceMade] = useState(false)
   const [identityChoiceError, setIdentityChoiceError] = useState(false)
   const [duplicateCandidate, setDuplicateCandidate] = useState<StackItem | null>(null)
+  // Geplante Stufen, die noch den alten Plan tragen: einmal fragen, ob sie
+  // den neuen uebernehmen. Vorgewaehlt ist „Uebernehmen".
+  const [adoptAsked, setAdoptAsked] = useState<LaterPlanStep[] | null>(null)
+  const [adoptChoice, setAdoptChoice] = useState<'adopt' | 'keep'>('adopt')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [planEffective, setPlanEffective] = useState<PlanEffectiveDraft>(() => (
@@ -218,7 +223,6 @@ export function StackItemWizard({
     ? laterLocalDay(nextLocalDate(planEditContext.timeZone), planEditContext.minEffectiveDate ?? '')
     : null
   const latestEffectiveDate = planEditContext?.maxEffectiveDate ?? null
-  const isAddStep = planEditContext?.purpose === 'add_step'
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
@@ -493,6 +497,17 @@ export function StackItemWizard({
     return null
   }
 
+  const laterStepsToAdopt = (): LaterPlanStep[] => (planEditContext?.laterSteps?.length
+    ? stepsToAdopt({
+      base: planScheduleSnapshot(planEditContext.snapshot, state.draft.trackingLevel),
+      changed: planScheduleSnapshot(state.draft.plan, state.draft.trackingLevel),
+      laterSteps: planEditContext.laterSteps,
+      boundary: planEffective.kind === 'date' ? planEffective.localDate : null,
+      exceptVersionId: planEditContext.target.versionId,
+      now: new Date(),
+    })
+    : [])
+
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
     const invalidField = firstInvalidField(state, !metadataOnly)
@@ -562,6 +577,15 @@ export function StackItemWizard({
       return
     }
 
+    const adoptSteps = planEditContext ? laterStepsToAdopt() : []
+    // Einmal fragen — und neu, wenn sich seither geaendert hat, welche Stufen es betrifft.
+    const stepIds = (steps: readonly LaterPlanStep[] | null) => steps?.map(step => step.versionId).join() ?? ''
+    if (adoptSteps.length > 0 && stepIds(adoptSteps) !== stepIds(adoptAsked)) {
+      setAdoptAsked(adoptSteps)
+      focusField('adoptPlan')
+      return
+    }
+
     setSaving(true)
     setSaveError(null)
     try {
@@ -578,6 +602,7 @@ export function StackItemWizard({
             planEditContext.changeKind,
           ),
           timeZone: planEditContext.timeZone,
+          adoptInto: adoptChoice === 'adopt' ? adoptSteps : [],
         })
       } else {
         await onSave(draftForSave, mode, setupIdempotencyKey)
@@ -720,7 +745,7 @@ export function StackItemWizard({
                 <legend className="px-1 text-sm font-semibold text-slate-200">
                   {t('my_stack_plan_effective_title', { defaultValue: 'Gültig ab' })}
                 </legend>
-                {planEditContext.target.mode === 'new_change' && !isAddStep && (
+                {planEditContext.target.mode === 'new_change' && (
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
                       <input
@@ -766,6 +791,7 @@ export function StackItemWizard({
             )}
             {!metadataOnly && <IntakePlanEditor
               scheduleOnly={Boolean(planEditContext)}
+              compactSchedule={Boolean(planEditContext)}
               trackingLevel={state.draft.trackingLevel}
               plan={state.draft.plan}
               dosageForm={state.draft.dosageForm}
@@ -1266,6 +1292,46 @@ export function StackItemWizard({
             )
           )}
           {renderStep()}
+          {adoptAsked && adoptAsked.length > 0 && (
+            <fieldset data-plan-adopt className="mt-5 rounded-2xl border border-sky-400/25 bg-sky-400/[0.06] p-4">
+              <legend className="sr-only">
+                {t('my_stack_plan_adopt_legend', { defaultValue: 'Geplante Stufen' })}
+              </legend>
+              <p className="text-sm text-sky-50">
+                {adoptAsked.length === 1
+                  ? t('my_stack_plan_adopt_one', {
+                    date: formatLocalDay(adoptAsked[0].effectiveLocalDate ?? '', i18n.language),
+                    defaultValue: 'Am {{date}} ist eine Stufe geplant. Soll sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
+                  })
+                  : t('my_stack_plan_adopt_many', {
+                    n: adoptAsked.length,
+                    date: formatLocalDay(adoptAsked[0].effectiveLocalDate ?? '', i18n.language),
+                    defaultValue: 'Ab {{date}} sind {{n}} Stufen geplant. Sollen sie den neuen Plan übernehmen? Ihre Mengen bleiben.',
+                  })}
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {(['adopt', 'keep'] as const).map(choice => (
+                  <label
+                    key={choice}
+                    className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-center text-sm font-semibold text-slate-200 has-[:checked]:border-sky-400/60 has-[:checked]:bg-sky-400/15 has-[:checked]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-400"
+                  >
+                    <input
+                      type="radio"
+                      name="adoptPlan"
+                      value={choice}
+                      checked={adoptChoice === choice}
+                      onChange={() => setAdoptChoice(choice)}
+                      className="sr-only"
+                      data-field={choice === 'adopt' ? 'adoptPlan' : undefined}
+                    />
+                    {choice === 'adopt'
+                      ? t('my_stack_plan_adopt_yes', { defaultValue: 'Übernehmen' })
+                      : t('my_stack_plan_adopt_no', { defaultValue: 'Nicht übernehmen' })}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
           {saveError && (
             <p role="alert" className="mt-5 flex items-start gap-2 rounded-2xl border border-rose-400/25 bg-rose-400/[0.07] p-4 text-sm text-rose-100">
               <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={18} />

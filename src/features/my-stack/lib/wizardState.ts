@@ -26,6 +26,7 @@ import { WEEKDAY_KEYS, emptyRhythm, isOnDemandRhythm } from './intakeRhythm'
 import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
+import { sameSchedule, type LaterPlanStep } from './planAdoption'
 
 export type WizardStep =
   | 'substance'
@@ -78,24 +79,23 @@ export interface PlanEditContext {
    * Ausgangsstand des Editors (`snapshot`).
    */
   baseline?: IntakePlanDraft
+  /**
+   * Die geplanten Stufen dieses Zyklus. Aendert der Plan Tage, Tageszeiten
+   * oder Methode, fragt der Assistent, ob die spaeteren Stufen ihn
+   * uebernehmen sollen (siehe `stepsToAdopt`).
+   */
+  laterSteps?: LaterPlanStep[]
 }
 
-// Alles am Plan ausser den Mengen. Aendert sich davon nichts, ist die
-// Aenderung eine Dosisaenderung (oder Titrationsstufe), sonst eine Planaenderung.
-const SCHEDULE_FIELDS = [
-  'frequency', 'x_days_interval', 'interval_unit', 'cycle_on_days', 'cycle_off_days',
-  'schedule_days', 'intake_time', 'intake_time_custom', 'slot_days', 'method',
-] as const satisfies readonly (keyof PlanScheduleSnapshot)[]
-
+// Alles am Plan ausser den Mengen (`SCHEDULE_FIELDS`). Aendert sich davon
+// nichts, ist die Aenderung eine Dosisaenderung (oder Titrationsstufe), sonst
+// eine Planaenderung.
 export function changeKindFor(
   before: PlanScheduleSnapshot,
   after: PlanScheduleSnapshot,
   doseOnlyKind: Exclude<PlanChangeKind, 'initial'>,
 ): Exclude<PlanChangeKind, 'initial'> {
-  const scheduleChanged = SCHEDULE_FIELDS.some(field => (
-    JSON.stringify(before[field] ?? null) !== JSON.stringify(after[field] ?? null)
-  ))
-  return scheduleChanged ? 'schedule' : doseOnlyKind
+  return sameSchedule(before, after) ? doseOnlyKind : 'schedule'
 }
 
 export interface PlanChangeSubmission {
@@ -104,6 +104,8 @@ export interface PlanChangeSubmission {
   effective: PlanEffectiveDraft
   changeKind: Exclude<PlanChangeKind, 'initial'>
   timeZone: string
+  /** Spaetere Stufen, die den neuen Plan uebernehmen — ihre Mengen bleiben. */
+  adoptInto?: LaterPlanStep[]
 }
 
 export interface WizardState {

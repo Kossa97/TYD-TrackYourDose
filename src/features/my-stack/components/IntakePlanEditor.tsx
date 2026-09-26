@@ -33,6 +33,12 @@ import type {
 
 export interface IntakePlanEditorProps {
   scheduleOnly?: boolean
+  /**
+   * Ein laufender Plan wird geaendert: zuerst Tageszeiten und Mengen, die
+   * man fast immer anfasst. Tage und Methode stehen fest und liegen als eine
+   * Zeile mit „Aendern" darunter.
+   */
+  compactSchedule?: boolean
   trackingLevel: TrackingLevel
   plan: IntakePlanDraft
   dosageForm: DosageFormKey
@@ -115,6 +121,7 @@ function quantityLabel(form: ReturnType<typeof getDosageForm>): string {
 
 export function IntakePlanEditor({
   scheduleOnly = false,
+  compactSchedule = false,
   trackingLevel,
   plan,
   dosageForm,
@@ -131,6 +138,13 @@ export function IntakePlanEditor({
   const onDemand = rhythm.kind === 'on_demand'
   const methodChoices = methodChoicesFor(dosageForm)
   const einheit = plan.unit?.trim() ?? ''
+  const [scheduleOpen, setScheduleOpen] = useState(!compactSchedule)
+  // Ein Fehler in Tagen oder Methode oeffnet den Abschnitt — und er bleibt
+  // offen, wenn der Fehler behoben ist; sonst klappte er mitten im
+  // Korrigieren wieder zu.
+  const scheduleError = Boolean(errors.method || errors.scheduleDays || errors.frequency || errors.xDaysInterval)
+  if (!scheduleOpen && (scheduleError || !compactSchedule)) setScheduleOpen(true)
+  const showSchedule = scheduleOpen || scheduleError
 
   // Ein Reiter je gewaehltem Wochentag, in Wochenreihenfolge und hoechstens
   // sieben. Nur „Wochentage waehlen" kennt einzelne Tage — taeglich, im
@@ -362,438 +376,481 @@ export function IntakePlanEditor({
         </div>
   )
 
-  return (
-    <div className="min-w-0 space-y-5">
-      {/* Die Route folgt fast immer aus der Form — eine Tablette wird
-          geschluckt. Nur wo es wirklich mehrere gibt (was man spritzt, kann
-          subkutan, intramuskulaer oder intravenoes gehen), bleibt die Wahl. */}
-      {methodChoices.length > 1 && (
-        <section className="min-w-0">
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            {t('my_stack_plan_section_how', { defaultValue: 'Wie' })}
-          </h3>
-          {/* Die Aufschrift steht schon im Abschnittskopf. Fuer Screenreader
-              braucht das Feld sie trotzdem — sichtbar waere sie doppelt. */}
-          <label htmlFor="stack-plan-method" className="sr-only">
-            {t('my_stack_plan_method', { defaultValue: 'Methode' })}
-          </label>
-          <select
-            id="stack-plan-method"
-            value={plan.method}
-            onChange={event => onChange({ method: event.target.value })}
-            data-field="plan.method"
-            aria-invalid={Boolean(errors.method) || undefined}
-            aria-describedby={errors.method ? 'stack-plan-method-error' : undefined}
-            required
-            className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-          >
-            <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
-            {methodChoices.map(method => (
-              <option key={method} value={method}>{methodLabel(t, method)}</option>
-            ))}
-          </select>
-          {errors.method && (
-            <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">
-              {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* ── AN WELCHEN TAGEN ────────────────────────────────────────────── */}
-      <section className="min-w-0 space-y-4">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        {t('my_stack_plan_section_when', { defaultValue: 'An welchen Tagen' })}
-      </h3>
-      <fieldset data-field="plan.frequency" tabIndex={-1} className="min-w-0">
-        <legend className="sr-only">
-          {t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}
-        </legend>
-        <div className="grid min-w-0 grid-cols-2 gap-2">
-          {RHYTHM_OPTIONS.map(({ kind, labelKey, defaultValue, Icon }) => (
-            <button
-              key={kind}
-              type="button"
-              aria-pressed={rhythm.kind === kind}
-              data-rhythm-kind={kind}
-              onClick={() => selectKind(kind)}
-              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${rhythm.kind === kind
-                ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
-                : 'cursor-pointer border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
-              }`}
-            >
-              <Icon aria-hidden="true" size={17} className="shrink-0" />
-              <span className="min-w-0 break-words text-left">{t(labelKey, { defaultValue })}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* „Taeglich" heisst: an jedem Tag dasselbe. Wer montags morgens und
-            dienstags abends nimmt, braucht die Reiter — und die haengen an
-            „Wochentage waehlen". Alle sieben Tage anzuwaehlen ist fuer den
-            Kalender dasselbe wie taeglich, also fuehrt ein Satz dorthin,
-            statt die Frage im leeren Raum stehen zu lassen. */}
-        {rhythm.kind === 'daily' && (
-          <button
-            type="button"
-            data-rhythm-per-day
-            onClick={() => changeRhythm({ kind: 'weekdays', weekdays: [...WEEKDAY_KEYS] })}
-            className="mt-3 min-h-11 cursor-pointer text-left text-sm font-semibold text-sky-300 underline decoration-sky-400/40 underline-offset-4 transition-colors duration-200 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-          >
-            {t('my_stack_plan_daily_per_day', {
-              defaultValue: 'An jedem Tag eine andere Tageszeit?',
-            })}
-          </button>
-        )}
-
-        {!onDemand && rhythm.kind === 'weekdays' && (
-          <div
-            data-field="plan.scheduleDays"
-            className="mt-3 min-w-0"
-            aria-invalid={Boolean(errors.scheduleDays) || undefined}
-          >
-            <div className="grid min-w-0 grid-cols-4 gap-2 sm:grid-cols-7">
-              {WEEKDAY_KEYS.map(day => {
-                const selected = rhythm.weekdays.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => toggleWeekday(day)}
-                    className={`min-h-11 min-w-0 cursor-pointer rounded-xl border px-2 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
-                      ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
-                      : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
-                    }`}
-                  >
-                    {day}
-                  </button>
-                )
-              })}
-            </div>
-            {errors.scheduleDays && (
-              <p role="alert" className="mt-2 text-sm text-rose-300">
-                {errors.scheduleDays === 'day_without_intake'
-                  ? t('my_stack_plan_day_without_intake', { defaultValue: 'An mindestens einem gewählten Tag steht keine Einnahme.' })
-                  : t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
-              </p>
-            )}
-          </div>
-        )}
-
-        {!onDemand && rhythm.kind === 'interval' && (
-          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-            <input
-              id="stack-plan-interval"
-              type="number"
-              inputMode="numeric"
-              min={INTERVAL_BOUNDS[rhythm.intervalUnit].min}
-              max={INTERVAL_BOUNDS[rhythm.intervalUnit].max}
-              value={rhythm.intervalValue ?? ''}
-              onChange={event => changeRhythm({ intervalValue: numericValue(event.target.value) })}
-              data-field="plan.xDaysInterval"
-              aria-label={String(t('my_stack_rhythm_interval_value', { defaultValue: 'Abstand' }))}
-              aria-invalid={Boolean(errors.xDaysInterval) || undefined}
-              className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            />
+  // Tage und Methode — beim Aendern eines laufenden Plans stehen sie fest
+  // und liegen zugeklappt unter den Tageszeiten (siehe `compactSchedule`).
+  const zeitplanBereich = (
+    <>
+        {/* Die Route folgt fast immer aus der Form — eine Tablette wird
+            geschluckt. Nur wo es wirklich mehrere gibt (was man spritzt, kann
+            subkutan, intramuskulaer oder intravenoes gehen), bleibt die Wahl. */}
+        {methodChoices.length > 1 && (
+          <section className="min-w-0">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {t('my_stack_plan_section_how', { defaultValue: 'Wie' })}
+            </h3>
+            {/* Die Aufschrift steht schon im Abschnittskopf. Fuer Screenreader
+                braucht das Feld sie trotzdem — sichtbar waere sie doppelt. */}
+            <label htmlFor="stack-plan-method" className="sr-only">
+              {t('my_stack_plan_method', { defaultValue: 'Methode' })}
+            </label>
             <select
-              value={rhythm.intervalUnit}
-              onChange={event => changeRhythm({ intervalUnit: event.target.value as IntervalUnit })}
-              aria-label={String(t('my_stack_rhythm_interval_unit', { defaultValue: 'Einheit des Abstands' }))}
+              id="stack-plan-method"
+              value={plan.method}
+              onChange={event => onChange({ method: event.target.value })}
+              data-field="plan.method"
+              aria-invalid={Boolean(errors.method) || undefined}
+              aria-describedby={errors.method ? 'stack-plan-method-error' : undefined}
+              required
               className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
-              {INTERVAL_UNITS.map(unit => (
-                <option key={unit} value={unit}>
-                  {t(INTERVAL_UNIT_LABELS[unit].labelKey, { defaultValue: INTERVAL_UNIT_LABELS[unit].defaultValue })}
-                </option>
+              <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
+              {methodChoices.map(method => (
+                <option key={method} value={method}>{methodLabel(t, method)}</option>
               ))}
             </select>
-            {errors.xDaysInterval && (
-              <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
-                {t('my_stack_rhythm_interval_invalid', { defaultValue: 'Bitte gib einen Abstand innerhalb der gewählten Einheit an.' })}
+            {errors.method && (
+              <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">
+                {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
               </p>
             )}
-          </div>
+          </section>
         )}
 
-        {!onDemand && rhythm.kind === 'cycle' && (
-          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2">
-            <label className="min-w-0 text-sm text-slate-300">
-              <span className="mb-1 block font-semibold text-slate-200">
-                {t('my_stack_rhythm_cycle_on', { defaultValue: 'Tage an' })}
-              </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={90}
-                value={rhythm.onDays ?? ''}
-                onChange={event => changeRhythm({ onDays: numericValue(event.target.value) })}
-                data-field="plan.cycleOnDays"
-                aria-invalid={Boolean(errors.scheduleDays) || undefined}
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-            </label>
-            <label className="min-w-0 text-sm text-slate-300">
-              <span className="mb-1 block font-semibold text-slate-200">
-                {t('my_stack_rhythm_cycle_off', { defaultValue: 'Tage Pause' })}
-              </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={90}
-                value={rhythm.offDays ?? ''}
-                onChange={event => changeRhythm({ offDays: numericValue(event.target.value) })}
-                data-field="plan.cycleOffDays"
-                aria-invalid={Boolean(errors.scheduleDays) || undefined}
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-            </label>
-            {errors.scheduleDays && (
-              <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
-                {t('my_stack_rhythm_cycle_invalid', { defaultValue: 'Ein Wechsel braucht mindestens einen Tag an und einen Tag Pause.' })}
-              </p>
-            )}
-          </div>
-        )}
-
-      </fieldset>
-      </section>
-
-      {/* ── TAGESZEIT — direkt hinter den Tagen, denn die Zeitpunkte gehoeren
-             zu ihnen und nicht hinter den Zeitraum. */}
-      <section className="min-w-0 space-y-3">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        {t('my_stack_plan_section_each', { defaultValue: 'Tageszeit' })}
-      </h3>
-
-      {/* Ein Reiter je Tag. Die Zahl daneben sagt, wie viele Einnahmen dieser
-          Tag hat — „Mo 2 · Mi 1 · Fr 1" steht damit lesbar da, ohne dass man
-          sich durch die Reiter klicken muss. */}
-      {!onDemand && tage.length > 0 && (
-        <div
-          role="tablist"
-          data-plan-day-tabs
-          aria-label={String(t('my_stack_plan_day_tabs', { defaultValue: 'Tage des Plans' }))}
-          className="no-scrollbar -mx-1 flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
-        >
-          {tage.map(tag => {
-            const anzahl = amTag(tag).length
-            const offen = tag === offenerTag
-            return (
+        {/* ── AN WELCHEN TAGEN ────────────────────────────────────────────── */}
+        <section className="min-w-0 space-y-4">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {t('my_stack_plan_section_when', { defaultValue: 'An welchen Tagen' })}
+        </h3>
+        <fieldset data-field="plan.frequency" tabIndex={-1} className="min-w-0">
+          <legend className="sr-only">
+            {t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}
+          </legend>
+          <div className="grid min-w-0 grid-cols-2 gap-2">
+            {RHYTHM_OPTIONS.map(({ kind, labelKey, defaultValue, Icon }) => (
               <button
-                key={tag}
+                key={kind}
                 type="button"
-                role="tab"
-                id={`stack-plan-day-tab-${tag}`}
-                aria-selected={offen}
-                aria-controls={`stack-plan-day-panel-${tag}`}
-                data-plan-day-tab={tag}
-                data-plan-day-count={anzahl}
-                aria-label={String(t('my_stack_plan_day_tab', {
-                  defaultValue: '{{day}}: {{count}} Einnahmen',
-                  day: tag,
-                  count: anzahl,
-                }))}
-                onClick={() => setGewaehlterTag(tag)}
-                className={`flex min-h-11 shrink-0 snap-start cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${offen
-                  ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
-                  : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
+                aria-pressed={rhythm.kind === kind}
+                data-rhythm-kind={kind}
+                onClick={() => selectKind(kind)}
+                className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${rhythm.kind === kind
+                  ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
+                  : 'cursor-pointer border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
                 }`}
               >
-                <span aria-hidden="true">{tag}</span>
-                <span
-                  aria-hidden="true"
-                  className={`grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs font-semibold ${offen ? 'bg-sky-400/25 text-sky-100' : 'bg-white/[0.06] text-slate-400'}`}
-                >
-                  {anzahl}
-                </span>
+                <Icon aria-hidden="true" size={17} className="shrink-0" />
+                <span className="min-w-0 break-words text-left">{t(labelKey, { defaultValue })}</span>
               </button>
-            )
-          })}
-        </div>
-      )}
-
-      {onDemand ? (
-        <div className="min-w-0 space-y-3">
-          <p
-            data-plan-on-demand
-            className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400"
-          >
-            <Clock aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
-            <span>
-              {t('my_stack_plan_on_demand_hint', {
-                defaultValue: 'Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.',
-              })}
-            </span>
-          </p>
-          {/* Eine Menge braucht es trotzdem: „400 mg je Einnahme". Sie haengt
-              am selben einen Zeitpunkt, der nur seine Tageszeit nicht zeigt. */}
-          {tracksQuantity && mengeUndEinheit(0)}
-        </div>
-      ) : (
-        <div
-          role={offenerTag ? 'tabpanel' : undefined}
-          id={offenerTag ? `stack-plan-day-panel-${offenerTag}` : undefined}
-          aria-labelledby={offenerTag ? `stack-plan-day-tab-${offenerTag}` : undefined}
-          className="min-w-0 space-y-3"
-        >
-          {/* Die Frage nennt den Tag, den man gerade offen hat. Ohne sie waere
-              der Reiter die einzige Stelle, die sagt, wovon die Karten
-              darunter handeln — und den liest man beim Tippen nicht mehr. */}
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-            <h4 data-plan-day-question className="min-w-0 text-sm font-semibold text-slate-200">
-              {offenerTag
-                ? t('my_stack_plan_day_question', {
-                    defaultValue: 'Wie oft nimmst du {{day}} ein?',
-                    day: t(
-                      WEEKDAY_LABELS[offenerTag]?.labelKey ?? '',
-                      { defaultValue: WEEKDAY_LABELS[offenerTag]?.defaultValue ?? offenerTag },
-                    ),
-                  })
-                : t('my_stack_plan_day_question_any', { defaultValue: 'Wie oft nimmst du es am Tag ein?' })}
-            </h4>
-            {/* Die Antwort als Zaehler, direkt an der Frage: eine Zahl, zwei
-                Knoepfe. Vorher stand unter den Karten ein „+ Weitere Einnahme",
-                und wie viele es schon sind, musste man abzaehlen. */}
-            <div data-plan-slot-count className="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                onClick={removeLastSlot}
-                disabled={sichtbareSlots.length <= 1}
-                data-plan-slot-fewer
-                aria-label={String(t('my_stack_plan_slot_fewer', { defaultValue: 'Eine Einnahme weniger' }))}
-                className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
-              >
-                <Minus aria-hidden="true" size={18} />
-              </button>
-              <span
-                aria-live="polite"
-                className="min-w-8 text-center text-base font-semibold tabular-nums text-slate-100"
-              >
-                {sichtbareSlots.length}
-              </span>
-              <button
-                type="button"
-                onClick={addSlot}
-                disabled={sichtbareSlots.length >= MAX_INTAKE_SLOTS}
-                data-plan-slot-more
-                aria-label={String(t('my_stack_plan_slot_more', { defaultValue: 'Eine Einnahme mehr' }))}
-                className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
-              >
-                <Plus aria-hidden="true" size={18} />
-              </button>
-            </div>
+            ))}
           </div>
-          {sichtbareSlots.map(({ slot, index }) => (
-        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
-          <fieldset
-            aria-labelledby={`stack-plan-slot-title-${index}`}
-            data-field={`plan.slots.${index}.routineGroup`}
-            tabIndex={-1}
-            aria-invalid={Boolean(errors.slots?.[index]) || undefined}
-            aria-describedby={errors.slots?.[index] ? `stack-plan-routine-${index}-error` : undefined}
-            className="min-w-0"
-          >
-            {/* Aufschrift und Papierkorb in einer Zeile. */}
-            <div className="flex min-h-11 items-center justify-between gap-2">
-              <span id={`stack-plan-slot-title-${index}`} className="text-sm font-semibold text-slate-200">
-                {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
-                    einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
-                    „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
-                {plan.slots.length > 1
-                  ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
-                  : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
-              </span>
-              {sichtbareSlots.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeSlot(index)}
-                  aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
-                  className="-mr-1.5 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-                >
-                  <Trash2 aria-hidden="true" size={18} />
-                </button>
+
+          {/* „Taeglich" heisst: an jedem Tag dasselbe. Wer montags morgens und
+              dienstags abends nimmt, braucht die Reiter — und die haengen an
+              „Wochentage waehlen". Alle sieben Tage anzuwaehlen ist fuer den
+              Kalender dasselbe wie taeglich, also fuehrt ein Satz dorthin,
+              statt die Frage im leeren Raum stehen zu lassen. */}
+          {rhythm.kind === 'daily' && (
+            <button
+              type="button"
+              data-rhythm-per-day
+              onClick={() => changeRhythm({ kind: 'weekdays', weekdays: [...WEEKDAY_KEYS] })}
+              className="mt-3 min-h-11 cursor-pointer text-left text-sm font-semibold text-sky-300 underline decoration-sky-400/40 underline-offset-4 transition-colors duration-200 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+            >
+              {t('my_stack_plan_daily_per_day', {
+                defaultValue: 'An jedem Tag eine andere Tageszeit?',
+              })}
+            </button>
+          )}
+
+          {!onDemand && rhythm.kind === 'weekdays' && (
+            <div
+              data-field="plan.scheduleDays"
+              className="mt-3 min-w-0"
+              aria-invalid={Boolean(errors.scheduleDays) || undefined}
+            >
+              <div className="grid min-w-0 grid-cols-4 gap-2 sm:grid-cols-7">
+                {WEEKDAY_KEYS.map(day => {
+                  const selected = rhythm.weekdays.includes(day)
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleWeekday(day)}
+                      className={`min-h-11 min-w-0 cursor-pointer rounded-xl border px-2 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
+                        ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
+                        : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  )
+                })}
+              </div>
+              {errors.scheduleDays && (
+                <p role="alert" className="mt-2 text-sm text-rose-300">
+                  {errors.scheduleDays === 'day_without_intake'
+                    ? t('my_stack_plan_day_without_intake', { defaultValue: 'An mindestens einem gewählten Tag steht keine Einnahme.' })
+                    : t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
+                </p>
               )}
             </div>
-            {/* Drei Tageszeiten nebeneinander, Symbol ueber dem Wort, damit
-                auch lange Namen (Mezzogiorno) auf schmalen Handys ganz
-                bleiben. Die Auswahl zeigt die Kachel mit Haken — nicht nur
-                die Farbe; das Optionsfeld bleibt fuer Tastatur und Vorleser. */}
-            <div className="grid min-w-0 grid-cols-3 gap-1.5">
-              {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
-                <label
-                  key={value}
-                  className={`relative flex min-h-11 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-xs font-semibold leading-tight transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
-                    ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
-                    : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
+          )}
+
+          {!onDemand && rhythm.kind === 'interval' && (
+            <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+              <input
+                id="stack-plan-interval"
+                type="number"
+                inputMode="numeric"
+                min={INTERVAL_BOUNDS[rhythm.intervalUnit].min}
+                max={INTERVAL_BOUNDS[rhythm.intervalUnit].max}
+                value={rhythm.intervalValue ?? ''}
+                onChange={event => changeRhythm({ intervalValue: numericValue(event.target.value) })}
+                data-field="plan.xDaysInterval"
+                aria-label={String(t('my_stack_rhythm_interval_value', { defaultValue: 'Abstand' }))}
+                aria-invalid={Boolean(errors.xDaysInterval) || undefined}
+                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              />
+              <select
+                value={rhythm.intervalUnit}
+                onChange={event => changeRhythm({ intervalUnit: event.target.value as IntervalUnit })}
+                aria-label={String(t('my_stack_rhythm_interval_unit', { defaultValue: 'Einheit des Abstands' }))}
+                className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              >
+                {INTERVAL_UNITS.map(unit => (
+                  <option key={unit} value={unit}>
+                    {t(INTERVAL_UNIT_LABELS[unit].labelKey, { defaultValue: INTERVAL_UNIT_LABELS[unit].defaultValue })}
+                  </option>
+                ))}
+              </select>
+              {errors.xDaysInterval && (
+                <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
+                  {t('my_stack_rhythm_interval_invalid', { defaultValue: 'Bitte gib einen Abstand innerhalb der gewählten Einheit an.' })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!onDemand && rhythm.kind === 'cycle' && (
+            <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2">
+              <label className="min-w-0 text-sm text-slate-300">
+                <span className="mb-1 block font-semibold text-slate-200">
+                  {t('my_stack_rhythm_cycle_on', { defaultValue: 'Tage an' })}
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={90}
+                  value={rhythm.onDays ?? ''}
+                  onChange={event => changeRhythm({ onDays: numericValue(event.target.value) })}
+                  data-field="plan.cycleOnDays"
+                  aria-invalid={Boolean(errors.scheduleDays) || undefined}
+                  className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                />
+              </label>
+              <label className="min-w-0 text-sm text-slate-300">
+                <span className="mb-1 block font-semibold text-slate-200">
+                  {t('my_stack_rhythm_cycle_off', { defaultValue: 'Tage Pause' })}
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={90}
+                  value={rhythm.offDays ?? ''}
+                  onChange={event => changeRhythm({ offDays: numericValue(event.target.value) })}
+                  data-field="plan.cycleOffDays"
+                  aria-invalid={Boolean(errors.scheduleDays) || undefined}
+                  className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                />
+              </label>
+              {errors.scheduleDays && (
+                <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
+                  {t('my_stack_rhythm_cycle_invalid', { defaultValue: 'Ein Wechsel braucht mindestens einen Tag an und einen Tag Pause.' })}
+                </p>
+              )}
+            </div>
+          )}
+
+        </fieldset>
+        </section>
+    </>
+  )
+
+  const tageszeitenBereich = (
+    <>
+        {/* ── TAGESZEIT — direkt hinter den Tagen, denn die Zeitpunkte gehoeren
+               zu ihnen und nicht hinter den Zeitraum. */}
+        <section className="min-w-0 space-y-3">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {t('my_stack_plan_section_each', { defaultValue: 'Tageszeit' })}
+        </h3>
+
+        {/* Ein Reiter je Tag. Die Zahl daneben sagt, wie viele Einnahmen dieser
+            Tag hat — „Mo 2 · Mi 1 · Fr 1" steht damit lesbar da, ohne dass man
+            sich durch die Reiter klicken muss. */}
+        {!onDemand && tage.length > 0 && (
+          <div
+            role="tablist"
+            data-plan-day-tabs
+            aria-label={String(t('my_stack_plan_day_tabs', { defaultValue: 'Tage des Plans' }))}
+            className="no-scrollbar -mx-1 flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
+          >
+            {tage.map(tag => {
+              const anzahl = amTag(tag).length
+              const offen = tag === offenerTag
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  role="tab"
+                  id={`stack-plan-day-tab-${tag}`}
+                  aria-selected={offen}
+                  aria-controls={`stack-plan-day-panel-${tag}`}
+                  data-plan-day-tab={tag}
+                  data-plan-day-count={anzahl}
+                  aria-label={String(t('my_stack_plan_day_tab', {
+                    defaultValue: '{{day}}: {{count}} Einnahmen',
+                    day: tag,
+                    count: anzahl,
+                  }))}
+                  onClick={() => setGewaehlterTag(tag)}
+                  className={`flex min-h-11 shrink-0 snap-start cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${offen
+                    ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
+                    : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name={`stack-plan-routine-${index}`}
-                    value={value}
-                    checked={slot.routineGroup === value}
-                    onChange={() => changeSlot(index, { routineGroup: value })}
-                    required
-                    className="sr-only"
-                  />
-                  {slot.routineGroup === value && (
-                    <Check aria-hidden="true" size={12} strokeWidth={3} className="absolute right-1.5 top-1.5" />
-                  )}
-                  <Icon aria-hidden="true" size={16} className="shrink-0" />
-                  <span className="min-w-0 max-w-full break-words">{t(labelKey, { defaultValue })}</span>
-                </label>
-              ))}
-            </div>
-            {errors.slots?.[index] && (
-              <p id={`stack-plan-routine-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
-                {errors.slots[index] === 'duplicate'
-                  ? t('my_stack_plan_slot_duplicate', { defaultValue: 'Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.' })
-                  : errors.slots[index] === 'unknown_day'
-                    ? t('my_stack_plan_slot_unknown_day', { defaultValue: 'Dieser Zeitpunkt liegt an einem Tag, den der Plan nicht auswählt.' })
-                    : t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
-              </p>
-            )}
-          </fieldset>
-
-          {/* Uhrzeit, Menge und Einheit in einer Zeile. `appearance-none`:
-              iOS gibt dem Uhrzeitfeld sonst eine Mindestbreite, und es ragt
-              ueber die Karte hinaus. Auf Touch-Geraeten faellt Chromes
-              Uhrsymbol weg — es schnitt „08:00 AM" ab, und ein Tipp ins Feld
-              oeffnet die Auswahl ohnehin; am Desktop bleibt es der Weg dorthin.
-              Unter 360 px stehen Uhrzeit und Menge untereinander. */}
-          <div className={`grid min-w-0 items-start gap-2 ${tracksQuantity
-            ? 'grid-cols-1 min-[360px]:grid-cols-[6.75rem_minmax(0,1fr)] sm:grid-cols-[9rem_minmax(0,1fr)]'
-            : 'grid-cols-1'}`}>
-            <div className="min-w-0">
-              <label htmlFor={`stack-plan-time-${index}`} className="mb-1.5 block text-xs font-semibold text-slate-400">
-                {t('my_stack_plan_time_short', { defaultValue: 'Uhrzeit' })}
-                {' '}
-                <span className="font-normal text-slate-500">
-                  {t('my_stack_plan_optional', { defaultValue: 'optional' })}
-                </span>
-              </label>
-              <input
-                id={`stack-plan-time-${index}`}
-                type="time"
-                value={slot.time ?? ''}
-                onChange={event => changeSlot(index, { time: event.target.value || null })}
-                className="input block min-h-11 w-full min-w-0 max-w-full appearance-none px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 [@media(pointer:coarse)]:[&::-webkit-calendar-picker-indicator]:hidden"
-              />
-            </div>
-
-            {tracksQuantity && mengeUndEinheit(index, true)}
+                  <span aria-hidden="true">{tag}</span>
+                  <span
+                    aria-hidden="true"
+                    className={`grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs font-semibold ${offen ? 'bg-sky-400/25 text-sky-100' : 'bg-white/[0.06] text-slate-400'}`}
+                  >
+                    {anzahl}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-          {tracksQuantity && bruchteile(index)}
+        )}
+
+        {onDemand ? (
+          <div className="min-w-0 space-y-3">
+            <p
+              data-plan-on-demand
+              className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400"
+            >
+              <Clock aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
+              <span>
+                {t('my_stack_plan_on_demand_hint', {
+                  defaultValue: 'Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.',
+                })}
+              </span>
+            </p>
+            {/* Eine Menge braucht es trotzdem: „400 mg je Einnahme". Sie haengt
+                am selben einen Zeitpunkt, der nur seine Tageszeit nicht zeigt. */}
+            {tracksQuantity && mengeUndEinheit(0)}
+          </div>
+        ) : (
+          <div
+            role={offenerTag ? 'tabpanel' : undefined}
+            id={offenerTag ? `stack-plan-day-panel-${offenerTag}` : undefined}
+            aria-labelledby={offenerTag ? `stack-plan-day-tab-${offenerTag}` : undefined}
+            className="min-w-0 space-y-3"
+          >
+            {/* Die Frage nennt den Tag, den man gerade offen hat. Ohne sie waere
+                der Reiter die einzige Stelle, die sagt, wovon die Karten
+                darunter handeln — und den liest man beim Tippen nicht mehr. */}
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+              <h4 data-plan-day-question className="min-w-0 text-sm font-semibold text-slate-200">
+                {offenerTag
+                  ? t('my_stack_plan_day_question', {
+                      defaultValue: 'Wie oft nimmst du {{day}} ein?',
+                      day: t(
+                        WEEKDAY_LABELS[offenerTag]?.labelKey ?? '',
+                        { defaultValue: WEEKDAY_LABELS[offenerTag]?.defaultValue ?? offenerTag },
+                      ),
+                    })
+                  : t('my_stack_plan_day_question_any', { defaultValue: 'Wie oft nimmst du es am Tag ein?' })}
+              </h4>
+              {/* Die Antwort als Zaehler, direkt an der Frage: eine Zahl, zwei
+                  Knoepfe. Vorher stand unter den Karten ein „+ Weitere Einnahme",
+                  und wie viele es schon sind, musste man abzaehlen. */}
+              <div data-plan-slot-count className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={removeLastSlot}
+                  disabled={sichtbareSlots.length <= 1}
+                  data-plan-slot-fewer
+                  aria-label={String(t('my_stack_plan_slot_fewer', { defaultValue: 'Eine Einnahme weniger' }))}
+                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+                >
+                  <Minus aria-hidden="true" size={18} />
+                </button>
+                <span
+                  aria-live="polite"
+                  className="min-w-8 text-center text-base font-semibold tabular-nums text-slate-100"
+                >
+                  {sichtbareSlots.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={addSlot}
+                  disabled={sichtbareSlots.length >= MAX_INTAKE_SLOTS}
+                  data-plan-slot-more
+                  aria-label={String(t('my_stack_plan_slot_more', { defaultValue: 'Eine Einnahme mehr' }))}
+                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+                >
+                  <Plus aria-hidden="true" size={18} />
+                </button>
+              </div>
             </div>
-          ))}
+            {sichtbareSlots.map(({ slot, index }) => (
+          <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
+            <fieldset
+              aria-labelledby={`stack-plan-slot-title-${index}`}
+              data-field={`plan.slots.${index}.routineGroup`}
+              tabIndex={-1}
+              aria-invalid={Boolean(errors.slots?.[index]) || undefined}
+              aria-describedby={errors.slots?.[index] ? `stack-plan-routine-${index}-error` : undefined}
+              className="min-w-0"
+            >
+              {/* Aufschrift und Papierkorb in einer Zeile. */}
+              <div className="flex min-h-11 items-center justify-between gap-2">
+                <span id={`stack-plan-slot-title-${index}`} className="text-sm font-semibold text-slate-200">
+                  {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
+                      einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
+                      „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
+                  {plan.slots.length > 1
+                    ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
+                    : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
+                </span>
+                {sichtbareSlots.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSlot(index)}
+                    aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
+                    className="-mr-1.5 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+                  >
+                    <Trash2 aria-hidden="true" size={18} />
+                  </button>
+                )}
+              </div>
+              {/* Drei Tageszeiten nebeneinander, Symbol ueber dem Wort, damit
+                  auch lange Namen (Mezzogiorno) auf schmalen Handys ganz
+                  bleiben. Die Auswahl zeigt die Kachel mit Haken — nicht nur
+                  die Farbe; das Optionsfeld bleibt fuer Tastatur und Vorleser. */}
+              <div className="grid min-w-0 grid-cols-3 gap-1.5">
+                {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
+                  <label
+                    key={value}
+                    className={`relative flex min-h-11 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center text-xs font-semibold leading-tight transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
+                      ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
+                      : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`stack-plan-routine-${index}`}
+                      value={value}
+                      checked={slot.routineGroup === value}
+                      onChange={() => changeSlot(index, { routineGroup: value })}
+                      required
+                      className="sr-only"
+                    />
+                    {slot.routineGroup === value && (
+                      <Check aria-hidden="true" size={12} strokeWidth={3} className="absolute right-1.5 top-1.5" />
+                    )}
+                    <Icon aria-hidden="true" size={16} className="shrink-0" />
+                    <span className="min-w-0 max-w-full break-words">{t(labelKey, { defaultValue })}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.slots?.[index] && (
+                <p id={`stack-plan-routine-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
+                  {errors.slots[index] === 'duplicate'
+                    ? t('my_stack_plan_slot_duplicate', { defaultValue: 'Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.' })
+                    : errors.slots[index] === 'unknown_day'
+                      ? t('my_stack_plan_slot_unknown_day', { defaultValue: 'Dieser Zeitpunkt liegt an einem Tag, den der Plan nicht auswählt.' })
+                      : t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
+                </p>
+              )}
+            </fieldset>
 
-        </div>
+            {/* Uhrzeit, Menge und Einheit in einer Zeile. `appearance-none`:
+                iOS gibt dem Uhrzeitfeld sonst eine Mindestbreite, und es ragt
+                ueber die Karte hinaus. Auf Touch-Geraeten faellt Chromes
+                Uhrsymbol weg — es schnitt „08:00 AM" ab, und ein Tipp ins Feld
+                oeffnet die Auswahl ohnehin; am Desktop bleibt es der Weg dorthin.
+                Unter 360 px stehen Uhrzeit und Menge untereinander. */}
+            <div className={`grid min-w-0 items-start gap-2 ${tracksQuantity
+              ? 'grid-cols-1 min-[360px]:grid-cols-[6.75rem_minmax(0,1fr)] sm:grid-cols-[9rem_minmax(0,1fr)]'
+              : 'grid-cols-1'}`}>
+              <div className="min-w-0">
+                <label htmlFor={`stack-plan-time-${index}`} className="mb-1.5 block text-xs font-semibold text-slate-400">
+                  {t('my_stack_plan_time_short', { defaultValue: 'Uhrzeit' })}
+                  {' '}
+                  <span className="font-normal text-slate-500">
+                    {t('my_stack_plan_optional', { defaultValue: 'optional' })}
+                  </span>
+                </label>
+                <input
+                  id={`stack-plan-time-${index}`}
+                  type="time"
+                  value={slot.time ?? ''}
+                  onChange={event => changeSlot(index, { time: event.target.value || null })}
+                  className="input block min-h-11 w-full min-w-0 max-w-full appearance-none px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 [@media(pointer:coarse)]:[&::-webkit-calendar-picker-indicator]:hidden"
+                />
+              </div>
+
+              {tracksQuantity && mengeUndEinheit(index, true)}
+            </div>
+            {tracksQuantity && bruchteile(index)}
+              </div>
+            ))}
+
+          </div>
+        )}
+
+        </section>
+    </>
+  )
+
+  const zeitplanZeile = (
+    <section data-plan-schedule-summary className="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {t('my_stack_plan_schedule_title', { defaultValue: 'Tage & Methode' })}
+        </p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-slate-200">
+          {[rhythmText(rhythmSummary(rhythm), t), methodChoices.length > 1 && plan.method ? methodLabel(t, plan.method) : null]
+            .filter(Boolean).join(' · ')}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setScheduleOpen(true)}
+        className="min-h-11 shrink-0 cursor-pointer rounded-lg px-2 text-sm font-semibold text-sky-300 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+      >
+        {t('my_stack_plan_schedule_change', { defaultValue: 'Ändern' })}
+      </button>
+    </section>
+  )
+
+  return (
+    <div className="min-w-0 space-y-5">
+      {compactSchedule ? (
+        <>
+          {tageszeitenBereich}
+          {showSchedule ? zeitplanBereich : zeitplanZeile}
+        </>
+      ) : (
+        <>
+          {zeitplanBereich}
+          {tageszeitenBereich}
+        </>
       )}
-
-      </section>
 
       {!scheduleOnly && <>
       {/* ── ZEITRAUM — erst was und wann, dann ab wann. Beide Daten in einer

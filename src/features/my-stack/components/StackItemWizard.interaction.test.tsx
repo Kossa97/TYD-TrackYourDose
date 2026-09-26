@@ -6,12 +6,12 @@ import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogE
 import type { PlanChangeSubmission, WizardSaveMode } from '../lib/wizardState'
 import { emptyRhythm } from '../lib/intakeRhythm'
 import type { PlanRpcClient } from '../services/planLifecycle'
-import { savePlanChange } from '../services/stackItems'
+import { planScheduleSnapshot, savePlanChange } from '../services/stackItems'
 import { StackItemWizard, type StackItemWizardProps } from './StackItemWizard'
 import { SubstanceSearch } from './SubstanceSearch'
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'de' } }),
 }))
 
 const vitaminD3: SubstanceCatalogEntry = {
@@ -577,7 +577,7 @@ describe('StackItemWizard interactions', () => {
     })
   })
 
-  it('adds a step behind the last one: date only, never before its minimum, dose-only as titration', async () => {
+  it('adds a step in the same form as a plan change, preset to a day, dose-only as titration', async () => {
     const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
     renderWizard({
       existingItem: existingVitaminD,
@@ -598,8 +598,8 @@ describe('StackItemWizard interactions', () => {
     // Eine Dosisstufe ist nur Plan: Produkt, Marke und Notizen gehoeren zur Substanz.
     expect(screen.queryByLabelText('my_stack_notes_optional')).toBeNull()
     expect(screen.queryByRole('button', { name: /my_stack_product/ })).toBeNull()
-    expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
-    const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
+    expect((screen.getByRole('radio', { name: 'my_stack_plan_effective_now' }) as HTMLInputElement).checked).toBe(false)
+    const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date', { selector: 'input[type="date"]' }) as HTMLInputElement
     expect(boundaryDate.value).toBe('2099-10-08')
     expect(boundaryDate.min).toBe('2099-10-02')
 
@@ -686,6 +686,78 @@ describe('StackItemWizard interactions', () => {
       changeKind: 'dose',
       snapshot: { dose: 7000, intake_time_custom: '08:30' },
     })
+  })
+
+  it('shows times first, days and method as one line, and asks before a planned step takes over the new plan', async () => {
+    const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
+    const laterStep = {
+      versionId: 'future-1',
+      effectiveLocalDate: '2099-10-08',
+      effectiveAt: null,
+      changeKind: 'titration' as const,
+      snapshot: planScheduleSnapshot({ ...existingPlan, slots: [{ ...existingPlan.slots[0], dose: 7000 }] }, existingVitaminD.tracking_level),
+    }
+    renderWizard({
+      existingItem: existingVitaminD,
+      intent: 'plan',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        snapshot: existingPlan,
+        changeKind: 'dose',
+        purpose: 'adjust',
+        timeZone: 'Europe/Berlin',
+        laterSteps: [laterStep],
+      },
+      onSavePlanChange,
+    } as Partial<StackItemWizardProps>)
+
+    // Tageszeiten offen, Tage und Methode zugeklappt dahinter.
+    const summary = document.querySelector('[data-plan-schedule-summary]')!
+    const time = screen.getByLabelText('my_stack_plan_time_short my_stack_plan_optional')
+    expect(summary).toBeTruthy()
+    expect(time.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    fireEvent.click(within(summary as HTMLElement).getByRole('button', { name: 'my_stack_plan_schedule_change' }))
+    expect(document.querySelector('[data-plan-schedule-summary]')).toBeNull()
+
+    // Eine andere Uhrzeit ist eine Planaenderung: erst fragen.
+    fireEvent.change(time, { target: { value: '09:00' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    expect(await screen.findByText('my_stack_plan_adopt_one')).toBeTruthy()
+    expect(onSavePlanChange).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('radio', { name: 'my_stack_plan_adopt_no' }))
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
+    expect(onSavePlanChange.mock.calls[0][0]).toMatchObject({ changeKind: 'schedule', adoptInto: [] })
+  })
+
+  it('does not ask about planned steps when only amounts change', async () => {
+    const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
+    renderWizard({
+      existingItem: existingVitaminD,
+      intent: 'plan',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        snapshot: existingPlan,
+        changeKind: 'dose',
+        purpose: 'adjust',
+        timeZone: 'Europe/Berlin',
+        laterSteps: [{
+          versionId: 'future-1',
+          effectiveLocalDate: '2099-10-08',
+          effectiveAt: null,
+          changeKind: 'titration',
+          snapshot: planScheduleSnapshot(existingPlan, existingVitaminD.tracking_level),
+        }],
+      },
+      onSavePlanChange,
+    } as Partial<StackItemWizardProps>)
+
+    fireEvent.change(screen.getByLabelText(/my_stack_plan_quantity$/), { target: { value: '6000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
+    expect(screen.queryByText('my_stack_plan_adopt_one')).toBeNull()
+    expect(onSavePlanChange.mock.calls[0][0]).toMatchObject({ changeKind: 'dose', adoptInto: [] })
   })
 
   it('reuses the same setup key after a visible save failure', async () => {

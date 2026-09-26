@@ -40,12 +40,13 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
-import type { WizardSaveMode } from './lib/wizardState'
+import { changeKindFor, type WizardSaveMode } from './lib/wizardState'
+import { adoptSchedule, type LaterPlanStep } from './lib/planAdoption'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities, type SortAbility } from './lib/stackSort'
@@ -66,6 +67,7 @@ import {
   loadCycleTimelines,
   pauseCycle,
   removeFuturePlanVersion,
+  replaceFuturePlanVersion,
   resolveCycleMigrationConflict,
   restartCycle,
   resumeCycle,
@@ -1190,6 +1192,22 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     maxEffectiveDate: cyclePeriod(timeline, timeZone).last,
   })
 
+  // Die geplanten Stufen, im Format, in dem der Assistent speichert — damit
+  // der Vergleich „traegt die Stufe noch den alten Plan?" gleich rechnet.
+  const laterStepsOf = (p: Peptide, timeline: CycleTimeline): LaterPlanStep[] => (
+    planVersionSegments(timeline, new Date(), timeZone)
+      .filter(segment => segment.status === 'future'
+        && segment.version.effective_kind === 'local_date'
+        && Boolean(segment.version.effective_local_date))
+      .map(({ version }) => ({
+        versionId: version.id,
+        effectiveLocalDate: version.effective_local_date,
+        effectiveAt: null,
+        changeKind: version.change_kind,
+        snapshot: planScheduleSnapshot(versionAsIntakePlanDraft(timeline, version, timeZone), p.tracking_level),
+      }))
+  )
+
   const openEditCycle = (
     p: Peptide,
     cycleId: string,
@@ -1219,6 +1237,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           : { kind: 'now', localDate: null },
         ...effectiveDateLimits(timeline, versionId ?? null),
         ...(previous ? { baseline: versionAsIntakePlanDraft(timeline, previous, timeZone) } : {}),
+        laterSteps: laterStepsOf(p, timeline),
       }, null)
     } else {
       if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
@@ -1226,8 +1245,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
 
-  // Eine Stufe hinter der letzten: vorausgefuellt mit ihr, nur mit Datum.
-  // Aendern sich nur Mengen, ist es eine Titrationsstufe.
+  // Eine Stufe hinter der letzten: vorausgefuellt mit ihr, das Datum danach
+  // vorgewaehlt. Dasselbe Formular wie „Plan anpassen" — nur der Einstieg und
+  // die Vorwahl sind anders. Aendern sich nur Mengen, ist es eine Titrationsstufe.
   const openAddPlanStep = (
     p: Peptide,
     timeline: CycleTimeline,
@@ -1241,8 +1261,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       purpose: 'add_step',
       timeZone,
       initialEffective: { kind: 'date', localDate: dates.defaultDate },
-      minEffectiveDate: dates.minDate,
       ...effectiveDateLimits(timeline, null),
+      laterSteps: laterStepsOf(p, timeline),
     }, null)
   }
 
@@ -1287,7 +1307,30 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       )
       recovery.committed = true
     }
+    // Spaetere Stufen, die den neuen Plan uebernehmen sollen: je Stufe ein
+    // eigener, wiederholbarer Schritt — schlaegt einer fehl, gelten die
+    // schon gespeicherten weiter, und ein erneutes Speichern macht dort weiter.
+    for (const step of submission.adoptInto ?? []) {
+      const mutation = lifecycleKey('adopt-plan', `${identity}:${step.versionId}`)
+      if (!mutation.mutation.committed) {
+        const schedule = adoptSchedule(submission.snapshot, step.snapshot)
+        await replaceFuturePlanVersion(stackDataClient as never, {
+          versionId: step.versionId,
+          effectiveKind: 'local_date',
+          effectiveAt: null,
+          effectiveLocalDate: step.effectiveLocalDate ?? '',
+          changeKind: changeKindFor(submission.snapshot, schedule, step.changeKind === 'titration' ? 'titration' : 'dose'),
+          schedule,
+          timeZone: submission.timeZone,
+          idempotencyKey: mutation.mutation.key,
+        })
+        mutation.mutation.committed = true
+      }
+    }
     await loadTimelines(true)
+    for (const step of submission.adoptInto ?? []) {
+      lifecycleIdempotencyKeysRef.current.delete(`adopt-plan:${identity}:${step.versionId}`)
+    }
     planSaveRecoveryRef.current = null
   }
 

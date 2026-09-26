@@ -1369,5 +1369,12 @@
   "my_stack_plan_draw_units": "= {{units}} U to draw",
   "my_stack_plan_units_short": "{{units}} U",
   "my_stack_plan_units_note": "U = units on the syringe. Worked out from {{amount}} in {{ml}} ml ({{perMl}}/ml).",
-  "my_stack_product_only": "Product"
+  "my_stack_product_only": "Product",
+  "my_stack_plan_schedule_title": "Days & method",
+  "my_stack_plan_schedule_change": "Change",
+  "my_stack_plan_adopt_legend": "Planned steps",
+  "my_stack_plan_adopt_one": "A step is planned for {{date}}. Should it take over the new plan? Its amounts stay.",
+  "my_stack_plan_adopt_many": "{{n}} steps are planned from {{date}}. Should they take over the new plan? Their amounts stay.",
+  "my_stack_plan_adopt_yes": "Take over",
+  "my_stack_plan_adopt_no": "Keep as is"
 }
