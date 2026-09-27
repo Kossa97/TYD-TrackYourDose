@@ -3240,15 +3240,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790472876.3421135,
-    "seen": 1790473213.315484,
-    "ast_hash": "c66024059fd45d4063e1bf7b2a7b813e",
+    "mtime": 1790475015.4055157,
+    "seen": 1790475360.9264514,
+    "ast_hash": "05e6ca9459900c4455a9b90dcb98969b",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790473513.4773514,
-    "seen": 1790473806.0348842,
-    "ast_hash": "803858d4a8662b08af63956d12ac4671",
+    "mtime": 1790474911.6184459,
+    "seen": 1790475360.9264534,
+    "ast_hash": "e5c506983c0b29e5912e665f2ce71f2a",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3372,9 +3372,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.tsx": {
-    "mtime": 1790374115.2311966,
-    "seen": 1790374154.1572478,
-    "ast_hash": "9915867d5501a81a92485d2b6f944349",
+    "mtime": 1790474824.1468349,
+    "seen": 1790475360.9264886,
+    "ast_hash": "a1ac0f25cba2f43efdca1db7a96926ae",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackArchive.tsx": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790470481.8081112,
-    "seen": 1790470660.1169236,
-    "ast_hash": "10720648a80ecb7cf012037f5644d4d3",
+    "mtime": 1790474827.6551213,
+    "seen": 1790475360.926493,
+    "ast_hash": "5d5a99ee10717a1865bd4a5abce540f3",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3420,9 +3420,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageDetailSheet.tsx": {
-    "mtime": 1790013049.5489206,
-    "seen": 1790013226.2836242,
-    "ast_hash": "10690befa8eccc66c360fd1bcc3be035",
+    "mtime": 1790474911.6167843,
+    "seen": 1790475360.926504,
+    "ast_hash": "b43ac03089ae83c4335ed3cb3c84e015",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
@@ -4176,15 +4176,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.test.ts": {
-    "mtime": 1790116333.8817444,
-    "seen": 1790116428.6083908,
-    "ast_hash": "92044062d1e033aa19a820cb88156bd0",
+    "mtime": 1790475015.4050848,
+    "seen": 1790475360.9266446,
+    "ast_hash": "2470ed961a71219522fdac8eacb7467f",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.ts": {
-    "mtime": 1790470371.4714625,
-    "seen": 1790470660.117061,
-    "ast_hash": "bb55f77e176a40673455f80387a1c564",
+    "mtime": 1790474730.2418284,
+    "seen": 1790475360.9266453,
+    "ast_hash": "4e04eead135395a75b14239f31df4bcd",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
@@ -4200,15 +4200,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackInventory.test.ts": {
-    "mtime": 1789927455.6180346,
-    "seen": 1789927683.0402586,
-    "ast_hash": "a0a358cad36fcd62ac28e121b38f85bb",
+    "mtime": 1790475085.311805,
+    "seen": 1790475360.9266481,
+    "ast_hash": "4c4b21e965cd7205ad08abf2aa91f3f2",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackInventory.ts": {
-    "mtime": 1790473535.908633,
-    "seen": 1790473806.0351021,
-    "ast_hash": "4b5ccf36a3ea27f19b8ef51b646cf2a9",
+    "mtime": 1790474763.9092948,
+    "seen": 1790475360.926649,
+    "ast_hash": "bd2d03bf3a554d09937d0ecd4a4786ed",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.test.ts": {
@@ -4326,9 +4326,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/types.ts": {
-    "mtime": 1790374115.23744,
-    "seen": 1790374154.1577058,
-    "ast_hash": "b8f7d70f62dc0b90ca381a674fa04971",
+    "mtime": 1790474730.2413914,
+    "seen": 1790475360.926666,
+    "ast_hash": "cb46195e71d59642ccf5e63076f25bd3",
     "semantic_hash": ""
   },
   "src/features/peptipedia/LegacyPeptipediaRedirect.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790473743.529868,
-    "seen": 1790473806.0353289,
+    "mtime": 1790475311.2253275,
+    "seen": 1790475360.926949,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5445,6 +5445,12 @@
     "mtime": 1790473528.0860684,
     "seen": 1790473806.0348897,
     "ast_hash": "921df6f48d1f5b2f0a5252ba24c366eb",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/components/ProductInventorySection.details.test.tsx": {
+    "mtime": 1790475085.301903,
+    "seen": 1790475360.9264855,
+    "ast_hash": "8d8a645ffa1ebd098afb7ad3a0d2582f",
     "semantic_hash": ""
   }
 }
