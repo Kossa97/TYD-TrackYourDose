@@ -32,6 +32,7 @@ import { anbruchArt, spritzenRechnung, vialBuchtUeberBestand, vorratTeile } from
 import {
   openInventoryContainer,
   startInventory,
+  saveInventoryDetails,
   updateInventory,
   uploadBatchDocument,
 } from './services/stackInventory'
@@ -1053,6 +1054,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const savedRow = FEATURES.planTimelineV2 && draft.id && !wizardCycleId && !wizardNeuerZyklus
       ? await saveStackItem(stackDataClient as never, draft)
       : await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
+    // Beim Bearbeiten schreibt `save_stack_item` den Bestand nicht mit: die
+    // Angaben zur Packung (Charge, Anmischen, Haltbarkeit) gehen extra.
+    if (draft.id && user) {
+      await saveInventoryDetails(stackDataClient as never, {
+        userId: user.id,
+        stackItemId: draft.id,
+        before: peptides.find(item => item.id === draft.id)?.inventory ?? null,
+        draft: draft.inventory,
+      })
+    }
     await Promise.all([
       loadPeptides(),
       loadCycles(),
@@ -2273,22 +2284,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     analyse: String(t('my_stack_stock_document')),
                     notizen: 'Notizen',
                   }
-                  // Was im Bestand steht, laesst sich hier direkt aendern: ein
-                  // Tipp oeffnet nur dieses eine Feld. Voraussetzung ist, dass
-                  // die Anzeige auch aus dem Bestand liest — beim Vial dieselbe
-                  // Regel wie `withVialInventory`; sonst bleibt es Anzeige.
-                  const bestandFuehrtAngaben = Boolean(activePeptide.inventory)
-                    && (art !== 'vial' || vialBuchtUeberBestand(activePeptide.inventory, activePeptide.ingredients))
-                  const FELD_EDITOR: Partial<Record<DetailFeld, BestandEditorArt>> = {
-                    fluessigkeit: 'reconstitution_ml',
-                    rekonstituiert_am: 'opened_at',
-                    haltbarkeit: 'use_within_days',
-                    ablauf: 'expires_at',
-                    batch: 'batch_number',
-                    quelle: 'batch_source',
-                    analyse: 'batch_file_url',
-                  }
-                  const editorFuer = (feld: DetailFeld) => (bestandFuehrtAngaben ? FELD_EDITOR[feld] ?? null : null)
                   const zeileFuer = (feld: DetailFeld): InfoRow => {
                     const a = angaben[feld]
                     const wert = angabeText(feld, a)
@@ -2365,29 +2360,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             const zeile = zeileFuer(feld)
                             const vollbreit = ('wide' in zeile && zeile.wide)
                               || (abschnitt.id === 'produkt' && feld === 'wirkstoff' && abschnitt.felder.length % 2 === 1)
-                            const editor = editorFuer(feld)
                             const kachel = `min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${vollbreit ? 'col-span-2' : ''}`
-                            if (editor) {
-                              // Die ganze Kachel ist der Knopf; ein Dokument
-                              // oeffnet man nach dem Tipp im Feld selbst.
-                              return (
-                                <button
-                                  key={feld}
-                                  type="button"
-                                  data-stack-detail-field={feld}
-                                  onClick={() => setBestandEdit({ peptideId: activePeptide.id, editor })}
-                                  className={`${kachel} text-left transition-colors hover:border-sky-400/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
-                                >
-                                  <span className="flex items-center justify-between gap-1">
-                                    <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</span>
-                                    <Pencil size={11} aria-hidden="true" className="shrink-0 text-slate-600" />
-                                  </span>
-                                  <span className="mt-1 block truncate text-sm font-semibold text-slate-200">
-                                    {'value' in zeile ? zeile.value : angabeText(feld, angaben[feld])}
-                                  </span>
-                                </button>
-                              )
-                            }
                             return (
                               <div key={feld} data-stack-detail-field={feld} className={kachel}>
                                 <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</p>
@@ -2465,44 +2438,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         bevor man ueberhaupt gesehen hat, was man da vor sich
                         hat. Was man liest, gehoert nach oben; was man am
                         Eintrag AENDERT, nach unten. */}
-                    <div data-stack-detail="verwalten" className="mt-3 border-t border-slate-800/70 px-1 pt-3">
-                      <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Verwalten</h3>
-                <div className="flex flex-col gap-2 px-1 text-xs font-semibold">
-                  {/* Ein neues Vial anmischen, einen neuen Pen oder eine neue
-                      Flasche anbrechen: setzt Datum und Fluessigkeit neu und
-                      verwirft auf Wunsch den Rest im alten. Nur mit Bestand
-                      und einem vollen Behaelter darin. */}
-                  {art && activePeptide.inventory?.enabled && (
-                  <button
-                    type="button"
-                    onClick={() => setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })}
-                    disabled={vorratTeile(activePeptide.inventory).voll < 1}
-                    className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
-                  >
-                    <RefreshCw size={14} />
-                    {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
-                  </button>
-                  )}
-                  {/* Eine Tuer zum Bearbeiten: der Assistent. Das aeltere
-                      Vial-Tracking-Formular ist entfernt; was es geschrieben
-                      hat, zeigt die Leseschicht weiter an (`produktAngaben.ts`). */}
-                  <button
-                    type="button"
-                    onClick={() => openEditPeptide(activePeptide)}
-                    className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
-                  >
-                    <Pencil size={14} /> Bearbeiten
-                  </button>
-                  {/* Abgesetzt und zuletzt. Es stand einmal ganz oben, direkt
-                      unter dem Daumen. */}
-                  <button
-                    type="button"
-                    onClick={() => removePeptide(activePeptide.id)}
-                    className="mt-1 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
-                  >
-                    <Trash2 size={14} /> Substanz löschen
-                  </button>
-                </div>                    </div>
                     </>
                   )
                 })()}
@@ -3571,6 +3506,48 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           onClose={closeStageDetail}
           onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
           title={activePeptide.name}
+          sideActions={(
+            <>
+              {/* Nur Symbole: was ein Stift und ein Papierkorb tun, liest
+                  man ohne Text. Loeschen fragt ohnehin noch einmal nach. */}
+              <button
+                type="button"
+                onClick={() => openEditPeptide(activePeptide)}
+                aria-label={String(t('bearbeiten'))}
+                title={String(t('bearbeiten'))}
+                className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              >
+                <Pencil size={17} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => removePeptide(activePeptide.id)}
+                aria-label={String(t('loeschen'))}
+                title={String(t('loeschen'))}
+                className="grid h-11 w-11 place-items-center rounded-full border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              >
+                <Trash2 size={17} aria-hidden="true" />
+              </button>
+            </>
+          )}
+          belowTitle={(() => {
+            // Ein neues Vial anmischen, einen neuen Pen oder eine neue Flasche
+            // anbrechen: setzt Datum und Fluessigkeit neu und verwirft auf
+            // Wunsch den Rest im alten. Nur mit Bestand und vollem Behaelter.
+            const art = anbruchArt(activePeptide.dosage_form)
+            if (!art || !activePeptide.inventory?.enabled) return null
+            return (
+              <button
+                type="button"
+                onClick={() => setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })}
+                disabled={vorratTeile(activePeptide.inventory).voll < 1}
+                className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
+              >
+                <RefreshCw size={15} aria-hidden="true" />
+                {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
+              </button>
+            )
+          })()}
           stage={(
             <SloshProvider engine={sloshEngine}>
               <div style={{ width: 'min(9rem, 38vw)' }}>
@@ -3594,6 +3571,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
+          onUploadDocument={file => uploadBatchDocument(supabase as never, user!.id, file)}
           metadataOnly={FEATURES.planTimelineV2 && Boolean(editingPeptideId) && !wizardCycleId && !wizardNeuerZyklus && !planEditContext}
           {...(planEditContext
             ? { planEditContext, onSavePlanChange: saveVersionChange }

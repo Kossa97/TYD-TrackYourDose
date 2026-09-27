@@ -141,6 +141,11 @@ describe('wizard state', () => {
       brand: '',
       batchNumber: 'A-42',
       expiresAt: '2027-08-01',
+      batchSource: '',
+      batchFileUrl: null,
+      reconstitutionMl: null,
+      openedAt: null,
+      useWithinDays: null,
     })
   })
 

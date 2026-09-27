@@ -139,23 +139,21 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('}[wirkstoffBezug(form)]')
   })
 
-  test('nennt in „Verwalten" jede Tür beim Namen', () => {
-    // Eine Tuer zum Bearbeiten — der Assistent. Das aeltere Vial-Tracking-
-    // Formular ist entfernt.
+  test('setzt Bearbeiten und Löschen als Symbole neben das Objekt', () => {
+    // Keine eigene „Verwalten"-Leiste mehr unten: die Knöpfe stehen oben
+    // neben der Grafik, Bearbeiten und Löschen nur als Symbol mit Namen fuer
+    // Screenreader. Das aeltere Vial-Tracking-Formular bleibt entfernt.
     const text = source()
-    const verwalten = text.slice(
-      text.indexOf('data-stack-detail="verwalten"'),
-      text.indexOf('\n  return (', text.indexOf('data-stack-detail="verwalten"')),
-    )
-    const platz = (s: string) => verwalten.indexOf(s)
+    const aktionen = text.slice(text.indexOf('sideActions={('), text.indexOf('belowTitle={('))
 
-    expect(verwalten).toContain('<Pencil size={14} /> Bearbeiten')
-    expect(verwalten).not.toContain('Vial-Tracking</')
-    expect(verwalten).not.toContain('> Vial-Tracking')
-    expect(verwalten).toContain('<Trash2 size={14} /> Substanz löschen')
-    expect(verwalten).not.toContain('> Edit')
-    // Das Löschen abgesetzt und zuletzt.
-    expect(platz('Substanz löschen')).toBeGreaterThan(platz('Bearbeiten'))
+    expect(text).not.toContain('data-stack-detail="verwalten"')
+    expect(aktionen).toContain("aria-label={String(t('bearbeiten'))}")
+    expect(aktionen).toContain("aria-label={String(t('loeschen'))}")
+    expect(aktionen).toContain('<Pencil size={17} aria-hidden="true" />')
+    expect(aktionen).toContain('<Trash2 size={17} aria-hidden="true" />')
+    expect(text).not.toContain('> Vial-Tracking')
+    // Das Löschen nach dem Bearbeiten.
+    expect(aktionen.indexOf("t('loeschen')")).toBeGreaterThan(aktionen.indexOf("t('bearbeiten')"))
   })
 
   test('liest die Angaben durch die Leseschicht, nicht aus den Altspalten', () => {
@@ -310,7 +308,6 @@ describe('My Stack page vial view', () => {
     // Schleife vor dem Zyklus steht.
     expect(platz('detailAbschnitte(form).map')).toBeGreaterThan(-1)
     expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
-    expect(platz('data-stack-detail="zyklus"')).toBeLessThan(platz('data-stack-detail="verwalten"'))
   })
 
   test('versteckt im Vollbild nichts mehr hinter einem Klappknopf', () => {

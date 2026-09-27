@@ -1,4 +1,4 @@
-import type { InventoryDraft } from '../types'
+import type { InventoryDraft, StackItemInventory } from '../types'
 
 interface ServiceError {
   message: string
@@ -165,6 +165,60 @@ export async function updateInventory(
     .from('stack_item_inventory')
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', inventoryId)
+  throwIfError(error)
+}
+
+/**
+ * Die Angaben zur Packung aus „Bearbeiten": Charge, Quelle, Dokument,
+ * Ablaufdatum, Anmischen/Oeffnen. Beim Bearbeiten schreibt `save_stack_item`
+ * den Bestand nicht mit — deshalb hier, getrennt von den Mengen.
+ */
+export function inventoryDetailsPatch(draft: InventoryDraft): InventoryPatch {
+  return {
+    batch_number: draft.batchNumber.trim() || null,
+    batch_source: draft.batchSource?.trim() || null,
+    batch_file_url: draft.batchFileUrl ?? null,
+    expires_at: draft.expiresAt || null,
+    reconstitution_ml: draft.reconstitutionMl ?? null,
+    opened_at: draft.openedAt || null,
+    use_within_days: draft.useWithinDays ?? null,
+  }
+}
+
+/** Nur schreiben, was sich geaendert hat — sonst bleibt die Zeile, wie sie ist. */
+export function changedInventoryDetails(
+  before: Partial<StackItemInventory> | null | undefined,
+  patch: InventoryPatch,
+): InventoryPatch {
+  return Object.fromEntries(Object.entries(patch).filter(([key, value]) => (
+    (before?.[key as keyof StackItemInventory] ?? null) !== (value ?? null)
+  ))) as InventoryPatch
+}
+
+export async function saveInventoryDetails(
+  client: InventoryTableClient,
+  input: {
+    userId: string
+    stackItemId: string
+    before: StackItemInventory | null | undefined
+    draft: InventoryDraft
+  },
+): Promise<void> {
+  const patch = changedInventoryDetails(input.before, inventoryDetailsPatch(input.draft))
+  if (Object.keys(patch).length === 0) return
+  if (input.before?.id) {
+    await updateInventory(client, input.before.id, patch)
+    return
+  }
+  // Noch keine Zeile: eine ausgeschaltete anlegen — die Angaben gehoeren zur
+  // Packung, auch wenn (noch) nicht gezaehlt wird.
+  const { error } = await client.from('stack_item_inventory').upsert({
+    user_id: input.userId,
+    stack_item_id: input.stackItemId,
+    enabled: false,
+    ...patch,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'stack_item_id' })
   throwIfError(error)
 }
 

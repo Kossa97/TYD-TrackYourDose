@@ -198,6 +198,13 @@ export interface InventoryDraft {
   brand: string
   batchNumber: string
   expiresAt: string | null
+  // Nur beim Bearbeiten eines bestehenden Eintrags: die Angaben zur Packung,
+  // die die Detailansicht bei „Substanz" und „Zusammensetzung" zeigt.
+  batchSource?: string
+  batchFileUrl?: string | null
+  reconstitutionMl?: number | null
+  openedAt?: string | null
+  useWithinDays?: number | null
 }
 
 export interface StackItemSetupDraft extends StackItemDraft {

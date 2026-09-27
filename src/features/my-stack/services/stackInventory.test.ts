@@ -4,6 +4,7 @@ import {
   applyInventoryConfirmation,
   loadStackItemInventory,
   reverseInventoryConfirmation,
+  saveInventoryDetails,
   saveStackItemInventory,
 } from './stackInventory'
 
@@ -144,5 +145,36 @@ describe('stack inventory service', () => {
 
     await expect(reverseInventoryConfirmation({ rpc }, 'dose-log-1', 'delete'))
       .rejects.toThrow('reversal failed')
+  })
+
+  it('saves only changed package details of an existing row', async () => {
+    const eq = vi.fn(async () => ({ error: null }))
+    const update = vi.fn(() => ({ eq }))
+    const from = vi.fn(() => ({ update }))
+    await saveInventoryDetails({ from } as never, {
+      userId: 'user-1',
+      stackItemId: 'stack-1',
+      before: { id: 'inv-1', batch_number: 'A-42', expires_at: '2027-08-01', batch_source: null, opened_at: null } as never,
+      draft: { ...inventory, batchSource: ' Apotheke ', openedAt: '2026-09-01' },
+    })
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ batch_source: 'Apotheke', opened_at: '2026-09-01' }))
+    const [[patch]] = update.mock.calls as unknown as [[Record<string, unknown>]]
+    expect(patch).not.toHaveProperty('batch_number')
+    expect(eq).toHaveBeenCalledWith('id', 'inv-1')
+  })
+
+  it('writes nothing when nothing changed, and creates a switched-off row when there was none', async () => {
+    const upsert = vi.fn(async () => ({ error: null }))
+    const update = vi.fn()
+    const from = vi.fn(() => ({ update, upsert }))
+    await saveInventoryDetails({ from } as never, {
+      userId: 'user-1', stackItemId: 'stack-1',
+      before: { id: 'inv-1', batch_number: 'A-42', expires_at: '2027-08-01' } as never,
+      draft: inventory,
+    })
+    expect(from).not.toHaveBeenCalled()
+
+    await saveInventoryDetails({ from } as never, { userId: 'user-1', stackItemId: 'stack-1', before: null, draft: inventory })
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ enabled: false, batch_number: 'A-42', stack_item_id: 'stack-1' }), { onConflict: 'stack_item_id' })
   })
 })

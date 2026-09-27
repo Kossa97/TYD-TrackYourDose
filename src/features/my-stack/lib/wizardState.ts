@@ -388,6 +388,11 @@ function draftFromStackItem(
           brand: '',
           batchNumber: existing.inventory.batch_number ?? '',
           expiresAt: existing.inventory.expires_at,
+          batchSource: existing.inventory.batch_source ?? '',
+          batchFileUrl: existing.inventory.batch_file_url ?? null,
+          reconstitutionMl: existing.inventory.reconstitution_ml ?? null,
+          openedAt: existing.inventory.opened_at ?? null,
+          useWithinDays: existing.inventory.use_within_days ?? null,
         }
       : emptyInventory(),
     pkProfileMethod: existing.pk_profile_method,

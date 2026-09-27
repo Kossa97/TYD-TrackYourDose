@@ -20,6 +20,13 @@ export interface StageDetailSheetProps {
   /** Das Objekt selbst — dieselbe Buehne, nur kleiner. */
   stage: ReactNode
   title: string
+  /**
+   * Knoepfe rechts neben dem Objekt (Bearbeiten, Loeschen) — nur Symbole,
+   * darum mit `aria-label`. Links bleibt frei, damit das Objekt mittig steht.
+   */
+  sideActions?: ReactNode
+  /** Eine Aktion mit Text unter dem Namen, etwa „Neues Vial anmischen". */
+  belowTitle?: ReactNode
   children: ReactNode
   onClose: () => void
   /** Waehrend des Flugs still: schwappende Fluessigkeit im Flug wirkt falsch. */
@@ -34,7 +41,7 @@ function magBewegen(): boolean {
 }
 
 export function StageDetailSheet({
-  originRect, stage, title, children, onClose, onFlightChange,
+  originRect, stage, title, sideActions, belowTitle, children, onClose, onFlightChange,
 }: StageDetailSheetProps) {
   const objektRef = useRef<HTMLDivElement>(null)
   const [gelandet, setGelandet] = useState(false)
@@ -113,10 +120,17 @@ export function StageDetailSheet({
       </div>
 
       <div className="flex flex-col items-center px-4">
-        <div ref={objektRef} data-stage-detail-object className="will-change-transform">
-          {stage}
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <span aria-hidden="true" />
+          <div ref={objektRef} data-stage-detail-object className="will-change-transform">
+            {stage}
+          </div>
+          <div data-stage-detail-actions className="flex flex-col items-start gap-3">
+            {sideActions}
+          </div>
         </div>
         <h2 className="mt-3 text-center text-xl font-bold text-white">{title}</h2>
+        {belowTitle && <div className="mt-3 w-full max-w-xs">{belowTitle}</div>}
       </div>
 
       {/* Erst wenn das Objekt steht, kommen die Angaben — gestaffelt, damit

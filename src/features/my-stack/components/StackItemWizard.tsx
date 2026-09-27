@@ -156,6 +156,8 @@ interface StackItemWizardBaseProps {
    */
   intent?: 'pk' | 'plan'
   metadataOnly?: boolean
+  /** Laedt ein Analyse-Dokument hoch (Bearbeiten → Produkt). */
+  onUploadDocument?: (file: File) => Promise<string>
 }
 
 export type StackItemWizardProps = StackItemWizardBaseProps & (
@@ -252,6 +254,7 @@ export function StackItemWizard({
   planEditContext,
   intent,
   metadataOnly = false,
+  onUploadDocument,
 }: StackItemWizardProps) {
   const { t, i18n } = useTranslation()
   const selectedPlan = planEditContext?.snapshot ?? existingPlan
@@ -1054,8 +1057,10 @@ export function StackItemWizard({
               showInventory={!existingItem}
               brand={state.draft.brand}
               inventory={state.draft.inventory}
+              dosageForm={state.draft.dosageForm}
               onBrandChange={brand => dispatch({ type: 'details_changed', changes: { brand } })}
               onInventoryChange={changes => dispatch({ type: 'inventory_changed', changes })}
+              onUploadDocument={onUploadDocument}
             />
             )}
 
