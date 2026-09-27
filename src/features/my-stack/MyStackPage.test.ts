@@ -130,7 +130,7 @@ describe('My Stack page vial view', () => {
     // was die Form ohnehin über sich sagt.
     const text = source()
 
-    expect(text).toContain('detailAbschnitte, wirkstoffBezug,')
+    expect(text).toContain('detailAbschnitte, LEER_AUSBLENDEN, wirkstoffBezug,')
     expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
     expect(text).toContain('data-stack-detail={abschnitt.id}')
     expect(text).toContain('data-stack-detail-field={feld}')

@@ -12,7 +12,7 @@ import type { DosageFormDefinition } from './dosageForms'
  * Eine Angabe, die die FORM nicht kennt, faellt weg: bei einem Pflaster steht
  * keine Kachel „Zugefuegte Fluessigkeit: Nicht gesetzt". Eine, die sie kennt
  * und die nur LEER ist, bleibt stehen — dort ist „Nicht gesetzt" eine
- * Aufforderung und keine Panne.
+ * Aufforderung und keine Panne. Ausnahme: `LEER_AUSBLENDEN`.
  *
  * Wie die Staerke heisst, sagt weiterhin die Form (`strengthShape` in
  * `dosageForms.ts`, siehe `wirkstoffBezug`).
@@ -65,6 +65,13 @@ export function wirkstoffBezug(form: DosageFormDefinition | undefined): Wirkstof
     default: return 'roh'
   }
 }
+
+/**
+ * Angaben, die leer KEINE Kachel bekommen. Ein Ablaufdatum steht auf vielen
+ * Packungen gar nicht drauf — „Nicht gesetzt" waere dort keine Aufforderung,
+ * sondern Dauerrauschen. Eintragen laesst es sich unter „Bearbeiten".
+ */
+export const LEER_AUSBLENDEN: ReadonlySet<DetailFeld> = new Set(['ablauf'])
 
 export function detailAbschnitte(form: DosageFormDefinition | undefined): DetailAbschnitt[] {
   // Die Wirkstoffmenge beschreibt die Zusammensetzung dieser Darreichung,

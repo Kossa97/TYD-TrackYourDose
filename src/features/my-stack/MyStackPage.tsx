@@ -26,7 +26,7 @@ import { ExpiredBadge } from './components/ExpiredBadge'
 import { expiryDaysLeft } from '../../lib/peptideExpiry'
 import { hapticTick } from '../../lib/haptics'
 import {
-  detailAbschnitte, wirkstoffBezug,
+  detailAbschnitte, LEER_AUSBLENDEN, wirkstoffBezug,
   type DetailFeld,
 } from './lib/stackDetailSections'
 import { BestandCard, BestandEditorHost, type BestandActions, type BestandEditorArt } from './components/Bestand'
@@ -2367,15 +2367,19 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           {ABSCHNITT_TITEL[abschnitt.id]}
                         </h3>
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
-                          {abschnitt.felder
-                            // Ein Ablaufdatum steht bei vielen Packungen gar nicht
-                            // drauf: leer keine Kachel „Nicht gesetzt". Eintragen
-                            // laesst es sich unter „Bearbeiten".
-                            .filter(feld => feld !== 'ablauf' || angaben.ablauf.art !== 'leer')
-                            .map(feld => {
+                          {(() => {
+                            // Leer ohne Kachel, was `LEER_AUSBLENDEN` nennt.
+                            const felder = abschnitt.felder.filter(feld => !LEER_AUSBLENDEN.has(feld) || angaben[feld].art !== 'leer')
+                            // Bleibt eine halbe Kachel allein in ihrer Zeile, wird
+                            // sie ganz breit: bei der Zusammensetzung der Wirkstoff
+                            // vorn, sonst die letzte halbe.
+                            const halbe = felder.filter(feld => !zeileFuer(feld).wide)
+                            const einzeln = halbe.length % 2 === 1
+                              ? abschnitt.id === 'produkt' && halbe.includes('wirkstoff') ? 'wirkstoff' : halbe.at(-1)
+                              : null
+                            return felder.map(feld => {
                             const zeile = zeileFuer(feld)
-                            const vollbreit = ('wide' in zeile && zeile.wide)
-                              || (abschnitt.id === 'produkt' && feld === 'wirkstoff' && abschnitt.felder.length % 2 === 1)
+                            const vollbreit = Boolean(zeile.wide) || feld === einzeln
                             const kachel = `min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${vollbreit ? 'col-span-2' : ''}`
                             return (
                               <div key={feld} data-stack-detail-field={feld} className={kachel}>
@@ -2385,7 +2389,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                 </div>
                               </div>
                             )
-                          })}
+                          })
+                          })()}
                         </div>
                       </section>
                     ))}

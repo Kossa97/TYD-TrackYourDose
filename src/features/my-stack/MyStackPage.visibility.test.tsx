@@ -559,6 +559,29 @@ describe('MyStackPage non-vial visibility', () => {
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
   })
 
+  it('shows a set expiry date as the unopened one, full width when it would stand alone', async () => {
+    const vial = loadedItems.find(item => item.id === 'vial-1')!
+    const vorher = vial.inventory
+    vial.inventory = {
+      id: 'inv-vial-1', enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null,
+      batch_number: null, expires_at: '2027-03-01', batch_source: null, batch_file_url: null,
+      opened_at: null, use_within_days: null, reconstitution_ml: null,
+    } as never
+    try {
+      await renderPage()
+      fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
+      const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+      const tile = dialog.querySelector<HTMLElement>('[data-stack-detail-field="ablauf"]')
+      expect(tile).not.toBeNull()
+      expect(within(tile!).getByText('my_stack_stock_expires_unopened')).toBeTruthy()
+      expect(tile!.textContent).toContain('01.03.2027')
+      // Sieben halbe Kacheln: die letzte stuende allein — sie wird ganz breit.
+      expect(tile!.className).toContain('col-span-2')
+    } finally {
+      vial.inventory = vorher
+    }
+  })
+
   it('uses the first browser-back step to close substance details without leaving My Stack', async () => {
     render(
       <MemoryRouter initialEntries={['/', '/my-stack']} initialIndex={1}>

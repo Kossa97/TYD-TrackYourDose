@@ -155,7 +155,9 @@ export function ProductInventorySection({
               </div>
               <div className="sm:col-span-2">
                 <label htmlFor={`${contentId}-expires`} className="mb-2 block text-sm font-semibold text-slate-200">
-                  {t('my_stack_expires_at_optional', { defaultValue: 'Ablaufdatum (optional)' })}
+                  {art
+                    ? `${t('my_stack_stock_expires_unopened')} (${t('my_stack_plan_optional', { defaultValue: 'optional' })})`
+                    : t('my_stack_expires_at_optional', { defaultValue: 'Ablaufdatum (optional)' })}
                 </label>
                 <input
                   id={`${contentId}-expires`}
