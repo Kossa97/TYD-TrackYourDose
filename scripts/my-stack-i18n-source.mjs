@@ -509,6 +509,7 @@ export const MY_STACK_EN = {
   my_stack_expired_since_days: 'for {{n}} days',
   my_stack_expired_aria: 'Expired, {{since}}',
   my_stack_expires_today: 'Expires today',
+  my_stack_stock_expires_unopened: 'Expiry date (unopened)',
 }
 
 export const MY_STACK_DE = {
@@ -1021,6 +1022,7 @@ export const MY_STACK_DE = {
   my_stack_expired_since_days: 'seit {{n}} Tagen',
   my_stack_expired_aria: 'Abgelaufen, {{since}}',
   my_stack_expires_today: 'Läuft heute ab',
+  my_stack_stock_expires_unopened: 'Ablaufdatum (ungeöffnet)',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

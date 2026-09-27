@@ -1397,5 +1397,6 @@
   "my_stack_expired_aria": "Expired, {{since}}",
   "my_stack_expired_since_day": "for 1 day",
   "my_stack_expired_since_days": "for {{n}} days",
-  "my_stack_expires_today": "Expires today"
+  "my_stack_expires_today": "Expires today",
+  "my_stack_stock_expires_unopened": "Expiry date (unopened)"
 }

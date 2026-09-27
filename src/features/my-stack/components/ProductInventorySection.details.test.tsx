@@ -55,7 +55,8 @@ describe('ProductInventorySection beim Bearbeiten', () => {
     expect((screen.getByLabelText(/my_stack_stock_use_within_vial/) as HTMLInputElement).value).toBe('28')
     expect((screen.getByLabelText('my_stack_stock_batch_number') as HTMLInputElement).value).toBe('B-1')
     expect(screen.getByLabelText('my_stack_stock_source')).toBeTruthy()
-    expect(screen.getByLabelText('my_stack_stock_expires')).toBeTruthy()
+    // Beim Vial gilt das Ablaufdatum dem ungeoeffneten — so heisst es auch.
+    expect(screen.getByLabelText('my_stack_stock_expires_unopened')).toBeTruthy()
     // Die Mengen stehen hier nicht — die aendert „Bestand ändern".
     expect(screen.queryByLabelText(/my_stack_remaining_quantity|Aktueller Bestand/)).toBeNull()
   })
@@ -66,6 +67,7 @@ describe('ProductInventorySection beim Bearbeiten', () => {
     expect(screen.queryByLabelText('my_stack_stock_liquid (ml)')).toBeNull()
     expect(screen.queryByLabelText('my_stack_stock_opened_on')).toBeNull()
     expect(screen.getByLabelText('my_stack_stock_batch_number')).toBeTruthy()
+    expect(screen.getByLabelText('my_stack_stock_expires')).toBeTruthy()
   })
 
   it('merkt sich ein gewähltes Dokument, hochgeladen wird erst beim Speichern', () => {

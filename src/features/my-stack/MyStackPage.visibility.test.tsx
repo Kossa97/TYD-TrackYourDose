@@ -549,6 +549,8 @@ describe('MyStackPage non-vial visibility', () => {
     for (const feld of ['batch', 'quelle', 'analyse']) {
       expect(substance?.querySelector(`[data-stack-detail-field="${feld}"]`), feld).not.toBeNull()
     }
+    // Ohne Ablaufdatum keine Kachel „Nicht gesetzt".
+    expect(dialog.querySelector('[data-stack-detail-field="ablauf"]')).toBeNull()
     // Den Vorrat zeigt die Bestand-Anzeige, keine Kachel — und kein eigenes Fenster.
     expect(dialog.querySelector('[data-stack-detail-field="vorrat"]')).toBeNull()
     const stock = dialog.querySelector<HTMLElement>('[data-stack-detail="bestand"]')

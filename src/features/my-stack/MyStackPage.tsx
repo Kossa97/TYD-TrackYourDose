@@ -2283,7 +2283,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     fluessigkeit: String(t('my_stack_stock_liquid')),
                     rekonstituiert_am: String(t(art === 'vial' ? 'my_stack_stock_mixed_on' : 'my_stack_stock_opened_on')),
                     haltbarkeit: haltbarkeitLabel,
-                    ablauf: String(t('my_stack_stock_expires')),
+                    // Wo angemischt oder geoeffnet wird, gilt das Datum dem
+                    // UNgeoeffneten — sonst klingt es wie „Haltbar danach".
+                    ablauf: String(t(art ? 'my_stack_stock_expires_unopened' : 'my_stack_stock_expires')),
                     vorrat: 'Vorrat',
                     // „Methode" und nicht „Applikationsart": im Zyklusknopf
                     // steht dasselbe Feld unter demselben Namen.
@@ -2365,7 +2367,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           {ABSCHNITT_TITEL[abschnitt.id]}
                         </h3>
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
-                          {abschnitt.felder.map(feld => {
+                          {abschnitt.felder
+                            // Ein Ablaufdatum steht bei vielen Packungen gar nicht
+                            // drauf: leer keine Kachel „Nicht gesetzt". Eintragen
+                            // laesst es sich unter „Bearbeiten".
+                            .filter(feld => feld !== 'ablauf' || angaben.ablauf.art !== 'leer')
+                            .map(feld => {
                             const zeile = zeileFuer(feld)
                             const vollbreit = ('wide' in zeile && zeile.wide)
                               || (abschnitt.id === 'produkt' && feld === 'wirkstoff' && abschnitt.felder.length % 2 === 1)

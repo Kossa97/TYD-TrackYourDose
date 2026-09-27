@@ -241,7 +241,9 @@ export function ProductInventorySection({
                 />
               </div>
               <div>
-                <label htmlFor={`${contentId}-expires-edit`} className={beschriftung}>{t('my_stack_stock_expires')}</label>
+                <label htmlFor={`${contentId}-expires-edit`} className={beschriftung}>
+                  {t(art ? 'my_stack_stock_expires_unopened' : 'my_stack_stock_expires')}
+                </label>
                 <input
                   id={`${contentId}-expires-edit`}
                   type="date"
