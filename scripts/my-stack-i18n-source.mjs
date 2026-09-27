@@ -503,6 +503,11 @@ export const MY_STACK_EN = {
   my_stack_stock_unopened_bottle: 'Unopened bottles',
   my_stack_stock_liquid_invalid: 'Enter an amount above 0 and up to 1000 ml.',
   my_stack_stock_days_invalid: 'Enter whole days from 1 to 3650.',
+  my_stack_expired: 'Expired!',
+  my_stack_expired_since_today: 'since today',
+  my_stack_expired_since_one: 'for 1 day',
+  my_stack_expired_since_many: 'for {{n}} days',
+  my_stack_expired_aria: 'Expired, {{since}}',
 }
 
 export const MY_STACK_DE = {
@@ -1009,6 +1014,11 @@ export const MY_STACK_DE = {
   my_stack_stock_unopened_bottle: 'Ungeöffnete Flaschen',
   my_stack_stock_liquid_invalid: 'Gib eine Menge über 0 und bis 1000 ml ein.',
   my_stack_stock_days_invalid: 'Gib ganze Tage von 1 bis 3650 ein.',
+  my_stack_expired: 'Abgelaufen!',
+  my_stack_expired_since_today: 'seit heute',
+  my_stack_expired_since_one: 'seit 1 Tag',
+  my_stack_expired_since_many: 'seit {{n}} Tagen',
+  my_stack_expired_aria: 'Abgelaufen, {{since}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

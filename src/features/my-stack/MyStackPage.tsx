@@ -22,6 +22,7 @@ import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
+import { ExpiredBadge } from './components/ExpiredBadge'
 import { hapticTick } from '../../lib/haptics'
 import {
   detailAbschnitte, wirkstoffBezug,
@@ -2701,7 +2702,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
                     return (
                       <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                        <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>
+                        {/* Abgelaufen: erst Alarm, dann „seit X Tagen" — je Substanz neu. */}
+                        {days !== null && days <= 0
+                          ? <ExpiredBadge key={activePeptide.id} daysSince={-days} />
+                          : <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>}
                         <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
                           {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
                         </span>

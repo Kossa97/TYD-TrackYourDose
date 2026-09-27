@@ -1538,5 +1538,10 @@
   "my_stack_stock_unopened_pen": "Ungeöffnete Pens",
   "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen",
   "my_stack_stock_liquid_invalid": "Gib eine Menge über 0 und bis 1000 ml ein.",
-  "my_stack_stock_days_invalid": "Gib ganze Tage von 1 bis 3650 ein."
+  "my_stack_stock_days_invalid": "Gib ganze Tage von 1 bis 3650 ein.",
+  "my_stack_expired": "Abgelaufen!",
+  "my_stack_expired_since_today": "seit heute",
+  "my_stack_expired_since_one": "seit 1 Tag",
+  "my_stack_expired_since_many": "seit {{n}} Tagen",
+  "my_stack_expired_aria": "Abgelaufen, {{since}}"
 }
