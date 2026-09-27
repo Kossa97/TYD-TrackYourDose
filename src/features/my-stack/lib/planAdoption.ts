@@ -1,4 +1,6 @@
 import type { PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTimeline'
+import type { IntakePlanDraft } from '../types'
+import { planCardSlots } from './planCard'
 
 /**
  * Wenn ein Plan geaendert wird, waehrend spaetere Stufen schon geplant sind.
@@ -6,8 +8,11 @@ import type { PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTime
  * Jede Stufe speichert den ganzen Plan. Eine Titrationsstufe, die vor der
  * Aenderung angelegt wurde, traegt deshalb noch die alten Tage, Tageszeiten
  * und die alte Methode in sich — ab ihrem Datum gaelte wieder der alte Plan.
- * Hier steht, welche Stufen das betrifft und wie sie den neuen Plan
- * uebernehmen, ohne ihre Mengen zu verlieren.
+ *
+ * Deshalb zeigt der Assistent vor dem Speichern jede geplante Stufe hinter dem
+ * gewaehlten Tag („Geplante Aenderungen"): so, wie sie mit dem neuen Plan
+ * aussaehe, mit Datum und Mengen zum Anpassen oder zum Entfernen. Gespeichert
+ * wird erst, wenn man das bestaetigt.
  */
 
 export interface LaterPlanStep {
@@ -16,6 +21,8 @@ export interface LaterPlanStep {
   effectiveLocalDate: string
   changeKind: PlanChangeKind
   snapshot: PlanScheduleSnapshot
+  /** Dieselbe Stufe als Formularstand — zum Vorbelegen einer neuen Stufe. */
+  draft: IntakePlanDraft
 }
 
 /** Alles am Plan ausser den Mengen — dieselbe Liste wie `changeKindFor`. */
@@ -30,43 +37,58 @@ export function sameSchedule(left: PlanScheduleSnapshot, right: PlanScheduleSnap
   ))
 }
 
+function sameSnapshot(left: PlanScheduleSnapshot, right: PlanScheduleSnapshot): boolean {
+  return (Object.keys(left) as (keyof PlanScheduleSnapshot)[]).every(field => (
+    JSON.stringify(left[field] ?? null) === JSON.stringify(right[field] ?? null)
+  ))
+}
+
+function byDate(left: LaterPlanStep, right: LaterPlanStep): number {
+  return left.effectiveLocalDate.localeCompare(right.effectiveLocalDate)
+}
+
 /**
- * Welche spaeteren Stufen den neuen Plan uebernehmen sollten.
+ * Die Stufen um den gewaehlten Tag herum.
  *
- * Verglichen wird mit dem Plan, der am Stichtag bisher gegolten haette: dem
- * der letzten Stufe davor, sonst dem, von dem das Formular ausging. Wird eine
- * geplante Stufe selbst bearbeitet, ist es ihr alter Plan.
- *
- * Nur Stufen, die diesen ALTEN Plan tragen — also reine Mengenstufen darauf.
- * Die erste Stufe mit einem eigenen, anderen Plan ist eine bewusste
- * Planaenderung („ab Woche 4 zusaetzlich abends"): dort und dahinter bleibt
- * alles, wie es ist.
+ * `before` ist die geplante Stufe, die an diesem Tag bisher gegolten haette
+ * (keine: es gilt die jetzige), `after` alles, was danach beginnt. Wird eine
+ * geplante Stufe selbst bearbeitet, zaehlt sie weder davor noch danach.
  */
-export function stepsToAdopt(input: {
-  /** Der Plan, von dem das Formular ausging. */
-  edited: PlanScheduleSnapshot
-  changed: PlanScheduleSnapshot
+export function stepsAround(input: {
   laterSteps: readonly LaterPlanStep[]
   /** `YYYY-MM-DD` bei „ab Datum", null bei „ab sofort". */
   boundary: string | null
   exceptVersionId?: string | null
-}): LaterPlanStep[] {
+}): { before: LaterPlanStep | null; after: LaterPlanStep[] } {
   const { boundary } = input
-  const editingStep = input.exceptVersionId != null
-    && input.laterSteps.some(step => step.versionId === input.exceptVersionId)
   const others = input.laterSteps
     .filter(step => step.versionId !== input.exceptVersionId)
-    .sort((left, right) => left.effectiveLocalDate.localeCompare(right.effectiveLocalDate))
-  const before = boundary == null || editingStep
-    ? undefined
-    : others.filter(step => step.effectiveLocalDate <= boundary).at(-1)
-  const base = before?.snapshot ?? input.edited
+    .sort(byDate)
+  if (boundary == null) return { before: null, after: others }
+  return {
+    before: others.filter(step => step.effectiveLocalDate <= boundary).at(-1) ?? null,
+    after: others.filter(step => step.effectiveLocalDate > boundary),
+  }
+}
 
-  if (sameSchedule(base, input.changed)) return []
+/**
+ * Welche spaeteren Stufen den neuen Plan uebernehmen.
+ *
+ * `base` ist der Plan, der am gewaehlten Tag bisher gegolten haette. Nur
+ * Stufen, die diesen ALTEN Plan tragen — also reine Mengenstufen darauf.
+ * Die erste Stufe mit einem eigenen, anderen Plan ist eine bewusste
+ * Planaenderung („ab Woche 4 zusaetzlich abends"): dort und dahinter bleibt
+ * der Plan, wie er ist.
+ */
+export function stepsToAdopt(input: {
+  base: PlanScheduleSnapshot
+  changed: PlanScheduleSnapshot
+  after: readonly LaterPlanStep[]
+}): LaterPlanStep[] {
+  if (sameSchedule(input.base, input.changed)) return []
   const adopt: LaterPlanStep[] = []
-  for (const step of others) {
-    if (boundary != null && step.effectiveLocalDate <= boundary) continue
-    if (!sameSchedule(step.snapshot, base)) break
+  for (const step of input.after) {
+    if (!sameSchedule(step.snapshot, input.base)) break
     adopt.push(step)
   }
   return adopt
@@ -93,14 +115,24 @@ function doseAt(snapshot: PlanScheduleSnapshot, index: number): string {
 }
 
 /**
+ * Die Mengen je Stelle eingesetzt — nach denselben Regeln wie beim Speichern
+ * (`planScheduleSnapshot`): `dose` ist die erste Menge, `slot_doses` steht
+ * nur, wenn sich die Mengen unterscheiden.
+ */
+function withDoses(snapshot: PlanScheduleSnapshot, doses: readonly string[]): PlanScheduleSnapshot {
+  const lead = doses.find(dose => dose !== '')
+  return {
+    ...snapshot,
+    dose: lead != null ? Number(lead) : snapshot.dose,
+    slot_doses: new Set(doses).size > 1 ? doses.join(',') : null,
+  }
+}
+
+/**
  * Die Stufe mit dem neuen Plan: Tage, Tageszeiten und Methode aus `plan`,
  * die Mengen aus `step`. Eine Einnahme, die es in der Stufe schon gab, behaelt
  * ihre Menge; eine neue bekommt die Menge aus dem neuen Plan (bei gleicher
  * Einheit), sonst die Grundmenge der Stufe.
- *
- * `dose` und `slot_doses` folgen denselben Regeln wie beim Speichern
- * (`planScheduleSnapshot`): `dose` ist die erste Menge, `slot_doses` steht nur,
- * wenn sich die Mengen unterscheiden.
  */
 export function adoptSchedule(plan: PlanScheduleSnapshot, step: PlanScheduleSnapshot): PlanScheduleSnapshot {
   const stepIds = slotIds(step.intake_time)
@@ -116,8 +148,91 @@ export function adoptSchedule(plan: PlanScheduleSnapshot, step: PlanScheduleSnap
   for (const field of SCHEDULE_FIELDS) {
     (merged as unknown as Record<string, unknown>)[field] = plan[field]
   }
-  const lead = doses.find(dose => dose !== '')
-  merged.dose = lead != null ? Number(lead) : step.dose
-  merged.slot_doses = new Set(doses).size > 1 ? doses.join(',') : null
-  return merged
+  return withDoses(merged, doses)
+}
+
+/** Eine geplante Stufe auf der Seite „Geplante Aenderungen". */
+export interface ReviewStep {
+  versionId: string
+  changeKind: PlanChangeKind
+  originalDate: string
+  original: PlanScheduleSnapshot
+  /** Der vorgeschlagene Plan der Stufe, ohne die Mengen aus `amounts`. */
+  proposed: PlanScheduleSnapshot
+  /** Uebernimmt die Stufe Tage, Tageszeiten oder Methode des neuen Plans? */
+  adopts: boolean
+  /** Hat die Stufe einen anderen Plan als den neuen (bewusst so geplant)? */
+  ownPlan: boolean
+  /** Einnahmen, die die Stufe bisher nicht hatte (Slot-ID). */
+  newSlotIds: string[]
+  date: string
+  /** Menge je Einnahme (Slot-ID), so wie sie im Feld steht. */
+  amounts: Record<string, string>
+  /** Die vorbelegten Mengen — unveraendert heisst: `proposed` gilt, wie es ist. */
+  initialAmounts: Record<string, string>
+  removed: boolean
+}
+
+function amountsOf(snapshot: PlanScheduleSnapshot): Record<string, string> {
+  return Object.fromEntries(planCardSlots(snapshot).map(slot => [slot.id, slot.dose == null ? '' : String(slot.dose)]))
+}
+
+/** Die Seite „Geplante Aenderungen": jede Stufe nach dem Tag, vorbelegt. */
+export function buildReview(input: {
+  base: PlanScheduleSnapshot
+  changed: PlanScheduleSnapshot
+  after: readonly LaterPlanStep[]
+}): ReviewStep[] {
+  const adopting = new Set(stepsToAdopt(input).map(step => step.versionId))
+  return input.after.map(step => {
+    const adopts = adopting.has(step.versionId)
+    const proposed = adopts ? adoptSchedule(input.changed, step.snapshot) : step.snapshot
+    const before = new Set(slotIds(step.snapshot.intake_time))
+    return {
+      versionId: step.versionId,
+      changeKind: step.changeKind,
+      originalDate: step.effectiveLocalDate,
+      original: step.snapshot,
+      proposed,
+      adopts,
+      ownPlan: !sameSchedule(proposed, input.changed),
+      newSlotIds: slotIds(proposed.intake_time).filter(id => !before.has(id)),
+      date: step.effectiveLocalDate,
+      amounts: amountsOf(proposed),
+      initialAmounts: amountsOf(proposed),
+      removed: false,
+    }
+  })
+}
+
+/** Eine eingegebene Menge als Zahl: Komma oder Punkt, groesser als null. */
+export function parseAmount(value: string): number | null {
+  const number = Number(value.trim().replace(',', '.'))
+  return value.trim() !== '' && Number.isFinite(number) && number > 0 ? number : null
+}
+
+/** Der Plan der Stufe mit den eingegebenen Mengen. Null: eine Menge fehlt. */
+export function reviewedSnapshot(step: ReviewStep): PlanScheduleSnapshot | null {
+  // Ohne Einheit wird keine Menge gefuehrt („nur Einnahme") — dann gibt es
+  // auch nichts einzusetzen.
+  if (step.proposed.unit == null) return step.proposed
+  if (JSON.stringify(step.amounts) === JSON.stringify(step.initialAmounts)) return step.proposed
+  const ids = slotIds(step.proposed.intake_time)
+  const doses: string[] = []
+  for (const [index, id] of ids.entries()) {
+    const raw = step.amounts[id]
+    if (raw === undefined) {
+      doses.push(doseAt(step.proposed, index))
+      continue
+    }
+    const amount = parseAmount(raw)
+    if (amount == null) return null
+    doses.push(String(amount))
+  }
+  return withDoses(step.proposed, doses)
+}
+
+/** Hat sich an der Stufe gegenueber dem Gespeicherten etwas geaendert? */
+export function reviewStepChanged(step: ReviewStep, snapshot: PlanScheduleSnapshot): boolean {
+  return step.removed || step.date !== step.originalDate || !sameSnapshot(snapshot, step.original)
 }

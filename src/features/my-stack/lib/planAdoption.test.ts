@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
-import { adoptSchedule, sameSchedule, stepsToAdopt, type LaterPlanStep } from './planAdoption'
+import type { IntakePlanDraft } from '../types'
+import { adoptSchedule, buildReview, reviewedSnapshot, reviewStepChanged, sameSchedule, stepsAround, stepsToAdopt, type LaterPlanStep } from './planAdoption'
 
 function snapshot(changes: Partial<PlanScheduleSnapshot> = {}): PlanScheduleSnapshot {
   return {
@@ -22,47 +23,66 @@ function snapshot(changes: Partial<PlanScheduleSnapshot> = {}): PlanScheduleSnap
 }
 
 function step(id: string, date: string, changes: Partial<PlanScheduleSnapshot> = {}): LaterPlanStep {
-  return { versionId: id, effectiveLocalDate: date, changeKind: 'titration', snapshot: snapshot(changes) }
+  return { versionId: id, effectiveLocalDate: date, changeKind: 'titration', snapshot: snapshot(changes), draft: { id } as IntakePlanDraft }
 }
 
 const base = snapshot()
 const daily = snapshot({ frequency: 'Täglich', schedule_days: [] })
 
+describe('stepsAround', () => {
+  const laterSteps = [step('b', '2026-10-20'), step('a', '2026-10-06')]
+
+  it('puts every planned step behind a change from now', () => {
+    expect(stepsAround({ laterSteps, boundary: null })).toMatchObject({ before: null, after: [{ versionId: 'a' }, { versionId: 'b' }] })
+  })
+
+  it('finds the planned step a chosen day falls into', () => {
+    const around = stepsAround({ laterSteps, boundary: '2026-10-10' })
+    expect(around.before?.versionId).toBe('a')
+    expect(around.after.map(s => s.versionId)).toEqual(['b'])
+  })
+
+  it('leaves out the step being edited', () => {
+    expect(stepsAround({ laterSteps, boundary: '2026-10-06', exceptVersionId: 'a' })).toMatchObject({ before: null, after: [{ versionId: 'b' }] })
+  })
+})
+
 describe('stepsToAdopt', () => {
-  it('offers nothing when only amounts changed', () => {
-    expect(stepsToAdopt({ edited: base, changed: snapshot({ dose: 500 }), laterSteps: [step('a', '2026-10-06', { dose: 500 })], boundary: null })).toEqual([])
+  it('adopts nothing when only amounts changed', () => {
+    expect(stepsToAdopt({ base, changed: snapshot({ dose: 500 }), after: [step('a', '2026-10-06', { dose: 500 })] })).toEqual([])
   })
 
-  it('offers the later dose steps that still carry the old plan', () => {
-    const laterSteps = [step('b', '2026-10-20', { dose: 750 }), step('a', '2026-10-06', { dose: 500 })]
-    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: null }).map(s => s.versionId)).toEqual(['a', 'b'])
-  })
-
-  it('stops at the first step with a plan of its own', () => {
-    const laterSteps = [
+  it('adopts the steps that still carry the old plan and stops at one with a plan of its own', () => {
+    const after = [
       step('a', '2026-10-06', { dose: 500 }),
       step('b', '2026-10-20', { intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' }),
       step('c', '2026-11-03', { dose: 750 }),
     ]
-    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: null }).map(s => s.versionId)).toEqual(['a'])
+    expect(stepsToAdopt({ base, changed: daily, after }).map(s => s.versionId)).toEqual(['a'])
+  })
+})
+
+describe('buildReview', () => {
+  it('shows each later step with the new plan, its own amounts and the new intake marked', () => {
+    const changed = snapshot({ intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' })
+    const [review] = buildReview({ base, changed, after: [step('a', '2026-10-12', { dose: 500 })] })
+    expect(review).toMatchObject({ adopts: true, ownPlan: false, date: '2026-10-12', newSlotIds: ['abends#0'], amounts: { 'morgens#0': '500', 'abends#0': '250' } })
+    expect(reviewStepChanged(review, reviewedSnapshot(review)!)).toBe(true)
   })
 
-  it('only looks behind the chosen day and never at the step being edited', () => {
-    const laterSteps = [step('a', '2026-10-06'), step('b', '2026-10-20')]
-    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-06' }).map(s => s.versionId)).toEqual(['b'])
-    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-01', exceptVersionId: 'a' }).map(s => s.versionId)).toEqual(['b'])
+  it('keeps a step with a plan of its own as it is, and unchanged unless edited', () => {
+    const own = step('b', '2026-10-20', { intake_time: 'abends', intake_time_custom: '20:00', dose: 400 })
+    const [review] = buildReview({ base, changed: daily, after: [own] })
+    expect(review).toMatchObject({ adopts: false, ownPlan: true, newSlotIds: [], amounts: { 'abends#0': '400' } })
+    expect(reviewStepChanged(review, reviewedSnapshot(review)!)).toBe(false)
+    expect(reviewStepChanged({ ...review, date: '2026-10-21' }, reviewedSnapshot(review)!)).toBe(true)
   })
 
-  it('compares with the plan that would have applied on the chosen day', () => {
-    // Heute Mo/Mi/Fr, ab 10.10. taeglich geplant, am 24.10. eine Mengenstufe darauf.
-    const laterSteps = [step('s', '2026-10-10', { frequency: 'Täglich', schedule_days: [] }), step('t', '2026-10-24', { frequency: 'Täglich', schedule_days: [], dose: 500 })]
-    const changed = snapshot({ frequency: 'Täglich', schedule_days: [], intake_time: 'abends', intake_time_custom: '20:00' })
-    expect(stepsToAdopt({ edited: base, changed, laterSteps, boundary: '2026-10-15' }).map(s => s.versionId)).toEqual(['t'])
-  })
-
-  it('measures an edited step against its own old plan', () => {
-    const laterSteps = [step('a', '2026-10-06'), step('b', '2026-10-20', { dose: 500 })]
-    expect(stepsToAdopt({ edited: base, changed: daily, laterSteps, boundary: '2026-10-06', exceptVersionId: 'a' }).map(s => s.versionId)).toEqual(['b'])
+  it('takes edited amounts, with comma or point, and refuses an empty one', () => {
+    const changed = snapshot({ intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' })
+    const [review] = buildReview({ base, changed, after: [step('a', '2026-10-12', { dose: 500 })] })
+    expect(reviewedSnapshot({ ...review, amounts: { 'morgens#0': '500', 'abends#0': '2,5' } })).toMatchObject({ dose: 500, slot_doses: '500,2.5' })
+    expect(reviewedSnapshot({ ...review, amounts: { 'morgens#0': '500', 'abends#0': '' } })).toBeNull()
   })
 })
 

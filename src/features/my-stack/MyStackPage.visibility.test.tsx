@@ -1566,7 +1566,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect((calls[0].p_schedule as { dose: number }).dose).toBe(175)
   })
 
-  it('lets a planned step take over a changed plan and keeps its amount', async () => {
+  it('saves a plan change together with the confirmed planned steps', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     visibilityMocks.realWizard = true
     localStorage.setItem('tyd_peptide_view', 'list')
@@ -1576,12 +1576,18 @@ describe('MyStackPage non-vial visibility', () => {
       effective_local_date: '2099-10-01',
       dose: 200,
     })
-    const current = timelineRow('cycle-adopt', [currentVersion, futureVersion])
+    const laterVersion = normalizedVersion('version-later', 'cycle-adopt', {
+      change_kind: 'titration',
+      effective_local_date: '2099-10-15',
+      dose: 300,
+    })
+    const current = timelineRow('cycle-adopt', [currentVersion, futureVersion, laterVersion])
     const calls: Array<[string, Record<string, unknown>]> = []
     const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
       calls.push([name, params])
       if (name === 'create_plan_version') return { data: normalizedVersion('version-new', 'cycle-adopt'), error: null }
       if (name === 'replace_future_plan_version') return { data: futureVersion, error: null }
+      if (name === 'remove_future_plan_version') return { data: { removed: true }, error: null }
       return { data: null, error: { message: `Unexpected RPC: ${name}` } }
     })
     const { client } = v2Client({
@@ -1600,24 +1606,25 @@ describe('MyStackPage non-vial visibility', () => {
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
     fireEvent.change(screen.getByLabelText('my_stack_plan_time_short my_stack_plan_optional'), { target: { value: '21:00' } })
-    fireEvent.click(screen.getByRole('button', { name: 'save' }))
-    // Erst fragen, dann speichern.
-    expect(await screen.findByText('my_stack_plan_adopt_one')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'continue' }))
+    // Erst die geplanten Stufen, dann speichern.
+    expect(await screen.findByText('my_stack_plan_review_title')).toBeTruthy()
     expect(calls).toHaveLength(0)
-    expect((screen.getByRole('radio', { name: 'my_stack_plan_adopt_yes' }) as HTMLInputElement).checked).toBe(true)
+    const later = document.querySelector('[data-review-step="version-later"]') as HTMLElement
+    fireEvent.click(within(later).getByRole('button', { name: 'my_stack_plan_review_remove' }))
 
-    fireEvent.click(screen.getByRole('button', { name: 'save' }))
-    await waitFor(() => expect(calls).toHaveLength(2))
-    expect(calls[0][0]).toBe('create_plan_version')
-    expect(calls[1][0]).toBe('replace_future_plan_version')
-    expect(calls[1][1]).toMatchObject({
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_plan_review_confirm' }))
+    await waitFor(() => expect(calls).toHaveLength(3))
+    expect(calls.map(([name]) => name)).toEqual(['create_plan_version', 'remove_future_plan_version', 'replace_future_plan_version'])
+    expect(calls[1][1]).toMatchObject({ p_version_id: 'version-later' })
+    expect(calls[2][1]).toMatchObject({
       p_version_id: 'version-future',
       p_effective_kind: 'local_date',
       p_effective_local_date: '2099-10-01',
       // Gegenueber dem neuen Plan aendert die Stufe nur die Menge.
       p_change_kind: 'titration',
     })
-    expect(calls[1][1].p_schedule).toMatchObject({ intake_time_custom: '21:00', dose: 200 })
+    expect(calls[2][1].p_schedule).toMatchObject({ intake_time_custom: '21:00', dose: 200 })
   })
 
   it('does not repeat a committed future removal when only canonical refresh failed', async () => {

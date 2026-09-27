@@ -45,8 +45,8 @@ import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
-import { changeKindFor, type WizardSaveMode } from './lib/wizardState'
-import { adoptSchedule, type LaterPlanStep } from './lib/planAdoption'
+import type { WizardSaveMode } from './lib/wizardState'
+import type { LaterPlanStep } from './lib/planAdoption'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities, type SortAbility } from './lib/stackSort'
@@ -1198,16 +1198,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     p: Peptide,
     timeline: CycleTimeline,
     segments = planVersionSegments(timeline, new Date(), timeZone),
-  ): LaterPlanStep[] => segments.flatMap(({ version, status }) => (
-    status === 'future' && version.effective_kind === 'local_date' && version.effective_local_date
-      ? [{
-        versionId: version.id,
-        effectiveLocalDate: version.effective_local_date,
-        changeKind: version.change_kind,
-        snapshot: planScheduleSnapshot(versionAsIntakePlanDraft(timeline, version, timeZone), p.tracking_level),
-      }]
-      : []
-  ))
+  ): LaterPlanStep[] => segments.flatMap(({ version, status }) => {
+    if (status !== 'future' || version.effective_kind !== 'local_date' || !version.effective_local_date) return []
+    const draft = versionAsIntakePlanDraft(timeline, version, timeZone)
+    return [{
+      versionId: version.id,
+      effectiveLocalDate: version.effective_local_date,
+      changeKind: version.change_kind,
+      snapshot: planScheduleSnapshot(draft, p.tracking_level),
+      draft,
+    }]
+  })
 
   const openEditCycle = (
     p: Peptide,
@@ -1250,12 +1251,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // Eine Stufe hinter der letzten: vorausgefuellt mit ihr, das Datum danach
   // vorgewaehlt. Dasselbe Formular wie „Plan anpassen" — nur der Einstieg und
   // die Vorwahl sind anders. Aendern sich nur Mengen, ist es eine Titrationsstufe.
+  // Waehlt man einen frueheren Tag oder „ab sofort", belegt der Assistent mit
+  // dem Plan vor, der dann gilt (`current`, `laterSteps`).
   const openAddPlanStep = (
     p: Peptide,
     timeline: CycleTimeline,
     template: CyclePlanVersion,
     dates: { minDate: string; maxDate: string | null; defaultDate: string },
   ) => {
+    const current = resolveCycleAt(timeline, new Date(), timeZone).planVersion
     openPlanWizard(p, {
       target: { cycleId: timeline.cycle.id, versionId: null, mode: 'new_change' },
       snapshot: versionAsIntakePlanDraft(timeline, template, timeZone),
@@ -1265,6 +1269,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       initialEffective: { kind: 'date', localDate: dates.defaultDate },
       ...effectiveDateLimits(timeline, null),
       laterSteps: laterStepsOf(p, timeline),
+      ...(current ? { current: versionAsIntakePlanDraft(timeline, current, timeZone) } : {}),
     }, null)
   }
 
@@ -1309,36 +1314,44 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       )
       recovery.committed = true
     }
-    // Spaetere Stufen, die den neuen Plan uebernehmen sollen: je Stufe ein
-    // eigener, wiederholbarer Schritt — schlaegt einer fehl, gelten die
-    // schon gespeicherten weiter, und ein erneutes Speichern macht dort weiter.
-    // Der neue Plan steht dann schon: auch bei einem Fehler die Ansicht
-    // nachladen, damit sie nicht den alten zeigt.
+    // Danach die geprueften geplanten Stufen: erst entfernen, dann neu
+    // schreiben — so ist ein frei gewordener Tag wieder frei. Jede Stufe ist
+    // ein eigener, wiederholbarer Schritt. Der neue Plan steht dann schon:
+    // auch bei einem Fehler die Ansicht nachladen, damit sie nicht den alten
+    // zeigt.
+    const laterChanges = [...submission.laterChanges ?? []]
+      .sort((left, right) => (left.kind === right.kind ? 0 : left.kind === 'remove' ? -1 : 1))
     try {
-      for (const step of submission.adoptInto ?? []) {
-        const mutation = lifecycleKey('adopt-plan', `${identity}:${step.versionId}`)
-        if (!mutation.mutation.committed) {
-          const schedule = adoptSchedule(submission.snapshot, step.snapshot)
-          await replaceFuturePlanVersion(stackDataClient as never, {
-            versionId: step.versionId,
-            effectiveKind: 'local_date',
-            effectiveAt: null,
-            effectiveLocalDate: step.effectiveLocalDate,
-            changeKind: changeKindFor(submission.snapshot, schedule, step.changeKind === 'titration' ? 'titration' : 'dose'),
-            schedule,
+      for (const change of laterChanges) {
+        const mutation = lifecycleKey(`later-${change.kind}`, `${identity}:${change.versionId}`)
+        if (mutation.mutation.committed) continue
+        if (change.kind === 'remove') {
+          await removeFuturePlanVersion(stackDataClient as never, {
+            versionId: change.versionId,
             timeZone: submission.timeZone,
             idempotencyKey: mutation.mutation.key,
           })
-          mutation.mutation.committed = true
+        } else {
+          await replaceFuturePlanVersion(stackDataClient as never, {
+            versionId: change.versionId,
+            effectiveKind: 'local_date',
+            effectiveAt: null,
+            effectiveLocalDate: change.effectiveLocalDate,
+            changeKind: change.changeKind,
+            schedule: change.schedule,
+            timeZone: submission.timeZone,
+            idempotencyKey: mutation.mutation.key,
+          })
         }
+        mutation.mutation.committed = true
       }
     } catch (error) {
       await loadTimelines(true).catch(() => undefined)
       throw error
     }
     await loadTimelines(true)
-    for (const step of submission.adoptInto ?? []) {
-      lifecycleIdempotencyKeysRef.current.delete(`adopt-plan:${identity}:${step.versionId}`)
+    for (const change of laterChanges) {
+      lifecycleIdempotencyKeysRef.current.delete(`later-${change.kind}:${identity}:${change.versionId}`)
     }
     planSaveRecoveryRef.current = null
   }

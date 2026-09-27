@@ -61,9 +61,9 @@ export interface PlanEditContext {
   timeZone: string
   initialEffective?: PlanEffectiveDraft
   /**
-   * 'add_step' haengt eine Stufe hinter die letzte: nur mit Datum, fruehestens
-   * `minEffectiveDate` — an einem Tag, der schon eine Stufe hat, kann keine
-   * zweite beginnen.
+   * Der Einstieg. 'add_step' ist dasselbe Formular wie 'adjust', nur mit
+   * einem Tag hinter der letzten Stufe vorbelegt; 'edit_future' bearbeitet
+   * eine geplante Stufe selbst.
    */
   purpose?: 'adjust' | 'add_step' | 'edit_future'
   minEffectiveDate?: string
@@ -80,12 +80,25 @@ export interface PlanEditContext {
    */
   baseline?: IntakePlanDraft
   /**
-   * Die geplanten Stufen dieses Zyklus. Aendert der Plan Tage, Tageszeiten
-   * oder Methode, fragt der Assistent, ob die spaeteren Stufen ihn
-   * uebernehmen sollen (siehe `stepsToAdopt`).
+   * Die geplanten Stufen dieses Zyklus. Liegen welche hinter dem gewaehlten
+   * Tag, zeigt der Assistent sie vor dem Speichern zum Pruefen (siehe
+   * `buildReview`).
    */
   laterSteps?: LaterPlanStep[]
+  /** Der Plan, der jetzt gilt. Fehlt er, ist es `snapshot`. */
+  current?: IntakePlanDraft
 }
+
+/** Was mit einer geplanten Stufe passiert, nachdem der Plan gespeichert ist. */
+export type LaterStepChange =
+  | { kind: 'remove'; versionId: string }
+  | {
+    kind: 'replace'
+    versionId: string
+    effectiveLocalDate: string
+    schedule: PlanScheduleSnapshot
+    changeKind: Exclude<PlanChangeKind, 'initial'>
+  }
 
 // Alles am Plan ausser den Mengen (`SCHEDULE_FIELDS`). Aendert sich davon
 // nichts, ist die Aenderung eine Dosisaenderung (oder Titrationsstufe), sonst
@@ -104,8 +117,8 @@ export interface PlanChangeSubmission {
   effective: PlanEffectiveDraft
   changeKind: Exclude<PlanChangeKind, 'initial'>
   timeZone: string
-  /** Spaetere Stufen, die den neuen Plan uebernehmen — ihre Mengen bleiben. */
-  adoptInto?: LaterPlanStep[]
+  /** Die geprueften geplanten Stufen — nur die, an denen sich etwas aendert. */
+  laterChanges?: LaterStepChange[]
 }
 
 export interface WizardState {
@@ -195,6 +208,8 @@ export type WizardAction =
   | { type: 'details_changed'; changes: Partial<Pick<StackItemDraft, 'brand' | 'colorHex' | 'notes'>> }
   | { type: 'inventory_changed'; changes: Partial<InventoryDraft> }
   | { type: 'plan_changed'; changes: Partial<IntakePlanDraft> }
+  /** Den ganzen Plan neu vorbelegen (Id des Zyklus bleibt). */
+  | { type: 'plan_replaced'; plan: IntakePlanDraft }
   | { type: 'save_mode_selected'; mode: Extract<WizardSaveMode, 'update' | 'duplicate'> }
 
 function emptyIngredient(position: number): StackItemIngredient {
@@ -635,6 +650,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           inventory: { ...state.draft.inventory, ...action.changes },
         },
       }
+    case 'plan_replaced':
+      return { ...state, draft: { ...state.draft, plan: { ...action.plan, id: state.draft.plan.id } } }
     case 'plan_changed': {
       const plan = { ...state.draft.plan, ...action.changes }
       // Nur ein RHYTHMUSWECHSEL fasst die Zeitpunkte an — sonst wuerde jede
