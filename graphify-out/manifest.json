@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790477449.4761293,
-    "seen": 1790477763.857083,
-    "ast_hash": "354a4dd81de69c78937eb428f81fb9ab",
+    "mtime": 1790478979.139592,
+    "seen": 1790479162.2215528,
+    "ast_hash": "3a1cffe629853392483ea043c7eaadf7",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790478811.2824008,
-    "seen": 1790478851.4261875,
+    "mtime": 1790479122.6304195,
+    "seen": 1790479162.2220173,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5454,15 +5454,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ExpiredBadge.test.tsx": {
-    "mtime": 1790478633.3880985,
-    "seen": 1790478851.4256413,
-    "ast_hash": "056ea438a7cbc209e6f8f9af73a33571",
+    "mtime": 1790478979.1400244,
+    "seen": 1790479162.2215707,
+    "ast_hash": "4b5526e6fba1c81051bcc0814cecde8f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ExpiredBadge.tsx": {
-    "mtime": 1790478633.3861847,
-    "seen": 1790478851.425643,
-    "ast_hash": "85e656a3233fdeb6c2be73f35aeebf45",
+    "mtime": 1790478979.1399257,
+    "seen": 1790479162.221572,
+    "ast_hash": "4e25e544c84082544faa2d80beb6e269",
     "semantic_hash": ""
   },
   "src/lib/peptideExpiryDays.test.ts": {
