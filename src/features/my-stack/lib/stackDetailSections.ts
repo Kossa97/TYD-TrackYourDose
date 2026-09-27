@@ -25,6 +25,7 @@ export type DetailFeld =
   | 'fluessigkeit'
   | 'rekonstituiert_am'
   | 'haltbarkeit'
+  | 'ablauf'
   | 'vorrat'
   | 'applikation'
   | 'batch'
@@ -79,7 +80,7 @@ export function detailAbschnitte(form: DosageFormDefinition | undefined): Detail
 
   const substanz: DetailFeld[] = [
     'kategorie', 'applikation', 'marke',
-    'batch', 'quelle', 'analyse', 'notizen',
+    'batch', 'quelle', 'analyse', 'ablauf', 'notizen',
   ]
 
   // Zuerst WAS es ist, dann woraus es besteht.

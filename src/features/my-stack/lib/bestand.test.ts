@@ -119,8 +119,19 @@ describe('bestandAufteilen', () => {
   })
 
   it('setzt sich wieder zusammen', () => {
-    expect(bestandZusammensetzen(1, 3, 40)).toBe(3.4)
-    expect(bestandZusammensetzen(3, 2, 100)).toBe(9)
+    const vial = { remaining_quantity: 2.955, package_unit: 'vial' }
+    const vorher = { groesse: 1, voll: 2, prozent: 96 }
+    expect(bestandZusammensetzen(vorher, 3, 40, vial)).toBe(3.4)
+    // Prozent unverändert: der genaue Rest bleibt, nicht die gerundete Zahl.
+    expect(bestandZusammensetzen(vorher, 2, 96, vial)).toBe(2.955)
+    expect(bestandZusammensetzen(vorher, 4, 96, vial)).toBe(4.955)
+  })
+
+  it('lässt gezählte Einheiten ganz', () => {
+    const spray = { remaining_quantity: 181, package_unit: 'spray' }
+    const vorher = { groesse: 120, voll: 1, prozent: 51 }
+    expect(bestandZusammensetzen(vorher, 1, 51, spray)).toBe(181)
+    expect(bestandZusammensetzen(vorher, 1, 33, spray)).toBe(160)
   })
 })
 

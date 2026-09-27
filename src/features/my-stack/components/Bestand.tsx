@@ -90,8 +90,8 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
   const [menge, setMenge] = useState(() => {
     switch (editor) {
       case 'correct': return String(inventory?.remaining_quantity ?? '')
-      case 'reconstitution_ml': return String(inventory?.reconstitution_ml ?? '')
-      case 'use_within_days': return String(inventory?.use_within_days ?? '')
+      case 'reconstitution_ml': return String(inv?.reconstitution_ml ?? '')
+      case 'use_within_days': return String(inv?.use_within_days ?? '')
       case 'open_new': return String(inventory?.reconstitution_ml ?? '')
       default: return ''
     }
@@ -105,7 +105,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
     switch (editor) {
       case 'batch_number': return inv?.batch_number ?? ''
       case 'batch_source': return inv?.batch_source ?? ''
-      case 'opened_at': return inventory?.opened_at ?? heute()
+      case 'opened_at': return inv?.opened_at ?? heute()
       case 'expires_at': return inv?.expires_at ?? ''
       case 'open_new': return heute()
       default: return ''
@@ -139,11 +139,13 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       break
     }
     case 'correct':
-      if (aufteilung) {
+      if (aufteilung && inventory) {
         const voll = zahl(geteilt.voll)
         const prozent = zahl(geteilt.prozent.replace('%', ''))
         gueltig = voll != null && Number.isInteger(voll) && voll >= 0 && prozent != null && prozent >= 0 && prozent <= 100
-        speichern = () => actions.update({ remaining_quantity: bestandZusammensetzen(aufteilung.groesse, voll!, prozent!) })
+        speichern = () => actions.update({
+          remaining_quantity: bestandZusammensetzen(aufteilung, voll!, prozent!, inventory),
+        })
       } else {
         gueltig = zahlWert != null && zahlWert >= 0
         speichern = () => actions.update({ remaining_quantity: zahlWert! })
@@ -158,7 +160,9 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       })
       break
     case 'reconstitution_ml':
-      gueltig = menge.trim() === '' || (zahlWert != null && zahlWert > 0 && zahlWert <= 1000)
+      // Nicht leeren: beim Vial mit Altdaten kaeme sonst der alte Wert wieder
+      // zum Vorschein (`withVialInventory`), und die Spritzeneinheiten mit ihm.
+      gueltig = zahlWert != null && zahlWert > 0 && zahlWert <= 1000
       speichern = () => actions.update({ reconstitution_ml: zahlWert })
       break
     case 'use_within_days':
@@ -223,7 +227,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
               </label>
               <div className="grid gap-1.5">
                 <label htmlFor={`${id}-prozent`} className="text-sm font-semibold text-slate-200">
-                  {String(t(`my_stack_stock_opened_percent_${behaelter}`))}
+                  {String(t(`my_stack_stock_opened_${behaelter}`))}
                 </label>
                 <span className="relative">
                   <input id={`${id}-prozent`} className={`${eingabe} pr-8`} inputMode="decimal" value={geteilt.prozent} onChange={event => setGeteilt(g => ({ ...g, prozent: event.target.value }))} />
@@ -335,13 +339,20 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-end" onClick={event => { event.stopPropagation(); onClose() }}>
+    // Liegt ueber dem Vollbild: Zurueck (Geste, Android) und Escape schliessen
+    // nur dieses Fenster, nicht das Vollbild darunter.
+    <div data-app-modal className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-end" onClick={event => { event.stopPropagation(); onClose() }}>
       <form
         role="dialog"
         aria-modal="true"
         aria-label={TITEL[editor]}
         className="flex w-full flex-col rounded-t-2xl border-t border-slate-700/60 bg-slate-900 sm:max-w-lg"
         onClick={event => event.stopPropagation()}
+        onKeyDown={event => {
+          if (event.key !== 'Escape') return
+          event.stopPropagation()
+          onClose()
+        }}
         onSubmit={event => {
           event.preventDefault()
           if (gueltig && speichern && !busy) onSubmit(speichern)
@@ -349,7 +360,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       >
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
           <h3 className="text-base font-bold text-white">{TITEL[editor]}</h3>
-          <button type="button" onClick={onClose} aria-label={String(t('my_stack_stock_close'))} className="grid h-11 w-11 place-items-center text-slate-400 hover:text-white">
+          <button type="button" onClick={onClose} data-app-back-close aria-label={String(t('my_stack_stock_close'))} className="grid h-11 w-11 place-items-center text-slate-400 hover:text-white">
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -417,12 +428,14 @@ export interface BestandCardProps {
   timelines: CycleTimeline[]
   timeZone: string
   now?: Date
+  /** Bucht die Datenbank bestaetigte Einnahmen hier ab? Sonst ein Hinweis. */
+  deductsIntakes?: boolean
   /** „Bestand aendern" bzw. „Bestand verfolgen", wenn noch keiner gefuehrt wird. */
   onEdit(editor: Extract<BestandEditorArt, 'correct' | 'start'>): void
 }
 
 /** Die Kurzfassung im Vollbild: was noch da ist und wie lange es reicht. */
-export function BestandCard({ dosageForm, inventory, ingredients, timelines, timeZone, now, onEdit }: BestandCardProps) {
+export function BestandCard({ dosageForm, inventory, ingredients, timelines, timeZone, now, deductsIntakes = true, onEdit }: BestandCardProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const aktiv = inventory?.enabled ? inventory : null
@@ -447,6 +460,7 @@ export function BestandCard({ dosageForm, inventory, ingredients, timelines, tim
               </span>
               {range && <span className="mt-0.5 block truncate text-xs text-slate-400">{reichweiteLabel(t, range, aktiv.package_unit, language)}</span>}
               <BarFill fraction={zeilen.anteil} />
+              {!deductsIntakes && <span className="mt-2 block text-xs text-amber-200/90">{String(t('my_stack_stock_needs_strength'))}</span>}
             </>
           ) : (
             <span className="mt-0.5 block text-sm text-slate-400">{String(t('my_stack_stock_not_tracked'))}</span>

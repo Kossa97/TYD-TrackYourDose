@@ -193,10 +193,6 @@ export async function startInventory(
 
 interface InventoryRpcClient {
   rpc(
-    name: 'add_inventory_package',
-    params: { p_inventory_id: string; p_quantity: number },
-  ): PromiseLike<{ data: number | null; error: ServiceError | null }>
-  rpc(
     name: 'open_inventory_container',
     params: {
       p_inventory_id: string
@@ -205,20 +201,6 @@ interface InventoryRpcClient {
       p_reconstitution_ml: number | null
     },
   ): PromiseLike<{ data: number | null; error: ServiceError | null }>
-}
-
-/** Neue Packung: atomar zum aktuellen Stand addiert. */
-export async function addInventoryPackage(
-  client: InventoryRpcClient,
-  inventoryId: string,
-  quantity: number,
-): Promise<number | null> {
-  const { data, error } = await client.rpc('add_inventory_package', {
-    p_inventory_id: inventoryId,
-    p_quantity: quantity,
-  })
-  throwIfError(error)
-  return data
 }
 
 /** Neues Vial anmischen bzw. neue Flasche oeffnen. */

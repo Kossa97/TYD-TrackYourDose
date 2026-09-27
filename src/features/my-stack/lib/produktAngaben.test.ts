@@ -107,7 +107,8 @@ describe('produktAngaben', () => {
     // Die Packung nennt ein Ablaufdatum, kein „haltbar noch n Tage". Beides
     // ist eine Haltbarkeit, aber nicht dieselbe Rechnung — die Angabe behaelt
     // ihre Form, damit die Oberflaeche sie richtig benennen kann.
-    expect(a.haltbarkeit).toEqual({ art: 'datum', iso: '2027-03-01', herkunft: 'neu' })
+    expect(a.haltbarkeit).toEqual({ art: 'leer', grund: 'nicht_gesetzt' })
+    expect(a.ablauf).toEqual({ art: 'datum', iso: '2027-03-01', herkunft: 'neu' })
   })
 
   test('liest weiterhin die Altspalten und lässt ihnen den Vortritt', () => {

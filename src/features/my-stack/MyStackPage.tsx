@@ -2255,9 +2255,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   // steht auf der Packung. Welche der beiden es ist, sagt die
                   // Angabe selbst — nicht die Form.
                   const art = anbruchArt(activePeptide.dosage_form)
-                  const haltbarkeitLabel = angaben.haltbarkeit.art === 'datum'
-                    ? String(t('my_stack_stock_expires'))
-                    : String(t(art === 'vial' ? 'my_stack_stock_use_within_vial' : 'my_stack_stock_use_within'))
+                  const haltbarkeitLabel = String(t(art === 'vial' ? 'my_stack_stock_use_within_vial' : 'my_stack_stock_use_within'))
                   const FELD_LABEL: Record<DetailFeld, string> = {
                     wirkstoff: wirkstoffLabel,
                     kategorie: 'Kategorie',
@@ -2265,6 +2263,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     fluessigkeit: String(t('my_stack_stock_liquid')),
                     rekonstituiert_am: String(t(art === 'vial' ? 'my_stack_stock_mixed_on' : 'my_stack_stock_opened_on')),
                     haltbarkeit: haltbarkeitLabel,
+                    ablauf: String(t('my_stack_stock_expires')),
                     vorrat: 'Vorrat',
                     // „Methode" und nicht „Applikationsart": im Zyklusknopf
                     // steht dasselbe Feld unter demselben Namen.
@@ -2276,14 +2275,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   }
                   // Was im Bestand steht, laesst sich hier direkt aendern: ein
                   // Tipp oeffnet nur dieses eine Feld. Voraussetzung ist, dass
-                  // die Anzeige auch aus dem Bestand liest — ein Vial mit
-                  // Altdaten (Bestand nicht in Vials) bleibt nur Anzeige.
+                  // die Anzeige auch aus dem Bestand liest — beim Vial dieselbe
+                  // Regel wie `withVialInventory`; sonst bleibt es Anzeige.
                   const bestandFuehrtAngaben = Boolean(activePeptide.inventory)
-                    && (art !== 'vial' || activePeptide.inventory?.package_unit === 'vial')
+                    && (art !== 'vial' || vialBuchtUeberBestand(activePeptide.inventory, activePeptide.ingredients))
                   const FELD_EDITOR: Partial<Record<DetailFeld, BestandEditorArt>> = {
                     fluessigkeit: 'reconstitution_ml',
                     rekonstituiert_am: 'opened_at',
-                    haltbarkeit: angaben.haltbarkeit.art === 'datum' || !art ? 'expires_at' : 'use_within_days',
+                    haltbarkeit: 'use_within_days',
+                    ablauf: 'expires_at',
                     batch: 'batch_number',
                     quelle: 'batch_source',
                     analyse: 'batch_file_url',
@@ -2348,6 +2348,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       ingredients={activePeptide.ingredients}
                       timelines={timelinesOf(activePeptide.id)}
                       timeZone={timeZone}
+                      // Vials bucht die Datenbank ueber den Bestand ab, wenn die
+                      // Umrechnung eindeutig ist, alle anderen nur mit Staerke.
+                      deductsIntakes={art === 'vial'
+                        ? vialBuchtUeberBestand(activePeptide.inventory, activePeptide.ingredients)
+                        : activePeptide.tracking_level === 'complete'}
                       onEdit={editor => setBestandEdit({ peptideId: activePeptide.id, editor })}
                     />
                     {detailAbschnitte(form).map(abschnitt => (
@@ -2467,7 +2472,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       Flasche anbrechen: setzt Datum und Fluessigkeit neu und
                       verwirft auf Wunsch den Rest im alten. Nur mit Bestand
                       und einem vollen Behaelter darin. */}
-                  {anbruchArt(activePeptide.dosage_form) && activePeptide.inventory?.enabled && (
+                  {art && activePeptide.inventory?.enabled && (
                   <button
                     type="button"
                     onClick={() => setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })}
@@ -2475,9 +2480,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
                   >
                     <RefreshCw size={14} />
-                    {String(t(anbruchArt(activePeptide.dosage_form) === 'vial'
-                      ? 'my_stack_stock_mix_new'
-                      : anbruchArt(activePeptide.dosage_form) === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
+                    {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
                   </button>
                   )}
                   {/* Eine Tuer zum Bearbeiten: der Assistent. Das aeltere

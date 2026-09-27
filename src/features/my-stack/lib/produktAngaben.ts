@@ -174,18 +174,14 @@ function vorrat(q: AngabenQuellen): Angabe {
 }
 
 /**
- * Wie lange es nach dem Anmischen haelt.
- *
- * Alt als DAUER („28 Tage", gezaehlt ab dem Anmischen), neu als DATUM auf der
- * Packung. Beides ist eine Haltbarkeit, aber nicht dieselbe Rechnung — deshalb
- * behaelt jede ihre Form, statt die eine in die andere umzudeuten.
+ * Wie lange es nach dem Anmischen oder Oeffnen haelt — eine DAUER („28 Tage"),
+ * alt am Eintrag, neu im Bestand. Das Datum auf der Packung ist eine eigene
+ * Angabe (`ablauf`): nicht dieselbe Rechnung, und beide koennen zugleich gelten.
  */
 function haltbarkeit(q: AngabenQuellen): Angabe {
   if (q.item.expiry_days != null) return { art: 'tage', n: q.item.expiry_days, herkunft: 'alt' }
   const tage = q.item.inventory?.use_within_days
   if (tage != null) return { art: 'tage', n: tage, herkunft: 'neu' }
-  const ablauf = q.item.inventory?.expires_at
-  if (ablauf) return { art: 'datum', iso: ablauf, herkunft: 'neu' }
   return leer('haltbarkeit')
 }
 
@@ -214,6 +210,11 @@ export function produktAngaben(q: AngabenQuellen): Record<DetailFeld, Angabe> {
         ? { art: 'datum', iso: item.inventory.opened_at, herkunft: 'neu' }
         : leer('rekonstituiert_am'),
     haltbarkeit: haltbarkeit(q),
+    // Das Ablaufdatum auf der Packung — eine eigene Angabe neben der
+    // Haltbarkeit nach dem Oeffnen, nicht eine Fassung davon.
+    ablauf: item.inventory?.expires_at
+      ? { art: 'datum', iso: item.inventory.expires_at, herkunft: 'neu' }
+      : leer('ablauf'),
     vorrat: vorrat(q),
     // Die Methode steht alt am Eintrag, neu am Zyklus. Ohne Zyklus gibt es
     // sie im neuen Modell nicht — dann ist sie leer und nicht geraten.

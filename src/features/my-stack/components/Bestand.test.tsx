@@ -78,6 +78,11 @@ describe('BestandCard', () => {
     expect(onEdit).toHaveBeenCalledWith('correct')
   })
 
+  it('says when confirmed intakes are not deducted', () => {
+    render(<BestandCard dosageForm="vial" inventory={vial} ingredients={[ingredient]} timelines={[]} timeZone="Europe/Berlin" deductsIntakes={false} onEdit={vi.fn()} />)
+    expect(screen.getByText('my_stack_stock_needs_strength')).not.toBeNull()
+  })
+
   it('starts tracking from the card when stock is not tracked', () => {
     const onEdit = vi.fn()
     render(<BestandCard dosageForm="tablet" inventory={null} ingredients={[]} timelines={[]} timeZone="Europe/Berlin" onEdit={onEdit} />)
@@ -92,7 +97,7 @@ describe('Bestand ändern', () => {
     const { handlers, onClose } = renderEditor('correct', vial)
     const editor = screen.getByRole('dialog', { name: 'my_stack_stock_edit' })
     const voll = within(editor).getByLabelText('my_stack_stock_unopened_vial') as HTMLInputElement
-    const prozent = within(editor).getByLabelText('my_stack_stock_opened_percent_vial') as HTMLInputElement
+    const prozent = within(editor).getByLabelText('my_stack_stock_opened_vial') as HTMLInputElement
     expect(voll.value).toBe('2')
     expect(prozent.value).toBe('95')
 
@@ -108,8 +113,8 @@ describe('Bestand ändern', () => {
     const { handlers } = renderEditor('correct', pen, 'pen')
     const editor = screen.getByRole('dialog', { name: 'my_stack_stock_edit' })
     expect((within(editor).getByLabelText('my_stack_stock_unopened_pen') as HTMLInputElement).value).toBe('2')
-    expect((within(editor).getByLabelText('my_stack_stock_opened_percent_pen') as HTMLInputElement).value).toBe('50')
-    fireEvent.change(within(editor).getByLabelText('my_stack_stock_opened_percent_pen'), { target: { value: '100' } })
+    expect((within(editor).getByLabelText('my_stack_stock_opened_pen') as HTMLInputElement).value).toBe('50')
+    fireEvent.change(within(editor).getByLabelText('my_stack_stock_opened_pen'), { target: { value: '100' } })
     fireEvent.click(within(editor).getByRole('button', { name: 'my_stack_stock_save' }))
     await waitFor(() => expect(handlers.update).toHaveBeenCalledWith({ remaining_quantity: 9 }))
   })
@@ -117,7 +122,7 @@ describe('Bestand ändern', () => {
   it('refuses a percentage above 100', () => {
     renderEditor('correct', vial)
     const editor = screen.getByRole('dialog', { name: 'my_stack_stock_edit' })
-    fireEvent.change(within(editor).getByLabelText('my_stack_stock_opened_percent_vial'), { target: { value: '120' } })
+    fireEvent.change(within(editor).getByLabelText('my_stack_stock_opened_vial'), { target: { value: '120' } })
     expect(within(editor).getByRole('button', { name: 'my_stack_stock_save' })).toHaveProperty('disabled', true)
   })
 
@@ -146,6 +151,24 @@ describe('Bestand ändern', () => {
 })
 
 describe('single fields opened from the detail view', () => {
+  it('closes only itself on Escape, not the full view underneath', () => {
+    const behind = vi.fn()
+    window.addEventListener('keydown', behind)
+    const { onClose } = renderEditor('reconstitution_ml', vial)
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'my_stack_stock_liquid' }), { key: 'Escape' })
+    window.removeEventListener('keydown', behind)
+    expect(onClose).toHaveBeenCalled()
+    expect(behind).not.toHaveBeenCalled()
+  })
+
+  it('shows the stored value while stock tracking is off, and does not accept an empty liquid', () => {
+    renderEditor('reconstitution_ml', { ...vial, enabled: false })
+    const editor = screen.getByRole('dialog', { name: 'my_stack_stock_liquid' })
+    expect((within(editor).getByRole('textbox') as HTMLInputElement).value).toBe('2')
+    fireEvent.change(within(editor).getByRole('textbox'), { target: { value: '' } })
+    expect(within(editor).getByRole('button', { name: 'my_stack_stock_save' })).toHaveProperty('disabled', true)
+  })
+
   it('mixes a new vial and offers to discard the rest of the old one', async () => {
     const { handlers } = renderEditor('open_new', vial)
     const editor = screen.getByRole('dialog', { name: 'my_stack_stock_mix_new' })

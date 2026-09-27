@@ -3,7 +3,7 @@ import { DOSAGE_FORMS, getDosageForm } from './dosageForms'
 import { detailAbschnitte, wirkstoffBezug } from './stackDetailSections'
 
 describe('detailAbschnitte', () => {
-  const substanz = { id: 'substanz', felder: ['kategorie', 'applikation', 'marke', 'batch', 'quelle', 'analyse', 'notizen'] }
+  const substanz = { id: 'substanz', felder: ['kategorie', 'applikation', 'marke', 'batch', 'quelle', 'analyse', 'ablauf', 'notizen'] }
 
   it('zeigt beim Vial Flüssigkeit, Anmischdatum und Haltbarkeit bei der Zusammensetzung', () => {
     expect(detailAbschnitte(getDosageForm('vial'))).toEqual([

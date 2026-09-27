@@ -128,9 +128,28 @@ export function bestandAufteilen(inventory: StackItemInventory, art: AnbruchArt 
   return { groesse, voll, prozent: Math.round((rest - voll * groesse) / groesse * 100) }
 }
 
-/** Der Vorrat aus ungeoeffneten Behaeltern und dem angebrochenen in Prozent. */
-export function bestandZusammensetzen(groesse: number, voll: number, prozent: number): number {
-  return rund(voll * groesse + prozent / 100 * groesse)
+// Einheiten, die man zaehlt: dort gibt es keinen halben Spruehstoss.
+const ZAEHLBAR_TEILBAR = new Set(['vial', 'ml', 'g'])
+
+/**
+ * Der Vorrat aus ungeoeffneten Behaeltern und dem angebrochenen in Prozent.
+ *
+ * Die Prozentzahl ist gerundet. Bleibt sie, wie sie angezeigt wurde, gilt der
+ * genaue Rest von vorher — sonst aendert schon „Speichern ohne Aenderung" den
+ * Bestand (181 Stoesse wuerden zu 181,2). Gezaehlte Einheiten bleiben ganz.
+ */
+export function bestandZusammensetzen(
+  vorher: BestandAufteilung,
+  voll: number,
+  prozent: number,
+  inventory: Pick<StackItemInventory, 'remaining_quantity' | 'package_unit'>,
+): number {
+  const { groesse } = vorher
+  const angebrochen = prozent === vorher.prozent
+    ? Math.max(0, (inventory.remaining_quantity ?? 0) - vorher.voll * groesse)
+    : prozent / 100 * groesse
+  const gesamt = rund(voll * groesse + angebrochen)
+  return ZAEHLBAR_TEILBAR.has(inventory.package_unit ?? '') ? gesamt : Math.round(gesamt)
 }
 
 /** Bis wann der angebrochene Behaelter haelt (`YYYY-MM-DD`), oder null. */

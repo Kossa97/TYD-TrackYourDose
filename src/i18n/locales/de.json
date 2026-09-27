@@ -1536,8 +1536,5 @@
   "my_stack_stock_edit": "Bestand ändern",
   "my_stack_stock_unopened_vial": "Ungeöffnete Vials",
   "my_stack_stock_unopened_pen": "Ungeöffnete Pens",
-  "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen",
-  "my_stack_stock_opened_percent_vial": "Angemischtes Vial",
-  "my_stack_stock_opened_percent_pen": "Angebrochener Pen",
-  "my_stack_stock_opened_percent_bottle": "Angebrochene Flasche"
+  "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen"
 }

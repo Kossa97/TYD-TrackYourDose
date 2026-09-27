@@ -501,9 +501,6 @@ export const MY_STACK_EN = {
   my_stack_stock_unopened_vial: 'Unopened vials',
   my_stack_stock_unopened_pen: 'Unopened pens',
   my_stack_stock_unopened_bottle: 'Unopened bottles',
-  my_stack_stock_opened_percent_vial: 'Mixed vial',
-  my_stack_stock_opened_percent_pen: 'Pen in use',
-  my_stack_stock_opened_percent_bottle: 'Opened bottle',
 }
 
 export const MY_STACK_DE = {
@@ -1008,9 +1005,6 @@ export const MY_STACK_DE = {
   my_stack_stock_unopened_vial: 'Ungeöffnete Vials',
   my_stack_stock_unopened_pen: 'Ungeöffnete Pens',
   my_stack_stock_unopened_bottle: 'Ungeöffnete Flaschen',
-  my_stack_stock_opened_percent_vial: 'Angemischtes Vial',
-  my_stack_stock_opened_percent_pen: 'Angebrochener Pen',
-  my_stack_stock_opened_percent_bottle: 'Angebrochene Flasche',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)
