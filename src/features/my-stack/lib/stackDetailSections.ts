@@ -1,13 +1,18 @@
+import { anbruchArt } from './bestand'
 import type { DosageFormDefinition } from './dosageForms'
 
 /**
  * Welche Angaben im Vollbild einer Substanz stehen.
  *
- * Das Vollbild zeigt, WAS eine Substanz ist und woraus sie besteht. Alles zur
- * einzelnen Packung — Vorrat, Anmischen/Oeffnen, Haltbarkeit danach, Charge —
- * liegt in der Bestand-Ansicht (`BestandSheet`), fuer jede Form nach dem,
- * was sie kennt (`anbruchArt` in `bestand.ts`). So steht bei einem Pflaster
- * auch keine Kachel „Zugefuegte Fluessigkeit: Nicht gesetzt" mehr.
+ * Das Vollbild zeigt, WAS eine Substanz ist (Kategorie, Methode, Marke,
+ * Charge) und woraus sie besteht (Wirkstoff, beim Anmischen oder Oeffnen auch
+ * Fluessigkeit, Datum und Haltbarkeit danach). Den Vorrat zeigt die
+ * Bestand-Anzeige darueber (`BestandCard`).
+ *
+ * Eine Angabe, die die FORM nicht kennt, faellt weg: bei einem Pflaster steht
+ * keine Kachel „Zugefuegte Fluessigkeit: Nicht gesetzt". Eine, die sie kennt
+ * und die nur LEER ist, bleibt stehen — dort ist „Nicht gesetzt" eine
+ * Aufforderung und keine Panne.
  *
  * Wie die Staerke heisst, sagt weiterhin die Form (`strengthShape` in
  * `dosageForms.ts`, siehe `wirkstoffBezug`).
@@ -31,8 +36,8 @@ export type DetailFeld =
  * `substanz` sagt, WAS das ist — Kategorie, Methode, Herkunft. Das gilt fuer
  * jede Packung derselben Substanz gleich.
  *
- * `produkt` sagt, woraus diese Darreichung besteht. Was DIESE Packung ist —
- * angemischt, haltbar, wie viel noch da — steht in der Bestand-Ansicht.
+ * `produkt` („Zusammensetzung") sagt, woraus diese Darreichung besteht — und
+ * wo angemischt oder geoeffnet wird, womit, wann und wie lange es haelt.
  */
 export type AbschnittId = 'substanz' | 'produkt'
 
@@ -60,23 +65,22 @@ export function wirkstoffBezug(form: DosageFormDefinition | undefined): Wirkstof
   }
 }
 
-export function detailAbschnitte(): DetailAbschnitt[] {
+export function detailAbschnitte(form: DosageFormDefinition | undefined): DetailAbschnitt[] {
   // Die Wirkstoffmenge beschreibt die Zusammensetzung dieser Darreichung,
   // nicht die Identitaet der Substanz.
-  //
-  // Was DIESE Packung betrifft — Vorrat, angemischt/geoeffnet am, Haltbarkeit
-  // danach, zugefuegte Fluessigkeit, Charge, Quelle, Analyse-Dokument — steht
-  // nicht mehr hier, sondern in der Bestand-Ansicht (`BestandSheet`). Das
-  // Vollbild zeigt davon nur die Kurzfassung als eigene Karte.
   const produkt: DetailFeld[] = ['wirkstoff']
+  // Aufloesen heisst: Pulver im Glas, das man selbst anmischt — nur dort gibt
+  // es eine zugefuegte Fluessigkeit. Ein Datum und eine Haltbarkeit danach
+  // hat alles, was angebrochen wird (Vial, Pen, Flasche).
+  if (form?.capabilities.includes('reconstitutable')) produkt.push('fluessigkeit')
+  if (form?.capabilities.includes('reconstitutable') || anbruchArt(form?.key)) {
+    produkt.push('rekonstituiert_am', 'haltbarkeit')
+  }
 
-  // Kategorie und Marke standen bis eben in einer zweiten Darstellung
-  // DARUEBER (`StackItemDetails`), zusammen mit Name, Zutaten und Notizen —
-  // also dreimal dasselbe untereinander, aus zwei verschiedenen Quellen. Was
-  // dort einzigartig war, steht jetzt hier; die Darreichungsform nennt schon
-  // die Ueberschrift des Wirkstoffs („Wirkstoff pro Pflaster"), und der Name
-  // steht auf dem Objekt darueber.
-  const substanz: DetailFeld[] = ['kategorie', 'applikation', 'marke', 'notizen']
+  const substanz: DetailFeld[] = [
+    'kategorie', 'applikation', 'marke',
+    'batch', 'quelle', 'analyse', 'notizen',
+  ]
 
   // Zuerst WAS es ist, dann woraus es besteht.
   return [

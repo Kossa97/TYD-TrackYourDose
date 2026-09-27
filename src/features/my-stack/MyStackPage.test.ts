@@ -131,7 +131,7 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('detailAbschnitte, wirkstoffBezug,')
-    expect(text).toContain('detailAbschnitte().map(abschnitt => (')
+    expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
     expect(text).toContain('data-stack-detail={abschnitt.id}')
     expect(text).toContain('data-stack-detail-field={feld}')
     // Und die Stärke heißt, wie die Form sie misst — „pro Vial" stimmt beim
@@ -308,8 +308,8 @@ describe('My Stack page vial view', () => {
     // Substanz und Produkt kommen aus derselben Schleife — ihre Reihenfolge
     // untereinander liegt in `detailAbschnitte`, hier zählt, dass die
     // Schleife vor dem Zyklus steht.
-    expect(platz('detailAbschnitte().map')).toBeGreaterThan(-1)
-    expect(platz('detailAbschnitte().map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
+    expect(platz('detailAbschnitte(form).map')).toBeGreaterThan(-1)
+    expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
     expect(platz('data-stack-detail="zyklus"')).toBeLessThan(platz('data-stack-detail="verwalten"'))
   })
 
@@ -448,9 +448,9 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('grid grid-cols-2 gap-2')
-    expect(text).toContain('Haltbar danach')
-    expect(text).toContain('Angemischt am')
-    expect(text).toContain('Analyse-Dokument')
+    expect(text).toContain("'my_stack_stock_use_within_vial'")
+    expect(text).toContain("'my_stack_stock_mixed_on'")
+    expect(text).toContain("'my_stack_stock_document'")
     expect(text).not.toContain('Peptidname')
     expect(text).not.toContain('Rohe Vials in Reserve')
     expect(text).not.toContain('compactInfoRows')

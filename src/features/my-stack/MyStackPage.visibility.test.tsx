@@ -533,7 +533,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
   })
 
-  it('keeps strength in the composition and moves the package details into the stock card', async () => {
+  it('shows mixing in the composition, the batch in the substance and the stock as its own line', async () => {
     await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
@@ -542,13 +542,18 @@ describe('MyStackPage non-vial visibility', () => {
     const product = dialog.querySelector<HTMLElement>('[data-stack-detail="produkt"]')
 
     expect(substance?.querySelector('[data-stack-detail-field="wirkstoff"]')).toBeNull()
-    expect(product?.querySelector('[data-stack-detail-field="wirkstoff"]')?.className).toContain('col-span-2')
     expect(within(product!).getByRole('heading', { name: 'Zusammensetzung' })).not.toBeNull()
-    // Charge, Anmischen und Vorrat stehen in der Bestand-Ansicht.
-    for (const feld of ['analyse', 'batch', 'quelle', 'fluessigkeit', 'rekonstituiert_am', 'vorrat']) {
-      expect(dialog.querySelector(`[data-stack-detail-field="${feld}"]`), feld).toBeNull()
+    for (const feld of ['wirkstoff', 'fluessigkeit', 'rekonstituiert_am', 'haltbarkeit']) {
+      expect(product?.querySelector(`[data-stack-detail-field="${feld}"]`), feld).not.toBeNull()
     }
-    expect(dialog.querySelector('[data-stack-detail="bestand"]')).not.toBeNull()
+    for (const feld of ['batch', 'quelle', 'analyse']) {
+      expect(substance?.querySelector(`[data-stack-detail-field="${feld}"]`), feld).not.toBeNull()
+    }
+    // Den Vorrat zeigt die Bestand-Anzeige, keine Kachel — und kein eigenes Fenster.
+    expect(dialog.querySelector('[data-stack-detail-field="vorrat"]')).toBeNull()
+    const stock = dialog.querySelector<HTMLElement>('[data-stack-detail="bestand"]')
+    expect(stock).not.toBeNull()
+    expect(within(stock!).getAllByRole('button')).toHaveLength(1)
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
   })
 

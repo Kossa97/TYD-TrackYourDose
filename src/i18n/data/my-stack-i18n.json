@@ -496,7 +496,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -995,7 +1002,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1494,7 +1508,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1993,7 +2014,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2492,7 +2520,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2991,7 +3026,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3490,7 +3532,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3989,7 +4038,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4488,7 +4544,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4987,7 +5050,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5486,7 +5556,14 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5985,6 +6062,13 @@
     "my_stack_plan_review_removed": "Will be removed",
     "my_stack_plan_review_undo": "Undo",
     "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-    "my_stack_plan_review_confirm": "Confirm"
+    "my_stack_plan_review_confirm": "Confirm",
+    "my_stack_stock_edit": "Edit stock",
+    "my_stack_stock_unopened_vial": "Unopened vials",
+    "my_stack_stock_unopened_pen": "Unopened pens",
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_opened_percent_vial": "Mixed vial",
+    "my_stack_stock_opened_percent_pen": "Pen in use",
+    "my_stack_stock_opened_percent_bottle": "Opened bottle"
   }
 }

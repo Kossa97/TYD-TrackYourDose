@@ -497,6 +497,13 @@ export const MY_STACK_EN = {
   my_stack_plan_review_undo: 'Undo',
   my_stack_plan_review_amount_invalid: 'Enter an amount greater than 0 for every intake.',
   my_stack_plan_review_confirm: 'Confirm',
+  my_stack_stock_edit: 'Edit stock',
+  my_stack_stock_unopened_vial: 'Unopened vials',
+  my_stack_stock_unopened_pen: 'Unopened pens',
+  my_stack_stock_unopened_bottle: 'Unopened bottles',
+  my_stack_stock_opened_percent_vial: 'Mixed vial',
+  my_stack_stock_opened_percent_pen: 'Pen in use',
+  my_stack_stock_opened_percent_bottle: 'Opened bottle',
 }
 
 export const MY_STACK_DE = {
@@ -997,6 +1004,13 @@ export const MY_STACK_DE = {
   my_stack_plan_review_undo: 'Rückgängig',
   my_stack_plan_review_amount_invalid: 'Gib für jede Einnahme eine Menge größer als 0 ein.',
   my_stack_plan_review_confirm: 'Bestätigen',
+  my_stack_stock_edit: 'Bestand ändern',
+  my_stack_stock_unopened_vial: 'Ungeöffnete Vials',
+  my_stack_stock_unopened_pen: 'Ungeöffnete Pens',
+  my_stack_stock_unopened_bottle: 'Ungeöffnete Flaschen',
+  my_stack_stock_opened_percent_vial: 'Angemischtes Vial',
+  my_stack_stock_opened_percent_pen: 'Angebrochener Pen',
+  my_stack_stock_opened_percent_bottle: 'Angebrochene Flasche',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

@@ -1532,5 +1532,12 @@
   "my_stack_plan_review_removed": "Wird entfernt",
   "my_stack_plan_review_undo": "Rückgängig",
   "my_stack_plan_review_amount_invalid": "Gib für jede Einnahme eine Menge größer als 0 ein.",
-  "my_stack_plan_review_confirm": "Bestätigen"
+  "my_stack_plan_review_confirm": "Bestätigen",
+  "my_stack_stock_edit": "Bestand ändern",
+  "my_stack_stock_unopened_vial": "Ungeöffnete Vials",
+  "my_stack_stock_unopened_pen": "Ungeöffnete Pens",
+  "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen",
+  "my_stack_stock_opened_percent_vial": "Angemischtes Vial",
+  "my_stack_stock_opened_percent_pen": "Angebrochener Pen",
+  "my_stack_stock_opened_percent_bottle": "Angebrochene Flasche"
 }

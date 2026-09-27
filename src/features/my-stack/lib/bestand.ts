@@ -104,6 +104,35 @@ function teiltInBehaelter(inventory: StackItemInventory): boolean {
   return inventory.package_unit === 'vial' || inventory.opened_at != null
 }
 
+export interface BestandAufteilung {
+  /** Wie viel ein Behaelter fasst, in Packungseinheiten. */
+  groesse: number
+  /** Ungeoeffnete Behaelter. */
+  voll: number
+  /** Was im angebrochenen noch ist, in Prozent (0 = keiner). */
+  prozent: number
+}
+
+/**
+ * Fuer „Bestand aendern": ungeoeffnete Behaelter und der angebrochene in
+ * Prozent. Anders als `vorratTeile` auch ohne Oeffnungsdatum — man soll dort
+ * eintragen koennen, dass ein Pen angebrochen ist. Null, wo die Form nichts
+ * anbricht oder die Behaeltergroesse fehlt: dann gibt es nur die eine Menge.
+ */
+export function bestandAufteilen(inventory: StackItemInventory, art: AnbruchArt | null): BestandAufteilung | null {
+  if (!art) return null
+  const groesse = behaelterGroesse(inventory)
+  if (!groesse) return null
+  const rest = Math.max(0, inventory.remaining_quantity ?? 0)
+  const voll = Math.floor(rest / groesse + 1e-9)
+  return { groesse, voll, prozent: Math.round((rest - voll * groesse) / groesse * 100) }
+}
+
+/** Der Vorrat aus ungeoeffneten Behaeltern und dem angebrochenen in Prozent. */
+export function bestandZusammensetzen(groesse: number, voll: number, prozent: number): number {
+  return rund(voll * groesse + prozent / 100 * groesse)
+}
+
 /** Bis wann der angebrochene Behaelter haelt (`YYYY-MM-DD`), oder null. */
 export function haltbarBis(inventory: StackItemInventory): string | null {
   if (!inventory.opened_at || !inventory.use_within_days) return null

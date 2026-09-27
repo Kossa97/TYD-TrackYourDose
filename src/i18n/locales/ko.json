@@ -1384,5 +1384,12 @@
   "my_stack_plan_review_removed": "Will be removed",
   "my_stack_plan_review_undo": "Undo",
   "my_stack_plan_review_amount_invalid": "Enter an amount greater than 0 for every intake.",
-  "my_stack_plan_review_confirm": "Confirm"
+  "my_stack_plan_review_confirm": "Confirm",
+  "my_stack_stock_edit": "Edit stock",
+  "my_stack_stock_unopened_vial": "Unopened vials",
+  "my_stack_stock_unopened_pen": "Unopened pens",
+  "my_stack_stock_unopened_bottle": "Unopened bottles",
+  "my_stack_stock_opened_percent_vial": "Mixed vial",
+  "my_stack_stock_opened_percent_pen": "Pen in use",
+  "my_stack_stock_opened_percent_bottle": "Opened bottle"
 }

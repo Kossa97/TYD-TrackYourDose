@@ -4,6 +4,8 @@ import type { StackItemIngredient, StackItemInventory } from '../types'
 import {
   anbruchArt,
   aufzuziehendeEinheiten,
+  bestandAufteilen,
+  bestandZusammensetzen,
   dosisInPackungseinheit,
   haltbarBis,
   reichweite,
@@ -99,6 +101,26 @@ describe('vorratTeile', () => {
   it('leaves tablets as one number', () => {
     const tablets = inventory({ package_unit: 'tablet', package_quantity: 60, remaining_quantity: 42 })
     expect(vorratTeile(tablets)).toMatchObject({ voll: 42, angebrochen: 0, angebrochenAnteil: null })
+  })
+})
+
+describe('bestandAufteilen', () => {
+  it('teilt Vials in ungeöffnete und das angemischte in Prozent', () => {
+    expect(bestandAufteilen(inventory({ package_unit: 'vial', remaining_quantity: 2.95 }), 'vial')).toEqual({ groesse: 1, voll: 2, prozent: 95 })
+  })
+
+  it('teilt Pens nach ihrer Größe, auch ohne Öffnungsdatum', () => {
+    expect(bestandAufteilen(inventory({ package_unit: 'ml', package_quantity: 3, remaining_quantity: 7.5, opened_at: null }), 'pen')).toEqual({ groesse: 3, voll: 2, prozent: 50 })
+  })
+
+  it('gibt es nicht, wo nichts angebrochen wird oder die Größe fehlt', () => {
+    expect(bestandAufteilen(inventory({ package_unit: 'tablet', remaining_quantity: 42 }), null)).toBeNull()
+    expect(bestandAufteilen(inventory({ package_unit: 'ml', package_quantity: null, remaining_quantity: 7 }), 'flasche')).toBeNull()
+  })
+
+  it('setzt sich wieder zusammen', () => {
+    expect(bestandZusammensetzen(1, 3, 40)).toBe(3.4)
+    expect(bestandZusammensetzen(3, 2, 100)).toBe(9)
   })
 })
 

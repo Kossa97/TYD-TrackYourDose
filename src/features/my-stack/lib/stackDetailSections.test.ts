@@ -3,11 +3,22 @@ import { DOSAGE_FORMS, getDosageForm } from './dosageForms'
 import { detailAbschnitte, wirkstoffBezug } from './stackDetailSections'
 
 describe('detailAbschnitte', () => {
-  it('zeigt, was die Substanz ist und woraus sie besteht — die Packung steht im Bestand', () => {
-    expect(detailAbschnitte()).toEqual([
-      { id: 'substanz', felder: ['kategorie', 'applikation', 'marke', 'notizen'] },
-      { id: 'produkt', felder: ['wirkstoff'] },
+  const substanz = { id: 'substanz', felder: ['kategorie', 'applikation', 'marke', 'batch', 'quelle', 'analyse', 'notizen'] }
+
+  it('zeigt beim Vial Flüssigkeit, Anmischdatum und Haltbarkeit bei der Zusammensetzung', () => {
+    expect(detailAbschnitte(getDosageForm('vial'))).toEqual([
+      substanz,
+      { id: 'produkt', felder: ['wirkstoff', 'fluessigkeit', 'rekonstituiert_am', 'haltbarkeit'] },
     ])
+  })
+
+  it('zeigt bei Pen und Flasche das Öffnen, aber keine zugefügte Flüssigkeit', () => {
+    expect(detailAbschnitte(getDosageForm('pen'))[1].felder).toEqual(['wirkstoff', 'rekonstituiert_am', 'haltbarkeit'])
+    expect(detailAbschnitte(getDosageForm('drops'))[1].felder).toEqual(['wirkstoff', 'rekonstituiert_am', 'haltbarkeit'])
+  })
+
+  it('lässt weg, was die Form nicht kennt', () => {
+    expect(detailAbschnitte(getDosageForm('patch'))).toEqual([substanz, { id: 'produkt', felder: ['wirkstoff'] }])
   })
 })
 

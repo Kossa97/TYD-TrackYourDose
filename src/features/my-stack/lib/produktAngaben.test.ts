@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { OHNE_NEUE_ENTSPRECHUNG, produktAngaben, type AngabenQuellen } from './produktAngaben'
 import { detailAbschnitte } from './stackDetailSections'
+import { getDosageForm } from './dosageForms'
 import type { StackItem } from '../types'
 
 /**
@@ -71,6 +72,24 @@ const ausDenTrackingDetails = (): AngabenQuellen => ({
 })
 
 describe('produktAngaben', () => {
+  test('liest Öffnen, Haltbarkeit und Charge eines Pens aus dem Bestand', () => {
+    const q = ausDemAssistenten()
+    q.item.inventory = {
+      ...q.item.inventory!,
+      opened_at: '2026-09-20',
+      use_within_days: 28,
+      reconstitution_ml: null,
+      batch_source: 'Apotheke',
+      batch_file_url: 'https://synthetic.invalid/analyse.pdf',
+    }
+    const angaben = produktAngaben(q)
+    expect(angaben.rekonstituiert_am).toMatchObject({ art: 'datum', iso: '2026-09-20', herkunft: 'neu' })
+    expect(angaben.haltbarkeit).toMatchObject({ art: 'tage', n: 28, herkunft: 'neu' })
+    expect(angaben.quelle).toMatchObject({ art: 'text', text: 'Apotheke', herkunft: 'neu' })
+    expect(angaben.analyse).toMatchObject({ art: 'datei', url: 'https://synthetic.invalid/analyse.pdf' })
+    expect(angaben.fluessigkeit.art).toBe('leer')
+  })
+
   test('füllt einen Eintrag aus dem Assistenten, statt „Nicht gesetzt" zu zeigen', () => {
     const a = produktAngaben(ausDemAssistenten())
 
@@ -172,7 +191,7 @@ describe('produktAngaben', () => {
     // `detailAbschnitte` zeigt, muss `produktAngaben` beantworten koennen.
     // Sonst steht irgendwo `undefined` in einer Kachel.
     const a = produktAngaben(ausDemAssistenten())
-    for (const abschnitt of detailAbschnitte()) {
+    for (const abschnitt of detailAbschnitte(getDosageForm('vial'))) {
       for (const feld of abschnitt.felder) {
         expect(a[feld], feld).toBeDefined()
       }
