@@ -3240,15 +3240,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790552812.2438443,
-    "seen": 1790552872.2070167,
-    "ast_hash": "f7c5be67d2d47c51533c008cd78f2070",
+    "mtime": 1790552983.6762846,
+    "seen": 1790553033.4642093,
+    "ast_hash": "9e4a1977ab60d3edc3b58f4c63c4153d",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790552803.8871634,
-    "seen": 1790552872.20702,
-    "ast_hash": "7f906ca496e59c06853c4918bccf1d01",
+    "mtime": 1790552983.6682875,
+    "seen": 1790553033.4642115,
+    "ast_hash": "594ee506b5cb5554e2bb62c6768b287c",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
