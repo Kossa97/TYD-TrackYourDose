@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790469103.4011607,
-    "seen": 1790469982.1764832,
-    "ast_hash": "d704d406e99cf7e64dee35c8940c2f6f",
+    "mtime": 1790470371.4734104,
+    "seen": 1790470660.1168847,
+    "ast_hash": "74fed52ca1168705039ba1a7b2659fd0",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3384,9 +3384,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1790469569.2775373,
-    "seen": 1790469982.1765118,
-    "ast_hash": "0910d970b4c126e05bb7f718456ab0b4",
+    "mtime": 1790470437.903752,
+    "seen": 1790470660.116922,
+    "ast_hash": "3ece01710a7d4ed0b675d6d2635e7561",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790469589.0228226,
-    "seen": 1790469982.176514,
-    "ast_hash": "755f329e4ddd623e171974a3e2bee251",
+    "mtime": 1790470481.8081112,
+    "seen": 1790470660.1169236,
+    "ast_hash": "10720648a80ecb7cf012037f5644d4d3",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4182,9 +4182,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.ts": {
-    "mtime": 1790469163.7979362,
-    "seen": 1790469982.1766334,
-    "ast_hash": "ff7bb72de1070b852b597ef795033193",
+    "mtime": 1790470371.4714625,
+    "seen": 1790470660.117061,
+    "ast_hash": "bb55f77e176a40673455f80387a1c564",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790469878.7306387,
-    "seen": 1790469982.1768742,
+    "mtime": 1790470610.1386821,
+    "seen": 1790470660.1173284,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5430,15 +5430,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planAdoption.test.ts": {
-    "mtime": 1790469793.3195307,
-    "seen": 1790469982.1766098,
-    "ast_hash": "2fc6422a3d8a5d9dc0793970041d0a0a",
+    "mtime": 1790470481.8083997,
+    "seen": 1790470660.1170359,
+    "ast_hash": "d8d5c7f9875c09cf8967516282c61912",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planAdoption.ts": {
-    "mtime": 1790469793.319156,
-    "seen": 1790469982.1766102,
-    "ast_hash": "d2dc1279592731b4df8514a45269394c",
+    "mtime": 1790470285.6111076,
+    "seen": 1790470660.117037,
+    "ast_hash": "4cbbb06b2afbb4405dd2b7f7a6edbed7",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlannedStepsReview.tsx": {
