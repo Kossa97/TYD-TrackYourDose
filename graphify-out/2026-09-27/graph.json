@@ -16586,7 +16586,7 @@
       "file_type": "code",
       "norm_label": "expiredbadge()",
       "source_file": "src/features/my-stack/components/ExpiredBadge.tsx",
-      "source_location": "L22"
+      "source_location": "L25"
     },
     {
       "id": "src_features_my_stack_components_expiredbadge_expiredsincelabel",
@@ -78290,7 +78290,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/ExpiredBadge.tsx",
-      "source_location": "L24",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -83942,7 +83942,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2793",
+      "source_location": "L2794",
       "weight": 1.0
     },
     {
@@ -83954,7 +83954,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2794",
+      "source_location": "L2795",
       "weight": 1.0
     },
     {
@@ -83966,7 +83966,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3306",
+      "source_location": "L3307",
       "weight": 1.0
     },
     {
@@ -83978,7 +83978,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3555",
+      "source_location": "L3556",
       "weight": 1.0
     },
     {
@@ -83990,7 +83990,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3601",
+      "source_location": "L3602",
       "weight": 1.0
     },
     {
@@ -187902,7 +187902,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/ExpiredBadge.tsx",
-      "source_location": "L22",
+      "source_location": "L25",
       "weight": 1.0
     },
     {
@@ -215764,5 +215764,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e19b5ed7d44176eebe2ea8c1aebd38c70898567b"
+  "built_at_commit": "5ec61819631c3e3481f0dec3d5653ca68a1407f2"
 }

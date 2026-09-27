@@ -20546,7 +20546,7 @@
       "file_type": "code",
       "norm_label": "canonicalhash()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L566"
+      "source_location": "L567"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_interpolationtokens",
@@ -20558,7 +20558,7 @@
       "file_type": "code",
       "norm_label": "interpolationtokens()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L579"
+      "source_location": "L580"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadlocale",
@@ -20570,7 +20570,7 @@
       "file_type": "code",
       "norm_label": "loadlocale()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L559"
+      "source_location": "L560"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadsource",
@@ -20582,7 +20582,7 @@
       "file_type": "code",
       "norm_label": "loadsource()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L551"
+      "source_location": "L552"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_withoutmystackoverlay",
@@ -20594,7 +20594,7 @@
       "file_type": "code",
       "norm_label": "withoutmystackoverlay()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L573"
+      "source_location": "L574"
     },
     {
       "id": "src_features_my_stack_stage_liquidgeometry_buildliquid",
@@ -49502,7 +49502,7 @@
       "file_type": "code",
       "norm_label": "expectedkeyset",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L549"
+      "source_location": "L550"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_localecodes",
@@ -49524,7 +49524,7 @@
       "file_type": "code",
       "norm_label": "manual_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L531"
+      "source_location": "L532"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_manuallocalecodes",
@@ -49557,7 +49557,7 @@
       "file_type": "code",
       "norm_label": "translated_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L535"
+      "source_location": "L536"
     },
     {
       "id": "src_i18n_plandataerrors_test",
@@ -54146,7 +54146,7 @@
       "file_type": "code",
       "norm_label": "my_stack_de",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L514"
+      "source_location": "L515"
     },
     {
       "id": "scripts_my_stack_i18n_source_my_stack_en",
@@ -54168,7 +54168,7 @@
       "file_type": "code",
       "norm_label": "my_stack_keys",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1026"
+      "source_location": "L1028"
     },
     {
       "id": "docs_superpowers_checklists_my_stack_backup_manifest",
@@ -79274,7 +79274,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/ProductInventorySection.tsx",
-      "source_location": "L263",
+      "source_location": "L265",
       "weight": 1.0
     },
     {
@@ -83906,7 +83906,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2358",
+      "source_location": "L2360",
       "weight": 1.0
     },
     {
@@ -83918,7 +83918,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2362",
+      "source_location": "L2364",
       "weight": 1.0
     },
     {
@@ -83930,7 +83930,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2691",
+      "source_location": "L2698",
       "weight": 1.0
     },
     {
@@ -83942,7 +83942,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2794",
+      "source_location": "L2801",
       "weight": 1.0
     },
     {
@@ -83954,7 +83954,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2795",
+      "source_location": "L2802",
       "weight": 1.0
     },
     {
@@ -83966,7 +83966,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3307",
+      "source_location": "L3314",
       "weight": 1.0
     },
     {
@@ -83978,7 +83978,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3556",
+      "source_location": "L3563",
       "weight": 1.0
     },
     {
@@ -83990,7 +83990,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3602",
+      "source_location": "L3609",
       "weight": 1.0
     },
     {
@@ -178288,7 +178288,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1026",
+      "source_location": "L1028",
       "weight": 1.0
     },
     {
@@ -178310,7 +178310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L514",
+      "source_location": "L515",
       "weight": 1.0
     },
     {
@@ -194568,7 +194568,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L531",
+      "source_location": "L532",
       "weight": 1.0
     },
     {
@@ -194579,7 +194579,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L535",
+      "source_location": "L536",
       "weight": 1.0
     },
     {
@@ -194590,7 +194590,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L549",
+      "source_location": "L550",
       "weight": 1.0
     },
     {
@@ -194601,7 +194601,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L551",
+      "source_location": "L552",
       "weight": 1.0
     },
     {
@@ -194612,7 +194612,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L559",
+      "source_location": "L560",
       "weight": 1.0
     },
     {
@@ -194623,7 +194623,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L566",
+      "source_location": "L567",
       "weight": 1.0
     },
     {
@@ -194634,7 +194634,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L573",
+      "source_location": "L574",
       "weight": 1.0
     },
     {
@@ -194645,7 +194645,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L579",
+      "source_location": "L580",
       "weight": 1.0
     },
     {
@@ -215764,5 +215764,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5ec61819631c3e3481f0dec3d5653ca68a1407f2"
+  "built_at_commit": "00f50dcb9ae91e1de5e72a980aaa438b5191b39f"
 }
