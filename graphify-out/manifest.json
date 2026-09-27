@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790477724.1911104,
-    "seen": 1790477763.8575833,
+    "mtime": 1790478811.2824008,
+    "seen": 1790478851.4261875,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5454,15 +5454,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ExpiredBadge.test.tsx": {
-    "mtime": 1790477596.2457173,
-    "seen": 1790477763.8571105,
-    "ast_hash": "02d5625bcd0116ea1322db29ecc0f528",
+    "mtime": 1790478633.3880985,
+    "seen": 1790478851.4256413,
+    "ast_hash": "056ea438a7cbc209e6f8f9af73a33571",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ExpiredBadge.tsx": {
-    "mtime": 1790477449.479094,
-    "seen": 1790477763.8571303,
-    "ast_hash": "1385374784ed04fe36492dbb0baa0f64",
+    "mtime": 1790478633.3861847,
+    "seen": 1790478851.425643,
+    "ast_hash": "85e656a3233fdeb6c2be73f35aeebf45",
     "semantic_hash": ""
   },
   "src/lib/peptideExpiryDays.test.ts": {
