@@ -21,28 +21,47 @@
 }
 
 /* ── Abgelaufen-Abzeichen (My Stack) ─────────────────────────────────────
-   Erst ein kurzer Alarm — das Warnsymbol blinkt viermal, das Abzeichen
-   glueht mit —, danach pulsiert nur noch das Symbol, ruhig und selten.
-   Wer weniger Bewegung will, sieht beides stehend. */
-@keyframes tyd-expired-alarm {
-  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 0 rgba(248, 113, 113, 0)); }
-  50% { opacity: 0.3; transform: scale(1.22); filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.95)); }
+   Ein gleichmaessiger Wechsel im 6-Sekunden-Takt, endlos: 3 s Alarm
+   („Abgelaufen!", das Warnsymbol blinkt viermal, das Abzeichen glueht mit),
+   dann 3 s „seit X Tagen" mit ruhigem Symbol. Alle Teile laufen mit derselben
+   Dauer, darum bleiben sie im Takt. Wer weniger Bewegung will, bekommt den
+   Wechsel als reines Ueberblenden — ohne Blinken, ohne Versatz. */
+@keyframes tyd-expired-icon {
+  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 0 rgba(248, 113, 113, 0)); }
+  5.8%, 17.5%, 29.2%, 40.8% { opacity: 0.3; transform: scale(1.22); filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.95)); }
 }
 @keyframes tyd-expired-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
-  50% { box-shadow: 0 0 14px 1px rgba(248, 113, 113, 0.45); }
+  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+  5.8%, 17.5%, 29.2%, 40.8% { box-shadow: 0 0 14px 1px rgba(248, 113, 113, 0.45); }
 }
-@keyframes tyd-expired-calm {
-  0%, 72%, 100% { opacity: 1; transform: scale(1); }
-  84% { opacity: 0.4; transform: scale(1.12); }
+@keyframes tyd-expired-text-alarm {
+  0%, 44% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  50%, 94% { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
+  94.1% { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
-.tyd-expired-icon-alarm { animation: tyd-expired-alarm 0.7s ease-in-out 4; }
-.tyd-expired-badge-alarm { animation: tyd-expired-glow 0.7s ease-in-out 4; }
-.tyd-expired-icon-calm { animation: tyd-expired-calm 3.2s ease-in-out infinite; }
+@keyframes tyd-expired-text-since {
+  0%, 44% { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  50%, 94% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
+}
+@keyframes tyd-expired-fade-alarm {
+  0%, 44%, 100% { opacity: 1; }
+  50%, 94% { opacity: 0; }
+}
+@keyframes tyd-expired-fade-since {
+  0%, 44%, 100% { opacity: 0; }
+  50%, 94% { opacity: 1; }
+}
+.tyd-expired-badge { animation: tyd-expired-glow 6s ease-in-out infinite; }
+.tyd-expired-icon { animation: tyd-expired-icon 6s ease-in-out infinite; }
+.tyd-expired-text-alarm { animation: tyd-expired-text-alarm 6s ease-in-out infinite; }
+.tyd-expired-text-since { opacity: 0; animation: tyd-expired-text-since 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .tyd-expired-icon-alarm,
-  .tyd-expired-badge-alarm,
-  .tyd-expired-icon-calm { animation: none; }
+  .tyd-expired-badge,
+  .tyd-expired-icon { animation: none; }
+  .tyd-expired-text-alarm { animation-name: tyd-expired-fade-alarm; }
+  .tyd-expired-text-since { animation-name: tyd-expired-fade-since; }
 }
 
 /* Onboarding overlay — above app modals (z-50) while tour is active */

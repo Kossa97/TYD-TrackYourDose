@@ -1,5 +1,4 @@
 import { AlertTriangle } from 'lucide-react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type Translate = (key: string, options?: Record<string, unknown>) => unknown
@@ -11,51 +10,30 @@ function expiredSinceLabel(t: Translate, daysSince: number): string {
   return String(t('my_stack_expired_since_days', { n: daysSince }))
 }
 
-function magBewegung(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return true
-  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
 /**
- * Abgelaufen: erst ein Alarm, dann wie lange schon.
+ * Abgelaufen: Alarm und „seit X Tagen" im gleichmaessigen Wechsel.
  *
- * Beim Erscheinen blinkt das Warnsymbol, das Abzeichen glueht mit. Ist der
- * Alarm durch (`animationend` — wie lange er dauert, sagt allein das CSS),
- * geht „Abgelaufen!" weich in „seit 3 Tagen" ueber; das Warnsymbol bleibt und
- * pulsiert ruhig weiter, damit es nicht nur die Farbe ist, die warnt. Beide
- * Texte liegen uebereinander, damit das Abzeichen beim Wechsel nicht springt.
- * Vorgelesen wird immer beides zusammen. Wer weniger Bewegung will, sieht
- * gleich den Endstand.
- *
- * Neu starten (etwa fuer die naechste Substanz) per `key`.
+ * Endlos im 6-Sekunden-Takt: 3 s „Abgelaufen!" mit blinkendem Warnsymbol und
+ * gluehendem Abzeichen, dann 3 s „seit 3 Tagen" mit ruhigem Symbol. Der Takt
+ * steht allein im CSS (`.tyd-expired-*` in `index.css`); alle Teile laufen mit
+ * derselben Dauer und bleiben so zusammen. Beide Texte liegen uebereinander,
+ * das Abzeichen springt beim Wechsel nicht. Vorgelesen wird beides zusammen.
  */
 export function ExpiredBadge({ daysSince }: { daysSince: number }) {
   const { t } = useTranslation()
-  const [phase, setPhase] = useState<'alarm' | 'seit'>(() => (magBewegung() ? 'alarm' : 'seit'))
-
   const since = expiredSinceLabel(t, daysSince)
-  const alarm = phase === 'alarm'
-  const text = 'col-start-1 row-start-1 whitespace-nowrap transition-[opacity,transform,filter] duration-500 ease-out motion-reduce:transition-none'
+  const text = 'col-start-1 row-start-1 whitespace-nowrap'
 
   return (
     <span
-      data-expired-badge={phase}
-      className={`inline-flex items-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/10 px-2.5 py-1 font-semibold text-red-300 ${alarm ? 'tyd-expired-badge-alarm' : ''}`}
+      data-expired-badge
+      className="tyd-expired-badge inline-flex items-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/10 px-2.5 py-1 font-semibold text-red-300"
     >
-      <AlertTriangle
-        size={13}
-        aria-hidden="true"
-        onAnimationEnd={() => { if (alarm) setPhase('seit') }}
-        className={`shrink-0 text-red-400 ${alarm ? 'tyd-expired-icon-alarm' : 'tyd-expired-icon-calm'}`}
-      />
+      <AlertTriangle size={13} aria-hidden="true" className="tyd-expired-icon shrink-0 text-red-400" />
       <span className="sr-only">{String(t('my_stack_expired_aria', { since }))}</span>
       <span aria-hidden="true" className="grid">
-        <span className={`${text} ${alarm ? 'translate-y-0 opacity-100 blur-0' : '-translate-y-1.5 opacity-0 blur-[3px]'}`}>
-          {String(t('my_stack_expired'))}
-        </span>
-        <span className={`${text} tabular-nums ${alarm ? 'translate-y-1.5 opacity-0 blur-[3px]' : 'translate-y-0 opacity-100 blur-0'}`}>
-          {since}
-        </span>
+        <span className={`${text} tyd-expired-text-alarm`}>{String(t('my_stack_expired'))}</span>
+        <span className={`${text} tyd-expired-text-since tabular-nums`}>{since}</span>
       </span>
     </span>
   )

@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ExpiredBadge } from './ExpiredBadge'
 
@@ -15,26 +17,30 @@ vi.mock('react-i18next', () => ({
 
 afterEach(cleanup)
 
-function badge(): HTMLElement {
-  return document.querySelector<HTMLElement>('[data-expired-badge]')!
-}
+const css = readFileSync(resolve(__dirname, '../../../index.css'), 'utf8')
 
 describe('ExpiredBadge', () => {
-  it('alarms first, then says for how long once the alarm has run', () => {
+  it('stacks alarm and duration so the badge never jumps, each on its own track of the cycle', () => {
     render(<ExpiredBadge daysSince={3} />)
-    expect(badge().dataset.expiredBadge).toBe('alarm')
-    expect(badge().className).toContain('tyd-expired-badge-alarm')
-    const icon = badge().querySelector('svg')!
-    expect(icon.getAttribute('class')).toContain('tyd-expired-icon-alarm')
+    const alarm = screen.getByText('my_stack_expired')
+    const since = screen.getByText('my_stack_expired_since_days(n=3)')
+    expect(alarm.className).toContain('tyd-expired-text-alarm')
+    expect(since.className).toContain('tyd-expired-text-since')
+    expect(alarm.className).toContain('row-start-1')
+    expect(since.className).toContain('row-start-1')
+    expect(document.querySelector('svg')!.getAttribute('class')).toContain('tyd-expired-icon')
+  })
 
-    // jsdom kennt kein AnimationEvent; React hoert dort auf den Namen mit
-    // Praefix. Im Browser kommt „animationend".
-    fireEvent.animationEnd(icon)
-    fireEvent(icon, new Event('webkitAnimationEnd', { bubbles: true }))
-    expect(badge().dataset.expiredBadge).toBe('seit')
-    expect(badge().className).not.toContain('tyd-expired-badge-alarm')
-    // Das Warnsymbol bleibt und pulsiert ruhig — nicht nur die Farbe warnt.
-    expect(badge().querySelector('svg')!.getAttribute('class')).toContain('tyd-expired-icon-calm')
+  it('runs every part on the same endless 6-second cycle, so they stay in step', () => {
+    for (const teil of ['badge', 'icon', 'text-alarm', 'text-since']) {
+      expect(css, teil).toMatch(new RegExp(`\\.tyd-expired-${teil} \\{[^}]*animation: tyd-expired-[a-z-]+ 6s ease-in-out infinite;`))
+    }
+  })
+
+  it('keeps the swap but drops blinking and movement for reduced motion', () => {
+    const block = css.slice(css.indexOf('.tyd-expired-badge {'), css.indexOf('/* Onboarding overlay'))
+    expect(block).toContain('@media (prefers-reduced-motion: reduce)')
+    expect(block).toContain('.tyd-expired-text-alarm { animation-name: tyd-expired-fade-alarm; }')
   })
 
   it('reads out both at once, whatever is on screen', () => {
@@ -48,13 +54,5 @@ describe('ExpiredBadge', () => {
     unmount()
     render(<ExpiredBadge daysSince={1} />)
     expect(screen.getByText('my_stack_expired_since_day')).toBeTruthy()
-  })
-
-  it('shows the end state right away for reduced motion', () => {
-    const original = window.matchMedia
-    window.matchMedia = vi.fn(() => ({ matches: true }) as unknown as MediaQueryList)
-    render(<ExpiredBadge daysSince={2} />)
-    expect(badge().dataset.expiredBadge).toBe('seit')
-    window.matchMedia = original
   })
 })
