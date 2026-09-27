@@ -100,6 +100,17 @@ export type LaterStepChange =
     changeKind: Exclude<PlanChangeKind, 'initial'>
   }
 
+/**
+ * Die Kennung einer Aenderung an einer geplanten Stufe — mit allem, was
+ * gespeichert wird. Aendert man nach einem Fehler noch etwas, ist es eine
+ * neue Aenderung mit neuem Schluessel, keine Wiederholung der alten.
+ */
+export function laterChangeIdentity(change: LaterStepChange): string {
+  return change.kind === 'remove'
+    ? `remove:${change.versionId}`
+    : `replace:${change.versionId}:${change.effectiveLocalDate}:${change.changeKind}:${JSON.stringify(change.schedule)}`
+}
+
 // Alles am Plan ausser den Mengen (`SCHEDULE_FIELDS`). Aendert sich davon
 // nichts, ist die Aenderung eine Dosisaenderung (oder Titrationsstufe), sonst
 // eine Planaenderung.

@@ -65,10 +65,41 @@ export function stepsAround(input: {
     .filter(step => step.versionId !== input.exceptVersionId)
     .sort(byDate)
   if (boundary == null) return { before: null, after: others }
+  // Eine Stufe, die genau am Stichtag beginnt, ist weder davor noch danach:
+  // an dem Tag kann keine zweite beginnen (`takenEffectiveDates`).
   return {
-    before: others.filter(step => step.effectiveLocalDate <= boundary).at(-1) ?? null,
+    before: others.filter(step => step.effectiveLocalDate < boundary).at(-1) ?? null,
     after: others.filter(step => step.effectiveLocalDate > boundary),
   }
+}
+
+/**
+ * Der Plan, der am Stichtag bisher gilt — daran wird gemessen, was sich
+ * aendert und welche spaeteren Stufen den neuen Plan uebernehmen.
+ *
+ * Sonst: die letzte geplante Stufe davor, ohne sie der jetzige Plan. Wird
+ * eine geplante Stufe selbst bearbeitet und bleibt sie zwischen denselben
+ * Nachbarn, ist es ihr alter Stand — die Stufen dahinter tragen ihn noch.
+ * Rueckt sie an anderen Stufen vorbei, gilt wieder die Regel von oben.
+ */
+export function planBaseAt(input: {
+  laterSteps: readonly LaterPlanStep[]
+  boundary: string | null
+  current: IntakePlanDraft
+  editing?: { versionId: string; originalDate: string | null; draft: IntakePlanDraft } | null
+}): IntakePlanDraft {
+  const { laterSteps, boundary, editing } = input
+  if (editing) {
+    const from = editing.originalDate
+    const crossed = from != null && boundary != null && laterSteps.some(step => (
+      step.versionId !== editing.versionId
+      && step.effectiveLocalDate > (from < boundary ? from : boundary)
+      && step.effectiveLocalDate < (from < boundary ? boundary : from)
+    ))
+    if (!crossed) return editing.draft
+  }
+  const { before } = stepsAround({ laterSteps, boundary, exceptVersionId: editing?.versionId })
+  return before?.draft ?? input.current
 }
 
 /**
@@ -221,7 +252,8 @@ export function reviewedSnapshot(step: ReviewStep): PlanScheduleSnapshot | null 
   const doses: string[] = []
   for (const [index, id] of ids.entries()) {
     const raw = step.amounts[id]
-    if (raw === undefined) {
+    // Nicht angefasst: der gespeicherte Wert bleibt, auch ein leerer.
+    if (raw === undefined || raw === step.initialAmounts[id]) {
       doses.push(doseAt(step.proposed, index))
       continue
     }
@@ -235,4 +267,27 @@ export function reviewedSnapshot(step: ReviewStep): PlanScheduleSnapshot | null 
 /** Hat sich an der Stufe gegenueber dem Gespeicherten etwas geaendert? */
 export function reviewStepChanged(step: ReviewStep, snapshot: PlanScheduleSnapshot): boolean {
   return step.removed || step.date !== step.originalDate || !sameSnapshot(snapshot, step.original)
+}
+
+/**
+ * Die Seite neu aufgebaut (etwa nach „Zurueck" und einer Aenderung am Plan),
+ * ohne zu verlieren, was man dort schon getan hat: entfernte Stufen,
+ * verschobene Tage und selbst eingegebene Mengen bleiben.
+ */
+export function carryOverReview(previous: readonly ReviewStep[], next: readonly ReviewStep[]): ReviewStep[] {
+  return next.map(step => {
+    const before = previous.find(candidate => candidate.versionId === step.versionId)
+    if (!before) return step
+    const amounts = { ...step.amounts }
+    for (const id of Object.keys(amounts)) {
+      const edited = before.amounts[id]
+      if (edited !== undefined && edited !== before.initialAmounts[id]) amounts[id] = edited
+    }
+    return {
+      ...step,
+      removed: before.removed,
+      date: before.date !== before.originalDate ? before.date : step.date,
+      amounts,
+    }
+  })
 }

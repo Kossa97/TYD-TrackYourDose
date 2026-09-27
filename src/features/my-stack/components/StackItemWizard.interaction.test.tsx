@@ -794,7 +794,7 @@ describe('StackItemWizard interactions', () => {
     ])
   })
 
-  it('goes back from the planned steps to the form without saving', async () => {
+  it('goes back from the planned steps to the form without saving and keeps what was done there', async () => {
     const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
     renderWizard({
       existingItem: existingVitaminD,
@@ -812,10 +812,16 @@ describe('StackItemWizard interactions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'continue' }))
     await screen.findByText('my_stack_plan_review_title')
+    fireEvent.click(within(document.querySelector('[data-review-step="f1"]') as HTMLElement).getByRole('button', { name: 'my_stack_plan_review_remove' }))
     fireEvent.click(screen.getByRole('button', { name: 'back' }))
     expect(screen.queryByText('my_stack_plan_review_title')).toBeNull()
     expect(screen.getByLabelText(/my_stack_plan_quantity$/)).toBeTruthy()
     expect(onSavePlanChange).not.toHaveBeenCalled()
+
+    // Wieder vor: was man dort getan hat, ist noch da.
+    fireEvent.click(screen.getByRole('button', { name: 'continue' }))
+    await screen.findByText('my_stack_plan_review_title')
+    expect(within(document.querySelector('[data-review-step="f1"]') as HTMLElement).getByText('my_stack_plan_review_removed')).toBeTruthy()
   })
 
   it('prefills a new step with the plan in force on the chosen day until the plan is touched', () => {

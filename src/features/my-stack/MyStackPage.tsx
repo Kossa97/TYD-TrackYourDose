@@ -45,7 +45,7 @@ import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
-import type { WizardSaveMode } from './lib/wizardState'
+import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
@@ -1323,7 +1323,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       .sort((left, right) => (left.kind === right.kind ? 0 : left.kind === 'remove' ? -1 : 1))
     try {
       for (const change of laterChanges) {
-        const mutation = lifecycleKey(`later-${change.kind}`, `${identity}:${change.versionId}`)
+        const mutation = lifecycleKey('later-step', `${identity}:${laterChangeIdentity(change)}`)
         if (mutation.mutation.committed) continue
         if (change.kind === 'remove') {
           await removeFuturePlanVersion(stackDataClient as never, {
@@ -1351,7 +1351,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
     await loadTimelines(true)
     for (const change of laterChanges) {
-      lifecycleIdempotencyKeysRef.current.delete(`later-${change.kind}:${identity}:${change.versionId}`)
+      lifecycleIdempotencyKeysRef.current.delete(`later-step:${identity}:${laterChangeIdentity(change)}`)
     }
     planSaveRecoveryRef.current = null
   }

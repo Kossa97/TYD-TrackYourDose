@@ -39,7 +39,7 @@ import {
   type LaterStepChange,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
-import { buildReview, reviewedSnapshot, reviewStepChanged, stepsAround, type LaterPlanStep, type ReviewStep } from '../lib/planAdoption'
+import { buildReview, carryOverReview, planBaseAt, reviewedSnapshot, reviewStepChanged, stepsAround, type LaterPlanStep, type ReviewStep } from '../lib/planAdoption'
 import { formatLocalDay, laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
@@ -60,15 +60,32 @@ import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
 
 /**
- * Der Plan, der an einem Stichtag bisher gilt: die letzte geplante Stufe
- * davor, sonst der jetzige. Null, solange kein Tag gewaehlt ist.
+ * Der Plan, der am Stichtag bisher gilt (`planBaseAt`). Null, solange bei
+ * „ab Datum" noch kein Tag gewaehlt ist.
  */
-function planInForce(context: PlanEditContext, effective: PlanEffectiveDraft): IntakePlanDraft | null {
+function planBaseFor(context: PlanEditContext, effective: PlanEffectiveDraft): IntakePlanDraft | null {
   const boundary = effective.kind === 'date' ? effective.localDate : null
   if (effective.kind === 'date' && !boundary) return null
-  const { before } = stepsAround({ laterSteps: context.laterSteps ?? [], boundary })
-  return before?.draft ?? context.current ?? context.snapshot
+  const editedVersion = context.target.mode === 'replace_future' ? context.target.versionId : null
+  return planBaseAt({
+    laterSteps: context.laterSteps ?? [],
+    boundary,
+    current: context.current ?? context.snapshot,
+    editing: editedVersion
+      ? {
+        versionId: editedVersion,
+        originalDate: context.initialEffective?.kind === 'date' ? context.initialEffective.localDate : null,
+        draft: context.snapshot,
+      }
+      : null,
+  })
 }
+
+/** Derselbe Plan ohne die Anwendung — die setzt der Editor bei nur einer erlaubten selbst. */
+function samePlanIgnoringMethod(left: IntakePlanDraft, right: IntakePlanDraft): boolean {
+  return JSON.stringify({ ...left, method: '', id: undefined }) === JSON.stringify({ ...right, method: '', id: undefined })
+}
+
 
 /**
  * Was der gewaehlte Tag fuer die Stufen bedeutet — immer gesagt, damit
@@ -261,9 +278,11 @@ export function StackItemWizard({
   // „Geplante Aenderungen": liegen hinter dem gewaehlten Tag schon Stufen,
   // zeigt der Assistent sie vor dem Speichern — null heisst, noch im Formular.
   const [review, setReview] = useState<ReviewStep[] | null>(null)
+  const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewErrors, setReviewErrors] = useState<Record<string, ReviewStepErrors>>({})
-  // Solange der Plan unberuehrt ist, folgt die Vorbelegung dem gewaehlten Tag.
-  const [planTouched, setPlanTouched] = useState(false)
+  // Womit „Stufe hinzufuegen" zuletzt vorbelegt hat. Solange der Plan noch
+  // so aussieht, folgt die Vorbelegung dem gewaehlten Tag.
+  const [planPrefill, setPlanPrefill] = useState<IntakePlanDraft | null>(() => (planEditContext ? state.draft.plan : null))
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [planEffective, setPlanEffective] = useState<PlanEffectiveDraft>(() => (
@@ -522,8 +541,9 @@ export function StackItemWizard({
   function handleBack(): void {
     if (saving) return
     // Von „Geplante Aenderungen" zurueck ins Formular.
-    if (review) {
-      setReview(null)
+    // Was man dort getan hat, bleibt fuer das naechste „Weiter".
+    if (reviewOpen) {
+      setReviewOpen(false)
       setReviewErrors({})
       return
     }
@@ -540,15 +560,19 @@ export function StackItemWizard({
 
   // Was an einem gewaehlten Stichtag nicht geht — vor dem Speichern gesagt,
   // statt als allgemeiner Fehler aus der Datenbank.
-  function effectiveDateProblem(localDate: string | null): string | null {
+  function effectiveDateProblem(
+    localDate: string | null,
+    earliest: string | null = earliestEffectiveDate,
+    isTaken: (day: string) => boolean = day => Boolean(planEditContext?.takenEffectiveDates?.includes(day)),
+  ): string | null {
     const language = i18n?.language || 'de'
     if (!localDate) {
       return String(t('my_stack_plan_effective_required', { defaultValue: 'Wähle ein Datum.' }))
     }
-    if (earliestEffectiveDate && localDate < earliestEffectiveDate) {
+    if (earliest && localDate < earliest) {
       return String(t('my_stack_plan_effective_too_early', {
         defaultValue: 'Wähle ein Datum ab dem {{date}}.',
-        date: formatLocalDay(earliestEffectiveDate, language),
+        date: formatLocalDay(earliest, language),
       }))
     }
     if (latestEffectiveDate && localDate > latestEffectiveDate) {
@@ -557,7 +581,7 @@ export function StackItemWizard({
         date: formatLocalDay(latestEffectiveDate, language),
       }))
     }
-    if (planEditContext?.takenEffectiveDates?.includes(localDate)) {
+    if (isTaken(localDate)) {
       return String(t('my_stack_plan_effective_taken', {
         defaultValue: 'An diesem Tag beginnt schon eine Stufe. Wähle einen anderen Tag.',
       }))
@@ -568,35 +592,34 @@ export function StackItemWizard({
   // Die geplanten Stufen um den gewaehlten Tag. `before` gilt dort bisher,
   // `after` beginnt danach und kommt auf die Seite „Geplante Aenderungen".
   const planBoundary = planEffective.kind === 'date' ? planEffective.localDate : null
+  const boundaryPending = planEffective.kind === 'date' && !planBoundary
   const editingPlannedStep = planEditContext?.target.mode === 'replace_future'
-  const plannedAround = planEditContext?.laterSteps?.length && !(planEffective.kind === 'date' && !planBoundary)
+  const plannedAround = planEditContext?.laterSteps?.length && !boundaryPending
     ? stepsAround({
       laterSteps: planEditContext.laterSteps,
       boundary: planBoundary,
       exceptVersionId: planEditContext.target.versionId,
     })
     : { before: null, after: [] }
-  // Der Plan, der am gewaehlten Tag bisher gegolten haette. Eine geplante
-  // Stufe, die man selbst bearbeitet, wird an ihrem alten Stand gemessen.
-  const planBefore = planEditContext
-    ? editingPlannedStep
-      ? planEditContext.snapshot
-      : plannedAround.before?.draft ?? planEditContext.current ?? planEditContext.snapshot
-    : null
+  // Der Plan, der am gewaehlten Tag bisher gegolten haette.
+  const planBefore = planEditContext ? planBaseFor(planEditContext, planEffective) : null
 
   // Neuer Stichtag. Bei „Stufe hinzufuegen" folgt die Vorbelegung dem Tag,
   // solange man am Plan noch nichts geaendert hat: ab sofort die Mengen von
   // jetzt, an einem Tag dazwischen die der Stufe davor.
   function chooseEffective(next: PlanEffectiveDraft): void {
     setPlanEffective(next)
-    if (!planEditContext || planEditContext.purpose !== 'add_step' || planTouched) return
-    const plan = planInForce(planEditContext, next)
-    if (plan) dispatch({ type: 'plan_replaced', plan })
+    if (!planEditContext || planEditContext.purpose !== 'add_step') return
+    if (planPrefill && !samePlanIgnoringMethod(state.draft.plan, planPrefill)) return
+    const plan = planBaseFor(planEditContext, next)
+    if (!plan) return
+    dispatch({ type: 'plan_replaced', plan })
+    setPlanPrefill(plan)
   }
 
   // Was der gewaehlte Tag fuer die Stufen bedeutet — immer gesagt, damit
   // niemand unbemerkt in eine laufende oder geplante Stufe schneidet.
-  const planNotes = planEditContext && !(planEffective.kind === 'date' && !planBoundary)
+  const planNotes = planEditContext && !boundaryPending
     ? planNoteTexts({ t, language: i18n?.language || 'de', editingPlannedStep, boundary: planBoundary, around: plannedAround })
     : []
 
@@ -605,31 +628,12 @@ export function StackItemWizard({
     ? laterLocalDay(nextLocalDate(planEditContext.timeZone), planBoundary ? shiftLocalDay(planBoundary, 1) : '')
     : ''
 
+  // Ein Tag, an dem eine andere Stufe beginnt oder bis eben begann. Nur ein
+  // Tag, den eine entfernte Stufe frei macht, ist wieder frei.
   function reviewDateProblem(step: ReviewStep, all: readonly ReviewStep[]): string | undefined {
-    const language = i18n?.language || 'de'
-    if (!step.date) return String(t('my_stack_plan_effective_required', { defaultValue: 'Wähle ein Datum.' }))
-    if (step.date < reviewMinDate) {
-      return String(t('my_stack_plan_effective_too_early', {
-        defaultValue: 'Wähle ein Datum ab dem {{date}}.',
-        date: formatLocalDay(reviewMinDate, language),
-      }))
-    }
-    if (latestEffectiveDate && step.date > latestEffectiveDate) {
-      return String(t('my_stack_plan_effective_too_late', {
-        defaultValue: 'Der Zyklus endet am {{date}}. Wähle ein früheres Datum.',
-        date: formatLocalDay(latestEffectiveDate, language),
-      }))
-    }
-    // Ein Tag, an dem eine andere Stufe beginnt oder bis eben begann. Nur
-    // ein Tag, den eine entfernte Stufe frei macht, ist wieder frei.
-    const taken = all.some(other => other.versionId !== step.versionId && !other.removed
-      && (other.date === step.date || other.originalDate === step.date))
-    if (taken) {
-      return String(t('my_stack_plan_effective_taken', {
-        defaultValue: 'An diesem Tag beginnt schon eine Stufe. Wähle einen anderen Tag.',
-      }))
-    }
-    return undefined
+    return effectiveDateProblem(step.date || null, reviewMinDate, day => all.some(other => (
+      other.versionId !== step.versionId && !other.removed && (other.date === day || other.originalDate === day)
+    ))) ?? undefined
   }
 
   async function handleSave(allowDuplicate = false): Promise<void> {
@@ -703,12 +707,14 @@ export function StackItemWizard({
 
     // Liegen hinter dem Tag schon Stufen, erst die Seite „Geplante
     // Aenderungen" — gespeichert wird dort mit „Bestaetigen".
-    if (planEditContext && planBefore && !review && plannedAround.after.length > 0) {
-      setReview(buildReview({
+    if (planEditContext && planBefore && !reviewOpen && plannedAround.after.length > 0) {
+      const fresh = buildReview({
         base: planScheduleSnapshot(planBefore, draftForSave.trackingLevel),
         changed: planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel),
         after: plannedAround.after,
-      }))
+      })
+      setReview(review ? carryOverReview(review, fresh) : fresh)
+      setReviewOpen(true)
       setReviewErrors({})
       setSaveError(null)
       focusField('planReview')
@@ -717,7 +723,7 @@ export function StackItemWizard({
 
     const mainSnapshot = planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel)
     const laterChanges: LaterStepChange[] = []
-    if (review) {
+    if (review && reviewOpen) {
       const errors: Record<string, ReviewStepErrors> = {}
       const kept: { step: ReviewStep; snapshot: PlanScheduleSnapshot }[] = []
       for (const step of review) {
@@ -743,14 +749,17 @@ export function StackItemWizard({
       // Jede Stufe wird an der davor gemessen: der neue Plan, dann die
       // geplanten in ihrer (neuen) Reihenfolge.
       let previous = mainSnapshot
+      // Auch eine unveraenderte Stufe wird neu geschrieben, wenn sich ihre
+      // Art gegenueber der neuen Stufe davor aendert (Dosis oder Plan).
       for (const { step, snapshot } of kept.sort((left, right) => left.step.date.localeCompare(right.step.date))) {
-        if (reviewStepChanged(step, snapshot)) {
+        const changeKind = changeKindFor(previous, snapshot, step.changeKind === 'titration' ? 'titration' : 'dose')
+        if (reviewStepChanged(step, snapshot) || changeKind !== step.changeKind) {
           laterChanges.push({
             kind: 'replace',
             versionId: step.versionId,
             effectiveLocalDate: step.date,
             schedule: snapshot,
-            changeKind: changeKindFor(previous, snapshot, step.changeKind === 'titration' ? 'titration' : 'dose'),
+            changeKind,
           })
         }
         previous = snapshot
@@ -982,7 +991,6 @@ export function StackItemWizard({
               errors={planValidationErrors}
               onChange={changes => {
                 dispatch({ type: 'plan_changed', changes })
-                setPlanTouched(true)
                 setPkIntentError(null)
               }}
             />}
@@ -1475,7 +1483,7 @@ export function StackItemWizard({
               </div>
             )
           )}
-          {review && planEditContext ? (
+          {review && reviewOpen && planEditContext ? (
             <PlannedStepsReview
               steps={review}
               newPlan={planScheduleSnapshot(state.draft.plan, state.draft.trackingLevel)}
@@ -1507,7 +1515,7 @@ export function StackItemWizard({
           >
             <ArrowLeft aria-hidden="true" size={18} />
             <span className="hidden sm:inline">
-              {currentStepIndex === 0 && !review ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
+              {currentStepIndex === 0 && !reviewOpen ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
             </span>
           </button>
 
@@ -1525,7 +1533,7 @@ export function StackItemWizard({
               )}
               {saving
                 ? t('loading', { defaultValue: 'Speichert …' })
-                : review
+                : reviewOpen
                   ? t('my_stack_plan_review_confirm', { defaultValue: 'Bestätigen' })
                   : plannedAround.after.length > 0
                     ? t('continue', { defaultValue: 'Weiter' })

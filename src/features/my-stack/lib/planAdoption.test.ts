@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import type { IntakePlanDraft } from '../types'
-import { adoptSchedule, buildReview, reviewedSnapshot, reviewStepChanged, sameSchedule, stepsAround, stepsToAdopt, type LaterPlanStep } from './planAdoption'
+import { adoptSchedule, buildReview, carryOverReview, planBaseAt, reviewedSnapshot, reviewStepChanged, sameSchedule, stepsAround, stepsToAdopt, type LaterPlanStep } from './planAdoption'
+import { laterChangeIdentity } from './wizardState'
 
 function snapshot(changes: Partial<PlanScheduleSnapshot> = {}): PlanScheduleSnapshot {
   return {
@@ -45,6 +46,28 @@ describe('stepsAround', () => {
   it('leaves out the step being edited', () => {
     expect(stepsAround({ laterSteps, boundary: '2026-10-06', exceptVersionId: 'a' })).toMatchObject({ before: null, after: [{ versionId: 'b' }] })
   })
+
+  it('counts a step on the chosen day neither before nor after it', () => {
+    expect(stepsAround({ laterSteps, boundary: '2026-10-06' })).toMatchObject({ before: null, after: [{ versionId: 'b' }] })
+  })
+})
+
+describe('planBaseAt', () => {
+  const current = { id: 'current' } as IntakePlanDraft
+  const laterSteps = [step('a', '2026-10-06'), step('b', '2026-10-20')]
+
+  it('is the current plan from now, and the planned step a chosen day falls into', () => {
+    expect(planBaseAt({ laterSteps, boundary: null, current }).id).toBe('current')
+    expect(planBaseAt({ laterSteps, boundary: '2026-10-01', current }).id).toBe('current')
+    expect(planBaseAt({ laterSteps, boundary: '2026-10-10', current }).id).toBe('a')
+  })
+
+  it('measures an edited step against its own old plan while it keeps its neighbours', () => {
+    const editing = { versionId: 'b', originalDate: '2026-10-20', draft: { id: 'b-old' } as IntakePlanDraft }
+    expect(planBaseAt({ laterSteps, boundary: '2026-10-22', current, editing }).id).toBe('b-old')
+    // An „a" vorbei nach vorn geschoben: dort galt bisher der jetzige Plan.
+    expect(planBaseAt({ laterSteps, boundary: '2026-10-02', current, editing }).id).toBe('current')
+  })
 })
 
 describe('stepsToAdopt', () => {
@@ -83,6 +106,30 @@ describe('buildReview', () => {
     const [review] = buildReview({ base, changed, after: [step('a', '2026-10-12', { dose: 500 })] })
     expect(reviewedSnapshot({ ...review, amounts: { 'morgens#0': '500', 'abends#0': '2,5' } })).toMatchObject({ dose: 500, slot_doses: '500,2.5' })
     expect(reviewedSnapshot({ ...review, amounts: { 'morgens#0': '500', 'abends#0': '' } })).toBeNull()
+  })
+})
+
+describe('review edits', () => {
+  const changed = snapshot({ intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' })
+
+  it('keeps an untouched empty amount instead of refusing it', () => {
+    const [review] = buildReview({ base, changed, after: [step('a', '2026-10-12', { dose: null, slot_doses: '500,', intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00' })] })
+    expect(review.amounts['abends#0']).toBe('')
+    expect(reviewedSnapshot({ ...review, amounts: { ...review.amounts, 'morgens#0': '600' } })).toMatchObject({ slot_doses: '600,' })
+  })
+
+  it('carries removals, moved days and typed amounts into a rebuilt page', () => {
+    const [first] = buildReview({ base, changed, after: [step('a', '2026-10-12', { dose: 500 })] })
+    const edited = { ...first, removed: true, date: '2026-10-14', amounts: { ...first.amounts, 'abends#0': '300' } }
+    const [rebuilt] = carryOverReview([edited], buildReview({ base, changed: daily, after: [step('a', '2026-10-12', { dose: 500 })] }))
+    expect(rebuilt).toMatchObject({ removed: true, date: '2026-10-14' })
+    expect(rebuilt.amounts['abends#0']).toBeUndefined()
+  })
+
+  it('gives a changed payload a new identity, so a retry after an edit is not skipped', () => {
+    const change = { kind: 'replace' as const, versionId: 'a', effectiveLocalDate: '2026-10-12', schedule: snapshot({ dose: 500 }), changeKind: 'titration' as const }
+    expect(laterChangeIdentity(change)).not.toBe(laterChangeIdentity({ ...change, schedule: snapshot({ dose: 600 }) }))
+    expect(laterChangeIdentity({ kind: 'remove', versionId: 'a' })).toBe('remove:a')
   })
 })
 
