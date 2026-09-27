@@ -708,15 +708,15 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1790541347.909309,
-    "seen": 1790541378.7304642,
-    "ast_hash": "ec3333e872698bfb79fd2f8712801652",
+    "mtime": 1790541872.9067318,
+    "seen": 1790542072.8871431,
+    "ast_hash": "d62b2ca07fba428ef377d699009d809d",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1790541347.9101393,
-    "seen": 1790541378.730466,
-    "ast_hash": "d26c6d84a68966664def65fa61ca08de",
+    "mtime": 1790541872.907275,
+    "seen": 1790542072.8871446,
+    "ast_hash": "cfc6d33959035bc0e0397f6d84f6b7f7",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "src/pages/Rechner.tsx": {
-    "mtime": 1790374115.2577493,
-    "seen": 1790374154.158015,
-    "ast_hash": "27625764c80608b06502f28c89a28f2b",
+    "mtime": 1790541872.9080229,
+    "seen": 1790542072.887316,
+    "ast_hash": "e95f45172c2c102f6339ac2cf5c3a0d8",
     "semantic_hash": ""
   },
   "src/pages/StudyDetail.tsx": {
@@ -3942,9 +3942,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1790541347.9043128,
-    "seen": 1790541378.730199,
-    "ast_hash": "25bb8f71a7873bc31c0d39652f1e7a03",
+    "mtime": 1790541872.8990655,
+    "seen": 1790542072.8868313,
+    "ast_hash": "c285c195c07ce02fcafc6dfe1a1435b6",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4554,15 +4554,15 @@
     "semantic_hash": ""
   },
   "src/features/peptipedia/lib/reconstitution.test.ts": {
-    "mtime": 1789927455.6208665,
-    "seen": 1789927683.040298,
-    "ast_hash": "10bcb4252c4962e59fa2133868af566b",
+    "mtime": 1790541872.8990655,
+    "seen": 1790542072.8869944,
+    "ast_hash": "3e52c5fbe29e208dc19dec951c92a594",
     "semantic_hash": ""
   },
   "src/features/peptipedia/lib/reconstitution.ts": {
-    "mtime": 1789927455.6225977,
-    "seen": 1789927683.0402985,
-    "ast_hash": "760afd80b511793a32d41d455c1253b2",
+    "mtime": 1790541872.8990655,
+    "seen": 1790542072.8870342,
+    "ast_hash": "a51f5b81aab77c3527af27e0fbf64817",
     "semantic_hash": ""
   },
   "src/features/peptipedia/publicRoutes.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790541788.219069,
-    "seen": 1790541827.6192539,
+    "mtime": 1790541936.2710629,
+    "seen": 1790542072.8874345,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5469,6 +5469,78 @@
     "mtime": 1790477468.6235335,
     "seen": 1790477763.8574748,
     "ast_hash": "4d83026e8181594462f26d4195a23c84",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/CopyCalculation.tsx": {
+    "mtime": 1790541872.9049597,
+    "seen": 1790542072.8870528,
+    "ast_hash": "8149d88311055a2425f973ed185906d4",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/DoseCalculator.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870547,
+    "ast_hash": "6709413d07141c690d2f18f1223201b0",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/SyringeFields.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870559,
+    "ast_hash": "2f47d64234323912cb341dee59cde24c",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/SyringeScale.test.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870568,
+    "ast_hash": "2b76e9d76c42b5fe12b43de56b4ab026",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/SyringeScale.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870585,
+    "ast_hash": "8858530780716765ee529d93dc1a2799",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/UnitConverter.test.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870595,
+    "ast_hash": "71975e250fbd73b30171a35f5f15829e",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/components/UnitConverter.tsx": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870606,
+    "ast_hash": "f8b1d8e1b4afbb0c45a14f322aebf669",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/lib/stackSources.test.ts": {
+    "mtime": 1790541872.905069,
+    "seen": 1790542072.8870618,
+    "ast_hash": "985bd6a2db76ce719ce34637521ef798",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/lib/stackSources.ts": {
+    "mtime": 1790541872.9058464,
+    "seen": 1790542072.887063,
+    "ast_hash": "3ca608c8601e29012f2c76cb468336a4",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/lib/units.test.ts": {
+    "mtime": 1790541872.9058464,
+    "seen": 1790542072.8870642,
+    "ast_hash": "75290b1dd3388c04d2556a75f3fda4eb",
+    "semantic_hash": ""
+  },
+  "src/features/rechner/lib/units.ts": {
+    "mtime": 1790541872.9058464,
+    "seen": 1790542072.8870656,
+    "ast_hash": "5a0cffced745dccd8ddb8e35d7fe8b2c",
+    "semantic_hash": ""
+  },
+  "src/pages/Rechner.test.tsx": {
+    "mtime": 1790541872.9080229,
+    "seen": 1790542072.8873148,
+    "ast_hash": "0dde036530f973893bcebec750442fd0",
     "semantic_hash": ""
   }
 }
