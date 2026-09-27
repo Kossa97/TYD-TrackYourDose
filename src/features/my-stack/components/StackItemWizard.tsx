@@ -58,6 +58,7 @@ import { ProductInventorySection } from './ProductInventorySection'
 import { StrengthEditor } from './StrengthEditor'
 import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
+import { gueltigeFluessigkeit, gueltigeHaltbarkeit } from '../lib/bestand'
 
 /**
  * Der Plan, der am Stichtag bisher gilt (`planBaseAt`). Null, solange bei
@@ -156,8 +157,6 @@ interface StackItemWizardBaseProps {
    */
   intent?: 'pk' | 'plan'
   metadataOnly?: boolean
-  /** Laedt ein Analyse-Dokument hoch (Bearbeiten → Produkt). */
-  onUploadDocument?: (file: File) => Promise<string>
 }
 
 export type StackItemWizardProps = StackItemWizardBaseProps & (
@@ -254,7 +253,6 @@ export function StackItemWizard({
   planEditContext,
   intent,
   metadataOnly = false,
-  onUploadDocument,
 }: StackItemWizardProps) {
   const { t, i18n } = useTranslation()
   const selectedPlan = planEditContext?.snapshot ?? existingPlan
@@ -679,6 +677,18 @@ export function StackItemWizard({
       }
     }
 
+    // Angaben zur Packung, die die Datenbank ablehnen wuerde — vorher sagen.
+    if (!planEditContext && existingItem) {
+      const field = !gueltigeFluessigkeit(state.draft.inventory.reconstitutionMl)
+        ? 'inventory.reconstitutionMl'
+        : !gueltigeHaltbarkeit(state.draft.inventory.useWithinDays) ? 'inventory.useWithinDays' : null
+      if (field) {
+        setSaveError(String(t(field === 'inventory.reconstitutionMl' ? 'my_stack_stock_liquid_invalid' : 'my_stack_stock_days_invalid')))
+        focusField(field)
+        return
+      }
+    }
+
     if (identityChanged && !identityChoiceMade) {
       setIdentityChoiceError(true)
       focusField('saveMode')
@@ -1045,9 +1055,9 @@ export function StackItemWizard({
                 wissen, wann die Packung leer ist — und was verbraucht wird,
                 steht im Plan darueber. Der Abschnitt ist zugeklappt, kostet
                 also eine Zeile, wenn er niemanden interessiert. */}
-            {/* Beim Bearbeiten nur noch die Marke: den Bestand pflegt die
-                Bestand-Ansicht im Vollbild. Der geladene Stand geht beim
-                Speichern unveraendert zurueck.
+            {/* Beim Bearbeiten die Marke und die Angaben zur Packung
+                (Charge, Anmischen, Haltbarkeit) — die Mengen aendert
+                „Bestand aendern" im Vollbild.
                 Wer nur den Plan aendert (Stufe hinzufuegen, Plan anpassen),
                 sieht weder Produkt noch Notizen — die gehoeren zur Substanz,
                 nicht zu einer Dosisstufe; gespeichert wird dort ohnehin nur
@@ -1060,7 +1070,6 @@ export function StackItemWizard({
               dosageForm={state.draft.dosageForm}
               onBrandChange={brand => dispatch({ type: 'details_changed', changes: { brand } })}
               onInventoryChange={changes => dispatch({ type: 'inventory_changed', changes })}
-              onUploadDocument={onUploadDocument}
             />
             )}
 

@@ -210,12 +210,12 @@ export async function saveInventoryDetails(
     await updateInventory(client, input.before.id, patch)
     return
   }
-  // Noch keine Zeile: eine ausgeschaltete anlegen — die Angaben gehoeren zur
-  // Packung, auch wenn (noch) nicht gezaehlt wird.
+  // Keine Zeile bekannt: anlegen — ausgeschaltet ist die Vorgabe der Spalte.
+  // `enabled` bleibt bewusst weg: gibt es die Zeile inzwischen doch (anderes
+  // Geraet), aendert das Upsert nur diese Angaben und schaltet nichts ab.
   const { error } = await client.from('stack_item_inventory').upsert({
     user_id: input.userId,
     stack_item_id: input.stackItemId,
-    enabled: false,
     ...patch,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'stack_item_id' })

@@ -794,6 +794,11 @@ describe('wizard state', () => {
         brand: '',
         batchNumber: '',
         expiresAt: null,
+        batchSource: '',
+        batchFileUrl: null,
+        reconstitutionMl: null,
+        openedAt: null,
+        useWithinDays: null,
       },
       pkProfileMethod: null,
     })

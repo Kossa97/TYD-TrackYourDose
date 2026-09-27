@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { useState } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DosageFormKey, InventoryDraft } from '../types'
 import { ProductInventorySection } from './ProductInventorySection'
@@ -27,7 +27,7 @@ const inventory: InventoryDraft = {
   useWithinDays: 28,
 }
 
-function Harness({ form, onUpload, onDraft }: { form: DosageFormKey; onUpload?: (file: File) => Promise<string>; onDraft?: (draft: InventoryDraft) => void }) {
+function Harness({ form, onDraft }: { form: DosageFormKey; onDraft?: (draft: InventoryDraft) => void }) {
   const [draft, setDraft] = useState(inventory)
   return (
     <ProductInventorySection
@@ -41,14 +41,13 @@ function Harness({ form, onUpload, onDraft }: { form: DosageFormKey; onUpload?: 
         onDraft?.(next)
         return next
       })}
-      onUploadDocument={onUpload}
     />
   )
 }
 
 describe('ProductInventorySection beim Bearbeiten', () => {
   it('zeigt beim Vial Flüssigkeit, Anmischdatum, Haltbarkeit und die Charge', () => {
-    render(<Harness form="vial" onUpload={vi.fn()} />)
+    render(<Harness form="vial" />)
     fireEvent.click(screen.getByRole('button', { name: /my_stack_product_only/ }))
 
     expect((screen.getByLabelText('my_stack_stock_liquid (ml)') as HTMLInputElement).value).toBe('2')
@@ -69,15 +68,26 @@ describe('ProductInventorySection beim Bearbeiten', () => {
     expect(screen.getByLabelText('my_stack_stock_batch_number')).toBeTruthy()
   })
 
-  it('lädt das Analyse-Dokument hoch und merkt sich seine Adresse', async () => {
-    const onUpload = vi.fn(async () => 'https://synthetic.invalid/analyse.pdf')
+  it('merkt sich ein gewähltes Dokument, hochgeladen wird erst beim Speichern', () => {
     const onDraft = vi.fn()
-    render(<Harness form="vial" onUpload={onUpload} onDraft={onDraft} />)
+    render(<Harness form="vial" onDraft={onDraft} />)
     fireEvent.click(screen.getByRole('button', { name: /my_stack_product_only/ }))
     const file = new File(['x'], 'analyse.pdf', { type: 'application/pdf' })
-    fireEvent.change(screen.getByLabelText('my_stack_stock_document'), { target: { files: [file] } })
+    const input = screen.getByLabelText('my_stack_stock_document') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
 
-    await waitFor(() => expect(onDraft).toHaveBeenCalledWith(expect.objectContaining({ batchFileUrl: 'https://synthetic.invalid/analyse.pdf' })))
-    expect(onUpload).toHaveBeenCalledWith(file)
+    expect(onDraft).toHaveBeenCalledWith(expect.objectContaining({ batchFile: file }))
+    expect(screen.getByText('analyse.pdf')).toBeTruthy()
+    // Dieselbe Datei laesst sich danach erneut waehlen.
+    expect(input.value).toBe('')
+  })
+
+  it('sagt direkt am Feld, wenn Flüssigkeit oder Tage nicht gehen', () => {
+    render(<Harness form="vial" />)
+    fireEvent.click(screen.getByRole('button', { name: /my_stack_product_only/ }))
+    fireEvent.change(screen.getByLabelText('my_stack_stock_liquid (ml)'), { target: { value: '1500' } })
+    fireEvent.change(screen.getByLabelText(/my_stack_stock_use_within_vial/), { target: { value: '2.5' } })
+    expect(screen.getByText('my_stack_stock_liquid_invalid')).toBeTruthy()
+    expect(screen.getByText('my_stack_stock_days_invalid')).toBeTruthy()
   })
 })

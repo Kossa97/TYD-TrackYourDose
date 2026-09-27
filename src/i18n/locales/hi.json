@@ -1389,5 +1389,7 @@
   "my_stack_stock_edit": "Edit stock",
   "my_stack_stock_unopened_vial": "Unopened vials",
   "my_stack_stock_unopened_pen": "Unopened pens",
-  "my_stack_stock_unopened_bottle": "Unopened bottles"
+  "my_stack_stock_unopened_bottle": "Unopened bottles",
+  "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+  "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
 }

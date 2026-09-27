@@ -47,7 +47,6 @@ function actions(): BestandActions {
     start: vi.fn(async () => undefined),
     update: vi.fn(async () => undefined),
     openContainer: vi.fn(async () => undefined),
-    uploadDocument: vi.fn(async () => 'https://synthetic.invalid/a.pdf'),
   }
 }
 
@@ -154,19 +153,11 @@ describe('single fields opened from the detail view', () => {
   it('closes only itself on Escape, not the full view underneath', () => {
     const behind = vi.fn()
     window.addEventListener('keydown', behind)
-    const { onClose } = renderEditor('reconstitution_ml', vial)
-    fireEvent.keyDown(screen.getByRole('dialog', { name: 'my_stack_stock_liquid' }), { key: 'Escape' })
+    const { onClose } = renderEditor('correct', vial)
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'my_stack_stock_edit' }), { key: 'Escape' })
     window.removeEventListener('keydown', behind)
     expect(onClose).toHaveBeenCalled()
     expect(behind).not.toHaveBeenCalled()
-  })
-
-  it('shows the stored value while stock tracking is off, and does not accept an empty liquid', () => {
-    renderEditor('reconstitution_ml', { ...vial, enabled: false })
-    const editor = screen.getByRole('dialog', { name: 'my_stack_stock_liquid' })
-    expect((within(editor).getByRole('textbox') as HTMLInputElement).value).toBe('2')
-    fireEvent.change(within(editor).getByRole('textbox'), { target: { value: '' } })
-    expect(within(editor).getByRole('button', { name: 'my_stack_stock_save' })).toHaveProperty('disabled', true)
   })
 
   it('mixes a new vial and offers to discard the rest of the old one', async () => {
@@ -175,14 +166,6 @@ describe('single fields opened from the detail view', () => {
     expect(within(editor).getByRole('checkbox', { name: 'my_stack_stock_discard_rest(amount=95 %)' })).toHaveProperty('checked', true)
     fireEvent.click(within(editor).getByRole('button', { name: 'my_stack_stock_save' }))
     await waitFor(() => expect(handlers.openContainer).toHaveBeenCalledWith(expect.objectContaining({ discardRest: true, reconstitutionMl: 2 })))
-  })
-
-  it('edits the added liquid', async () => {
-    const { handlers } = renderEditor('reconstitution_ml', vial)
-    const editor = screen.getByRole('dialog', { name: 'my_stack_stock_liquid' })
-    fireEvent.change(within(editor).getByRole('textbox'), { target: { value: '3' } })
-    fireEvent.click(within(editor).getByRole('button', { name: 'my_stack_stock_save' }))
-    await waitFor(() => expect(handlers.update).toHaveBeenCalledWith({ reconstitution_ml: 3 }))
   })
 
   it('starts tracking with the unit the ingredients count in', async () => {

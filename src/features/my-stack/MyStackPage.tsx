@@ -979,14 +979,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       start: input => guarded(() => startInventory(stackDataClient as never, { userId: user!.id, stackItemId: p.id, ...input })),
       update: patch => guarded(() => updateInventory(stackDataClient as never, inventoryId(), patch)),
       openContainer: input => guarded(() => openInventoryContainer(stackDataClient as never, inventoryId(), input)),
-      uploadDocument: async file => {
-        try {
-          return await uploadBatchDocument(supabase as never, user!.id, file)
-        } catch (error) {
-          toast.error(t('datei_upload_fehler'))
-          throw error
-        }
-      },
     }
   }
   const bestandPeptide = bestandEdit ? peptides.find(peptide => peptide.id === bestandEdit.peptideId) ?? null : null
@@ -1051,18 +1043,37 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     _mode: WizardSaveMode,
     idempotencyKey: string,
   ) => {
+    // Ein neu gewaehltes Analyse-Dokument erst jetzt hochladen: wer abbricht,
+    // hinterlaesst nichts. Schlaegt es fehl, ist noch nichts gespeichert.
+    const editedFrom = editingPeptideId ? peptides.find(item => item.id === editingPeptideId) ?? null : null
+    let inventoryDraft = draft.inventory
+    if (editedFrom && inventoryDraft.batchFile && user) {
+      try {
+        inventoryDraft = { ...inventoryDraft, batchFileUrl: await uploadBatchDocument(supabase as never, user.id, inventoryDraft.batchFile), batchFile: null }
+      } catch (error) {
+        toast.error(t('datei_upload_fehler'))
+        throw error
+      }
+    }
     const savedRow = FEATURES.planTimelineV2 && draft.id && !wizardCycleId && !wizardNeuerZyklus
       ? await saveStackItem(stackDataClient as never, draft)
       : await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
     // Beim Bearbeiten schreibt `save_stack_item` den Bestand nicht mit: die
-    // Angaben zur Packung (Charge, Anmischen, Haltbarkeit) gehen extra.
-    if (draft.id && user) {
-      await saveInventoryDetails(stackDataClient as never, {
-        userId: user.id,
-        stackItemId: draft.id,
-        before: peptides.find(item => item.id === draft.id)?.inventory ?? null,
-        draft: draft.inventory,
-      })
+    // Angaben zur Packung (Charge, Anmischen, Haltbarkeit) gehen extra — auch
+    // fuer eine neue Variante, die aus einem bestehenden Eintrag entsteht.
+    // Der Eintrag selbst steht dann schon; scheitert nur das, sagt es eine
+    // eigene Meldung, statt „Speichern fehlgeschlagen" fuer alles.
+    if (editedFrom && user) {
+      try {
+        await saveInventoryDetails(stackDataClient as never, {
+          userId: user.id,
+          stackItemId: savedRow.id,
+          before: draft.id === editedFrom.id ? editedFrom.inventory ?? null : null,
+          draft: inventoryDraft,
+        })
+      } catch {
+        toast.error(t('my_stack_stock_save_failed'))
+      }
     }
     await Promise.all([
       loadPeptides(),
@@ -3571,7 +3582,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
-          onUploadDocument={file => uploadBatchDocument(supabase as never, user!.id, file)}
           metadataOnly={FEATURES.planTimelineV2 && Boolean(editingPeptideId) && !wizardCycleId && !wizardNeuerZyklus && !planEditContext}
           {...(planEditContext
             ? { planEditContext, onSavePlanChange: saveVersionChange }

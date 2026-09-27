@@ -242,10 +242,11 @@ function ingredientForSave(ingredient: StackItemIngredient): SaveStackItemIngred
 }
 
 /**
- * Den Bestand schickt nur das Anlegen mit. Ein bestehender Eintrag pflegt ihn
- * in der Bestand-Ansicht; ohne Angabe laesst `save_stack_item` ihn in Ruhe.
- * Sonst ueberschriebe jedes Bearbeiten den Rest mit dem Stand von beim
- * Oeffnen — oder schaltete ihn unterhalb von „Gruendlich" ganz ab.
+ * Den Bestand schickt nur das Anlegen mit; ohne Angabe laesst
+ * `save_stack_item` ihn in Ruhe. Sonst ueberschriebe jedes Bearbeiten den Rest
+ * mit dem Stand von beim Oeffnen — oder schaltete ihn unterhalb von
+ * „Gruendlich" ganz ab. Beim Bearbeiten gehen die Mengen ueber „Bestand
+ * aendern", die Angaben zur Packung getrennt (`saveInventoryDetails`).
  */
 function inventoryForSave(draft: StackItemDraft | StackItemSetupDraft): StackItemSetupDraft['inventory'] | undefined {
   if (draft.id || !('inventory' in draft)) return undefined

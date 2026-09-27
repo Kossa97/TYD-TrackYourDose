@@ -501,6 +501,8 @@ export const MY_STACK_EN = {
   my_stack_stock_unopened_vial: 'Unopened vials',
   my_stack_stock_unopened_pen: 'Unopened pens',
   my_stack_stock_unopened_bottle: 'Unopened bottles',
+  my_stack_stock_liquid_invalid: 'Enter an amount above 0 and up to 1000 ml.',
+  my_stack_stock_days_invalid: 'Enter whole days from 1 to 3650.',
 }
 
 export const MY_STACK_DE = {
@@ -1005,6 +1007,8 @@ export const MY_STACK_DE = {
   my_stack_stock_unopened_vial: 'Ungeöffnete Vials',
   my_stack_stock_unopened_pen: 'Ungeöffnete Pens',
   my_stack_stock_unopened_bottle: 'Ungeöffnete Flaschen',
+  my_stack_stock_liquid_invalid: 'Gib eine Menge über 0 und bis 1000 ml ein.',
+  my_stack_stock_days_invalid: 'Gib ganze Tage von 1 bis 3650 ein.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

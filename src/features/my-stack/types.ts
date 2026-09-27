@@ -202,6 +202,8 @@ export interface InventoryDraft {
   // die die Detailansicht bei „Substanz" und „Zusammensetzung" zeigt.
   batchSource?: string
   batchFileUrl?: string | null
+  /** Ein gewaehltes, noch nicht hochgeladenes Analyse-Dokument — erst beim Speichern hoch. */
+  batchFile?: File | null
   reconstitutionMl?: number | null
   openedAt?: string | null
   useWithinDays?: number | null

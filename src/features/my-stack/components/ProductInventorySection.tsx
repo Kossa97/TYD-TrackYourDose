@@ -1,7 +1,7 @@
 import { ChevronDown, FileUp, Package } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { anbruchArt } from '../lib/bestand'
+import { anbruchArt, gueltigeFluessigkeit, gueltigeHaltbarkeit } from '../lib/bestand'
 import type { DosageFormKey, InventoryDraft } from '../types'
 
 interface ProductInventorySectionProps {
@@ -16,8 +16,16 @@ interface ProductInventorySectionProps {
   dosageForm?: DosageFormKey | null
   onBrandChange: (brand: string) => void
   onInventoryChange: (changes: Partial<InventoryDraft>) => void
-  /** Laedt das Analyse-Dokument hoch und gibt seine Adresse zurueck. */
-  onUploadDocument?: (file: File) => Promise<string>
+}
+
+/** Der Dateiname aus der Adresse — ein kaputtes „%" darin darf nichts sprengen. */
+function dateiname(url: string): string {
+  const letzter = url.split('/').pop() ?? ''
+  try {
+    return decodeURIComponent(letzter)
+  } catch {
+    return letzter
+  }
 }
 
 function numberValue(value: string): number | null {
@@ -33,26 +41,15 @@ export function ProductInventorySection({
   dosageForm,
   onBrandChange,
   onInventoryChange,
-  onUploadDocument,
 }: ProductInventorySectionProps) {
   const { t } = useTranslation()
   const contentId = useId()
   const [expanded, setExpanded] = useState(false)
-  const [upload, setUpload] = useState<'idle' | 'busy' | 'failed'>('idle')
   const art = anbruchArt(dosageForm)
   const eingabe = 'input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400'
   const beschriftung = 'mb-2 block text-sm font-semibold text-slate-200'
-
-  const dokumentWaehlen = async (file: File | undefined) => {
-    if (!file || !onUploadDocument) return
-    setUpload('busy')
-    try {
-      onInventoryChange({ batchFileUrl: await onUploadDocument(file) })
-      setUpload('idle')
-    } catch {
-      setUpload('failed')
-    }
-  }
+  const fluessigkeitFalsch = !gueltigeFluessigkeit(inventory.reconstitutionMl)
+  const haltbarkeitFalsch = !gueltigeHaltbarkeit(inventory.useWithinDays)
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.035]">
@@ -180,13 +177,17 @@ export function ProductInventorySection({
                       <label htmlFor={`${contentId}-liquid`} className={beschriftung}>{t('my_stack_stock_liquid')} (ml)</label>
                       <input
                         id={`${contentId}-liquid`}
+                        data-field="inventory.reconstitutionMl"
                         type="number"
                         min="0"
+                        max="1000"
                         step="any"
                         value={inventory.reconstitutionMl ?? ''}
+                        aria-invalid={fluessigkeitFalsch || undefined}
                         onChange={event => onInventoryChange({ reconstitutionMl: numberValue(event.target.value) })}
                         className={eingabe}
                       />
+                      {fluessigkeitFalsch && <p role="alert" className="mt-1.5 text-sm text-rose-300">{t('my_stack_stock_liquid_invalid')}</p>}
                     </div>
                   )}
                   <div>
@@ -207,13 +208,17 @@ export function ProductInventorySection({
                     </label>
                     <input
                       id={`${contentId}-within`}
+                      data-field="inventory.useWithinDays"
                       type="number"
                       min="1"
+                      max="3650"
                       step="1"
                       value={inventory.useWithinDays ?? ''}
+                      aria-invalid={haltbarkeitFalsch || undefined}
                       onChange={event => onInventoryChange({ useWithinDays: numberValue(event.target.value) })}
                       className={eingabe}
                     />
+                    {haltbarkeitFalsch && <p role="alert" className="mt-1.5 text-sm text-rose-300">{t('my_stack_stock_days_invalid')}</p>}
                   </div>
                 </>
               )}
@@ -245,41 +250,42 @@ export function ProductInventorySection({
                   className={eingabe}
                 />
               </div>
-              {onUploadDocument && (
-                <div className="sm:col-span-2">
-                  <span className={beschriftung}>{t('my_stack_stock_document')}</span>
-                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-white/15 px-3 py-2 focus-within:ring-2 focus-within:ring-sky-400">
-                    <FileUp size={18} aria-hidden="true" className="shrink-0 text-slate-400" />
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-300">
-                      {upload === 'busy'
-                        ? t('loading', { defaultValue: 'Lädt …' })
-                        : inventory.batchFileUrl
-                          ? decodeURIComponent(inventory.batchFileUrl.split('/').pop() ?? '')
-                          : t('my_stack_stock_document_pick')}
-                    </span>
-                    <input
-                      type="file"
-                      className="sr-only"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      aria-label={String(t('my_stack_stock_document'))}
-                      disabled={upload === 'busy'}
-                      onChange={event => { void dokumentWaehlen(event.target.files?.[0]) }}
-                    />
-                  </label>
-                  {upload === 'failed' && (
-                    <p role="alert" className="mt-2 text-sm text-rose-300">{t('datei_upload_fehler')}</p>
-                  )}
-                  {inventory.batchFileUrl && upload !== 'busy' && (
-                    <button
-                      type="button"
-                      onClick={() => onInventoryChange({ batchFileUrl: null })}
-                      className="mt-1 min-h-11 px-1 text-sm font-semibold text-rose-300"
-                    >
-                      {t('my_stack_stock_document_remove')}
-                    </button>
-                  )}
-                </div>
-              )}
+              <div className="sm:col-span-2">
+                <span className={beschriftung}>{t('my_stack_stock_document')}</span>
+                {/* Hochgeladen wird erst beim Speichern: wer abbricht oder
+                    eine andere Datei waehlt, hinterlaesst nichts im Speicher. */}
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-white/15 px-3 py-2 focus-within:ring-2 focus-within:ring-sky-400">
+                  <FileUp size={18} aria-hidden="true" className="shrink-0 text-slate-400" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-300">
+                    {inventory.batchFile
+                      ? inventory.batchFile.name
+                      : inventory.batchFileUrl
+                        ? dateiname(inventory.batchFileUrl)
+                        : t('my_stack_stock_document_pick')}
+                  </span>
+                  <input
+                    type="file"
+                    className="sr-only"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    aria-label={String(t('my_stack_stock_document'))}
+                    onChange={event => {
+                      const file = event.target.files?.[0]
+                      // Leeren, damit dieselbe Datei erneut gewaehlt werden kann.
+                      event.target.value = ''
+                      if (file) onInventoryChange({ batchFile: file })
+                    }}
+                  />
+                </label>
+                {(inventory.batchFile || inventory.batchFileUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => onInventoryChange({ batchFile: null, batchFileUrl: null })}
+                    className="mt-1 min-h-11 px-1 text-sm font-semibold text-rose-300"
+                  >
+                    {t('my_stack_stock_document_remove')}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -27,6 +27,7 @@ import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 import { sameSchedule, type LaterPlanStep } from './planAdoption'
+import type { AltSpalten } from './produktAngaben'
 
 export type WizardStep =
   | 'substance'
@@ -350,6 +351,27 @@ function emptyPlan(name: string, dosageForm: DosageFormKey | null = null): Intak
   }
 }
 
+/**
+ * Die Angaben zur Packung so vorbelegt, wie die Detailansicht sie zeigt
+ * (`produktAngaben`): zuerst der Bestand, sonst die stillstehende Altspalte.
+ * Gespeichert wird in den Bestand — so steht danach dort, was man sah.
+ */
+function packungsAngaben(existing: StackItem): Pick<
+  InventoryDraft,
+  'batchNumber' | 'batchSource' | 'batchFileUrl' | 'reconstitutionMl' | 'openedAt' | 'useWithinDays'
+> {
+  const inv = existing.inventory
+  const alt = existing as StackItem & AltSpalten
+  return {
+    batchNumber: inv?.batch_number ?? alt.batch_number ?? '',
+    batchSource: inv?.batch_source ?? alt.batch_source ?? '',
+    batchFileUrl: inv?.batch_file_url ?? alt.batch_file_url ?? null,
+    reconstitutionMl: inv?.reconstitution_ml ?? alt.reconstitution_ml ?? null,
+    openedAt: inv?.opened_at ?? alt.reconstitution_date ?? null,
+    useWithinDays: inv?.use_within_days ?? alt.expiry_days ?? null,
+  }
+}
+
 function emptyInventory(): InventoryDraft {
   return {
     enabled: false,
@@ -386,15 +408,10 @@ function draftFromStackItem(
           packageUnit: existing.inventory.package_unit,
           remainingQuantity: existing.inventory.remaining_quantity,
           brand: '',
-          batchNumber: existing.inventory.batch_number ?? '',
           expiresAt: existing.inventory.expires_at,
-          batchSource: existing.inventory.batch_source ?? '',
-          batchFileUrl: existing.inventory.batch_file_url ?? null,
-          reconstitutionMl: existing.inventory.reconstitution_ml ?? null,
-          openedAt: existing.inventory.opened_at ?? null,
-          useWithinDays: existing.inventory.use_within_days ?? null,
+          ...packungsAngaben(existing),
         }
-      : emptyInventory(),
+      : { ...emptyInventory(), ...packungsAngaben(existing) },
     pkProfileMethod: existing.pk_profile_method,
   }
 }

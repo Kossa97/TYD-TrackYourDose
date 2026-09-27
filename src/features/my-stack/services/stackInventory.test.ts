@@ -175,6 +175,8 @@ describe('stack inventory service', () => {
     expect(from).not.toHaveBeenCalled()
 
     await saveInventoryDetails({ from } as never, { userId: 'user-1', stackItemId: 'stack-1', before: null, draft: inventory })
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ enabled: false, batch_number: 'A-42', stack_item_id: 'stack-1' }), { onConflict: 'stack_item_id' })
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ batch_number: 'A-42', stack_item_id: 'stack-1' }), { onConflict: 'stack_item_id' })
+    // Nie abschalten: gibt es die Zeile inzwischen doch, bleibt sie, wie sie ist.
+    expect(upsert.mock.calls[0]).not.toHaveProperty('0.enabled')
   })
 })

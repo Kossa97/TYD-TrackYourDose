@@ -152,6 +152,16 @@ export function bestandZusammensetzen(
   return ZAEHLBAR_TEILBAR.has(inventory.package_unit ?? '') ? gesamt : Math.round(gesamt)
 }
 
+/** Zugefuegte Fluessigkeit: mehr als 0 und hoechstens 1000 ml (Check in der Datenbank). */
+export function gueltigeFluessigkeit(ml: number | null | undefined): boolean {
+  return ml == null || (ml > 0 && ml <= 1000)
+}
+
+/** Haltbarkeit danach: ganze Tage von 1 bis 3650 (Check in der Datenbank). */
+export function gueltigeHaltbarkeit(tage: number | null | undefined): boolean {
+  return tage == null || (Number.isInteger(tage) && tage >= 1 && tage <= 3650)
+}
+
 /** Bis wann der angebrochene Behaelter haelt (`YYYY-MM-DD`), oder null. */
 export function haltbarBis(inventory: StackItemInventory): string | null {
   if (!inventory.opened_at || !inventory.use_within_days) return null

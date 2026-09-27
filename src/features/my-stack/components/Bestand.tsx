@@ -1,4 +1,4 @@
-import { FileUp, Package, X } from 'lucide-react'
+import { Package, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { useId, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,11 +7,12 @@ import {
   anbruchArt,
   bestandAufteilen,
   bestandZusammensetzen,
+  gueltigeFluessigkeit,
   reichweite,
   vorratTeile,
   type AnbruchArt,
 } from '../lib/bestand'
-import { daysLabel, reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
+import { reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
 import type { InventoryPatch } from '../services/stackInventory'
 import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
 
@@ -26,19 +27,14 @@ export interface BestandActions {
   start(input: { packageQuantity: number; packageUnit: string; remainingQuantity: number }): Promise<void>
   update(patch: InventoryPatch): Promise<void>
   openContainer(input: { openedAt: string; discardRest: boolean; reconstitutionMl: number | null }): Promise<void>
-  uploadDocument(file: File): Promise<string>
 }
 
-export type BestandEditorArt =
-  | 'start' | 'correct' | 'open_new'
-  | 'opened_at' | 'reconstitution_ml' | 'use_within_days'
-  | 'batch_number' | 'batch_source' | 'batch_file_url' | 'expires_at'
-
-const HALTBAR_VORGABEN: Record<AnbruchArt, number[]> = {
-  vial: [14, 21, 28, 42],
-  pen: [14, 28, 30, 56],
-  flasche: [30, 90, 180, 365],
-}
+/**
+ * „Bestand verfolgen", „Bestand aendern" und „Neues Vial anmischen". Die
+ * Angaben zur Packung (Charge, Anmischdatum, Haltbarkeit) aendert man ueber
+ * „Bearbeiten" (`ProductInventorySection`), nicht hier.
+ */
+export type BestandEditorArt = 'start' | 'correct' | 'open_new'
 
 function heute(): string {
   return format(new Date(), 'yyyy-MM-dd')
@@ -90,8 +86,6 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
   const [menge, setMenge] = useState(() => {
     switch (editor) {
       case 'correct': return String(inventory?.remaining_quantity ?? '')
-      case 'reconstitution_ml': return String(inv?.reconstitution_ml ?? '')
-      case 'use_within_days': return String(inv?.use_within_days ?? '')
       case 'open_new': return String(inventory?.reconstitution_ml ?? '')
       default: return ''
     }
@@ -101,30 +95,13 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
     einheit: fallback?.package_unit ?? choices[0] ?? '',
     rest: String(fallback?.remaining_quantity ?? ''),
   })
-  const [text, setText] = useState(() => {
-    switch (editor) {
-      case 'batch_number': return inv?.batch_number ?? ''
-      case 'batch_source': return inv?.batch_source ?? ''
-      case 'opened_at': return inv?.opened_at ?? heute()
-      case 'expires_at': return inv?.expires_at ?? ''
-      case 'open_new': return heute()
-      default: return ''
-    }
-  })
+  const [text, setText] = useState(() => (editor === 'open_new' ? heute() : ''))
   const [verwerfen, setVerwerfen] = useState(true)
-  const [datei, setDatei] = useState<File | null>(null)
 
   const TITEL: Record<BestandEditorArt, string> = {
     start: String(t('my_stack_stock_start')),
     correct: String(t('my_stack_stock_edit')),
     open_new: art === 'vial' ? String(t('my_stack_stock_mix_new')) : art === 'pen' ? String(t('my_stack_stock_open_new_pen')) : String(t('my_stack_stock_open_new_bottle')),
-    opened_at: String(t(art === 'vial' ? 'my_stack_stock_mixed_on' : 'my_stack_stock_opened_on')),
-    reconstitution_ml: String(t('my_stack_stock_liquid')),
-    use_within_days: String(t(art === 'vial' ? 'my_stack_stock_use_within_vial' : 'my_stack_stock_use_within')),
-    batch_number: String(t('my_stack_stock_batch_number')),
-    batch_source: String(t('my_stack_stock_source')),
-    batch_file_url: String(t('my_stack_stock_document')),
-    expires_at: String(t('my_stack_stock_expires')),
   }
 
   const zahlWert = zahl(menge)
@@ -152,41 +129,12 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       }
       break
     case 'open_new':
-      gueltig = Boolean(text) && (art !== 'vial' || menge.trim() === '' || (zahlWert != null && zahlWert > 0))
+      gueltig = Boolean(text) && (art !== 'vial' || menge.trim() === '' || (zahlWert != null && gueltigeFluessigkeit(zahlWert)))
       speichern = () => actions.openContainer({
         openedAt: text,
         discardRest: Boolean(teile?.angebrochen) && verwerfen,
         reconstitutionMl: art === 'vial' ? zahlWert : null,
       })
-      break
-    case 'reconstitution_ml':
-      // Nicht leeren: beim Vial mit Altdaten kaeme sonst der alte Wert wieder
-      // zum Vorschein (`withVialInventory`), und die Spritzeneinheiten mit ihm.
-      gueltig = zahlWert != null && zahlWert > 0 && zahlWert <= 1000
-      speichern = () => actions.update({ reconstitution_ml: zahlWert })
-      break
-    case 'use_within_days':
-      gueltig = menge.trim() === '' || (zahlWert != null && Number.isInteger(zahlWert) && zahlWert >= 1 && zahlWert <= 3650)
-      speichern = () => actions.update({ use_within_days: zahlWert })
-      break
-    case 'opened_at':
-      speichern = () => actions.update({ opened_at: text || null })
-      break
-    case 'expires_at':
-      speichern = () => actions.update({ expires_at: text || null })
-      break
-    case 'batch_number':
-      speichern = () => actions.update({ batch_number: text.trim() || null })
-      break
-    case 'batch_source':
-      speichern = () => actions.update({ batch_source: text.trim() || null })
-      break
-    case 'batch_file_url':
-      gueltig = datei != null
-      speichern = async () => {
-        const url = await actions.uploadDocument(datei!)
-        await actions.update({ batch_file_url: url })
-      }
       break
   }
 
@@ -253,63 +201,6 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       )
       break
     }
-    case 'reconstitution_ml':
-      body = <input aria-label={TITEL[editor]} className={eingabe} inputMode="decimal" value={menge} onChange={event => setMenge(event.target.value)} autoFocus />
-      break
-    case 'use_within_days':
-      body = (
-        <div className="grid gap-3">
-          <div className="grid grid-cols-4 gap-2">
-            {(art ? HALTBAR_VORGABEN[art] : HALTBAR_VORGABEN.flasche).map(tage => (
-              <button
-                key={tage}
-                type="button"
-                aria-pressed={zahlWert === tage}
-                onClick={() => setMenge(String(tage))}
-                className={`min-h-11 rounded-xl border text-sm font-semibold ${zahlWert === tage ? 'border-sky-400/60 bg-sky-400/15 text-sky-100' : 'border-slate-700 text-slate-300'}`}
-              >
-                {daysLabel(t, tage)}
-              </button>
-            ))}
-          </div>
-          <input aria-label={TITEL[editor]} className={eingabe} inputMode="numeric" value={menge} onChange={event => setMenge(event.target.value)} />
-        </div>
-      )
-      break
-    case 'opened_at':
-    case 'expires_at':
-      body = <input aria-label={TITEL[editor]} type="date" className={eingabe} value={text} onChange={event => setText(event.target.value)} autoFocus />
-      break
-    case 'batch_number':
-    case 'batch_source':
-      body = <input aria-label={TITEL[editor]} className={eingabe} value={text} onChange={event => setText(event.target.value)} autoFocus />
-      break
-    case 'batch_file_url':
-      body = (
-        <div className="grid gap-3">
-          <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-4 ${datei ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700'}`}>
-            <FileUp size={20} aria-hidden="true" className={datei ? 'text-sky-400' : 'text-slate-500'} />
-            <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{datei ? datei.name : String(t('my_stack_stock_document_pick'))}</span>
-            <input type="file" className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={event => setDatei(event.target.files?.[0] ?? null)} />
-          </label>
-          {inv?.batch_file_url && (
-            <div className="flex items-center gap-3 text-xs">
-              <a className="flex-1 truncate text-sky-400 hover:underline" href={inv.batch_file_url} target="_blank" rel="noopener noreferrer">
-                {String(t('my_stack_stock_document_show'))}
-              </a>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onSubmit(() => actions.update({ batch_file_url: null }))}
-                className="min-h-11 px-2 text-rose-300"
-              >
-                {String(t('my_stack_stock_document_remove'))}
-              </button>
-            </div>
-          )}
-        </div>
-      )
-      break
     case 'open_new':
       body = (
         <div className="grid gap-3">

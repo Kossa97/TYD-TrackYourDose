@@ -138,7 +138,9 @@ describe('produktAngaben', () => {
 
     const a = produktAngaben(beides)
     expect(a.wirkstoff.art === 'zutaten' && a.wirkstoff.herkunft).toBe('alt')
-    expect(a.batch).toEqual({ art: 'text', text: 'A-1', herkunft: 'alt' })
+    // Die Charge dagegen aus dem Bestand: dorthin schreibt „Bearbeiten",
+    // die Altspalte steht still.
+    expect(a.batch).toEqual({ art: 'text', text: 'B-77', herkunft: 'neu' })
     expect(a.vorrat.art === 'vorrat' && a.vorrat.herkunft).toBe('alt')
   })
 

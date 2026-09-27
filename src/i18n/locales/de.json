@@ -1536,5 +1536,7 @@
   "my_stack_stock_edit": "Bestand ändern",
   "my_stack_stock_unopened_vial": "Ungeöffnete Vials",
   "my_stack_stock_unopened_pen": "Ungeöffnete Pens",
-  "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen"
+  "my_stack_stock_unopened_bottle": "Ungeöffnete Flaschen",
+  "my_stack_stock_liquid_invalid": "Gib eine Menge über 0 und bis 1000 ml ein.",
+  "my_stack_stock_days_invalid": "Gib ganze Tage von 1 bis 3650 ein."
 }

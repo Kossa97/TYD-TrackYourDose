@@ -179,9 +179,9 @@ function vorrat(q: AngabenQuellen): Angabe {
  * Angabe (`ablauf`): nicht dieselbe Rechnung, und beide koennen zugleich gelten.
  */
 function haltbarkeit(q: AngabenQuellen): Angabe {
-  if (q.item.expiry_days != null) return { art: 'tage', n: q.item.expiry_days, herkunft: 'alt' }
   const tage = q.item.inventory?.use_within_days
   if (tage != null) return { art: 'tage', n: tage, herkunft: 'neu' }
+  if (q.item.expiry_days != null) return { art: 'tage', n: q.item.expiry_days, herkunft: 'alt' }
   return leer('haltbarkeit')
 }
 
@@ -197,17 +197,17 @@ export function produktAngaben(q: AngabenQuellen): Record<DetailFeld, Angabe> {
     wirkstoff: wirkstoff(q),
     kategorie: { art: 'text', text: item.category, herkunft: 'neu' },
     marke: text(item.brand, 'neu') ?? leer('marke'),
-    // Alt am Eintrag (ein Vial mit Bestand bekommt sie dort aus dem Bestand,
-    // `withVialInventory`), sonst aus dem Bestand: Pen und Flasche.
-    fluessigkeit: item.reconstitution_ml != null
-      ? { art: 'menge', wert: item.reconstitution_ml, einheit: 'ml', herkunft: 'alt' }
-      : item.inventory?.reconstitution_ml != null
-        ? { art: 'menge', wert: item.inventory.reconstitution_ml, einheit: 'ml', herkunft: 'neu' }
+    // Zuerst der Bestand — dorthin schreibt „Bearbeiten" —, sonst die
+    // Altspalte am Eintrag, die seit der Umstellung stillsteht.
+    fluessigkeit: item.inventory?.reconstitution_ml != null
+      ? { art: 'menge', wert: item.inventory.reconstitution_ml, einheit: 'ml', herkunft: 'neu' }
+      : item.reconstitution_ml != null
+        ? { art: 'menge', wert: item.reconstitution_ml, einheit: 'ml', herkunft: 'alt' }
         : leer('fluessigkeit'),
-    rekonstituiert_am: item.reconstitution_date
-      ? { art: 'datum', iso: item.reconstitution_date, herkunft: 'alt' }
-      : item.inventory?.opened_at
-        ? { art: 'datum', iso: item.inventory.opened_at, herkunft: 'neu' }
+    rekonstituiert_am: item.inventory?.opened_at
+      ? { art: 'datum', iso: item.inventory.opened_at, herkunft: 'neu' }
+      : item.reconstitution_date
+        ? { art: 'datum', iso: item.reconstitution_date, herkunft: 'alt' }
         : leer('rekonstituiert_am'),
     haltbarkeit: haltbarkeit(q),
     // Das Ablaufdatum auf der Packung — eine eigene Angabe neben der
@@ -219,12 +219,12 @@ export function produktAngaben(q: AngabenQuellen): Record<DetailFeld, Angabe> {
     // Die Methode steht alt am Eintrag, neu am Zyklus. Ohne Zyklus gibt es
     // sie im neuen Modell nicht — dann ist sie leer und nicht geraten.
     applikation: text(item.default_method, 'alt') ?? text(q.zyklusMethode, 'zyklus') ?? leer('applikation'),
-    batch: text(item.batch_number, 'alt') ?? text(item.inventory?.batch_number, 'neu') ?? leer('batch'),
-    quelle: text(item.batch_source, 'alt') ?? text(item.inventory?.batch_source, 'neu') ?? leer('quelle'),
-    analyse: item.batch_file_url
-      ? { art: 'datei', url: item.batch_file_url, herkunft: 'alt' }
-      : item.inventory?.batch_file_url
-        ? { art: 'datei', url: item.inventory.batch_file_url, herkunft: 'neu' }
+    batch: text(item.inventory?.batch_number, 'neu') ?? text(item.batch_number, 'alt') ?? leer('batch'),
+    quelle: text(item.inventory?.batch_source, 'neu') ?? text(item.batch_source, 'alt') ?? leer('quelle'),
+    analyse: item.inventory?.batch_file_url
+      ? { art: 'datei', url: item.inventory.batch_file_url, herkunft: 'neu' }
+      : item.batch_file_url
+        ? { art: 'datei', url: item.batch_file_url, herkunft: 'alt' }
         : leer('analyse'),
     // Eine Spalte, beide Wege schreiben sie.
     notizen: text(item.notes, 'neu') ?? leer('notizen'),

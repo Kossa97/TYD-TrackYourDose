@@ -500,7 +500,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1003,7 +1005,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1506,7 +1510,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2009,7 +2015,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2512,7 +2520,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3015,7 +3025,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3518,7 +3530,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4021,7 +4035,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4524,7 +4540,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5027,7 +5045,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5530,7 +5550,9 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6033,6 +6055,8 @@
     "my_stack_stock_edit": "Edit stock",
     "my_stack_stock_unopened_vial": "Unopened vials",
     "my_stack_stock_unopened_pen": "Unopened pens",
-    "my_stack_stock_unopened_bottle": "Unopened bottles"
+    "my_stack_stock_unopened_bottle": "Unopened bottles",
+    "my_stack_stock_liquid_invalid": "Enter an amount above 0 and up to 1000 ml.",
+    "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650."
   }
 }
