@@ -434,8 +434,12 @@ export function StackItemWizard({
   const currentStepIndex = steps.indexOf(state.step)
   const sections = editOverview ? editSections(steps) : []
   const currentSection = sections.find(section => section.steps.includes(state.step)) ?? null
-  const lastInSection = currentSection !== null
-    && currentSection.steps.indexOf(state.step) === currentSection.steps.length - 1
+  const sectionStepIndex = currentSection ? currentSection.steps.indexOf(state.step) : -1
+  // Auch ohne Abschnitt ist ein Schritt beim Bearbeiten der letzte: faellt er
+  // unterwegs aus den Schritten (letzte eigene Zutat entfernt), fuehrt
+  // „Fertig" trotzdem zur Uebersicht und nicht auf Schritt eins.
+  const lastInSection = editOverview && state.step !== 'review'
+    && (currentSection === null || sectionStepIndex === currentSection.steps.length - 1)
   const validationErrors = showErrors ? validateStackItemDraft(state.draft) : {}
   const planValidationErrors = showErrors
     ? validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
@@ -547,8 +551,8 @@ export function StackItemWizard({
       return
     }
 
-    if (currentSection) {
-      const nextInSection = currentSection.steps[currentSection.steps.indexOf(state.step) + 1]
+    if (editOverview) {
+      const nextInSection = currentSection?.steps[sectionStepIndex + 1]
       if (nextInSection) selectStep(nextInSection)
       else backToOverview(currentSection)
       return
@@ -559,8 +563,9 @@ export function StackItemWizard({
     else if (intent === 'pk' || intent === 'plan') void handleSave()
   }
 
-  function backToOverview(section: EditSection): void {
+  function backToOverview(section: EditSection | null): void {
     selectStep('review')
+    if (!section) return
     requestAnimationFrame(() => {
       dialogRef.current?.querySelector<HTMLElement>(`[data-edit-section="${section.id}"]`)?.focus()
     })
@@ -576,10 +581,10 @@ export function StackItemWizard({
       return
     }
     if (editOverview) {
-      const previousInSection = currentSection?.steps[currentSection.steps.indexOf(state.step) - 1]
-      if (previousInSection) selectStep(previousInSection)
-      else if (currentSection) backToOverview(currentSection)
-      else onClose()
+      const previousInSection = currentSection?.steps[sectionStepIndex - 1]
+      if (state.step === 'review') onClose()
+      else if (previousInSection) selectStep(previousInSection)
+      else backToOverview(currentSection)
       return
     }
     const previousStep = steps[currentStepIndex - 1]
@@ -717,7 +722,7 @@ export function StackItemWizard({
         ? 'inventory.reconstitutionMl'
         : !gueltigeHaltbarkeit(state.draft.inventory.useWithinDays) ? 'inventory.useWithinDays' : null
       if (field) {
-        if (state.step !== 'plan') dispatch({ type: 'step_selected', step: 'plan' })
+        if (editOverview && state.step !== 'plan') selectStep('plan')
         setSaveError(String(t(field === 'inventory.reconstitutionMl' ? 'my_stack_stock_liquid_invalid' : 'my_stack_stock_days_invalid')))
         focusField(field)
         return
@@ -847,6 +852,34 @@ export function StackItemWizard({
     }
   }
 
+  function trackingLevelLabel(): string {
+    // Die Bezeichnung, nicht das Adjektiv: „Gründlich“ allein sagt in einer
+    // Zusammenfassung nichts darüber, was gespeichert wird.
+    return String(state.draft.trackingLevel === 'intake_only'
+      ? t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' })
+      : state.draft.trackingLevel === 'with_amount'
+        ? t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' })
+        : t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' }))
+  }
+
+  function ingredientName(ingredient: StackItemSetupDraft['ingredients'][number], index: number): string {
+    const fallback = String(t(`my_stack_ingredient_${index + 1}`))
+    return ingredient.catalog_substance_id
+      ? catalogNames[ingredient.catalog_substance_id] ?? fallback
+      : ingredient.custom_name || fallback
+  }
+
+  /** „5 mg / 1 ml" — ohne haengenden Schraegstrich, wenn etwas fehlt. */
+  function ingredientStrength(ingredient: StackItemSetupDraft['ingredients'][number]): string {
+    const menge = ingredient.amount_value != null && ingredient.amount_unit
+      ? `${ingredient.amount_value} ${ingredient.amount_unit}`
+      : ''
+    const basis = ingredient.basis_value != null && ingredient.basis_unit
+      ? `${ingredient.basis_value} ${ingredient.basis_unit}`
+      : ''
+    return menge && basis ? `${menge} / ${basis}` : menge
+  }
+
   function editSectionLabel(section: EditSection): string {
     switch (section.id) {
       case 'substance': return String(t('my_stack_step_substance', { defaultValue: 'Substanz' }))
@@ -880,25 +913,24 @@ export function StackItemWizard({
         )
       case 'tracking':
         return (
-          <span className="block text-sm font-semibold text-slate-100">
-            {draft.trackingLevel === 'intake_only'
-              ? t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' })
-              : draft.trackingLevel === 'with_amount'
-                ? t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' })
-                : t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' })}
-          </span>
+          <>
+            <span className="block text-sm font-semibold text-slate-100">{trackingLevelLabel()}</span>
+            {draft.trackingLevel === 'complete' && (
+              <span className="block text-sm text-slate-400">
+                {selectedPkCatalogEntry?.pk_profile_id
+                  ? t('my_stack_pk_available', { defaultValue: 'PK-Profil verfügbar; Kurve abhängig von vollständigen Angaben' })
+                  : t('my_stack_pk_unavailable', { defaultValue: 'Kein PK-Profil hinterlegt' })}
+              </span>
+            )}
+          </>
         )
       case 'composition':
         return draft.ingredients.map((ingredient, index) => {
-          const name = ingredient.catalog_substance_id
-            ? catalogNames[ingredient.catalog_substance_id]
-            : ingredient.custom_name || t(`my_stack_ingredient_${index + 1}`)
-          const staerke = ingredient.amount_value != null
-            ? `${ingredient.amount_value} ${ingredient.amount_unit ?? ''} / ${ingredient.basis_value ?? ''} ${ingredient.basis_unit ?? ''}`.trim()
-            : ''
+          const name = ingredientName(ingredient, index)
+          const staerke = ingredientStrength(ingredient)
           return (
             <span key={ingredient.position} className="block break-words text-sm font-semibold text-slate-100">
-              {draft.ingredients.length > 1 ? `${name} · ${staerke}` : staerke || name}
+              {draft.ingredients.length > 1 && staerke ? `${name} · ${staerke}` : staerke || name}
             </span>
           )
         })
@@ -1279,16 +1311,7 @@ export function StackItemWizard({
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_tracking_level', { defaultValue: 'Tracking-Tiefe' })}</dt>
-                  <dd className="font-medium text-slate-200">
-                    {/* Die Bezeichnung, nicht das Adjektiv: „Gründlich“ allein
-                        sagt in einer Zusammenfassung nichts darüber, was
-                        gespeichert wurde. */}
-                    {state.draft.trackingLevel === 'intake_only'
-                      ? t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' })
-                      : state.draft.trackingLevel === 'with_amount'
-                        ? t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' })
-                        : t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' })}
-                  </dd>
+                  <dd className="font-medium text-slate-200">{trackingLevelLabel()}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_daily_behavior', { defaultValue: 'Im Alltag' })}</dt>
@@ -1383,14 +1406,8 @@ export function StackItemWizard({
                 )}
                 {state.draft.trackingLevel === 'complete' && state.draft.ingredients.map((ingredient, index) => (
                   <div key={ingredient.position} className="border-t border-white/10 pt-3">
-                    <dt className="text-slate-400">
-                      {ingredient.catalog_substance_id
-                        ? catalogNames[ingredient.catalog_substance_id]
-                        : ingredient.custom_name || t(`my_stack_ingredient_${index + 1}`)}
-                    </dt>
-                    <dd className="mt-1 break-words font-medium text-slate-200">
-                      {ingredient.amount_value} {ingredient.amount_unit} / {ingredient.basis_value} {ingredient.basis_unit}
-                    </dd>
+                    <dt className="text-slate-400">{ingredientName(ingredient, index)}</dt>
+                    <dd className="mt-1 break-words font-medium text-slate-200">{ingredientStrength(ingredient)}</dd>
                   </div>
                 ))}
               </dl>
@@ -1669,7 +1686,10 @@ export function StackItemWizard({
         </main>
 
         <footer className="flex shrink-0 gap-3 border-t border-white/10 bg-slate-950/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-          <button
+          {/* Auf der Bearbeiten-Uebersicht gibt es kein Zurueck: dort liegen
+              alle Aenderungen bis zum Speichern, und ein Pfeil, der schliesst,
+              wuerde sie wortlos verwerfen. Schliessen bleibt oben am X. */}
+          {!(editOverview && state.step === 'review') && <button
             type="button"
             onClick={handleBack}
             disabled={saving}
@@ -1677,9 +1697,9 @@ export function StackItemWizard({
           >
             <ArrowLeft aria-hidden="true" size={18} />
             <span className="hidden sm:inline">
-              {(editOverview ? state.step === 'review' : currentStepIndex === 0 && !reviewOpen) ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
+              {!editOverview && currentStepIndex === 0 && !reviewOpen ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
             </span>
-          </button>
+          </button>}
 
           {state.step === 'review' || ((intent === 'pk' || intent === 'plan') && currentStepIndex === steps.length - 1) ? (
             <button

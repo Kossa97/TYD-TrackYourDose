@@ -1550,9 +1550,23 @@ describe('StackItemWizard — Bearbeiten-Übersicht', () => {
     expect(screen.queryByRole('progressbar')).toBeNull()
     expect(document.querySelector('[data-review-rhythm]')).toBeNull()
     expect(screen.getByText('With breakfast')).toBeTruthy()
+    // Kein Zurueck-Pfeil, der alle Aenderungen wortlos verwirft — nur das X.
+    expect(screen.queryByRole('button', { name: 'cancel' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'back' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('zeigt die Zusammensetzung als eigenen Abschnitt und führt mit Zurück zur Übersicht', () => {
+    renderWizard({ existingItem: existingVitaminD, existingPlan, catalogEntries: [vitaminD3], metadataOnly: true })
+
+    // Nur Katalogzutaten: der Abschnitt ist allein die Stärke.
+    fireEvent.click(document.querySelector('[data-edit-section="composition"]')!)
+    expect(screen.getByRole('button', { name: 'my_stack_edit_done' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'back' }))
+    expect(document.querySelector('[data-edit-overview]')).not.toBeNull()
+    expect(screen.getByText('5000 IU / 1 capsule')).toBeTruthy()
   })
 
   it('führt aus einem Abschnitt mit „Fertig" zurück zur Übersicht, nicht zum nächsten Schritt', async () => {
