@@ -529,9 +529,10 @@ const EXPECTED_MY_STACK_KEYS = [
 // jemand bewusst einen Schluessel daneben ergaenzt — zuletzt
 // die Texte des Bestaetigungs-Sheets (`confirm_sheet_*`, `verpasst`,
 // `dose_mark_taken`), zuletzt das Mengenfeld darin (`confirm_sheet_dose_label`).
+// Aktualisiert fuer die neuen Rechner- und Einheitenumrechner-Texte (`rechner_*`).
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '9c85c83e31329e7b8bab29ee867af94ea4b43f16e9a4cf96378f524f18a3077e',
-  en: '1f2a2f59cd3b3e3b24c7172f4d24d922cedbebfca0f81e8862796441228e130b',
+  de: '7ecf8827ffe193a3c6e8e54d348d3cb0588b05b93142423dfeaeb34109fe0ef5',
+  en: 'dd30172f0a8be31cc498eb18d49c89e51ee22a1fbe836e2b26c79ea308a40687',
 } as const
 const TRANSLATED_OUTSIDE_OVERLAY_HASHES = {
   ar: 'a04902a2d0e44c1980f76c4553a49ce36c5515a7aebf911a3c05a82402db73ad',
