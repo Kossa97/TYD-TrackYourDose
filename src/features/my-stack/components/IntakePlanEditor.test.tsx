@@ -586,18 +586,18 @@ describe('IntakePlanEditor', () => {
 
     // Bei einer Einnahme gibt es nichts wegzunehmen.
     expect(anzahl()).toBe('1')
-    expect(weniger().disabled).toBe(true)
+    expect(weniger().getAttribute('aria-disabled')).toBe('true')
 
     for (let i = 0; i < 3; i += 1) fireEvent.click(mehr())
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(4)
     expect(anzahl()).toBe('4')
-    expect(mehr().disabled).toBe(true)
+    expect(mehr().getAttribute('aria-disabled')).toBe('true')
 
     // Und wieder zurück: der Zähler nimmt die letzte Einnahme weg.
     fireEvent.click(weniger())
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(3)
-    expect(mehr().disabled).toBe(false)
+    expect(mehr().hasAttribute('aria-disabled')).toBe(false)
   })
 
   it('bietet bei „Bei Bedarf" gar keinen Zeitpunkt an', () => {

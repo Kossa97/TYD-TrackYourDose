@@ -15,6 +15,7 @@ import {
 import { reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
 import type { InventoryPatch } from '../services/stackInventory'
 import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
+import { denyProps } from '../../../lib/denyFeedback'
 
 /**
  * Der Bestand im Vollbild: die Kurzfassung unter dem Plan (`BestandCard`) und
@@ -257,7 +258,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
         </div>
         <div className="px-5 py-5">{body}</div>
         <div className="border-t border-slate-800 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <button type="submit" className="btn-primary w-full" disabled={!gueltig || busy}>
+          <button type="submit" className="btn-primary w-full" disabled={busy} {...denyProps(!busy && !gueltig)}>
             {String(t('my_stack_stock_save'))}
           </button>
         </div>

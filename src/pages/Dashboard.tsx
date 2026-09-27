@@ -54,6 +54,7 @@ import {
 } from '../features/my-stack/services/stackInventory'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
+import { denyProps } from '../lib/denyFeedback'
 
 interface DoseLog {
   id: string
@@ -2480,9 +2481,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                   {t('cancel', { defaultValue: 'Abbrechen' })}
                 </button>
                 <button
-                  onClick={() => void handleConfirmSheet()}
-                  disabled={confirmDoseUngueltig}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => { if (!confirmDoseUngueltig) void handleConfirmSheet() }}
+                  {...denyProps(confirmDoseUngueltig)}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
                 >
                   <Check size={14} /> {t('eingenommen', { defaultValue: 'Eingenommen' })}
                 </button>

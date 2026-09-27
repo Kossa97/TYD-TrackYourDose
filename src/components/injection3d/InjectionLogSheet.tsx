@@ -17,6 +17,7 @@ import {
   areInjectionDetailsLocked,
   replaceTimeInLocalDateTime,
 } from '../../lib/injectionLogSheetState'
+import { denyProps } from '../../lib/denyFeedback'
 
 const UNIT_OPTIONS = ['mcg', 'mg', 'IU', 'ml', 'nmol']
 const METHOD_OPTIONS = ['Subkutan', 'Intramuskulär']
@@ -417,7 +418,7 @@ export function InjectionLogSheet({
               </p>
               <div className="flex min-w-0 gap-3 border-t border-white/10 pt-4 pb-5">
                 <button type="button" className="btn-secondary min-h-11 min-w-0 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
-                <button type="button" className="btn-primary min-h-11 min-w-0 flex-1" onClick={save} disabled={saving || !canSave}>
+                <button type="button" className="btn-primary min-h-11 min-w-0 flex-1" onClick={save} disabled={saving} {...denyProps(!canSave)}>
                   <Check size={14} aria-hidden="true" /> {saveActionLabel}
                 </button>
               </div>

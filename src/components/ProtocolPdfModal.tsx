@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Download, FileText, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { denyProps } from '../lib/denyFeedback'
 import { loadProtocolData } from '../lib/protocolPdf/loadProtocolData'
 import { SECTIONS } from '../lib/protocolPdf/sections'
 import { PRESETS, applyPreset, matchPreset, type ActivePreset, type PresetId } from '../lib/protocolPdf/presets'
@@ -26,6 +27,7 @@ const T: Record<UILang, {
   period: string; from: string; to: string
   note: string; notePlaceholder: string; language: string; download: string; generating: string
   loading: string; noneSelected: string; empty: string; emptyClick: (label: string) => string
+  invalidRange: string
   loadError: string; genError: string
   personalHint: string
   livePreview: string; previewUpdating: string; previewEmpty: string; previewError: string
@@ -47,6 +49,7 @@ const T: Record<UILang, {
     noneSelected: 'Wähle mindestens einen Inhalt aus.',
     empty: 'keine Daten',
     emptyClick: label => `Keine Daten für „${label}“ im gewählten Zeitraum.`,
+    invalidRange: 'Der Zeitraum passt nicht: „Von“ muss vor „Bis“ liegen.',
     loadError: 'Daten konnten nicht geladen werden',
     genError: 'PDF konnte nicht erstellt werden',
     personalHint: 'Ohne „Persönliche Angaben“ wird das PDF anonymisiert (z. B. fürs Forum).',
@@ -72,6 +75,7 @@ const T: Record<UILang, {
     noneSelected: 'Select at least one section.',
     empty: 'no data',
     emptyClick: label => `No data for “${label}” in the selected period.`,
+    invalidRange: 'Check the period: “From” must come before “To”.',
     loadError: 'Could not load data',
     genError: 'Could not create PDF',
     personalHint: 'Without “Personal details” the PDF is anonymised (e.g. for forums).',
@@ -159,30 +163,11 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const previewUrlRef = useRef<string | null>(null)
   const loadGenRef = useRef(0)
   const previewGenRef = useRef(0)
-  const denyFlashTimer = useRef<number | null>(null)
-  const [denyFlashId, setDenyFlashId] = useState<SectionId | null>(null)
-  const [denyFlashKey, setDenyFlashKey] = useState(0)
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
   const langRef = useRef(lang)
   langRef.current = lang
-
-  const flashUnavailableSection = (id: SectionId) => {
-    // State-gesteuert: imperative classList wird von React-className beim Toast-Re-Render gelöscht.
-    // Kurz null → wieder setzen, damit die CSS-Animation bei erneutem Klick neu startet
-    // (ohne Button-Remount via key, der den Flash unzuverlässig abbrach).
-    if (denyFlashTimer.current) window.clearTimeout(denyFlashTimer.current)
-    setDenyFlashId(null)
-    setDenyFlashKey(k => k + 1)
-    requestAnimationFrame(() => {
-      setDenyFlashId(id)
-      denyFlashTimer.current = window.setTimeout(() => {
-        setDenyFlashId(null)
-        denyFlashTimer.current = null
-      }, 650)
-    })
-  }
 
   // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
   // Bei späteren Range-Änderungen Auswahl nur auf verfügbare Sektionen beschneiden
@@ -263,11 +248,10 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const toggle = (id: SectionId) => {
     const section = SECTIONS.find(s => s.id === id)
     if (!section) return
-    if (!(availability.get(id) ?? false)) {
-      flashUnavailableSection(id)
-      toast(t.emptyClick(section.label[lang]), { duration: 2800 })
-      return
-    }
+    // Leere Abschnitte sind aria-disabled: den Klick faengt der app-weite
+    // „geht nicht"-Hinweis ab (src/lib/denyFeedback.ts). Das hier ist nur
+    // die Absicherung.
+    if (!(availability.get(id) ?? false)) return
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -349,7 +333,6 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
     revokePreviewUrl(previewUrlRef.current)
   }, [])
 
-  const canGenerate = data != null && isValidRange(range) && !generating
 
   const generate = async () => {
     if (!data || !isValidRange(range)) return
@@ -504,17 +487,16 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                     <button
                       key={s.id}
                       type="button"
-                      aria-disabled={!has}
+                      {...denyProps(!has, t.emptyClick(s.label[lang]))}
                       title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
-                      data-deny-key={denyFlashId === s.id ? denyFlashKey : undefined}
                       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-45'
                           : checked
                             ? 'border-sky-500/40 bg-sky-500/10'
                             : 'border-slate-800 bg-slate-800/30 hover:border-slate-700'
-                      } ${denyFlashId === s.id ? 'pdf-section-deny' : ''}`}
+                      }`}
                     >
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
@@ -582,7 +564,11 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
           <button
             type="button"
             onClick={() => { void generate() }}
-            disabled={!canGenerate}
+            // Laden und Erstellen sind gleich vorbei — dort bleibt der Knopf
+            // stumm. Ein falscher Zeitraum bleibt, bis man ihn aendert: dort
+            // sagt der Knopf, warum er nicht geht.
+            disabled={generating || data == null}
+            {...denyProps(!isValidRange(range), t.invalidRange)}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             {generating

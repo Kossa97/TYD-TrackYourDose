@@ -1,5 +1,6 @@
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import type { MetricKey } from '../../types'
+import { denyProps } from '../../../../lib/denyFeedback'
 
 interface Props {
   availableMetrics: MetricDefinition[]
@@ -35,8 +36,10 @@ export function MetricChipBar({
           <button
             key={metric.key}
             type="button"
-            disabled={disabled}
-            onClick={() => onSelectMetric(metric.key)}
+            {...denyProps(disabled, metric.isLab
+              ? `Für „${metric.label}“ braucht es mindestens zwei Werte.`
+              : `Noch keine Werte für „${metric.label}“.`)}
+            onClick={() => { if (!disabled) onSelectMetric(metric.key) }}
             style={{
               flexShrink: 0,
               padding: '4px 9px',

@@ -10,6 +10,7 @@ import {
 } from '../intakeGroups'
 import { buildOneOffActualDose, dosePlanCapabilities } from '../../my-stack/lib/dosePlan'
 import { InventoryConfirmationError } from '../../my-stack/services/stackInventory'
+import { denyProps } from '../../../lib/denyFeedback'
 
 interface ConfirmedIntake {
   entry: RoutineConfirmationEntry
@@ -305,9 +306,10 @@ export function RoutineConfirmationSheet({
               </button>
               <button
                 type="button"
-                disabled={!canConfirm}
+                disabled={saving}
+                {...denyProps(!saving && !canConfirm)}
                 onClick={() => void save()}
-                className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:opacity-50"
               >
                 <Check size={16} aria-hidden="true" /> {saving
                   ? t('routine_confirmation_saving', { defaultValue: 'Speichert …' })

@@ -10,6 +10,7 @@ import {
   type InjectionHistoryDays,
 } from '../../lib/injectionHistory'
 import type { InjectionLog3D } from '../../lib/injectionLogTypes'
+import { denyProps } from '../../lib/denyFeedback'
 
 export function InjectionHistorySheet({
   logs,
@@ -95,9 +96,9 @@ export function InjectionHistorySheet({
                           title={String(exactPosition
                             ? t('injection_focus_site_title', { defaultValue: 'Zur Injektionsstelle' })
                             : t('injection_focus_site_unavailable', { defaultValue: 'Keine genaue Position gespeichert' }))}
-                          disabled={!exactPosition}
-                          onClick={() => onFocusLog(log)}
-                          className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400 disabled:cursor-not-allowed disabled:opacity-30"
+                          {...denyProps(!exactPosition, String(t('injection_focus_site_unavailable', { defaultValue: 'Keine genaue Position gespeichert' })))}
+                          onClick={() => { if (exactPosition) onFocusLog(log) }}
+                          className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400 aria-disabled:opacity-30"
                         >
                           <LocateFixed size={16} aria-hidden="true" />
                         </button>

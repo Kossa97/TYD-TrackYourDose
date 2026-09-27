@@ -518,6 +518,9 @@ export const MY_STACK_EN = {
   my_stack_edit_section_product: 'Product & notes',
   my_stack_edit_product_empty: 'Nothing added yet',
   my_stack_edit_substance_question: 'Which substance is it?',
+  my_stack_tab_locked: 'No substances under “{{category}}” yet.',
+  my_stack_plan_remove_locked: 'This step starts the plan and can’t be removed.',
+  my_stack_open_new_locked: 'Nothing unopened left in stock.',
 }
 
 export const MY_STACK_DE = {
@@ -1039,6 +1042,9 @@ export const MY_STACK_DE = {
   my_stack_edit_section_product: 'Produkt & Notizen',
   my_stack_edit_product_empty: 'Noch keine Angaben',
   my_stack_edit_substance_question: 'Welche Substanz ist es?',
+  my_stack_tab_locked: 'Noch keine Substanz unter „{{category}}“.',
+  my_stack_plan_remove_locked: 'Diese Stufe ist der Anfang des Plans und lässt sich nicht entfernen.',
+  my_stack_open_new_locked: 'Nichts Ungeöffnetes mehr im Bestand.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

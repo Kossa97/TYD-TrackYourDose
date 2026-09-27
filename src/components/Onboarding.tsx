@@ -6,6 +6,7 @@ import {
   useCallback,
   type CSSProperties,
 } from 'react'
+import { denyProps } from '../lib/denyFeedback'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -526,9 +527,9 @@ export function Onboarding() {
         <div className="ob-callout-actions">
           <button
             type="button"
-            onClick={prev}
+            onClick={() => { if (!isFirst) prev() }}
             data-app-back-close
-            disabled={isFirst}
+            {...denyProps(isFirst)}
             className="ob-nav-btn"
             aria-label={t('back')}
             style={{ width: 'auto', padding: '0 12px', gap: 5 }}
@@ -540,7 +541,7 @@ export function Onboarding() {
           <button
             type="button"
             onClick={() => { if (canAdvance) nextRef.current() }}
-            disabled={!canAdvance}
+            {...denyProps(!canAdvance)}
             className="ob-primary-btn flex-1 justify-center"
             style={{ opacity: canAdvance ? 1 : 0.4, cursor: canAdvance ? 'pointer' : 'not-allowed' }}
           >

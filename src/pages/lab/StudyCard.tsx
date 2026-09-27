@@ -11,6 +11,7 @@ import {
   getKeyFindings,
 } from './labUtils'
 import type { EvidenceScore, StudyType } from './labUtils'
+import { denyProps } from '../../lib/denyFeedback'
 
 // ─── Style Configs ────────────────────────────────────────────────────────────
 
@@ -433,8 +434,8 @@ export function StudyCard({ article, variant }: StudyCardProps) {
       >
         <button
           type="button"
-          className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-slate-400 transition-colors cursor-not-allowed"
-          title="Coming soon"
+          className="flex items-center gap-1.5 text-xs text-slate-700 transition-colors"
+          {...denyProps(true, String(t('lab_save_soon', { defaultValue: 'Studien merken kommt bald.' })))}
         >
           <Bookmark size={11} />
           {t('lab_save')}

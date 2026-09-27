@@ -50,6 +50,7 @@ import { methodLabel } from '../../lib/intakeMethods'
 import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
 import { rhythmFromStorage } from './lib/intakeRhythm'
+import { denyProps } from '../../lib/denyFeedback'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities, type SortAbility } from './lib/stackSort'
 import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
@@ -898,7 +899,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // Was in den Reitern steht, zaehlt ueber den GANZEN Stack — nicht ueber die
   // gerade gefilterte Liste, sonst zeigte jeder Reiter ausser dem offenen 0.
   const reiterZaehler = tabCounts(peptides)
-  const offeneKategorie = filterByTab(gesuchtePeptides, activeTab)
+  // Ein leerer Reiter laesst sich nicht waehlen. Wird der offene leer (letzte
+  // Substanz archiviert oder geloescht), gilt wieder „Alle" — sonst stuende
+  // das Karussell ohne Inhalt da, und mit ihm verschwaende die Reiterleiste.
+  const offenerReiter: StackTabKey = (reiterZaehler.get(activeTab) ?? 0) > 0 ? activeTab : 'all'
+  const offeneKategorie = filterByTab(gesuchtePeptides, offenerReiter)
   // Welche Sortierungen dieser Reiter ueberhaupt beantworten kann.
   const moeglicheSortierungen = sortAbilities(offeneKategorie)
   // Sortiert jemand nach Fuellstand und wechselt dann in einen Reiter ohne
@@ -2662,7 +2667,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 >
                   {STACK_TABS.map(reiter => {
                     const anzahl = reiterZaehler.get(reiter.key) ?? 0
-                    const offen = reiter.key === activeTab
+                    const offen = reiter.key === offenerReiter
+                    const reiterName = String(t(reiter.labelKey, { defaultValue: reiter.defaultValue }))
                     return (
                       <button
                         key={reiter.key}
@@ -2671,7 +2677,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         aria-selected={offen}
                         data-stack-tab={reiter.key}
                         data-stack-tab-count={anzahl}
-                        onClick={() => reiterWechseln(reiter.key)}
+                        {...denyProps(anzahl === 0, String(t('my_stack_tab_locked', {
+                          defaultValue: 'Noch keine Substanz unter „{{category}}“.',
+                          category: reiterName,
+                        })))}
+                        onClick={() => { if (anzahl > 0) reiterWechseln(reiter.key) }}
                         className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
                           ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
                           : anzahl === 0
@@ -2679,7 +2689,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
                         }`}
                       >
-                        {t(reiter.labelKey, { defaultValue: reiter.defaultValue })}
+                        {reiterName}
                         {anzahl > 0 && (
                           <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
                             {anzahl}
@@ -3027,9 +3037,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             </span>
                             <div className="flex items-center gap-0.5">
                               <button
-                                onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
-                                disabled={invItem.vials_count <= 0}
-                                className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 disabled:opacity-25"
+                                onClick={e => { e.stopPropagation(); if (invItem.vials_count > 0) adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
+                                {...denyProps(invItem.vials_count <= 0)}
+                                className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 aria-disabled:opacity-25 aria-disabled:hover:bg-transparent"
                               >
                                 <Minus size={10} />
                               </button>
@@ -3561,12 +3571,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             // Wunsch den Rest im alten. Nur mit Bestand und vollem Behaelter.
             const art = anbruchArt(activePeptide.dosage_form)
             if (!art || !activePeptide.inventory?.enabled) return null
+            const nichtsZuOeffnen = vorratTeile(activePeptide.inventory).voll < 1
             return (
               <button
                 type="button"
-                onClick={() => setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })}
-                disabled={vorratTeile(activePeptide.inventory).voll < 1}
-                className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
+                onClick={() => {
+                  if (!nichtsZuOeffnen) setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })
+                }}
+                {...denyProps(nichtsZuOeffnen, String(t('my_stack_open_new_locked', {
+                  defaultValue: 'Nichts Ungeöffnetes mehr im Bestand.',
+                })))}
+                className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 aria-disabled:border-slate-800 aria-disabled:bg-slate-900/60 aria-disabled:text-slate-600"
               >
                 <RefreshCw size={15} aria-hidden="true" />
                 {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}

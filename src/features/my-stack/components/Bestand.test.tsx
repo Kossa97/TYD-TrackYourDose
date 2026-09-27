@@ -122,7 +122,7 @@ describe('Bestand ändern', () => {
     renderEditor('correct', vial)
     const editor = screen.getByRole('dialog', { name: 'my_stack_stock_edit' })
     fireEvent.change(within(editor).getByLabelText('my_stack_stock_opened_vial'), { target: { value: '120' } })
-    expect(within(editor).getByRole('button', { name: 'my_stack_stock_save' })).toHaveProperty('disabled', true)
+    expect(within(editor).getByRole('button', { name: 'my_stack_stock_save' }).getAttribute('aria-disabled')).toBe('true')
   })
 
   it('keeps one amount for forms without an opened container', async () => {

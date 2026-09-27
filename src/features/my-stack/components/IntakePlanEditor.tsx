@@ -30,6 +30,7 @@ import type {
   SubstanceCatalogEntry,
   TrackingLevel,
 } from '../types'
+import { denyProps } from '../../../lib/denyFeedback'
 
 export interface IntakePlanEditorProps {
   scheduleOnly?: boolean
@@ -683,10 +684,10 @@ export function IntakePlanEditor({
                 <button
                   type="button"
                   onClick={removeLastSlot}
-                  disabled={sichtbareSlots.length <= 1}
+                  {...denyProps(sichtbareSlots.length <= 1)}
                   data-plan-slot-fewer
                   aria-label={String(t('my_stack_plan_slot_fewer', { defaultValue: 'Eine Einnahme weniger' }))}
-                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 aria-disabled:opacity-40 aria-disabled:hover:border-white/10 aria-disabled:hover:text-slate-300 cursor-pointer motion-reduce:transition-none"
                 >
                   <Minus aria-hidden="true" size={18} />
                 </button>
@@ -699,10 +700,10 @@ export function IntakePlanEditor({
                 <button
                   type="button"
                   onClick={addSlot}
-                  disabled={sichtbareSlots.length >= MAX_INTAKE_SLOTS}
+                  {...denyProps(sichtbareSlots.length >= MAX_INTAKE_SLOTS)}
                   data-plan-slot-more
                   aria-label={String(t('my_stack_plan_slot_more', { defaultValue: 'Eine Einnahme mehr' }))}
-                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+                  className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 aria-disabled:opacity-40 aria-disabled:hover:border-white/10 aria-disabled:hover:text-slate-300 cursor-pointer motion-reduce:transition-none"
                 >
                   <Plus aria-hidden="true" size={18} />
                 </button>

@@ -527,6 +527,9 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_edit_section_product',
   'my_stack_edit_product_empty',
   'my_stack_edit_substance_question',
+  'my_stack_tab_locked',
+  'my_stack_plan_remove_locked',
+  'my_stack_open_new_locked',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit
@@ -537,10 +540,11 @@ const EXPECTED_MY_STACK_KEYS = [
 // jemand bewusst einen Schluessel daneben ergaenzt — zuletzt
 // die Texte des Bestaetigungs-Sheets (`confirm_sheet_*`, `verpasst`,
 // `dose_mark_taken`), zuletzt das Mengenfeld darin (`confirm_sheet_dose_label`).
-// Aktualisiert fuer die neuen Rechner- und Einheitenumrechner-Texte (`rechner_*`).
+// Aktualisiert fuer die neuen Rechner- und Einheitenumrechner-Texte (`rechner_*`),
+// zuletzt fuer den Hinweis am gesperrten Merken-Knopf der Studien (`lab_save_soon`).
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '7ecf8827ffe193a3c6e8e54d348d3cb0588b05b93142423dfeaeb34109fe0ef5',
-  en: 'dd30172f0a8be31cc498eb18d49c89e51ee22a1fbe836e2b26c79ea308a40687',
+  de: 'f1da2b26947f2957166c1c73cad2c577ca27337b0d8b28f09836fadddf351085',
+  en: '2771645306f1bb50b1ef3db3aea43679f53091266acc0c5e112f78897c2820cd',
 } as const
 const TRANSLATED_OUTSIDE_OVERLAY_HASHES = {
   ar: 'a04902a2d0e44c1980f76c4553a49ce36c5515a7aebf911a3c05a82402db73ad',

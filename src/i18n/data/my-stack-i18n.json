@@ -517,7 +517,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1037,7 +1040,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1557,7 +1563,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2077,7 +2086,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2597,7 +2609,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3117,7 +3132,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3637,7 +3655,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4157,7 +4178,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4677,7 +4701,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5197,7 +5224,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5717,7 +5747,10 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6237,6 +6270,9 @@
     "my_stack_edit_section_composition": "Composition",
     "my_stack_edit_section_product": "Product & notes",
     "my_stack_edit_product_empty": "Nothing added yet",
-    "my_stack_edit_substance_question": "Which substance is it?"
+    "my_stack_edit_substance_question": "Which substance is it?",
+    "my_stack_tab_locked": "No substances under “{{category}}” yet.",
+    "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+    "my_stack_open_new_locked": "Nothing unopened left in stock."
   }
 }

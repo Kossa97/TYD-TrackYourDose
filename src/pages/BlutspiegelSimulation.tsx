@@ -37,6 +37,7 @@ import {
 } from '../features/my-stack/lib/pkReadiness'
 import type { TrackingLevel } from '../features/my-stack/types'
 import type { EscalationRow } from '../lib/intakeSchedule'
+import { denyProps } from '../lib/denyFeedback'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -1278,7 +1279,7 @@ export function BlutspiegelSimulation() {
 
         <button
           onClick={startSimulation}
-          disabled={!selectedProfile}
+          {...denyProps(!selectedProfile, 'Wähle zuerst eine Substanz aus.')}
           style={{
             width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 14,
             background: selectedProfile ? 'var(--accent-weak)' : 'var(--surface-raised)',

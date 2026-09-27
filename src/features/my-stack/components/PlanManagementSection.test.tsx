@@ -367,7 +367,7 @@ describe('PlanManagementSection', () => {
       versions: [version('version-planned', 5, '2026-09-20', { change_kind: 'initial' })],
     })
     render(<PlanManagementSection {...callbacks({ timeline: planned })} />)
-    expect((screen.getByRole('button', { name: /Geplante Änderung.*entfernen/ }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: /Geplante Änderung.*entfernen/ }).getAttribute('aria-disabled')).toBe('true')
 
     const section = screen.getByTestId('plan-management-cycle-1')
     expect(section.textContent).toContain('Geplant')

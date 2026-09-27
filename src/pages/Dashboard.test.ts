@@ -1044,14 +1044,14 @@ describe('Dashboard normalized timeline path', () => {
     await openSingle()
     fireEvent.change(screen.getByLabelText('Menge'), { target: { value: '0' } })
     const knopf = screen.getByRole('button', { name: 'Eingenommen' }) as HTMLButtonElement
-    expect(knopf.disabled).toBe(true)
+    expect(knopf.getAttribute('aria-disabled')).toBe('true')
     fireEvent.click(knopf)
     expect(client.rpc).not.toHaveBeenCalled()
 
     // Eine leere Menge ebenso -- die Substanz traegt eine Menge, „nichts"
     // ist keine gueltige Antwort darauf.
     fireEvent.change(screen.getByLabelText('Menge'), { target: { value: '' } })
-    expect((screen.getByRole('button', { name: 'Eingenommen' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Eingenommen' }).getAttribute('aria-disabled')).toBe('true')
   })
 
   it('zeigt kein Mengenfeld fuer eine Intake-Only-Substanz', async () => {

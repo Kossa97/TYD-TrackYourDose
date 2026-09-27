@@ -9,6 +9,7 @@ import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
 import { emptyRhythm } from './lib/intakeRhythm'
 import { MyStackPage } from './MyStackPage'
+import { installDenyFeedback } from '../../lib/denyFeedback'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDosageForm } from './lib/dosageForms'
@@ -507,6 +508,25 @@ describe('MyStackPage non-vial visibility', () => {
     expect(strip?.className).toContain('overflow-y-hidden')
     expect(strip?.className).toContain('overscroll-none')
     expect(strip?.className).toContain('touch-pan-x')
+  })
+
+  it('sperrt leere Reiter, statt das Karussell samt Leiste verschwinden zu lassen', async () => {
+    const uninstall = installDenyFeedback()
+    try {
+      await renderPage()
+      const leer = document.querySelector<HTMLElement>('[data-stack-tab="medication"]')!
+      expect(leer.getAttribute('aria-disabled')).toBe('true')
+      expect(leer.getAttribute('data-deny-reason')).toBe('my_stack_tab_locked')
+
+      fireEvent.click(leer)
+
+      expect(leer.hasAttribute('data-deny')).toBe(true)
+      expect(document.querySelector('[data-stack-tabs]')).not.toBeNull()
+      expect(document.querySelector('[data-stack-tab="all"]')?.getAttribute('aria-selected')).toBe('true')
+      expect(document.querySelector('[data-stack-tab="peptide"]')?.hasAttribute('aria-disabled')).toBe(false)
+    } finally {
+      uninstall()
+    }
   })
 
   it('keeps vertical scrolling available in list mode', async () => {

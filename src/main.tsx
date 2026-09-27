@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import './index.css'
 import { applyDirection, i18nReady } from './i18n'
 import App from './App.tsx'
+import { installDenyFeedback } from './lib/denyFeedback'
 const DEV_SW_RESET_KEY = 'tyd_dev_sw_reset'
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
@@ -31,6 +32,9 @@ applyDirection(savedLang)
 // Erst rendern, wenn das Locale-Bundle der aktiven Sprache geladen ist —
 // verhindert kurzes Aufblitzen roher i18n-Keys. .finally: auch bei
 // fehlgeschlagenem Laden rendern (i18next fällt dann auf 'de' zurück).
+// Gesperrte Knoepfe (aria-disabled) antworten app-weit mit rotem Wackelrahmen.
+installDenyFeedback()
+
 i18nReady.finally(() => {
   const root = document.getElementById('root')!
   const app = <StrictMode><App /></StrictMode>

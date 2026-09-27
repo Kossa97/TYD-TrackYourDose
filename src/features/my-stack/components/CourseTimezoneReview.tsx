@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { denyProps } from '../../../lib/denyFeedback'
 
 export function CourseTimezoneReview({ timeZone, onConfirm }: {
   timeZone: string
@@ -28,7 +29,7 @@ export function CourseTimezoneReview({ timeZone, onConfirm }: {
       <input className="input mt-1 w-full" value={zone} disabled={pending} onChange={event => setZone(event.target.value.trim())} />
     </label>
     {failed && <p>{t('my_stack_course_timezone_error')}</p>}
-    <button className="btn-primary" disabled={pending || !zone} onClick={() => void confirm()}>
+    <button className="btn-primary" disabled={pending} {...denyProps(!pending && !zone)} onClick={() => { if (zone) void confirm() }}>
       {t('my_stack_course_timezone_confirm')}
     </button>
   </section>

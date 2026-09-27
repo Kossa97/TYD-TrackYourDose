@@ -453,7 +453,8 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   flex-shrink: 0;
 }
 
-.ob-nav-btn:disabled {
+.ob-nav-btn:disabled,
+.ob-nav-btn[aria-disabled="true"] {
   opacity: 0.3;
 }
 
@@ -1090,7 +1091,9 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
       0 2px 8px rgba(0,0,0,0.5),
       inset 0 1px 0 rgba(255,255,255,0.10);
   }
-  .btn-primary:disabled {
+  .btn-primary:disabled,
+  .btn-primary[aria-disabled="true"],
+  .btn-primary[aria-disabled="true"]:hover {
     opacity: 0.30;
     cursor: not-allowed;
     transform: none;
@@ -1491,8 +1494,9 @@ main.flex-1 {
 }
 @keyframes tydPulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-/* Kurzer „geht nicht“-Hinweis: dezenter roter Rahmen + leichtes Wackeln */
-@keyframes pdf-section-deny {
+/* „Geht gerade nicht“ (src/lib/denyFeedback.ts): dezenter roter Rahmen und
+   leichtes Wackeln auf einem gesperrten Knopf, den man trotzdem antippt. */
+@keyframes tyd-deny {
   0%, 100% { transform: translateX(0); }
   16% { transform: translateX(-3px); }
   32% { transform: translateX(3px); }
@@ -1500,25 +1504,29 @@ main.flex-1 {
   64% { transform: translateX(2px); }
   80% { transform: translateX(-1px); }
 }
-.pdf-section-deny {
-  /* outline statt border-color: kämpft nicht mit Tailwind-Border-Utilities */
-  outline: 1px solid rgb(248 113 113 / 0.75);
-  outline-offset: 0;
-  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.3);
+[data-deny] {
+  /* outline statt border-color: kämpft nicht mit Tailwind-Border-Utilities.
+     !important gegen focus-visible:outline-none am selben Knopf. */
+  outline: 1px solid rgb(248 113 113 / 0.75) !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.3) !important;
   opacity: 0.9 !important;
-  animation-name: pdf-section-deny;
+  animation-name: tyd-deny;
   animation-duration: 0.48s;
   animation-timing-function: ease;
   animation-iteration-count: 1;
 }
 
 /* Gegen globales prefers-reduced-motion: * { animation-duration: 0.001ms } —
-   Shake nur wenn Motion erlaubt; Rahmen bleibt über die Klasse sichtbar. */
+   Wackeln nur wenn Bewegung erlaubt; der Rahmen bleibt über das Attribut sichtbar. */
 @media (prefers-reduced-motion: no-preference) {
-  .pdf-section-deny {
+  [data-deny] {
     animation-duration: 0.48s !important;
   }
 }
+
+/* Gesperrt, aber antippbar: sieht aus wie gesperrt, reagiert nicht auf Hover. */
+[aria-disabled="true"] { cursor: not-allowed; }
 
 .pulse-soft { animation: tydPulseSoft 1.2s ease-in-out infinite; }
 .motion-fade-up { animation: tydFadeUp var(--t-std) cubic-bezier(0.22,1,0.36,1) both; }

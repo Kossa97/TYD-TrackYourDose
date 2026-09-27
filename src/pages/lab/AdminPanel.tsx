@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { getAllPeptides, STATUS_LABEL_KEYS, CATEGORY_LABEL_KEYS } from '../../services/peptideLibrary'
 import type { PeptideEntry } from '../../services/peptideLibrary'
+import { denyProps } from '../../lib/denyFeedback'
 
 type Tab   = 'update' | 'create' | 'pk'
 type Status = 'idle' | 'loading' | 'preview' | 'saving' | 'done' | 'error'
@@ -398,7 +399,7 @@ export function AdminPanel() {
                 <p>Evidence Score: <span className="text-slate-400">{selected.evidence_score}/10</span></p>
               </div>
             )}
-            <button type="button" onClick={handleUpdate} disabled={!selected || isLoading}
+            <button type="button" onClick={handleUpdate} disabled={isLoading} {...denyProps(!isLoading && !selected, 'Wähle zuerst eine Substanz aus.')}
               className="btn-primary w-full flex items-center justify-center gap-2">
               {status === 'loading' ? <><Loader2 size={14} className="animate-spin" /> KI analysiert…</> : <><Sparkles size={14} /> KI-Update starten</>}
             </button>
@@ -414,7 +415,7 @@ export function AdminPanel() {
           <input value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }} disabled={isLoading}
             placeholder="z.B. Hexarelin, PT-141, Melanotan II…" className={`${inp} mb-4`} />
-          <button type="button" onClick={() => void handleCreate()} disabled={!newName.trim() || isLoading}
+          <button type="button" onClick={() => void handleCreate()} disabled={isLoading} {...denyProps(!isLoading && !newName.trim())}
             className="btn-primary w-full flex items-center justify-center gap-2">
             {status === 'loading' ? <><Loader2 size={14} className="animate-spin" /> KI generiert Profil…</> : <><Sparkles size={14} /> Profil generieren</>}
           </button>
@@ -480,7 +481,8 @@ export function AdminPanel() {
               </div>
 
               <button type="button" onClick={() => void savePkProfile()}
-                disabled={pkSaving || !pkName.trim() || !pkHalfLife || !pkTmax}
+                disabled={pkSaving}
+                {...denyProps(!pkSaving && (!pkName.trim() || !pkHalfLife || !pkTmax))}
                 className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
                 {pkSaving ? <><Loader2 size={14} className="animate-spin" /> Speichern…</> : <><Save size={14} /> PK-Profil speichern</>}
               </button>

@@ -757,6 +757,7 @@
   "lab_summary": "Zusammenfassung",
   "lab_read_summary": "Zusammenfassung lesen",
   "lab_save": "♡ Speichern",
+  "lab_save_soon": "Studien merken kommt bald.",
   "lab_filter_title": "Filter & Sortierung",
   "lab_filter_peptide": "Peptid (Mehrfach)",
   "lab_filter_year_label": "Erscheinungsjahr",
@@ -1613,5 +1614,8 @@
   "my_stack_edit_section_composition": "Zusammensetzung",
   "my_stack_edit_section_product": "Produkt & Notizen",
   "my_stack_edit_product_empty": "Noch keine Angaben",
-  "my_stack_edit_substance_question": "Welche Substanz ist es?"
+  "my_stack_edit_substance_question": "Welche Substanz ist es?",
+  "my_stack_tab_locked": "Noch keine Substanz unter „{{category}}“.",
+  "my_stack_plan_remove_locked": "Diese Stufe ist der Anfang des Plans und lässt sich nicht entfernen.",
+  "my_stack_open_new_locked": "Nichts Ungeöffnetes mehr im Bestand."
 }

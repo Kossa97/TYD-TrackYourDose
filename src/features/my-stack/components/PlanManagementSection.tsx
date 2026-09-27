@@ -24,6 +24,7 @@ import {
   versionRhythm,
   versionSlots,
 } from '../lib/planLabels'
+import { denyProps } from '../../../lib/denyFeedback'
 
 export interface PlanManagementSectionProps {
   timeline: CycleTimeline
@@ -514,6 +515,8 @@ export function PlanManagementSection({
                   const previous = steps[index - 1]?.version ?? null
                   const effectiveDate = dateLabel(segment.effectiveFrom, language, timeZone)
                   const isLast = index === steps.length - 1
+                  // Die erste Stufe traegt den Plan — ohne sie bliebe keiner.
+                  const removable = segment.version.change_kind !== 'initial' && timeline.versions.length > 1
                   const rhythm = rhythmLabel(segment.version, t)
                   const previousRhythm = previous ? rhythmLabel(previous, t) : null
                   const rows = isOnDemandRhythm(versionRhythm(segment.version))
@@ -535,13 +538,16 @@ export function PlanManagementSection({
                       </button>
                       <button
                         type="button"
-                        disabled={pending || segment.version.change_kind === 'initial' || timeline.versions.length === 1}
-                        onClick={() => openDialog({ kind: 'remove', version: segment.version })}
+                        disabled={pending}
+                        {...denyProps(!removable, String(t('my_stack_plan_remove_locked', {
+                          defaultValue: 'Diese Stufe ist der Anfang des Plans und lässt sich nicht entfernen.',
+                        })))}
+                        onClick={() => { if (removable) openDialog({ kind: 'remove', version: segment.version }) }}
                         aria-label={String(t('my_stack_plan_remove_future', {
                           defaultValue: 'Geplante Änderung vom {{date}} entfernen',
                           date: effectiveDate,
                         }))}
-                        className="grid h-11 w-11 place-items-center rounded-lg text-slate-400 hover:bg-rose-400/10 hover:text-rose-200 disabled:opacity-50"
+                        className="grid h-11 w-11 place-items-center rounded-lg text-slate-400 hover:bg-rose-400/10 hover:text-rose-200 disabled:opacity-50 aria-disabled:opacity-50 aria-disabled:hover:bg-transparent aria-disabled:hover:text-slate-400"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -743,9 +749,10 @@ export function PlanManagementSection({
               </button>
               <button
                 type="button"
-                disabled={pending || (dialog.kind === 'pause_end' && !pauseEnd)}
-                onClick={() => void submitDialog()}
-                className="min-h-11 flex-1 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-bold text-cyan-100 disabled:opacity-50"
+                disabled={pending}
+                {...denyProps(dialog.kind === 'pause_end' && !pauseEnd)}
+                onClick={() => { if (dialog.kind !== 'pause_end' || pauseEnd) void submitDialog() }}
+                className="min-h-11 flex-1 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-bold text-cyan-100 disabled:opacity-50 aria-disabled:opacity-50"
               >
                 {confirmLabel}
               </button>

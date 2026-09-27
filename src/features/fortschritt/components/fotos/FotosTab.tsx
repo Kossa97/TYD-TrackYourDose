@@ -9,6 +9,7 @@ import { PHOTO_BUCKET } from '../../constants'
 import { PHOTO_GRID_OPTIONS, photoGridColumns, readPhotoGridSize, writePhotoGridSize, type PhotoGridSize } from '../../lib/photoGrid'
 import { isLegacyPhotoUrl } from '../../hooks/useFortschrittData'
 import { fieldLabel, inputStyle, panel } from '../../styles'
+import { denyProps } from '../../../../lib/denyFeedback'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
 const fmtDate = (d: string) => format(parseISO(`${d}T00:00:00`), 'dd.MM.yyyy')
@@ -268,7 +269,7 @@ export function FotosTab({ photos, onChange }: Props) {
           <label style={fieldLabel}>Notizen (optional)</label>
           <textarea placeholder="Besondere Beobachtungen…" value={notes} onChange={e => setNotes(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
         </div>
-        <button type="button" onClick={() => void handleUpload()} disabled={!selectedFile || uploading} className="btn-primary" style={{ width: '100%' }}>
+        <button type="button" onClick={() => void handleUpload()} disabled={uploading} {...denyProps(!selectedFile, 'Bitte zuerst ein Foto auswählen')} className="btn-primary" style={{ width: '100%' }}>
           {uploading ? 'Wird hochgeladen…' : 'Foto speichern'}
         </button>
       </div>
