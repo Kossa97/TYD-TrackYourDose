@@ -505,9 +505,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1015,9 +1016,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1525,9 +1527,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2035,9 +2038,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2545,9 +2549,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3055,9 +3060,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3565,9 +3571,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4075,9 +4082,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4585,9 +4593,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5095,9 +5104,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5605,9 +5615,10 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6115,8 +6126,9 @@
     "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
     "my_stack_expired": "Expired!",
     "my_stack_expired_since_today": "since today",
-    "my_stack_expired_since_one": "for 1 day",
-    "my_stack_expired_since_many": "for {{n}} days",
-    "my_stack_expired_aria": "Expired, {{since}}"
+    "my_stack_expired_since_day": "for 1 day",
+    "my_stack_expired_since_days": "for {{n}} days",
+    "my_stack_expired_aria": "Expired, {{since}}",
+    "my_stack_expires_today": "Expires today"
   }
 }

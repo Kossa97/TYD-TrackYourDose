@@ -1393,7 +1393,8 @@
   "my_stack_stock_days_invalid": "Enter whole days from 1 to 3650.",
   "my_stack_expired": "Expired!",
   "my_stack_expired_since_today": "since today",
-  "my_stack_expired_since_one": "for 1 day",
-  "my_stack_expired_since_many": "for {{n}} days",
-  "my_stack_expired_aria": "Expired, {{since}}"
+  "my_stack_expired_aria": "Expired, {{since}}",
+  "my_stack_expired_since_day": "for 1 day",
+  "my_stack_expired_since_days": "for {{n}} days",
+  "my_stack_expires_today": "Expires today"
 }

@@ -1541,7 +1541,8 @@
   "my_stack_stock_days_invalid": "Gib ganze Tage von 1 bis 3650 ein.",
   "my_stack_expired": "Abgelaufen!",
   "my_stack_expired_since_today": "seit heute",
-  "my_stack_expired_since_one": "seit 1 Tag",
-  "my_stack_expired_since_many": "seit {{n}} Tagen",
-  "my_stack_expired_aria": "Abgelaufen, {{since}}"
+  "my_stack_expired_aria": "Abgelaufen, {{since}}",
+  "my_stack_expired_since_day": "seit 1 Tag",
+  "my_stack_expired_since_days": "seit {{n}} Tagen",
+  "my_stack_expires_today": "Läuft heute ab"
 }

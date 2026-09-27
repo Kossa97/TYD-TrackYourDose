@@ -2,6 +2,20 @@ import { addDays, differenceInCalendarDays, parseISO } from 'date-fns'
 
 export type ExpiryStatus = 'expired' | 'soon'
 
+/**
+ * Wie viele KALENDERtage bis zum Ablauf: 0 = laeuft heute ab, negativ = seit
+ * so vielen Tagen abgelaufen. Dieselbe Rechnung wie der Hinweis auf der
+ * Startseite (`getPeptideExpiryAlerts`) — beide Stellen sagen am selben Tag
+ * dasselbe. Ohne Anmischdatum oder Haltbarkeit: null.
+ */
+export function expiryDaysLeft(
+  source: { reconstitution_date?: string | null; expiry_days?: number | null },
+  referenceDate = new Date(),
+): number | null {
+  if (!source.reconstitution_date || !source.expiry_days) return null
+  return differenceInCalendarDays(addDays(parseISO(source.reconstitution_date), Number(source.expiry_days)), referenceDate)
+}
+
 export interface PeptideExpiryAlert {
   id: string
   name: string

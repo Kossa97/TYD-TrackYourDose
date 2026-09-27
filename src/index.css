@@ -20,7 +20,6 @@
   50%       { box-shadow: 0 0 18px rgba(0,204,245,0.38); }
 }
 
-/* Onboarding overlay — above app modals (z-50) while tour is active */
 /* ── Abgelaufen-Abzeichen (My Stack) ─────────────────────────────────────
    Erst ein kurzer Alarm — das Warnsymbol blinkt viermal, das Abzeichen
    glueht mit —, danach pulsiert nur noch das Symbol, ruhig und selten.
@@ -46,6 +45,7 @@
   .tyd-expired-icon-calm { animation: none; }
 }
 
+/* Onboarding overlay — above app modals (z-50) while tour is active */
 @keyframes ob-ring-pulse {
   0% {
     border-color: rgba(0, 238, 255, 0.95);

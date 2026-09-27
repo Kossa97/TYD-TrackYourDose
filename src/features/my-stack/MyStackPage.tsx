@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
 import { NewDot } from '../../components/NewDot'
-import { format, isValid, parseISO, addDays, differenceInDays } from 'date-fns'
+import { format, isValid, parseISO, addDays } from 'date-fns'
 import { effectiveQuantity, scheduleForDay, type ScheduleSegment } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
 import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
@@ -23,6 +23,7 @@ import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
 import { ExpiredBadge } from './components/ExpiredBadge'
+import { expiryDaysLeft } from '../../lib/peptideExpiry'
 import { hapticTick } from '../../lib/haptics'
 import {
   detailAbschnitte, wirkstoffBezug,
@@ -242,10 +243,6 @@ function withVialInventory(p: Peptide): Peptide {
   }
 }
 
-function expiryDaysLeft(p: Peptide): number | null {
-  if (!p.reconstitution_date || !p.expiry_days) return null
-  return differenceInDays(addDays(parseISO(p.reconstitution_date), p.expiry_days), new Date())
-}
 
 /** Rest im aktuellen Vial in % — gleiche Logik wie die Vial-Anzeige in der Liste. */
 function getVialFillPct(p: Peptide): number | null {
@@ -2692,18 +2689,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   </button>
                   {addTileActive ? <div aria-hidden /> : (() => {
                     const days = expiryDaysLeft(activePeptide)
-                    const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days > 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
+                    const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     const expiryLabel = days === null
                       ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
                       : days > 0
                         ? `Haltbar: ${days} ${days === 1 ? 'Tag' : 'Tage'}`
-                        : t('abgelaufen_warn')
+                        : t('my_stack_expires_today')
                     const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
 
                     return (
                       <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
                         {/* Abgelaufen: erst Alarm, dann „seit X Tagen" — je Substanz neu. */}
-                        {days !== null && days <= 0
+                        {days !== null && days < 0
                           ? <ExpiredBadge key={activePeptide.id} daysSince={-days} />
                           : <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>}
                         <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
@@ -2996,13 +2993,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         </div>
 
 
-                        {p.reconstitution_date && p.expiry_days && (() => {
-                          const exp  = addDays(parseISO(p.reconstitution_date), p.expiry_days)
-                          const days = differenceInDays(exp, new Date())
-                          const cls  = days > 7 ? 'text-emerald-400' : days > 0 ? 'text-amber-400' : 'text-red-400'
+                        {(() => {
+                          const days = expiryDaysLeft(p)
+                          if (days === null) return null
+                          const cls  = days > 7 ? 'text-emerald-400' : days >= 0 ? 'text-amber-400' : 'text-red-400'
                           return (
                             <p className={`text-xs mt-0.5 ${cls}`}>
-                              {days > 0 ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days })) : t('abgelaufen_warn')}
+                              {days > 0 ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days })) : days === 0 ? t('my_stack_expires_today') : t('abgelaufen_warn')}
                             </p>
                           )
                         })()}
@@ -4225,7 +4222,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         let expiryDate: string | null = null
         if (p.reconstitution_date && p.expiry_days) {
           const exp = addDays(parseISO(p.reconstitution_date), p.expiry_days)
-          expiryDays = differenceInDays(exp, new Date())
+          expiryDays = expiryDaysLeft(p)
           expiryDate = format(exp, 'dd.MM.yyyy')
         }
 
@@ -4307,11 +4304,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       {expiryDate && expiryDays !== null && (
                         <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('ablauf_label')}</p>
-                          <p className={`font-semibold mt-0.5 ${expiryDays > 7 ? 'text-emerald-400' : expiryDays > 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                          <p className={`font-semibold mt-0.5 ${expiryDays > 7 ? 'text-emerald-400' : expiryDays >= 0 ? 'text-amber-400' : 'text-red-400'}`}>
                             {expiryDate}
                           </p>
-                          <p className={`text-xs ${expiryDays > 7 ? 'text-emerald-500' : expiryDays > 0 ? 'text-amber-500' : 'text-red-500'}`}>
-                            {expiryDays > 0 ? t('noch_n_tage_ablauf', { n: expiryDays }) : t('abgelaufen_warn')}
+                          <p className={`text-xs ${expiryDays > 7 ? 'text-emerald-500' : expiryDays >= 0 ? 'text-amber-500' : 'text-red-500'}`}>
+                            {expiryDays > 0 ? t('noch_n_tage_ablauf', { n: expiryDays }) : expiryDays === 0 ? t('my_stack_expires_today') : t('abgelaufen_warn')}
                           </p>
                         </div>
                       )}
