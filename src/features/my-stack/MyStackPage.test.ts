@@ -234,6 +234,16 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-position className="mb-2 mt-1')
   })
 
+  test('hält die Positionszeile gleich hoch — Punkte, Leiste oder nichts', () => {
+    // Die Buehne darueber fuellt den Rest. War die Zeile mal 10 px (Punkte),
+    // mal 4 px (Leiste), mal gar nicht da (ein Eintrag), wuchs und schrumpfte
+    // das Vial beim Wechsel der Kategorie.
+    const text = source()
+
+    expect(text).toContain('data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0')
+    expect(text).not.toContain("{stagePeptides.length > 1 && (\n                  <div data-vial-position")
+  })
+
   test('gibt jeder Darreichungsform denselben Karussellplatz und Abstand', () => {
     const text = source()
 

@@ -2924,34 +2924,36 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     angeschnitten — ohne diese Zeile wuesste niemand, ob nach
                     dem dritten Wisch noch fuenf kommen oder einer. Bis zu
                     sieben Eintraege als Punkte zum Antippen, darueber eine
-                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
-                {stagePeptides.length > 1 && (
-                  <div data-vial-position className="mb-2 mt-1 flex shrink-0 items-center justify-center gap-1.5">
-                    {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => scrollToPeptideIndex(index)}
-                        aria-label={p.name}
-                        aria-current={index === activeIndex}
-                        data-vial-dot={index}
-                        className={`h-2.5 rounded-full transition-all duration-300 ${
-                          index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
-                        }`}
+                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt.
+                    Die Zeile ist immer gleich hoch (h-2.5, so hoch wie ein
+                    Punkt) und steht auch bei nur einem Eintrag leer da:
+                    Punkte, Leiste oder nichts duerfen die Buehne darueber
+                    nicht groesser oder kleiner machen. */}
+                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center gap-1.5">
+                  {stagePeptides.length > 1 && (stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => scrollToPeptideIndex(index)}
+                      aria-label={p.name}
+                      aria-current={index === activeIndex}
+                      data-vial-dot={index}
+                      className={`h-2.5 rounded-full transition-all duration-300 ${
+                        index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
+                      }`}
+                    />
+                  )) : (
+                    <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-cyan-300 transition-all duration-300"
+                        style={{
+                          width: `${100 / stagePeptides.length}%`,
+                          marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
+                        }}
                       />
-                    )) : (
-                      <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-cyan-300 transition-all duration-300"
-                          style={{
-                            width: `${100 / stagePeptides.length}%`,
-                            marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
 
 
               </div>
