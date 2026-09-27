@@ -2699,7 +2699,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
                     return (
                       <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                        {/* Abgelaufen: erst Alarm, dann „seit X Tagen" — je Substanz neu. */}
+                        {/* Abgelaufen: Alarm und „seit X Tagen" im Wechsel. Der
+                            `key` laesst den Takt je Substanz mit dem Alarm beginnen. */}
                         {days !== null && days < 0
                           ? <ExpiredBadge key={activePeptide.id} daysSince={-days} />
                           : <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>}

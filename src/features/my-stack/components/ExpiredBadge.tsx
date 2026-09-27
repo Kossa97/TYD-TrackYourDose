@@ -18,6 +18,9 @@ function expiredSinceLabel(t: Translate, daysSince: number): string {
  * steht allein im CSS (`.tyd-expired-*` in `index.css`); alle Teile laufen mit
  * derselben Dauer und bleiben so zusammen. Beide Texte liegen uebereinander,
  * das Abzeichen springt beim Wechsel nicht. Vorgelesen wird beides zusammen.
+ * Bei „weniger Bewegung" steht still „seit X Tagen".
+ *
+ * Mit Alarm beginnen (etwa fuer die naechste Substanz) per `key`.
  */
 export function ExpiredBadge({ daysSince }: { daysSince: number }) {
   const { t } = useTranslation()

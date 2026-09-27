@@ -22,46 +22,49 @@
 
 /* ── Abgelaufen-Abzeichen (My Stack) ─────────────────────────────────────
    Ein gleichmaessiger Wechsel im 6-Sekunden-Takt, endlos: 3 s Alarm
-   („Abgelaufen!", das Warnsymbol blinkt viermal, das Abzeichen glueht mit),
-   dann 3 s „seit X Tagen" mit ruhigem Symbol. Alle Teile laufen mit derselben
-   Dauer, darum bleiben sie im Takt. Wer weniger Bewegung will, bekommt den
-   Wechsel als reines Ueberblenden — ohne Blinken, ohne Versatz. */
+   („Abgelaufen!", das Warnsymbol blinkt viermal, der Rand glueht mit), dann
+   3 s „seit X Tagen", in denen das Symbol einmal ruhig pulsiert — so warnt
+   nie nur die Farbe. Alle Teile laufen mit derselben Dauer und bleiben im
+   Takt; der zweite Text ist derselbe Verlauf, um einen halben Takt versetzt.
+   Animiert werden nur Deckkraft und Lage (billig fuer den Compositor); das
+   Gluehen ist ein fertiger Schatten, dessen Deckkraft wechselt.
+   Wer weniger Bewegung will, sieht still den Endstand „seit X Tagen" — die
+   globale Regel unten kuerzt ohnehin jede Animation auf 0,001 ms. */
 @keyframes tyd-expired-icon {
-  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 0 rgba(248, 113, 113, 0)); }
-  5.8%, 17.5%, 29.2%, 40.8% { opacity: 0.3; transform: scale(1.22); filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.95)); }
+  0%, 11.7%, 23.3%, 35%, 46.7%, 65%, 85%, 100% { opacity: 1; transform: scale(1); }
+  5.8%, 17.5%, 29.2%, 40.8% { opacity: 0.3; transform: scale(1.22); }
+  75% { opacity: 0.55; transform: scale(1.1); }
 }
 @keyframes tyd-expired-glow {
-  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
-  5.8%, 17.5%, 29.2%, 40.8% { box-shadow: 0 0 14px 1px rgba(248, 113, 113, 0.45); }
+  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { opacity: 0; }
+  5.8%, 17.5%, 29.2%, 40.8% { opacity: 1; }
 }
-@keyframes tyd-expired-text-alarm {
-  0%, 44% { opacity: 1; transform: translateY(0); filter: blur(0); }
-  50%, 94% { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
-  94.1% { opacity: 0; transform: translateY(6px); filter: blur(3px); }
-  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+@keyframes tyd-expired-text {
+  0%, 44% { opacity: 1; transform: translateY(0); }
+  50%, 94% { opacity: 0; transform: translateY(-6px); }
+  94.1% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
-@keyframes tyd-expired-text-since {
-  0%, 44% { opacity: 0; transform: translateY(6px); filter: blur(3px); }
-  50%, 94% { opacity: 1; transform: translateY(0); filter: blur(0); }
-  100% { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
+.tyd-expired-badge { position: relative; }
+.tyd-expired-badge::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 14px 1px rgba(248, 113, 113, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: tyd-expired-glow 6s ease-in-out infinite;
 }
-@keyframes tyd-expired-fade-alarm {
-  0%, 44%, 100% { opacity: 1; }
-  50%, 94% { opacity: 0; }
-}
-@keyframes tyd-expired-fade-since {
-  0%, 44%, 100% { opacity: 0; }
-  50%, 94% { opacity: 1; }
-}
-.tyd-expired-badge { animation: tyd-expired-glow 6s ease-in-out infinite; }
 .tyd-expired-icon { animation: tyd-expired-icon 6s ease-in-out infinite; }
-.tyd-expired-text-alarm { animation: tyd-expired-text-alarm 6s ease-in-out infinite; }
-.tyd-expired-text-since { opacity: 0; animation: tyd-expired-text-since 6s ease-in-out infinite; }
+.tyd-expired-text-alarm { animation: tyd-expired-text 6s ease-in-out infinite; }
+.tyd-expired-text-since { animation: tyd-expired-text 6s ease-in-out -3s infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .tyd-expired-badge,
-  .tyd-expired-icon { animation: none; }
-  .tyd-expired-text-alarm { animation-name: tyd-expired-fade-alarm; }
-  .tyd-expired-text-since { animation-name: tyd-expired-fade-since; }
+  .tyd-expired-badge::after,
+  .tyd-expired-icon,
+  .tyd-expired-text-since { animation: none !important; }
+  .tyd-expired-text-alarm { display: none !important; }
+  .tyd-expired-text-since { opacity: 1 !important; transform: none !important; }
 }
 
 /* Onboarding overlay — above app modals (z-50) while tour is active */

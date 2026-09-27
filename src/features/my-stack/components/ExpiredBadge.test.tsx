@@ -31,16 +31,27 @@ describe('ExpiredBadge', () => {
     expect(document.querySelector('svg')!.getAttribute('class')).toContain('tyd-expired-icon')
   })
 
+  // Die Regeln einer Klasse — tolerant gegen Zeilenumbrueche und Reihenfolge.
+  const regeln = (selektor: string) => {
+    const block = css.slice(css.indexOf('/* ── Abgelaufen-Abzeichen'), css.indexOf('/* Onboarding overlay'))
+    const treffer = block.match(new RegExp(`${selektor.replace(/[.:]/g, m => `\\${m}`)}\\s*\\{([^}]*)\\}`))
+    return treffer?.[1] ?? ''
+  }
+
   it('runs every part on the same endless 6-second cycle, so they stay in step', () => {
-    for (const teil of ['badge', 'icon', 'text-alarm', 'text-since']) {
-      expect(css, teil).toMatch(new RegExp(`\\.tyd-expired-${teil} \\{[^}]*animation: tyd-expired-[a-z-]+ 6s ease-in-out infinite;`))
+    for (const teil of ['.tyd-expired-badge::after', '.tyd-expired-icon', '.tyd-expired-text-alarm', '.tyd-expired-text-since']) {
+      expect(regeln(teil), teil).toMatch(/animation:[^;]*\b6s\b[^;]*\binfinite\b/)
     }
+    // Beide Texte sind derselbe Verlauf, der zweite um einen halben Takt versetzt.
+    expect(regeln('.tyd-expired-text-alarm')).toContain('tyd-expired-text ')
+    expect(regeln('.tyd-expired-text-since')).toMatch(/tyd-expired-text [^;]*-3s/)
   })
 
-  it('keeps the swap but drops blinking and movement for reduced motion', () => {
-    const block = css.slice(css.indexOf('.tyd-expired-badge {'), css.indexOf('/* Onboarding overlay'))
-    expect(block).toContain('@media (prefers-reduced-motion: reduce)')
-    expect(block).toContain('.tyd-expired-text-alarm { animation-name: tyd-expired-fade-alarm; }')
+  it('shows the still end state for reduced motion, stronger than the global reset', () => {
+    const block = css.slice(css.indexOf('/* ── Abgelaufen-Abzeichen'), css.indexOf('/* Onboarding overlay'))
+    const reduziert = block.slice(block.indexOf('@media (prefers-reduced-motion: reduce)'))
+    expect(reduziert).toContain('.tyd-expired-text-alarm { display: none !important; }')
+    expect(reduziert).toContain('.tyd-expired-text-since { opacity: 1 !important; transform: none !important; }')
   })
 
   it('reads out both at once, whatever is on screen', () => {
