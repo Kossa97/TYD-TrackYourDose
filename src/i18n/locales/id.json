@@ -508,6 +508,7 @@
   "lab_summary": "Ringkasan",
   "lab_read_summary": "Baca Ringkasan",
   "lab_save": "♡ Simpan",
+  "lab_save_soon": "Saving studies is coming soon.",
   "lab_filter_title": "Filter & Urutkan",
   "lab_filter_peptide": "Peptida (Ganda)",
   "lab_filter_year_label": "Tahun Publikasi",
@@ -1408,6 +1409,6 @@
   "my_stack_edit_product_empty": "Nothing added yet",
   "my_stack_edit_substance_question": "Which substance is it?",
   "my_stack_tab_locked": "No substances under “{{category}}” yet.",
-  "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+  "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
   "my_stack_open_new_locked": "Nothing unopened left in stock."
 }

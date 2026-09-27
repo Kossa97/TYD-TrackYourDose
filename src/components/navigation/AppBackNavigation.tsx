@@ -64,7 +64,9 @@ export function AppBackNavigation({ children }: { children: ReactNode }) {
         ? modal
         : modal.querySelector<HTMLElement>('[data-app-back-close]')
       if (closeControl) {
-        closeControl.click()
+        // Ein gesperrter Schliessen-Knopf (aria-disabled) schliesst nicht —
+        // die Geste tut dann nichts, statt ihn rot wackeln zu lassen.
+        if (closeControl.getAttribute('aria-disabled') !== 'true') closeControl.click()
         return
       }
 

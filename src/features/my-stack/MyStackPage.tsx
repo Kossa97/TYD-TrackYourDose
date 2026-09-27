@@ -904,6 +904,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // das Karussell ohne Inhalt da, und mit ihm verschwaende die Reiterleiste.
   const offenerReiter: StackTabKey = (reiterZaehler.get(activeTab) ?? 0) > 0 ? activeTab : 'all'
   const offeneKategorie = filterByTab(gesuchtePeptides, offenerReiter)
+  // …und merkt sich das: kommt spaeter wieder etwas in die alte Kategorie,
+  // springt die Ansicht nicht ungefragt dorthin zurueck.
+  useEffect(() => {
+    if (offenerReiter !== activeTab) setActiveTab(offenerReiter)
+  }, [offenerReiter, activeTab])
   // Welche Sortierungen dieser Reiter ueberhaupt beantworten kann.
   const moeglicheSortierungen = sortAbilities(offeneKategorie)
   // Sortiert jemand nach Fuellstand und wechselt dann in einen Reiter ohne
@@ -2470,6 +2475,61 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     </>
   )
 
+  // Die Reiterleiste steht ueber dem Karussell. Gibt es dort nichts zu
+  // zeigen (Suche ohne Treffer, nur Formen ohne Buehnengrafik), steht sie
+  // allein — sonst verschwaende sie mit dem Karussell, und man kaeme aus dem
+  // Reiter nicht mehr heraus.
+  const reiterLeiste = (
+    <>
+      {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
+          Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
+          Inhalt sagt, dass die App das auch kann; versteckt saehe
+          das niemand. Die Leiste wischt waagerecht, das Karussell
+          darunter auch: deshalb ist sie flach, mit Pillen, und
+          deutlich abgesetzt. */}
+      <div
+        data-stack-tabs
+        role="tablist"
+        aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
+        className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x px-3 pb-1"
+      >
+        {STACK_TABS.map(reiter => {
+          const anzahl = reiterZaehler.get(reiter.key) ?? 0
+          const offen = reiter.key === offenerReiter
+          const reiterName = String(t(reiter.labelKey, { defaultValue: reiter.defaultValue }))
+          return (
+            <button
+              key={reiter.key}
+              type="button"
+              role="tab"
+              aria-selected={offen}
+              data-stack-tab={reiter.key}
+              data-stack-tab-count={anzahl}
+              {...denyProps(anzahl === 0, String(t('my_stack_tab_locked', {
+                defaultValue: 'Noch keine Substanz unter „{{category}}“.',
+                category: reiterName,
+              })))}
+              onClick={() => { if (anzahl > 0) reiterWechseln(reiter.key) }}
+              className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
+                ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
+                : anzahl === 0
+                  ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
+                  : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
+              }`}
+            >
+              {reiterName}
+              {anzahl > 0 && (
+                <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
+                  {anzahl}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+
   return (
     <div
       data-my-stack-page
@@ -2650,55 +2710,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </div>
           )}
 
+          {!loading && viewMode === 'vials' && !activePeptide && peptides.length > 0 && (
+            <div className="shrink-0 pt-1">{reiterLeiste}</div>
+          )}
+
           {!loading && viewMode === 'vials' && activePeptide && (
             <div data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col">
               <div className="flex min-h-0 flex-1 flex-col pt-1">
-                {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
-                    Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
-                    Inhalt sagt, dass die App das auch kann; versteckt saehe
-                    das niemand. Die Leiste wischt waagerecht, das Karussell
-                    darunter auch: deshalb ist sie flach, mit Pillen, und
-                    deutlich abgesetzt. */}
-                <div
-                  data-stack-tabs
-                  role="tablist"
-                  aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x px-3 pb-1"
-                >
-                  {STACK_TABS.map(reiter => {
-                    const anzahl = reiterZaehler.get(reiter.key) ?? 0
-                    const offen = reiter.key === offenerReiter
-                    const reiterName = String(t(reiter.labelKey, { defaultValue: reiter.defaultValue }))
-                    return (
-                      <button
-                        key={reiter.key}
-                        type="button"
-                        role="tab"
-                        aria-selected={offen}
-                        data-stack-tab={reiter.key}
-                        data-stack-tab-count={anzahl}
-                        {...denyProps(anzahl === 0, String(t('my_stack_tab_locked', {
-                          defaultValue: 'Noch keine Substanz unter „{{category}}“.',
-                          category: reiterName,
-                        })))}
-                        onClick={() => { if (anzahl > 0) reiterWechseln(reiter.key) }}
-                        className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
-                          ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
-                          : anzahl === 0
-                            ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
-                            : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
-                        }`}
-                      >
-                        {reiterName}
-                        {anzahl > 0 && (
-                          <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
-                            {anzahl}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                {reiterLeiste}
 
                 <div className="mb-1 flex shrink-0 items-center justify-between px-3">
                   <button

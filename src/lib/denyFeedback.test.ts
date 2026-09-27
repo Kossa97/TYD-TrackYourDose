@@ -37,6 +37,18 @@ describe('denyFeedback', () => {
     expect(el.hasAttribute('data-deny')).toBe(false)
   })
 
+  it('verbirgt den Klick auch vor anderen Lauschern am Dokument', () => {
+    uninstall = installDenyFeedback(document, vi.fn())
+    const andere = vi.fn()
+    document.addEventListener('click', andere, true)
+    try {
+      button({ 'aria-disabled': 'true' }).el.click()
+      expect(andere).not.toHaveBeenCalled()
+    } finally {
+      document.removeEventListener('click', andere, true)
+    }
+  })
+
   it('zeigt ohne Grund nur den Rahmen', () => {
     const notify = vi.fn()
     uninstall = installDenyFeedback(document, notify)

@@ -1556,7 +1556,7 @@ main.flex-1 {
   }
 
   /* Roter Rahmen bleibt sichtbar; nur das Wackeln entfällt */
-  .pdf-section-deny {
+  [data-deny] {
     animation: none !important;
   }
 }

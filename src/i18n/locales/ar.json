@@ -507,6 +507,7 @@
   "lab_summary": "ملخص",
   "lab_read_summary": "قراءة الملخص",
   "lab_save": "♡ حفظ",
+  "lab_save_soon": "Saving studies is coming soon.",
   "lab_filter_title": "تصفية وترتيب",
   "lab_filter_peptide": "ببتيد (متعدد)",
   "lab_filter_year_label": "سنة النشر",
@@ -1412,6 +1413,6 @@
   "my_stack_edit_product_empty": "Nothing added yet",
   "my_stack_edit_substance_question": "Which substance is it?",
   "my_stack_tab_locked": "No substances under “{{category}}” yet.",
-  "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+  "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
   "my_stack_open_new_locked": "Nothing unopened left in stock."
 }

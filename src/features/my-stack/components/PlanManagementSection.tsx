@@ -515,7 +515,7 @@ export function PlanManagementSection({
                   const previous = steps[index - 1]?.version ?? null
                   const effectiveDate = dateLabel(segment.effectiveFrom, language, timeZone)
                   const isLast = index === steps.length - 1
-                  // Die erste Stufe traegt den Plan — ohne sie bliebe keiner.
+                  // Die erste oder einzige Stufe traegt den Plan — ohne sie bliebe keiner.
                   const removable = segment.version.change_kind !== 'initial' && timeline.versions.length > 1
                   const rhythm = rhythmLabel(segment.version, t)
                   const previousRhythm = previous ? rhythmLabel(previous, t) : null
@@ -540,7 +540,7 @@ export function PlanManagementSection({
                         type="button"
                         disabled={pending}
                         {...denyProps(!removable, String(t('my_stack_plan_remove_locked', {
-                          defaultValue: 'Diese Stufe ist der Anfang des Plans und lässt sich nicht entfernen.',
+                          defaultValue: 'Diese Stufe trägt den Plan und lässt sich nicht entfernen.',
                         })))}
                         onClick={() => { if (removable) openDialog({ kind: 'remove', version: segment.version }) }}
                         aria-label={String(t('my_stack_plan_remove_future', {

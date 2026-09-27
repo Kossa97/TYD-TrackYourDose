@@ -507,6 +507,7 @@
   "lab_summary": "Résumé",
   "lab_read_summary": "Lire le Résumé",
   "lab_save": "♡ Sauvegarder",
+  "lab_save_soon": "Saving studies is coming soon.",
   "lab_filter_title": "Filtrer & Trier",
   "lab_filter_peptide": "Peptide (Multiple)",
   "lab_filter_year_label": "Année de publication",
@@ -1408,6 +1409,6 @@
   "my_stack_edit_product_empty": "Nothing added yet",
   "my_stack_edit_substance_question": "Which substance is it?",
   "my_stack_tab_locked": "No substances under “{{category}}” yet.",
-  "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+  "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
   "my_stack_open_new_locked": "Nothing unopened left in stock."
 }

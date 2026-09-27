@@ -507,6 +507,7 @@
   "lab_summary": "Özet",
   "lab_read_summary": "Özeti Oku",
   "lab_save": "♡ Kaydet",
+  "lab_save_soon": "Saving studies is coming soon.",
   "lab_filter_title": "Filtrele & Sırala",
   "lab_filter_peptide": "Peptit (Çoklu)",
   "lab_filter_year_label": "Yayın Yılı",
@@ -1408,6 +1409,6 @@
   "my_stack_edit_product_empty": "Nothing added yet",
   "my_stack_edit_substance_question": "Which substance is it?",
   "my_stack_tab_locked": "No substances under “{{category}}” yet.",
-  "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+  "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
   "my_stack_open_new_locked": "Nothing unopened left in stock."
 }

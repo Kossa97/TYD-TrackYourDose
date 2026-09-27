@@ -507,6 +507,7 @@
   "lab_summary": "요약",
   "lab_read_summary": "요약 읽기",
   "lab_save": "♡ 저장",
+  "lab_save_soon": "Saving studies is coming soon.",
   "lab_filter_title": "필터 & 정렬",
   "lab_filter_peptide": "펩타이드 (다중)",
   "lab_filter_year_label": "발행 연도",
@@ -1407,6 +1408,6 @@
   "my_stack_edit_product_empty": "Nothing added yet",
   "my_stack_edit_substance_question": "Which substance is it?",
   "my_stack_tab_locked": "No substances under “{{category}}” yet.",
-  "my_stack_plan_remove_locked": "This step starts the plan and can’t be removed.",
+  "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
   "my_stack_open_new_locked": "Nothing unopened left in stock."
 }
