@@ -1398,5 +1398,13 @@
   "my_stack_expired_since_day": "for 1 day",
   "my_stack_expired_since_days": "for {{n}} days",
   "my_stack_expires_today": "Expires today",
-  "my_stack_stock_expires_unopened": "Expiry date (unopened)"
+  "my_stack_stock_expires_unopened": "Expiry date (unopened)",
+  "my_stack_edit_overview_hint": "What would you like to change?",
+  "my_stack_edit_change": "Change",
+  "my_stack_edit_done": "Done",
+  "my_stack_edit_section_form_color": "Form & color",
+  "my_stack_edit_section_composition": "Composition",
+  "my_stack_edit_section_product": "Product & notes",
+  "my_stack_edit_product_empty": "Nothing added yet",
+  "my_stack_edit_substance_question": "Which substance is it?"
 }

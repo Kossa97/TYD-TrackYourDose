@@ -23,6 +23,8 @@ export interface SubstanceSearchProps {
   onAddCustom: (name: string) => void
   onDetach: () => void
   onCategoryChange: (category: StackCategory) => void
+  /** Die Frage ueber dem Suchfeld — beim Bearbeiten nicht „hinzufuegen". */
+  question?: string
 }
 
 export function SubstanceSearch({
@@ -39,6 +41,7 @@ export function SubstanceSearch({
   onAddCustom,
   onDetach,
   onCategoryChange,
+  question,
 }: SubstanceSearchProps) {
   const { t } = useTranslation()
   const hasQuery = query.trim().length > 0
@@ -91,7 +94,7 @@ export function SubstanceSearch({
     <div className="space-y-5">
       <div>
         <label htmlFor="stack-substance-search" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_question', { defaultValue: 'Was möchtest du hinzufügen?' })}
+          {question ?? t('my_stack_question', { defaultValue: 'Was möchtest du hinzufügen?' })}
         </label>
         {selectedEntry ? (
           <div

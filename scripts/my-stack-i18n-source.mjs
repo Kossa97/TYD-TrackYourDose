@@ -510,6 +510,14 @@ export const MY_STACK_EN = {
   my_stack_expired_aria: 'Expired, {{since}}',
   my_stack_expires_today: 'Expires today',
   my_stack_stock_expires_unopened: 'Expiry date (unopened)',
+  my_stack_edit_overview_hint: 'What would you like to change?',
+  my_stack_edit_change: 'Change',
+  my_stack_edit_done: 'Done',
+  my_stack_edit_section_form_color: 'Form & color',
+  my_stack_edit_section_composition: 'Composition',
+  my_stack_edit_section_product: 'Product & notes',
+  my_stack_edit_product_empty: 'Nothing added yet',
+  my_stack_edit_substance_question: 'Which substance is it?',
 }
 
 export const MY_STACK_DE = {
@@ -1023,6 +1031,14 @@ export const MY_STACK_DE = {
   my_stack_expired_aria: 'Abgelaufen, {{since}}',
   my_stack_expires_today: 'Läuft heute ab',
   my_stack_stock_expires_unopened: 'Ablaufdatum (ungeöffnet)',
+  my_stack_edit_overview_hint: 'Was möchtest du ändern?',
+  my_stack_edit_change: 'Ändern',
+  my_stack_edit_done: 'Fertig',
+  my_stack_edit_section_form_color: 'Form & Farbe',
+  my_stack_edit_section_composition: 'Zusammensetzung',
+  my_stack_edit_section_product: 'Produkt & Notizen',
+  my_stack_edit_product_empty: 'Noch keine Angaben',
+  my_stack_edit_substance_question: 'Welche Substanz ist es?',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

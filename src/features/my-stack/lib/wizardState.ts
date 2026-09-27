@@ -190,6 +190,35 @@ export function wizardSteps(state: WizardState): WizardStep[] {
   return [...gemeinsam, ...wirkstoffSchritte, 'plan', 'review']
 }
 
+/** Abschnitte der Bearbeiten-Uebersicht. */
+export type EditSectionId = 'substance' | 'form' | 'tracking' | 'composition' | 'product'
+
+export interface EditSection {
+  id: EditSectionId
+  /** Die Schritte des Abschnitts, in Reihenfolge — nur die, die es gerade gibt. */
+  steps: WizardStep[]
+}
+
+const EDIT_SECTION_STEPS: ReadonlyArray<readonly [EditSectionId, readonly WizardStep[]]> = [
+  ['substance', ['substance']],
+  ['form', ['dosage_form', 'color']],
+  ['tracking', ['tracking_level']],
+  ['composition', ['ingredients', 'strength']],
+  ['product', ['plan']],
+]
+
+/**
+ * „Bearbeiten" fuehrt nicht noch einmal durch alle Schritte, sondern zeigt
+ * eine Uebersicht. Jede Zeile oeffnet einen Abschnitt aus einem oder zwei
+ * Schritten; Farbe gehoert zur Form, die Zutaten zur Staerke. Ob es sie gibt,
+ * haengt wie beim Anlegen an Form und Tracking-Tiefe.
+ */
+export function editSections(steps: readonly WizardStep[]): EditSection[] {
+  return EDIT_SECTION_STEPS
+    .map(([id, members]) => ({ id, steps: members.filter(step => steps.includes(step)) }))
+    .filter(section => section.steps.length > 0)
+}
+
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
 export type WizardAction =

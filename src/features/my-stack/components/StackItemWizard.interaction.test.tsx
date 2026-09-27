@@ -1536,3 +1536,68 @@ describe('StackItemWizard interactions', () => {
       .toBe('Multi Word Product')
   })
 })
+
+describe('StackItemWizard — Bearbeiten-Übersicht', () => {
+  function editSections(): string[] {
+    return [...document.querySelectorAll('[data-edit-section]')].map(el => el.getAttribute('data-edit-section') ?? '')
+  }
+
+  it('öffnet beim Bearbeiten auf der Übersicht, ohne Plan und ohne Schrittbalken', () => {
+    const { onClose } = renderWizard({ existingItem: existingVitaminD, existingPlan, metadataOnly: true })
+
+    expect(screen.getByText('my_stack_edit_overview_hint')).toBeTruthy()
+    expect(editSections()).toEqual(['substance', 'form', 'tracking', 'composition', 'product'])
+    expect(screen.queryByRole('progressbar')).toBeNull()
+    expect(document.querySelector('[data-review-rhythm]')).toBeNull()
+    expect(screen.getByText('With breakfast')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('führt aus einem Abschnitt mit „Fertig" zurück zur Übersicht, nicht zum nächsten Schritt', async () => {
+    renderWizard({ existingItem: existingVitaminD, existingPlan, metadataOnly: true })
+
+    fireEvent.click(document.querySelector('[data-edit-section="form"]')!)
+    expect(screen.getByRole('button', { name: 'dosage_form_capsule' })).toBeTruthy()
+    // Form und Farbe sind ein Abschnitt: erst weiter zur Farbe, dann fertig.
+    continueWizard()
+    expect(screen.queryByRole('button', { name: 'my_stack_edit_done' })).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_edit_done' }))
+
+    expect(editSections()).toHaveLength(5)
+    await waitFor(() => expect(document.activeElement?.getAttribute('data-edit-section')).toBe('form'))
+  })
+
+  it('fragt im Substanz-Abschnitt nicht nach „hinzufügen" und geht mit Zurück zur Übersicht', () => {
+    renderWizard({ existingItem: existingVitaminD, existingPlan, metadataOnly: true })
+
+    fireEvent.click(document.querySelector('[data-edit-section="substance"]')!)
+    expect(screen.queryByText('my_stack_question')).toBeNull()
+    expect(screen.getByText('my_stack_edit_substance_question')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'back' }))
+    expect(editSections()).toHaveLength(5)
+  })
+
+  it('speichert eine Änderung einmal auf der Übersicht', async () => {
+    const { onSave } = renderWizard({ existingItem: existingVitaminD, existingPlan, metadataOnly: true })
+
+    fireEvent.click(document.querySelector('[data-edit-section="product"]')!)
+    fireEvent.change(screen.getByLabelText('my_stack_notes_optional'), { target: { value: 'Mit Fett' } })
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_edit_done' }))
+    expect(screen.getByText('Mit Fett')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0][0].notes).toBe('Mit Fett')
+    expect(onSave.mock.calls[0][1]).toBe('update')
+  })
+
+  it('bleibt ohne Bearbeiten-Modus beim bisherigen Ablauf', () => {
+    renderWizard({ existingItem: existingVitaminD, existingPlan })
+
+    expect(document.querySelector('[data-edit-overview]')).toBeNull()
+    expect(screen.getByRole('progressbar')).toBeTruthy()
+  })
+})

@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronRight,
   ExternalLink,
   Info,
   LoaderCircle,
@@ -26,11 +27,13 @@ import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogE
 import {
   changeKindFor,
   didIdentityChange,
+  editSections,
   firstInvalidField,
   initialWizardState,
   wizardReducer,
   wizardSteps,
   zutatenAusDemKatalog,
+  type EditSection,
   type WizardSaveMode,
   type WizardStep,
   type PlanChangeSubmission,
@@ -256,6 +259,11 @@ export function StackItemWizard({
 }: StackItemWizardProps) {
   const { t, i18n } = useTranslation()
   const selectedPlan = planEditContext?.snapshot ?? existingPlan
+  // „Bearbeiten": eine Uebersicht statt noch einmal aller Schritte. Jede
+  // Zeile oeffnet ihren Abschnitt, „Fertig" fuehrt zurueck, gespeichert wird
+  // einmal auf der Uebersicht. Der Plan gehoert nicht dazu — der hat
+  // „Plan aendern".
+  const editOverview = metadataOnly && Boolean(existingItem) && !planEditContext && !intent
   // Die Schritte fuer „PK vervollstaendigen" — einmal beim Oeffnen bestimmt.
   const [pkIntentStepList] = useState<WizardStep[] | null>(() => (
     intent === 'pk' && existingItem ? pkIntentSteps(existingItem, selectedPlan) : null
@@ -266,6 +274,7 @@ export function StackItemWizard({
     () => {
       const initial = initialWizardState(existingItem, initialColorHex, selectedPlan)
       if (intent === 'plan') initial.step = 'plan'
+      if (editOverview) initial.step = 'review'
       if (pkIntentStepList) initial.step = pkIntentStepList[0]
       return initial
     },
@@ -423,6 +432,10 @@ export function StackItemWizard({
     ? pkIntentStepList
     : wizardSteps(state)
   const currentStepIndex = steps.indexOf(state.step)
+  const sections = editOverview ? editSections(steps) : []
+  const currentSection = sections.find(section => section.steps.includes(state.step)) ?? null
+  const lastInSection = currentSection !== null
+    && currentSection.steps.indexOf(state.step) === currentSection.steps.length - 1
   const validationErrors = showErrors ? validateStackItemDraft(state.draft) : {}
   const planValidationErrors = showErrors
     ? validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
@@ -534,9 +547,23 @@ export function StackItemWizard({
       return
     }
 
+    if (currentSection) {
+      const nextInSection = currentSection.steps[currentSection.steps.indexOf(state.step) + 1]
+      if (nextInSection) selectStep(nextInSection)
+      else backToOverview(currentSection)
+      return
+    }
+
     const nextStep = steps[currentStepIndex + 1]
     if (nextStep) selectStep(nextStep)
     else if (intent === 'pk' || intent === 'plan') void handleSave()
+  }
+
+  function backToOverview(section: EditSection): void {
+    selectStep('review')
+    requestAnimationFrame(() => {
+      dialogRef.current?.querySelector<HTMLElement>(`[data-edit-section="${section.id}"]`)?.focus()
+    })
   }
 
   function handleBack(): void {
@@ -546,6 +573,13 @@ export function StackItemWizard({
     if (reviewOpen) {
       setReviewOpen(false)
       setReviewErrors({})
+      return
+    }
+    if (editOverview) {
+      const previousInSection = currentSection?.steps[currentSection.steps.indexOf(state.step) - 1]
+      if (previousInSection) selectStep(previousInSection)
+      else if (currentSection) backToOverview(currentSection)
+      else onClose()
       return
     }
     const previousStep = steps[currentStepIndex - 1]
@@ -683,6 +717,7 @@ export function StackItemWizard({
         ? 'inventory.reconstitutionMl'
         : !gueltigeHaltbarkeit(state.draft.inventory.useWithinDays) ? 'inventory.useWithinDays' : null
       if (field) {
+        if (state.step !== 'plan') dispatch({ type: 'step_selected', step: 'plan' })
         setSaveError(String(t(field === 'inventory.reconstitutionMl' ? 'my_stack_stock_liquid_invalid' : 'my_stack_stock_days_invalid')))
         focusField(field)
         return
@@ -812,6 +847,108 @@ export function StackItemWizard({
     }
   }
 
+  function editSectionLabel(section: EditSection): string {
+    switch (section.id) {
+      case 'substance': return String(t('my_stack_step_substance', { defaultValue: 'Substanz' }))
+      case 'form': return section.steps.includes('color')
+        ? String(t('my_stack_edit_section_form_color', { defaultValue: 'Form & Farbe' }))
+        : String(t('my_stack_step_dosage_form', { defaultValue: 'Darreichungsform' }))
+      case 'tracking': return String(t('my_stack_step_tracking_level', { defaultValue: 'Tracking-Tiefe' }))
+      case 'composition': return String(t('my_stack_edit_section_composition', { defaultValue: 'Zusammensetzung' }))
+      case 'product': return String(t('my_stack_edit_section_product', { defaultValue: 'Produkt & Notizen' }))
+    }
+  }
+
+  function editSectionValue(section: EditSection) {
+    const { draft } = state
+    switch (section.id) {
+      case 'substance':
+        return (
+          <>
+            <span className="block break-words text-sm font-semibold text-slate-100">{draft.displayName}</span>
+            {draft.category && <span className="block text-sm text-slate-400">{t(`stack_category_${draft.category}`)}</span>}
+          </>
+        )
+      case 'form':
+        return (
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+            {section.steps.includes('color') && draft.colorHex && (
+              <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full border border-white/20" style={{ backgroundColor: draft.colorHex }} />
+            )}
+            {draft.dosageForm && t(`dosage_form_${draft.dosageForm}`)}
+          </span>
+        )
+      case 'tracking':
+        return (
+          <span className="block text-sm font-semibold text-slate-100">
+            {draft.trackingLevel === 'intake_only'
+              ? t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' })
+              : draft.trackingLevel === 'with_amount'
+                ? t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' })
+                : t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' })}
+          </span>
+        )
+      case 'composition':
+        return draft.ingredients.map((ingredient, index) => {
+          const name = ingredient.catalog_substance_id
+            ? catalogNames[ingredient.catalog_substance_id]
+            : ingredient.custom_name || t(`my_stack_ingredient_${index + 1}`)
+          const staerke = ingredient.amount_value != null
+            ? `${ingredient.amount_value} ${ingredient.amount_unit ?? ''} / ${ingredient.basis_value ?? ''} ${ingredient.basis_unit ?? ''}`.trim()
+            : ''
+          return (
+            <span key={ingredient.position} className="block break-words text-sm font-semibold text-slate-100">
+              {draft.ingredients.length > 1 ? `${name} · ${staerke}` : staerke || name}
+            </span>
+          )
+        })
+      case 'product': {
+        const angaben = [
+          draft.brand.trim(),
+          draft.inventory.batchNumber.trim()
+            ? `${t('my_stack_stock_batch', { defaultValue: 'Charge' })} ${draft.inventory.batchNumber.trim()}`
+            : '',
+        ].filter(Boolean)
+        const notiz = draft.notes.trim()
+        if (angaben.length === 0 && !notiz) {
+          return <span className="block text-sm text-slate-500">{t('my_stack_edit_product_empty', { defaultValue: 'Noch keine Angaben' })}</span>
+        }
+        return (
+          <>
+            {angaben.length > 0 && <span className="block break-words text-sm font-semibold text-slate-100">{angaben.join(' · ')}</span>}
+            {notiz && <span className="line-clamp-2 break-words text-sm text-slate-400">{notiz}</span>}
+          </>
+        )
+      }
+    }
+  }
+
+  function renderEditOverview() {
+    return (
+      <ul data-edit-overview className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]">
+        {sections.map(section => (
+          <li key={section.id}>
+            <button
+              type="button"
+              data-edit-section={section.id}
+              onClick={() => selectStep(section.steps[0])}
+              className="flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 motion-reduce:transition-none"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-400">{editSectionLabel(section)}</span>
+                <span className="mt-1 block">{editSectionValue(section)}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-0.5 text-sm font-semibold text-sky-300">
+                {t('my_stack_edit_change', { defaultValue: 'Ändern' })}
+                <ChevronRight aria-hidden="true" size={16} />
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   function renderStep() {
     switch (state.step) {
       case 'substance':
@@ -843,6 +980,9 @@ export function StackItemWizard({
             }}
             onDetach={() => dispatch({ type: 'catalog_detached' })}
             onCategoryChange={category => dispatch({ type: 'category_selected', category })}
+            question={editOverview
+              ? String(t('my_stack_edit_substance_question', { defaultValue: 'Welche Substanz ist es?' }))
+              : undefined}
           />
         )
       case 'ingredients':
@@ -1129,6 +1269,7 @@ export function StackItemWizard({
               </fieldset>
             )}
 
+            {editOverview ? renderEditOverview() : (
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
               <h3 className="font-semibold text-white">{state.draft.displayName}</h3>
               <dl className="mt-4 space-y-3 text-sm">
@@ -1254,6 +1395,7 @@ export function StackItemWizard({
                 ))}
               </dl>
             </div>
+            )}
 
             {duplicateCandidate && (
               <div role="alert" className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] p-4">
@@ -1332,7 +1474,11 @@ export function StackItemWizard({
                       : t('my_stack_add_item', { defaultValue: 'Substanz hinzufügen' })}
               </h2>
               <p id="stack-item-wizard-description" className="mt-1 text-sm leading-relaxed text-slate-400">
-                {t(STEP_LABELS[state.step].key, { defaultValue: STEP_LABELS[state.step].defaultValue })}
+                {editOverview && state.step === 'review'
+                  ? t('my_stack_edit_overview_hint', { defaultValue: 'Was möchtest du ändern?' })
+                  : currentSection?.id === 'product'
+                    ? editSectionLabel(currentSection)
+                    : t(STEP_LABELS[state.step].key, { defaultValue: STEP_LABELS[state.step].defaultValue })}
               </p>
             </div>
             <button
@@ -1355,7 +1501,9 @@ export function StackItemWizard({
               mit „Gruendlich" startet, steht die Zahl von Anfang an fest.
               Stellt jemand auf eine flachere Stufe zurueck, wird der Balken
               voller, nicht leerer — die harmlose Richtung. */}
-          <div
+          {/* Beim Bearbeiten gibt es keinen Weg von vorn nach hinten — die
+              Abschnitte werden einzeln geoeffnet. */}
+          {!editOverview && <div
             className="mt-4 flex items-center gap-2"
             role="progressbar"
             aria-valuemin={1}
@@ -1368,7 +1516,7 @@ export function StackItemWizard({
                 className={`h-1.5 flex-1 rounded-full ${index <= currentStepIndex ? 'bg-sky-400' : 'bg-white/10'}`}
               />
             ))}
-          </div>
+          </div>}
         </header>
 
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-6" data-step-autofocus tabIndex={-1}>
@@ -1529,7 +1677,7 @@ export function StackItemWizard({
           >
             <ArrowLeft aria-hidden="true" size={18} />
             <span className="hidden sm:inline">
-              {currentStepIndex === 0 && !reviewOpen ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
+              {(editOverview ? state.step === 'review' : currentStepIndex === 0 && !reviewOpen) ? t('cancel', { defaultValue: 'Abbrechen' }) : t('back', { defaultValue: 'Zurück' })}
             </span>
           </button>
 
@@ -1560,8 +1708,8 @@ export function StackItemWizard({
               disabled={saving}
               className="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 font-bold text-slate-950 transition-colors duration-200 hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             >
-              {currentStepIndex === steps.length - 2 ? <Check aria-hidden="true" size={18} /> : <ArrowRight aria-hidden="true" size={18} />}
-              {t('continue', { defaultValue: 'Weiter' })}
+              {currentStepIndex === steps.length - 2 || lastInSection ? <Check aria-hidden="true" size={18} /> : <ArrowRight aria-hidden="true" size={18} />}
+              {lastInSection ? t('my_stack_edit_done', { defaultValue: 'Fertig' }) : t('continue', { defaultValue: 'Weiter' })}
             </button>
           )}
         </footer>

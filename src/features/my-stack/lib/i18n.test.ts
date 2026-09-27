@@ -519,6 +519,14 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_expired_aria',
   'my_stack_expires_today',
   'my_stack_stock_expires_unopened',
+  'my_stack_edit_overview_hint',
+  'my_stack_edit_change',
+  'my_stack_edit_done',
+  'my_stack_edit_section_form_color',
+  'my_stack_edit_section_composition',
+  'my_stack_edit_section_product',
+  'my_stack_edit_product_empty',
+  'my_stack_edit_substance_question',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

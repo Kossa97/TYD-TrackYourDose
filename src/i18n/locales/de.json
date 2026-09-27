@@ -1545,5 +1545,13 @@
   "my_stack_expired_since_day": "seit 1 Tag",
   "my_stack_expired_since_days": "seit {{n}} Tagen",
   "my_stack_expires_today": "Läuft heute ab",
-  "my_stack_stock_expires_unopened": "Ablaufdatum (ungeöffnet)"
+  "my_stack_stock_expires_unopened": "Ablaufdatum (ungeöffnet)",
+  "my_stack_edit_overview_hint": "Was möchtest du ändern?",
+  "my_stack_edit_change": "Ändern",
+  "my_stack_edit_done": "Fertig",
+  "my_stack_edit_section_form_color": "Form & Farbe",
+  "my_stack_edit_section_composition": "Zusammensetzung",
+  "my_stack_edit_section_product": "Produkt & Notizen",
+  "my_stack_edit_product_empty": "Noch keine Angaben",
+  "my_stack_edit_substance_question": "Welche Substanz ist es?"
 }
