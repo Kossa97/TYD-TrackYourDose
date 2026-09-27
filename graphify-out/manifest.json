@@ -3240,21 +3240,21 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790475015.4055157,
-    "seen": 1790475360.9264514,
-    "ast_hash": "05e6ca9459900c4455a9b90dcb98969b",
+    "mtime": 1790528687.4080093,
+    "seen": 1790528858.5781348,
+    "ast_hash": "c752772a06453947d6ebdd53bf7f9851",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790528252.4501607,
-    "seen": 1790528507.2662163,
-    "ast_hash": "230b43161d22ffca1fae118324ca2642",
+    "mtime": 1790528638.2764914,
+    "seen": 1790528858.5781379,
+    "ast_hash": "38d823c435c88b8c5bfae1d2ef8ac252",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1790528323.4538558,
-    "seen": 1790528507.266224,
-    "ast_hash": "142334afa9a5eb6f1861558b89202d4a",
+    "mtime": 1790528687.408477,
+    "seen": 1790528858.5781403,
+    "ast_hash": "47ff4e6112085aca0f8b2e16907a7ad2",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/CourseTimezoneReview.test.tsx": {
@@ -3372,9 +3372,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.tsx": {
-    "mtime": 1790528252.4505002,
-    "seen": 1790528507.2663224,
-    "ast_hash": "f24173385b83c0ed7e1a2bf867da1462",
+    "mtime": 1790528638.2792084,
+    "seen": 1790528858.5782063,
+    "ast_hash": "914255130f0087e371bbc3c2704e2447",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackArchive.tsx": {
@@ -4092,9 +4092,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackDetailSections.ts": {
-    "mtime": 1790473513.4777343,
-    "seen": 1790473806.0350883,
-    "ast_hash": "ebd5b0a12980998d78f6c36bc7745cff",
+    "mtime": 1790528630.4833584,
+    "seen": 1790528858.5785615,
+    "ast_hash": "e0a5257cbccae1ebad92e9bbf229eb71",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackSort.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790528444.13648,
-    "seen": 1790528507.2671328,
+    "mtime": 1790528814.3525019,
+    "seen": 1790528858.5793002,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
