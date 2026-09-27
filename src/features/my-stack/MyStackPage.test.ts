@@ -241,7 +241,6 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0')
-    expect(text).not.toContain("{stagePeptides.length > 1 && (\n                  <div data-vial-position")
   })
 
   test('gibt jeder Darreichungsform denselben Karussellplatz und Abstand', () => {

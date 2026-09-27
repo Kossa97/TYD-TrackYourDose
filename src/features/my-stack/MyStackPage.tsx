@@ -2929,7 +2929,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     Punkt) und steht auch bei nur einem Eintrag leer da:
                     Punkte, Leiste oder nichts duerfen die Buehne darueber
                     nicht groesser oder kleiner machen. */}
-                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center gap-1.5">
+                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center gap-1.5" aria-hidden={stagePeptides.length <= 1 || undefined}>
                   {stagePeptides.length > 1 && (stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
                     <button
                       key={p.id}
