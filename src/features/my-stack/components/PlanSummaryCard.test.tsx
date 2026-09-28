@@ -82,6 +82,26 @@ describe('PlanSummaryCard', () => {
     expect(onOpen).toHaveBeenCalledTimes(1)
   })
 
+  it('zeigt einen Wochentagsplan wie jeden anderen: je Einnahmezeit eine Zeile, ohne Tagesleiste', () => {
+    // So speichert der Editor „Mo und Fr, morgens und abends": vier Stellen.
+    const { card } = renderCard([timeline({
+      versions: [version('v1', '2026-05-31', {
+        frequency: 'weekdays',
+        schedule_days: ['Mo', 'Fr'],
+        intake_time: 'morgens,abends,morgens,abends',
+        intake_time_custom: '08:00,20:00,08:00,20:00',
+        slot_doses: '50,50,50,50',
+        slot_days: 'Mo,Mo,Fr,Fr',
+        dose: 50,
+        unit: 'mg',
+      })],
+    })])
+
+    expect(card.textContent).toContain('2 Einnahmezeiten')
+    expect(card.querySelectorAll('li')).toHaveLength(2)
+    expect(card.textContent).not.toContain('4 Einnahmezeiten')
+  })
+
   it('names a planned step by its new dose, or by its kind when several doses change', () => {
     const oneDose = timeline({ versions: [version('v1', '2026-05-31'), version('v2', '2026-10-01', { dose: 150, change_kind: 'titration' })] })
     const { card } = renderCard([oneDose])

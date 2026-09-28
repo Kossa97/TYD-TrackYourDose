@@ -2,7 +2,8 @@ import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { resolveScheduleSlots, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import { localDateTimeKey, type CycleTimeline, type PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { shiftLocalDay } from './localDays'
-import { WEEKDAY_KEYS } from './intakeRhythm'
+import { WEEKDAY_KEYS, rhythmFromStorage } from './intakeRhythm'
+import type { IntakeRhythm } from '../types'
 
 /**
  * Was die Plankarte je Einnahmezeit zeigt.
@@ -74,6 +75,73 @@ export function planCardSlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
     .sort((links, rechts) => links.minutes - rechts.minutes)
 }
 
+// Plan-Versionen speichern die Frequenz als Schluessel ('daily'); die
+// Rhythmus- und Einnahmelogik kennt die alten deutschen Texte.
+const LEGACY_FREQUENCY: Readonly<Record<string, string>> = {
+  daily: 'Täglich',
+  weekdays: 'Wochentage wählen',
+  interval: 'Alle X Tage',
+  cycle: 'Im Wechsel',
+  on_demand: 'Bei Bedarf',
+}
+
+export function legacyFrequency(frequency: string): string {
+  return Object.prototype.hasOwnProperty.call(LEGACY_FREQUENCY, frequency) ? LEGACY_FREQUENCY[frequency] : frequency
+}
+
+export function versionRhythm(version: PlanScheduleSnapshot): IntakeRhythm {
+  return rhythmFromStorage({
+    frequency: legacyFrequency(version.frequency),
+    x_days_interval: version.x_days_interval,
+    interval_unit: version.interval_unit,
+    cycle_on_days: version.cycle_on_days,
+    cycle_off_days: version.cycle_off_days,
+    schedule_days: version.schedule_days,
+  })
+}
+
+/**
+ * Gleiche Einnahmen zusammenfassen — fuer die Anzeige, nicht fuer die Daten.
+ *
+ * Bei „bestimmte Wochentage" speichert der Editor die Einnahmen JE TAG: aus
+ * „Mo und Fr, morgens und abends" werden vier Stellen (Mo morgens, Fr
+ * morgens, …). Einzeln gezeigt stand dieselbe Einnahme doppelt da, jede mit
+ * einer eigenen Tagesleiste, und die Karte zaehlte vier Einnahmezeiten.
+ *
+ * Zusammen gehoert, was dieselbe Tageszeit, Uhrzeit und Menge hat; die Tage
+ * werden vereinigt. Deckt eine Einnahme alle Tage des Plans ab, verliert sie
+ * ihre Tagesleiste — die Tage stehen schon im Rhythmus darueber. Weicht sie
+ * ab („abends nur montags"), bleibt die Leiste.
+ *
+ * `planDays`: die Tage des Rhythmus bei „bestimmte Wochentage", sonst null.
+ */
+export function groupPlanCardSlots(slots: readonly PlanCardSlot[], planDays: readonly string[] | null): PlanCardSlot[] {
+  const gruppen = new Map<string, PlanCardSlot>()
+  for (const slot of slots) {
+    const schluessel = `${slot.routineGroup}|${slot.time}|${slot.dose ?? ''}|${slot.unit ?? ''}`
+    const vorhanden = gruppen.get(schluessel)
+    if (!vorhanden) {
+      gruppen.set(schluessel, { ...slot, days: [...slot.days] })
+      continue
+    }
+    // Leer heisst „an jedem Tag des Plans" — das schluckt jede Auswahl.
+    vorhanden.days = vorhanden.days.length === 0 || slot.days.length === 0
+      ? []
+      : WEEKDAY_KEYS.filter(tag => vorhanden.days.includes(tag) || slot.days.includes(tag))
+  }
+  return [...gruppen.values()].map(slot => (
+    slot.days.length > 0 && planDays && planDays.length > 0 && planDays.every(tag => slot.days.includes(tag))
+      ? { ...slot, days: [] }
+      : slot
+  ))
+}
+
+/** Die Einnahmen einer Stufe so, wie Karte und Verlauf sie zeigen. */
+export function planDisplaySlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
+  const rhythmus = versionRhythm(version)
+  return groupPlanCardSlots(planCardSlots(version), rhythmus.kind === 'weekdays' ? rhythmus.weekdays : null)
+}
+
 export type PlanSlotChange = 'initial' | 'same' | 'increased' | 'decreased' | 'changed' | 'new' | 'removed'
 
 export interface PlanStepRow {
@@ -116,10 +184,10 @@ export function planStepRows(
   version: PlanScheduleSnapshot,
   previousVersion: PlanScheduleSnapshot | null,
 ): PlanStepRow[] {
-  const jetzt = planCardSlots(version)
+  const jetzt = planDisplaySlots(version)
   if (!previousVersion) return jetzt.map(slot => ({ slot, previous: null, change: 'initial' }))
 
-  const vorher = new Map(planCardSlots(previousVersion).map(slot => [slot.id, slot]))
+  const vorher = new Map(planDisplaySlots(previousVersion).map(slot => [slot.id, slot]))
   const zeilen: PlanStepRow[] = jetzt.map(slot => {
     const alt = vorher.get(slot.id) ?? null
     vorher.delete(slot.id)

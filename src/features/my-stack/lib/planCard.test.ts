@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
-import { inclusiveDayCount, planCardSlots, planStepRows } from './planCard'
+import { groupPlanCardSlots, inclusiveDayCount, planCardSlots, planDisplaySlots, planStepRows } from './planCard'
 
 function snapshot(changes: Partial<PlanScheduleSnapshot> = {}): PlanScheduleSnapshot {
   return {
@@ -111,5 +111,60 @@ describe('inclusiveDayCount', () => {
     expect(inclusiveDayCount('2026-09-01', '2026-09-01')).toBe(1)
     expect(inclusiveDayCount('2026-05-31', '2026-08-12')).toBe(74)
     expect(inclusiveDayCount('2026-10-24', '2026-10-26')).toBe(3)
+  })
+})
+
+describe('planDisplaySlots — gleiche Einnahmen zusammengefasst', () => {
+  // So speichert der Editor „Mo und Fr, morgens und abends": je Tag eigene Stellen.
+  const moUndFr = snapshot({
+    frequency: 'weekdays',
+    schedule_days: ['Mo', 'Fr'],
+    intake_time: 'morgens,abends,morgens,abends',
+    intake_time_custom: '08:00,20:00,08:00,20:00',
+    slot_doses: '50,50,50,50',
+    slot_days: 'Mo,Mo,Fr,Fr',
+    unit: 'mg',
+  })
+
+  it('zeigt zwei Einnahmezeiten statt vier, ohne Tagesleiste, wenn sie alle Plantage abdecken', () => {
+    expect(planDisplaySlots(moUndFr).map(slot => [slot.time, slot.dose, slot.days])).toEqual([
+      ['08:00', 50, []],
+      ['20:00', 50, []],
+    ])
+  })
+
+  it('behält die Tage, wenn eine Einnahme nur an einem Teil der Plantage liegt', () => {
+    const abweichend = { ...moUndFr, slot_doses: '50,50,50,100' }
+
+    expect(planDisplaySlots(abweichend).map(slot => [slot.time, slot.dose, slot.days])).toEqual([
+      ['08:00', 50, []],
+      ['20:00', 50, ['Mo']],
+      ['20:00', 100, ['Fr']],
+    ])
+  })
+
+  it('lässt tägliche Pläne unverändert', () => {
+    expect(planDisplaySlots(snapshot())).toEqual(planCardSlots(snapshot()))
+  })
+
+  it('vergleicht Stufen über die zusammengefassten Einnahmen', () => {
+    const hoeher = { ...moUndFr, slot_doses: '75,75,75,75' }
+    const rows = planStepRows(hoeher, moUndFr)
+
+    expect(rows.map(row => [row.slot.time, row.change])).toEqual([
+      ['08:00', 'increased'],
+      ['20:00', 'increased'],
+    ])
+  })
+})
+
+describe('groupPlanCardSlots', () => {
+  it('schluckt eine Tagesauswahl, sobald eine gleiche Einnahme an jedem Tag liegt', () => {
+    const [morgens] = planCardSlots(snapshot())
+    const grouped = groupPlanCardSlots([{ ...morgens, days: ['Mo'] }, { ...morgens, id: 'morgens#1', days: [] }], null)
+
+    expect(grouped).toHaveLength(1)
+    expect(grouped[0].days).toEqual([])
+    expect(grouped[0].id).toBe(morgens.id)
   })
 })

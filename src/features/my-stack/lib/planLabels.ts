@@ -8,12 +8,10 @@ import {
 import {
   WEEKDAY_KEYS,
   isOnDemandRhythm,
-  rhythmFromStorage,
   rhythmSummary,
   rhythmText,
 } from './intakeRhythm'
-import type { IntakeRhythm } from '../types'
-import { planCardSlots, type PlanCardSlot } from './planCard'
+import { legacyFrequency, planDisplaySlots, versionRhythm, type PlanCardSlot } from './planCard'
 
 /**
  * Wie der Plan beschrieben wird — geteilt von der vollen Plan-Uebersicht
@@ -23,30 +21,7 @@ import { planCardSlots, type PlanCardSlot } from './planCard'
 
 export type Translate = (key: string, options?: Record<string, unknown>) => unknown
 
-// Plan-Versionen speichern die Frequenz als Schluessel ('daily'); die
-// Rhythmus- und Einnahmelogik kennt die alten deutschen Texte.
-const LEGACY_FREQUENCY: Readonly<Record<string, string>> = {
-  daily: 'Täglich',
-  weekdays: 'Wochentage wählen',
-  interval: 'Alle X Tage',
-  cycle: 'Im Wechsel',
-  on_demand: 'Bei Bedarf',
-}
-
-function legacyFrequency(frequency: string): string {
-  return Object.prototype.hasOwnProperty.call(LEGACY_FREQUENCY, frequency) ? LEGACY_FREQUENCY[frequency] : frequency
-}
-
-export function versionRhythm(version: CyclePlanVersion): IntakeRhythm {
-  return rhythmFromStorage({
-    frequency: legacyFrequency(version.frequency),
-    x_days_interval: version.x_days_interval,
-    interval_unit: version.interval_unit,
-    cycle_on_days: version.cycle_on_days,
-    cycle_off_days: version.cycle_off_days,
-    schedule_days: version.schedule_days,
-  })
-}
+export { versionRhythm } from './planCard'
 
 export function rhythmLabel(version: CyclePlanVersion, t: Translate): string {
   return rhythmText(rhythmSummary(versionRhythm(version)), t)
@@ -54,7 +29,7 @@ export function rhythmLabel(version: CyclePlanVersion, t: Translate): string {
 
 /** „Bei Bedarf" hat keine Einnahmezeiten — die gespeicherte Tageszeit bedeutet dort nichts. */
 export function versionSlots(version: CyclePlanVersion): PlanCardSlot[] {
-  return isOnDemandRhythm(versionRhythm(version)) ? [] : planCardSlots(version)
+  return isOnDemandRhythm(versionRhythm(version)) ? [] : planDisplaySlots(version)
 }
 
 export function slotDoseLabel(slot: PlanCardSlot): string | null {

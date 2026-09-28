@@ -1,7 +1,7 @@
 import { Trash2, Undo2 } from 'lucide-react'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { formatLocalDay } from '../lib/localDays'
-import { planCardSlots } from '../lib/planCard'
+import { planCardSlots, planDisplaySlots } from '../lib/planCard'
 import { routineLabel, type Translate } from '../lib/planLabels'
 import type { ReviewStep } from '../lib/planAdoption'
 import { CurrentSlotRow, RoutineIcon } from './planCardParts'
@@ -62,7 +62,7 @@ export function PlannedStepsReview({
             : String(t('my_stack_plan_review_new_from_now', { defaultValue: 'Neuer Plan ab jetzt' }))}
         </p>
         <ul className="mt-3 space-y-2">
-          {planCardSlots(newPlan).map(slot => (
+          {planDisplaySlots(newPlan).map(slot => (
             <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} />
           ))}
         </ul>
