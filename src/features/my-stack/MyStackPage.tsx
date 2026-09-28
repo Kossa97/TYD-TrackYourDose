@@ -5,15 +5,14 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
-  Plus, Minus, Trash2, Pencil, Activity,
-  CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, 
-  TrendingUp, TrendingDown, Bell, SlidersHorizontal,
-  X, FileText, ExternalLink,
-  Archive, Info, RefreshCw, Clock,
-  RotateCcw, type LucideIcon,
+  Plus, Minus, Trash2, Activity,
+  CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, 
+  TrendingUp, TrendingDown, 
+  X, ExternalLink,
+  Archive, Info, 
+  RotateCcw, 
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
-import { NewDot } from '../../components/NewDot'
 import { format, parseISO, addDays } from 'date-fns'
 import { effectiveQuantity, scheduleForDay } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
@@ -21,7 +20,6 @@ import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
-import { StageDetailSheet } from './components/StageDetailSheet'
 import { ExpiredBadge } from './components/ExpiredBadge'
 import { expiryDaysLeft } from '../../lib/peptideExpiry'
 import { hapticTick } from '../../lib/haptics'
@@ -30,7 +28,7 @@ import {
   type DetailFeld,
 } from './lib/stackDetailSections'
 import { BestandCard, BestandEditorHost, type BestandActions, type BestandEditorArt } from './components/Bestand'
-import { anbruchArt, spritzenRechnung, vialBuchtUeberBestand, vorratTeile } from './lib/bestand'
+import { anbruchArt, spritzenRechnung, vialBuchtUeberBestand } from './lib/bestand'
 import {
   openInventoryContainer,
   startInventory,
@@ -42,13 +40,12 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup } from './services/stackItems'
 import type { StackItem, StackItemSetupDraft } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
 import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
-import { denyProps } from '../../lib/denyFeedback'
 import { filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities } from './lib/stackSort'
 import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
@@ -114,6 +111,9 @@ import { StackTabBar } from './page/StackTabBar'
 import { VialPositionRow } from './page/VialPositionRow'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
+import { StageDetailView } from './page/StageDetailView'
+import { PlanOverviewSheet } from './page/PlanOverviewSheet'
+import { StackListView } from './page/StackListView'
 import { MyStackHeader } from './page/MyStackHeader'
 import { LegacyCycleManager } from './page/LegacyCycleManager'
 import { SubstanceInfoSheet } from './page/SubstanceInfoSheet'
@@ -2254,321 +2254,52 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           )}
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
-          <div className={`space-y-3 ${!loading && listPeptides.length > 0 ? '' : 'hidden'}`}>
-            {/* Share the page slosh engine so list vials get the ambient living
-                surface ripple. No impulses are pushed here, so the liquid never
-                tilts/sloshes — only the surface breathes at rest. */}
-            <SloshProvider engine={sloshEngine}>
-            {listPeptides.map(p => {
-              const pCycles   = cyclesOf(p.id)
-              const pTimelines = timelinesOf(p.id)
-              const presentedTimelines = p.configuration_status === 'needs_review'
-                ? pTimelines.filter(timeline => timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date())
-                : pTimelines
-              const planCount = FEATURES.planTimelineV2 ? pTimelines.length : pCycles.length
-              const isOpen    = expandedId === p.id
-              const hasActive = pCycles.some(c => c.active)
-              const stageRenderable = isStageRenderable(p.dosage_form)
-              const vialPct = getVialFillPct(p)
-              const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
-              const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
-
-              return (
-                <div key={p.id} className="card bg-slate-950">
-                  {/* Kopfzeile */}
-                  <div className="flex items-start gap-3">
-                    {stageRenderable && (
-                      <div className="flex w-16 shrink-0 flex-col items-center gap-0.5">
-                        <StackStage
-                          key={animationEpoch}
-                          item={{ ...p, color_hex: peptideColor }}
-                          fillPct={vialPct ?? 100}
-                          animateOnMount={true}
-                          isActive={false}
-                          size="mini"
-                          showLabel={false}
-                        />
-                        {vialPct !== null && (
-                          <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">
-                            {Math.round(vialPct)}%
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        className="flex-1 text-left min-w-0 cursor-pointer"
-                        onClick={() => setExpandedId(isOpen ? null : p.id)}
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isOpen ? null : p.id) } }}
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-white">{p.name}</p>
-                          {hasActive && <span className="badge bg-emerald-500/10 text-emerald-400">{t('aktiv_badge')}</span>}
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
-                          {stageRenderable ? (
-                            <>
-                              <span>{methodLabel(t, p.default_method)}</span>
-                              {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
-                            </>
-                          ) : (
-                            <>
-                              <span>{t(`dosage_form_${p.dosage_form}`)}</span>
-                              {p.ingredients.map(ingredient => {
-                                const loadedIngredient = ingredient as LoadedStackItemIngredient
-                                const ingredientName = ingredient.custom_name || loadedIngredient.substance_catalog?.canonical_name || p.name
-                                return (
-                                  <span key={ingredient.id ?? ingredient.position}>
-                                    {ingredientName}: {ingredient.amount_value ?? '-'} {ingredient.amount_unit ?? ''} / {ingredient.basis_value ?? '-'} {ingredient.basis_unit ?? ''}
-                                  </span>
-                                )
-                              })}
-                            </>
-                          )}
-                        </div>
-
-
-                        {(() => {
-                          const days = expiryDaysLeft(p)
-                          if (days === null) return null
-                          const cls  = days > 7 ? 'text-emerald-400' : days >= 0 ? 'text-amber-400' : 'text-red-400'
-                          return (
-                            <p className={`text-xs mt-0.5 ${cls}`}>
-                              {days > 0 ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days })) : days === 0 ? t('my_stack_expires_today') : t('abgelaufen_warn')}
-                            </p>
-                          )
-                        })()}
-
-                        {invItem && (
-                          <div
-                            className="mt-0.5 flex items-center gap-2"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <span className="text-[11px] tabular-nums text-slate-500">
-                              {t('vials_vorratig', { n: invItem.vials_count })}
-                            </span>
-                            <div className="flex items-center gap-0.5">
-                              <button
-                                onClick={e => { e.stopPropagation(); if (invItem.vials_count > 0) adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
-                                {...denyProps(invItem.vials_count <= 0)}
-                                className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 aria-disabled:opacity-25 aria-disabled:hover:bg-transparent"
-                              >
-                                <Minus size={10} />
-                              </button>
-                              <button
-                                onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, +1, invItem.vials_count) }}
-                                className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
-                                style={{ color: peptideColor }}
-                              >
-                                <Plus size={10} />
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button className="relative p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                          title="Infos" onClick={() => { setInfoPeptide(p); dismissInfoBtn() }}>
-                          <FileText size={15} />
-                          {infoBtnNew && <NewDot className="absolute -top-0.5 -right-0.5" />}
-                        </button>
-                        <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                          aria-label={t('bearbeiten')}
-                          onClick={() => openEditPeptide(p)}><Pencil size={15} /></button>
-                        {p.inventory_item_id && (
-                          <button
-                            className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                            title={t('rekonstitution_wdh')}
-                            onClick={(e) => { e.stopPropagation(); handleRekonstitution(p) }}
-                          >
-                            <RefreshCw size={15} />
-                          </button>
-                        )}
-                        <button className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
-                          aria-label={t('loeschen')}
-                          onClick={() => removePeptide(p.id)}><Trash2 size={15} /></button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Zyklus-Zeile */}
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60">
-                    <button
-                      onClick={() => setExpandedId(isOpen ? null : p.id)}
-                      className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                      {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      {planCount > 0 ? (planCount === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: planCount })) : t('keine_zyklen')}
-                    </button>
-                    <button
-                      data-ob="btn-zyklus-add"
-                      onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-400 hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors text-xs font-medium">
-                      {t('zyklus_hinzufuegen')}
-                      {zyklusBtnNew && <NewDot />}
-                    </button>
-                  </div>
-
-                  {/* Ausgeklappt: Zyklen */}
-                  {isOpen && (
-                    <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                          <CalendarDays size={14} className="text-violet-400" /> {t('zyklen_header')}
-                        </span>
-                      </div>
-                      {planCount === 0 && (
-                        <p className="text-slate-500 text-sm text-center py-4">
-                          {t('noch_kein_zyklus')}
-                        </p>
-                      )}
-                      {FEATURES.planTimelineV2 && planManagementSections(p, presentedTimelines)}
-                      {!FEATURES.planTimelineV2 && pCycles.map(c => {
-                        const pEscs = escalationsOf(c.id)
-                        return (
-                          <div data-cycle-id={c.id} key={c.id} className={`rounded-xl border ${c.active ? 'border-violet-500/30 bg-violet-500/5' : 'border-slate-800 opacity-60'}`}>
-                            <div className="flex items-start justify-between gap-2 p-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">{c.name}</p>
-                                <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-0.5">
-                                  {dosePlanCapabilities(p.tracking_level).permanent && (
-                                    <span className="font-medium text-slate-300">{currentQuantityLabel(c)}</span>
-                                  )}
-                                  <span>{methodLabel(t, c.method)}</span>
-                                  <span>{freqLabel(c)}</span>
-                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; const SlotIcon = (INTAKE_TIME_CONFIG as Record<string,{icon:LucideIcon}>)[firstKey]?.icon ?? Clock; return lbl ? <span className="text-amber-400 inline-flex items-center gap-1"><SlotIcon size={12} /> {lbl}</span> : null })()}
-                                  <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
-                                  {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
-                                </div>
-                                {c.reminder && c.reminder !== 'none' && (
-                                  <p className="text-xs mt-0.5 flex items-center gap-1 flex-wrap text-sky-400">
-                                    <Bell size={10} className="shrink-0" />
-                                    {c.reminder.split(',').filter(v => v && v !== 'none').map(v => {
-                                      const opt = REMINDER_OPTIONS.find(r => r.value === v)
-                                      return opt ? t(opt.labelKey) : v
-                                    }).filter(Boolean).join(' · ')}
-                                  </p>
-                                )}
-                                {dosePlanCapabilities(p.tracking_level).permanent && plannedQuantityRows(c)}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button onClick={() => toggleCycleActive(c)} title={c.active ? t('deaktivieren_title') : t('aktivieren_title')}
-                                  className="flex items-center gap-1.5">
-                                  <span className={`text-xs font-medium transition-colors ${c.active ? 'text-emerald-400' : 'text-slate-500'}`}>
-                                    {c.active ? t('aktiv_badge') : t('inaktiv_badge')}
-                                  </span>
-                                  <div className={`relative w-9 h-5 rounded-full transition-colors ${c.active ? 'bg-emerald-500' : 'bg-slate-700'}`}>
-                                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${c.active ? 'left-4' : 'left-0.5'}`} />
-                                  </div>
-                                </button>
-                                <button
-                                  className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                                  aria-label={t('bearbeiten')}
-                                  onClick={() => openEditCycle(p, c.id)}
-                                ><Pencil size={13} /></button>
-                                <button className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
-                                  onClick={() => removeCycle(c.id)}><Trash2 size={13} /></button>
-                              </div>
-                            </div>
-
-                            {dosePlanCapabilities(p.tracking_level).titration && (
-                            /* Dosisanpassungen */
-                            <div className="border-t border-slate-800/60 px-3 pb-3 pt-2">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-                                  <SlidersHorizontal size={12} className="text-orange-400" /> {t('dosiserhoehungen')}
-                                </span>
-                              </div>
-                              {pEscs.length === 0 && (
-                                <p className="text-slate-600 text-xs italic">{t('keine_dosiserhoehungen')}</p>
-                              )}
-                              <div className="space-y-1.5">
-                                {pEscs.map((e, idx) => {
-                                  const AdjustmentIcon = doseAdjustmentIcon(c, e)
-                                  return (
-                                    <div key={e.id} className="flex items-center justify-between gap-2 bg-orange-500/5 border border-orange-500/20 rounded-lg px-3 py-1.5">
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        <span className="text-orange-400 text-xs font-bold shrink-0">#{idx + 1}</span>
-                                        <div className="min-w-0">
-                                          <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
-                                            <AdjustmentIcon size={11} /> {escalationQuantityLabel(c, e)}
-                                          </span>
-                                          {!escalationIsActive(c, e) && <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('dose_plan_planned', { defaultValue: 'Geplant' })}</span>}
-                                          <span className="text-slate-400 text-xs ml-2">{escLabel(e)}</span>
-                                          {e.notes && <p className="text-slate-500 text-xs truncate">{e.notes}</p>}
-                                        </div>
-                                      </div>
-                                      <div className="flex gap-1 shrink-0">
-                                        <button className="p-1 text-slate-500 hover:text-sky-400 transition-colors"
-                                          onClick={() => openEditEsc(c, e)}><Pencil size={11} /></button>
-                                        <button className="p-1 text-slate-500 hover:text-red-400 transition-colors"
-                                          onClick={() => removeEsc(e.id)}><Trash2 size={11} /></button>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                              <div className="mt-2">
-                                <DosePlanActions
-                                  trackingLevel={p.tracking_level}
-                                  onPermanent={() => openEditCycle(p, c.id)}
-                                  onTitration={() => openNewEsc(c)}
-                                />
-                              </div>
-                            </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-            </SloshProvider>
-          </div>
+          <StackListView
+            loading={loading}
+            listPeptides={listPeptides}
+            sloshEngine={sloshEngine}
+            cyclesOf={cyclesOf}
+            timelinesOf={timelinesOf}
+            expandedId={expandedId}
+            inventory={inventory}
+            animationEpoch={animationEpoch}
+            setExpandedId={setExpandedId}
+            adjustInventoryCount={adjustInventoryCount}
+            setInfoPeptide={setInfoPeptide}
+            dismissInfoBtn={dismissInfoBtn}
+            infoBtnNew={infoBtnNew}
+            openEditPeptide={openEditPeptide}
+            handleRekonstitution={handleRekonstitution}
+            removePeptide={removePeptide}
+            openNewCycle={openNewCycle}
+            dismissZyklusBtn={dismissZyklusBtn}
+            zyklusBtnNew={zyklusBtnNew}
+            planManagementSections={planManagementSections}
+            escalationsOf={escalationsOf}
+            currentQuantityLabel={currentQuantityLabel}
+            freqLabel={freqLabel}
+            intakeLabel={intakeLabel}
+            plannedQuantityRows={plannedQuantityRows}
+            toggleCycleActive={toggleCycleActive}
+            openEditCycle={openEditCycle}
+            removeCycle={removeCycle}
+            doseAdjustmentIcon={doseAdjustmentIcon}
+            escalationQuantityLabel={escalationQuantityLabel}
+            escalationIsActive={escalationIsActive}
+            escLabel={escLabel}
+            openEditEsc={openEditEsc}
+            removeEsc={removeEsc}
+            openNewEsc={openNewEsc}
+          />
       </div>
 
       {/* ZYKLUS-MANAGER */}
-      {currentCycleManagerPeptide && FEATURES.planTimelineV2 && (
-        <div className="fixed inset-0 z-50 flex justify-center bg-slate-950" data-app-modal>
-          <div className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-slate-950">
-            <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">
-                    {t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' })}
-                  </p>
-                  <h2 className="mt-1 truncate text-lg font-bold text-white">{currentCycleManagerPeptide.name}</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCycleManagerPeptide(null)}
-                  data-app-back-close
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
-                  aria-label={t('close')}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {planManagementSections(
-                currentCycleManagerPeptide,
-                timelinesOf(currentCycleManagerPeptide.id)
-                  .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date()),
-              )}
-              {timelinesOf(currentCycleManagerPeptide.id).length === 0 && (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                  <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
-                  <p className="mt-1 text-xs text-slate-500">{t('noch_kein_zyklus_desc')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PlanOverviewSheet
+        currentCycleManagerPeptide={currentCycleManagerPeptide}
+        setCycleManagerPeptide={setCycleManagerPeptide}
+        planManagementSections={planManagementSections}
+        timelinesOf={timelinesOf}
+      />
       <LegacyCycleManager
         cycleManagerPeptide={cycleManagerPeptide}
         cyclesOf={cyclesOf}
@@ -2605,75 +2336,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           wird an seinem Platz im Karussell gemessen und fliegt von dort an
           seine Stelle hier oben, dabei verkleinert. Waehrend des Flugs ist die
           Fluessigkeitsphysik still. */}
-      {detailUrsprung && activePeptide && detailHistoryPeptideId === activePeptide.id && (
-        <StageDetailSheet
-          originRect={detailUrsprung}
-          onClose={closeStageDetail}
-          onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
-          title={activePeptide.name}
-          sideActions={(
-            <>
-              {/* Nur Symbole: was ein Stift und ein Papierkorb tun, liest
-                  man ohne Text. Loeschen fragt ohnehin noch einmal nach. */}
-              <button
-                type="button"
-                onClick={() => openEditPeptide(activePeptide)}
-                aria-label={String(t('bearbeiten'))}
-                title={String(t('bearbeiten'))}
-                className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              >
-                <Pencil size={17} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => removePeptide(activePeptide.id)}
-                aria-label={String(t('loeschen'))}
-                title={String(t('loeschen'))}
-                className="grid h-11 w-11 place-items-center rounded-full border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-              >
-                <Trash2 size={17} aria-hidden="true" />
-              </button>
-            </>
-          )}
-          belowTitle={(() => {
-            // Ein neues Vial anmischen, einen neuen Pen oder eine neue Flasche
-            // anbrechen: setzt Datum und Fluessigkeit neu und verwirft auf
-            // Wunsch den Rest im alten. Nur mit Bestand und vollem Behaelter.
-            const art = anbruchArt(activePeptide.dosage_form)
-            if (!art || !activePeptide.inventory?.enabled) return null
-            const nichtsZuOeffnen = vorratTeile(activePeptide.inventory).voll < 1
-            return (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!nichtsZuOeffnen) setBestandEdit({ peptideId: activePeptide.id, editor: 'open_new' })
-                }}
-                {...denyProps(nichtsZuOeffnen, String(t('my_stack_open_new_locked', {
-                  defaultValue: 'Nichts Ungeöffnetes mehr im Bestand.',
-                })))}
-                className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 aria-disabled:border-slate-800 aria-disabled:bg-slate-900/60 aria-disabled:text-slate-600"
-              >
-                <RefreshCw size={15} aria-hidden="true" />
-                {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
-              </button>
-            )
-          })()}
-          stage={(
-            <SloshProvider engine={sloshEngine}>
-              <div style={{ width: 'min(9rem, 38vw)' }}>
-                <StackStage
-                  item={{ ...activePeptide, color_hex: activePeptide.color_hex ?? getStableStackItemColor(activePeptide.id) }}
-                  fillPct={Math.round(getVialFillPct(activePeptide) ?? 100)}
-                  isActive
-                  size="carousel"
-                />
-              </div>
-            </SloshProvider>
-          )}
-        >
-          {eintragDetails()}
-        </StageDetailSheet>
-      )}
+      <StageDetailView
+        detailUrsprung={detailUrsprung}
+        activePeptide={activePeptide}
+        detailHistoryPeptideId={detailHistoryPeptideId}
+        closeStageDetail={closeStageDetail}
+        sloshEngine={sloshEngine}
+        openEditPeptide={openEditPeptide}
+        removePeptide={removePeptide}
+        setBestandEdit={setBestandEdit}
+        eintragDetails={eintragDetails}
+      />
 
       {showPeptideForm && (
         <StackItemWizard
