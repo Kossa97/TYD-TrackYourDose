@@ -46,3 +46,8 @@ backup-*.sql
 backup-*.sqlnpx
 *.dump
 *.sql.gz
+
+# Playwright (npm run test:e2e)
+e2e/.dist
+test-results
+playwright-report

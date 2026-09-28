@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "seed:pk": "tsx scripts/seed-pk-profiles.ts",
     "seed:test": "tsx scripts/seed-test-data.ts",
     "faq:export": "tsx scripts/export-faq-en.ts",

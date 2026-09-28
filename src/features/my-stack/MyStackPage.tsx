@@ -175,6 +175,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
+  // Ein gerade angelegter Eintrag, der auf die Buehne soll, sobald er im
+  // Karussell steht (siehe den Effekt bei `vialSnapClassName`).
+  const [neuZentrieren, setNeuZentrieren] = useState<string | null>(null)
   // Das Rechteck des angetippten Objekts — der Startpunkt des Flugs.
   const [detailUrsprung, setDetailUrsprung] = useState<DOMRect | null>(null)
   const detailHistoryPeptideId = typeof historyStateRecord(location.state)[MY_STACK_DETAIL_HISTORY_KEY] === 'string'
@@ -553,6 +556,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       nichtGeladen.forEach(ergebnis => reportError(ergebnis.reason, 'my-stack.reload-after-save'))
     }
     setExpandedId(savedRow.id)
+    if (!draft.id) setNeuZentrieren(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }
 
@@ -1395,6 +1399,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, loading])
+  // Nach dem Anlegen steht der neue Eintrag in der Mitte. Ohne das blieb das
+  // Karussell, wo es war — beim ersten Eintrag auf der „Neu"-Kachel, waehrend
+  // die Zeile darueber schon den neuen Eintrag beschrieb.
+  useEffect(() => {
+    if (!neuZentrieren) return
+    setNeuZentrieren(null)
+    const index = stagePeptides.findIndex(p => p.id === neuZentrieren)
+    // Im aktuellen Reiter oder in der Suche nicht sichtbar: nichts verschieben.
+    if (viewMode !== 'vials' || index < 0) return
+    setActivePeptideId(neuZentrieren)
+    setAddTileActive(false)
+    requestAnimationFrame(() => {
+      vialCarouselRef.current
+        ?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
+        ?.scrollIntoView({ block: 'nearest', inline: 'center' })
+      updateVialFocus()
+    })
+  }, [neuZentrieren, stagePeptides, viewMode])
   const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
   /**
    * `snap-always`: ein Wisch geht genau einen Eintrag weit.
