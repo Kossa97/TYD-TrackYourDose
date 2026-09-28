@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790564327.1790555,
-    "seen": 1790564365.3868132,
+    "mtime": 1790564461.2510633,
+    "seen": 1790564506.1571321,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5478,9 +5478,9 @@
     "semantic_hash": ""
   },
   "src/features/rechner/components/DoseCalculator.tsx": {
-    "mtime": 1790562117.400228,
-    "seen": 1790562263.4243362,
-    "ast_hash": "9db126669f23ecbe356129b8fcc45a7f",
+    "mtime": 1790564382.4070587,
+    "seen": 1790564506.1568968,
+    "ast_hash": "f59df401d1a8088ff1adcd60d153db92",
     "semantic_hash": ""
   },
   "src/features/rechner/components/SyringeFields.tsx": {
@@ -5538,9 +5538,9 @@
     "semantic_hash": ""
   },
   "src/pages/Rechner.test.tsx": {
-    "mtime": 1790562117.4007227,
-    "seen": 1790562263.4244978,
-    "ast_hash": "f9586942a189b4b7dfade8432494897f",
+    "mtime": 1790564382.4070587,
+    "seen": 1790564506.1570718,
+    "ast_hash": "847d88ca7caf043a5e0f082a103751a6",
     "semantic_hash": ""
   },
   "src/lib/denyFeedback.test.ts": {
@@ -5562,15 +5562,15 @@
     "semantic_hash": ""
   },
   "src/features/rechner/lib/liquidCalculation.test.ts": {
-    "mtime": 1790557622.9134305,
-    "seen": 1790557853.2539666,
-    "ast_hash": "db28222d304a03fb484ff13b5d843f4e",
+    "mtime": 1790564382.4070587,
+    "seen": 1790564506.1569092,
+    "ast_hash": "b83c74d917e0fca7d8b2769402b8ae7d",
     "semantic_hash": ""
   },
   "src/features/rechner/lib/liquidCalculation.ts": {
-    "mtime": 1790557622.9134305,
-    "seen": 1790557853.2539673,
-    "ast_hash": "bfcdb4cca8f1b8557987179efbeb9a39",
+    "mtime": 1790564382.4070587,
+    "seen": 1790564506.1569111,
+    "ast_hash": "a66aa4f1147dcd25d1f45b8242ed207b",
     "semantic_hash": ""
   },
   "src/features/rechner/lib/syringeGraduation.test.ts": {
