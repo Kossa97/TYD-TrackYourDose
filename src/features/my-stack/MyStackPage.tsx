@@ -5,12 +5,12 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
-  Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
-  CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
-  TrendingUp, TrendingDown, Search, Bell, SlidersHorizontal,
+  Plus, Minus, Trash2, Pencil, Activity,
+  CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, 
+  TrendingUp, TrendingDown, Bell, SlidersHorizontal,
   X, FileText, ExternalLink,
   Archive, Info, RefreshCw, Clock,
-  RotateCcw, Flag, Pause, Play, type LucideIcon,
+  RotateCcw, type LucideIcon,
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
 import { NewDot } from '../../components/NewDot'
@@ -91,7 +91,7 @@ import {
   MY_STACK_DETAIL_HISTORY_KEY,
   historyStateRecord,
   PEPTIDE_SORT_GROUPS,
-  SORT_OPTION_LABEL_KEYS,
+  
   NO_TIMELINES,
   vialCarouselItemWidth,
   ADD_SLOT,
@@ -114,6 +114,8 @@ import { StackTabBar } from './page/StackTabBar'
 import { VialPositionRow } from './page/VialPositionRow'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
+import { MyStackHeader } from './page/MyStackHeader'
+import { LegacyCycleManager } from './page/LegacyCycleManager'
 import { SubstanceInfoSheet } from './page/SubstanceInfoSheet'
 import { RekonstitutionDialog } from './page/RekonstitutionDialog'
 import { EscalationFormSheet } from './page/EscalationFormSheet'
@@ -1960,153 +1962,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       className={`flex h-full min-h-0 flex-col overflow-hidden ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
     >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
-      <div className="relative mb-4 flex shrink-0 items-center gap-2">
-        {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
-        <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
-          <FlaskConical size={18} className="shrink-0 text-sky-400" />
-          <h2 className="min-w-0 truncate font-semibold text-white">{t('meine_peptide')}</h2>
-          {peptides.length > 0 && (
-            <span className="badge shrink-0 bg-slate-700 text-slate-400">{peptides.length}</span>
-          )}
-        </div>
-
-        {peptides.length > 0 && (
-          <>
-            {/* Suchfeld — wächst smooth von rechts in die Zeile */}
-            <div className={`relative overflow-hidden transition-[max-width] duration-300 ease-out ${searchOpen ? 'max-w-full flex-1' : 'max-w-0'}`}>
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                ref={searchInputRef}
-                className="input w-full pl-9 text-sm"
-                placeholder={t('peptid_suchen')}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Escape') closeSearch() }}
-              />
-            </div>
-
-            {!searchOpen && <div className="flex-1" />}
-
-            {/* Neue Substanz — die Hauptaktion der Seite, deshalb als einziger
-                Knopf gefuellt, in beiden Ansichten. Die „Neu"-Kachel im
-                Karussell steht links vor der ersten Substanz und ist nur per
-                Wisch zu finden; von hier aus braucht man sie nicht zu kennen.
-                Der gestrichelte Knopf ueber der Liste ist damit entfallen.
-                Er bleibt auch bei offener Suche stehen: findet sie nichts,
-                ist genau das der Moment, die Substanz anzulegen. */}
-            <button
-              type="button"
-              onClick={handleNewPeptide}
-              aria-label={String(t('neues_peptid_title'))}
-              title={String(t('neues_peptid_title'))}
-              data-my-stack-add
-              data-ob="btn-peptid-anlegen"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.28)] transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
-            >
-              <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
-            </button>
-
-            {/* Lupe / Schließen */}
-            <button
-              type="button"
-              onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
-              aria-label={searchOpen ? t('close') : t('peptid_suchen')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-            >
-              {searchOpen ? <X size={18} /> : <Search size={18} />}
-            </button>
-
-            {!searchOpen && (
-              <button
-                type="button"
-                onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
-                aria-label={t('archiv')}
-                title={t('archiv')}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-              >
-                <Archive size={18} />
-              </button>
-            )}
-
-            {/* Ansicht + Sortierung (Popover) */}
-            {!searchOpen && (
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setFilterOpen(o => !o)}
-                  aria-label={t('sort_aria_label')}
-                  aria-expanded={filterOpen}
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
-                    filterOpen
-                      ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
-                      : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
-                  }`}
-                >
-                  <SlidersHorizontal size={18} />
-                </button>
-
-                {filterOpen && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setFilterOpen(false)} />
-                    <div className="absolute right-0 top-full z-30 mt-2 w-56 space-y-3 rounded-xl border border-slate-800 bg-[var(--surface-raised)] p-3 shadow-2xl">
-                      <div>
-                        <p className="mb-1.5 text-xs font-semibold text-slate-400">Ansicht</p>
-                        <div className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('vials')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'vials' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <FlaskConical size={14} /> Vials
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('list')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'list' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <List size={14} /> Liste
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('sort_aria_label')}</p>
-                        <select
-                          className="select w-full pr-8 text-sm"
-                          value={wirksameSortierung}
-                          aria-label={t('sort_aria_label')}
-                          onChange={e => setSortBy(e.target.value as PeptideSortKey)}
-                        >
-                          <option value="active_name">{t('sort_option_active_name')}</option>
-                          {PEPTIDE_SORT_GROUPS
-                            .filter(group => !group.needs || moeglicheSortierungen.has(group.needs))
-                            .map(group => (
-                            <optgroup key={group.labelKey} label={t(group.labelKey)}>
-                              {group.options.map(key => (
-                                <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                      >
-                        <Archive size={14} /> {t('archiv')}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <MyStackHeader
+        searchOpen={searchOpen}
+        peptides={peptides}
+        searchInputRef={searchInputRef}
+        search={search}
+        setSearch={setSearch}
+        closeSearch={closeSearch}
+        handleNewPeptide={handleNewPeptide}
+        setSearchOpen={setSearchOpen}
+        setFilterOpen={setFilterOpen}
+        setArchiveViewOpen={setArchiveViewOpen}
+        loadArchived={loadArchived}
+        filterOpen={filterOpen}
+        setViewMode={setViewMode}
+        viewMode={viewMode}
+        wirksameSortierung={wirksameSortierung}
+        setSortBy={setSortBy}
+        moeglicheSortierungen={moeglicheSortierungen}
+      />
 
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
@@ -2695,280 +2569,36 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           </div>
         </div>
       )}
-      {cycleManagerPeptide && !FEATURES.planTimelineV2 && (() => {
-        const managerCycles = cyclesOf(cycleManagerPeptide.id)
-        const activeCycles = managerCycles.filter(c => c.active)
-        const inactiveCycles = managerCycles.filter(c => !c.active)
-
-        const cycleIcons = (c: Cycle) => (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => { openEditCycle(cycleManagerPeptide, c.id); setCycleManagerPeptide(null) }}
-              aria-label={t('bearbeiten')}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-950 text-slate-400 transition-colors hover:border-sky-500/40 hover:text-sky-300"
-            >
-              <Pencil size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => removeCycle(c.id)}
-              aria-label={t('loeschen')}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/25 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/10"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )
-
-        const cycleMeta = (c: Cycle) => (
-          <>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
-              {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent && (
-                <span className="font-semibold text-slate-200">{currentQuantityLabel(c)}</span>
-              )}
-              <span>{freqLabel(c)}</span>
-              <span>{methodLabel(t, c.method)}</span>
-              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
-              {c.end_date ? (
-                <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
-              ) : (
-                <span>{t('ende_offen')}</span>
-              )}
-            </div>
-            {(() => {
-              const intake = intakeLabel(c)
-              const reminder = reminderLabel(c)
-              return intake || reminder ? (
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                  {intake && <span className="text-amber-300">{intake}</span>}
-                  {reminder && <span className="text-sky-300">{reminder}</span>}
-                </div>
-              ) : null
-            })()}
-            {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent && plannedQuantityRows(c)}
-            {/* Die Planstufen samt „Stufe zuruecknehmen" standen frueher auf der
-                Vollbildseite. Seit der Zyklus dort nur noch ein Knopf ist, gehoeren
-                sie hierher — nicht in den Papierkorb. */}
-            {planStufenListe(c)}
-          </>
-        )
-
-        const cycleActions = (c: Cycle, isEnded: boolean) => (
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              onClick={() => toggleCycleActive(c)}
-              className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-xs font-semibold transition-colors ${c.active ? 'border-red-500/30 bg-red-500/10 text-red-300 hover:border-red-400/50 hover:bg-red-500/15' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50 hover:bg-emerald-500/15'}`}
-            >
-              {c.active ? <><Pause size={13} /> {t('deaktivieren')}</> : <><Play size={13} /> {t('aktivieren')}</>}
-            </button>
-            {!isEnded && (
-              <button
-                type="button"
-                onClick={() => endCycle(c)}
-                className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-2 text-xs font-semibold text-violet-200 transition-colors hover:border-violet-400/50 hover:bg-violet-500/20"
-              >
-                <Flag size={13} /> {t('beenden')}
-              </button>
-            )}
-          </div>
-        )
-
-        const cycleEsc = (c: Cycle) => {
-          if (!dosePlanCapabilities(cycleManagerPeptide.tracking_level).titration) return null
-          const pEscs = escalationsOf(c.id)
-          const open = managerEscOpen.has(c.id)
-          return (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => toggleManagerEsc(c.id)}
-                className="flex w-full items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-xs text-slate-300 transition-colors hover:border-slate-700"
-              >
-                <SlidersHorizontal size={13} className="text-orange-300" /> {t('dosiserhoehungen')}
-                <span className={`ml-auto font-semibold ${pEscs.length > 0 ? 'text-orange-300' : 'text-slate-500'}`}>
-                  {pEscs.length > 0 ? (pEscs.length === 1 ? t('stufe_count_one') : t('stufe_count_many', { n: pEscs.length })) : t('keine')}
-                </span>
-                {open ? <ChevronUp size={15} className="text-slate-500" /> : <ChevronDown size={15} className="text-slate-500" />}
-              </button>
-              {open && (
-                <div className="mt-2 space-y-1.5">
-                  <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs">
-                    <span className="min-w-0 truncate text-orange-100">{t('basis')}</span>
-                    <span className="shrink-0 font-semibold text-white">{scheduledQuantityLabel(c, parseISO(c.start_date))}</span>
-                  </div>
-                  {pEscs.map((e, idx) => {
-                    const AdjustmentIcon = doseAdjustmentIcon(c, e)
-                    return (
-                      <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
-                        <div className="min-w-0 text-xs">
-                          <p className="flex items-center gap-1 truncate font-semibold text-white">
-                            <AdjustmentIcon size={12} /> #{idx + 1} {escalationQuantityLabel(c, e)}
-                          </p>
-                          {!escalationIsActive(c, e) && <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('dose_plan_planned', { defaultValue: 'Geplant' })}</p>}
-                          <p className="truncate text-slate-400">{escLabel(e)}</p>
-                          {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => { openEditEsc(c, e); setCycleManagerPeptide(null) }}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
-                            aria-label={t('dosisanpassung_bearbeiten')}
-                          >
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeEsc(e.id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                            aria-label={t('dosisanpassung_loeschen')}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <DosePlanActions
-                    trackingLevel={cycleManagerPeptide.tracking_level}
-                    onPermanent={() => { openEditCycle(cycleManagerPeptide, c.id); setCycleManagerPeptide(null) }}
-                    onTitration={() => { openNewEsc(c); setCycleManagerPeptide(null) }}
-                  />
-                </div>
-              )}
-            </div>
-          )
-        }
-
-        const renderActiveCard = (c: Cycle) => {
-          const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
-          return (
-            <div key={c.id} className="rounded-xl border border-emerald-500/35 bg-emerald-500/5 p-3">
-              <div className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-bold text-white">{c.name}</p>
-                    <span className="shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300">{t('aktiv_badge')}</span>
-                  </div>
-                  {cycleMeta(c)}
-                </div>
-                {cycleIcons(c)}
-              </div>
-              {cycleActions(c, isEnded)}
-              {cycleEsc(c)}
-            </div>
-          )
-        }
-
-        const renderInactiveCard = (c: Cycle) => {
-          const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
-          const open = managerCardOpen.has(c.id)
-          const statusLabel = isEnded ? t('beendet') : t('inaktiv_badge')
-          return (
-            <div key={c.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35">
-              <button
-                type="button"
-                onClick={() => toggleManagerCard(c.id)}
-                aria-expanded={open}
-                className="flex w-full items-center gap-2.5 p-3 text-left"
-              >
-                <span className="h-2 w-2 shrink-0 rounded-full bg-slate-500" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-bold text-white">{c.name}</p>
-                    <span className="shrink-0 rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">{statusLabel}</span>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">
-                    {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent ? currentQuantityLabel(c) : ''}
-                    {c.end_date ? ` · ${t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}` : ''}
-                  </p>
-                </div>
-                {open ? <ChevronUp size={16} className="shrink-0 text-slate-500" /> : <ChevronDown size={16} className="shrink-0 text-slate-500" />}
-              </button>
-              {open && (
-                <div className="border-t border-slate-800/70 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">{cycleMeta(c)}</div>
-                    {cycleIcons(c)}
-                  </div>
-                  {cycleActions(c, isEnded)}
-                  {cycleEsc(c)}
-                </div>
-              )}
-            </div>
-          )
-        }
-
-        return (
-          <div className="fixed inset-0 z-50 flex justify-center bg-slate-950" data-app-modal>
-            <div className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-slate-950">
-              <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">{t('zyklen_verwalten')}</p>
-                    <h2 className="mt-1 truncate text-lg font-bold text-white">{cycleManagerPeptide.name}</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">
-                      {managerCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: managerCycles.length })}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCycleManagerPeptide(null)}
-                    data-app-back-close
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
-                    aria-label={t('close')}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                <button
-                  type="button"
-                  data-ob="btn-zyklus-add"
-                  onClick={() => {
-                    openNewCycle(cycleManagerPeptide)
-                    dismissZyklusBtn()
-                    setCycleManagerPeptide(null)
-                  }}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 text-sm font-bold text-violet-200 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                >
-                  <Plus size={16} /> {t('neuer_zyklus')}
-                </button>
-
-                {managerCycles.length === 0 && (
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                    <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
-                    <p className="mt-1 text-xs text-slate-500">{t('noch_kein_zyklus_desc')}</p>
-                  </div>
-                )}
-
-                {activeCycles.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
-                      <Play size={12} /> {t('aktiv_badge')}
-                    </p>
-                    {activeCycles.map(renderActiveCard)}
-                  </div>
-                )}
-
-                {inactiveCycles.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      <Flag size={12} /> {t('beendet_inaktiv')}
-                    </p>
-                    {inactiveCycles.map(renderInactiveCard)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+      <LegacyCycleManager
+        cycleManagerPeptide={cycleManagerPeptide}
+        cyclesOf={cyclesOf}
+        openEditCycle={openEditCycle}
+        setCycleManagerPeptide={setCycleManagerPeptide}
+        removeCycle={removeCycle}
+        currentQuantityLabel={currentQuantityLabel}
+        freqLabel={freqLabel}
+        intakeLabel={intakeLabel}
+        reminderLabel={reminderLabel}
+        plannedQuantityRows={plannedQuantityRows}
+        planStufenListe={planStufenListe}
+        toggleCycleActive={toggleCycleActive}
+        endCycle={endCycle}
+        escalationsOf={escalationsOf}
+        managerEscOpen={managerEscOpen}
+        toggleManagerEsc={toggleManagerEsc}
+        scheduledQuantityLabel={scheduledQuantityLabel}
+        doseAdjustmentIcon={doseAdjustmentIcon}
+        escalationQuantityLabel={escalationQuantityLabel}
+        escalationIsActive={escalationIsActive}
+        escLabel={escLabel}
+        openEditEsc={openEditEsc}
+        removeEsc={removeEsc}
+        openNewEsc={openNewEsc}
+        managerCardOpen={managerCardOpen}
+        toggleManagerCard={toggleManagerCard}
+        openNewCycle={openNewCycle}
+        dismissZyklusBtn={dismissZyklusBtn}
+      />
 
       {/* PEPTID-FORMULAR */}
       {/* Das Vollbild hinter einem Objekt. Der Uebergang ist FLIP: das Objekt
