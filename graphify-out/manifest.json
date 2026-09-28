@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1789927455.5886283,
-    "seen": 1789927683.0399687,
-    "ast_hash": "067123b6eb0131809080666f371d708c",
+    "mtime": 1790613787.7253165,
+    "seen": 1790613838.6008036,
+    "ast_hash": "7e2d4df35196ec99a18e6daf0353953f",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/main.tsx": {
-    "mtime": 1790547543.7986546,
-    "seen": 1790547881.6895168,
-    "ast_hash": "91ceecc6f3aeb8ce7450b7509e9ca56e",
+    "mtime": 1790614137.863166,
+    "seen": 1790614393.332709,
+    "ast_hash": "37fbab22779222bc0e916df13ecf13ff",
     "semantic_hash": ""
   },
   "src/pages/Auth.tsx": {
@@ -1446,9 +1446,9 @@
     "semantic_hash": ""
   },
   "vite.config.ts": {
-    "mtime": 1789927455.6407425,
-    "seen": 1789927683.0404465,
-    "ast_hash": "d948360242f50c8d7d7828c75276731b",
+    "mtime": 1790614137.863274,
+    "seen": 1790614393.3328297,
+    "ast_hash": "4169c1349b8bcb0985484851476c75d3",
     "semantic_hash": ""
   },
   "vitest.config.ts": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790612946.5747242,
-    "seen": 1790613115.1068604,
-    "ast_hash": "0b025e469962bf229d86ebe1ff5dae3a",
+    "mtime": 1790614137.8640368,
+    "seen": 1790614393.3322701,
+    "ast_hash": "6e8f3002450320782e523b86bc661c48",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790564082.448294,
-    "seen": 1790564365.386447,
-    "ast_hash": "1e6b984c7d905b3cd4c03dc56f2f45d0",
+    "mtime": 1790613535.183242,
+    "seen": 1790613838.6010947,
+    "ast_hash": "0265cf68b056b9af78328c3accf920b8",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790613287.8532867,
-    "seen": 1790613395.7578335,
+    "mtime": 1790614295.8893466,
+    "seen": 1790614393.3328114,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5703,6 +5703,18 @@
     "mtime": 1790613146.5303843,
     "seen": 1790613395.7576036,
     "ast_hash": "1c760453e4399b73dfa621fe1e7e8f8c",
+    "semantic_hash": ""
+  },
+  "src/lib/monitoring.test.ts": {
+    "mtime": 1790614203.61838,
+    "seen": 1790614393.3326764,
+    "ast_hash": "3ffb6ce155f0e7af377255d573fb336d",
+    "semantic_hash": ""
+  },
+  "src/lib/monitoring.ts": {
+    "mtime": 1790614114.7293358,
+    "seen": 1790614393.3326776,
+    "ast_hash": "05798691f1880c6bb64e8cea837093d5",
     "semantic_hash": ""
   }
 }
