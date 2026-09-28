@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -9,13 +9,13 @@ import {
   CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, SlidersHorizontal,
   X, FileText, ExternalLink,
-  Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
-  RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
+  Archive, Info, RefreshCw, Clock, AlertTriangle,
+  RotateCcw, Flag, Pause, Play, type LucideIcon,
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
 import { NewDot } from '../../components/NewDot'
-import { format, isValid, parseISO, addDays } from 'date-fns'
-import { effectiveQuantity, scheduleForDay, type ScheduleSegment } from '../../lib/intakeSchedule'
+import { format, parseISO, addDays } from 'date-fns'
+import { effectiveQuantity, scheduleForDay } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
 import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
@@ -42,17 +42,16 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
-import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
+import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
 import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
-import { rhythmFromStorage } from './lib/intakeRhythm'
 import { denyProps } from '../../lib/denyFeedback'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
-import { sortAbilities, type SortAbility } from './lib/stackSort'
+import { sortAbilities } from './lib/stackSort'
 import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
 import { cyclePeriod } from './lib/planCard'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
@@ -77,524 +76,49 @@ import {
   setPauseEnd,
 } from './services/planLifecycle'
 import {
-  localDateTimeKey,
   resolveCycleAt,
   type CyclePlanVersion,
   type CycleTimeline,
   type PlanChangeKind,
-  type PlanScheduleSnapshot,
 } from '../../lib/planTimeline'
 import type { PlanChangeSubmission, PlanEditContext } from './lib/wizardState'
+import {
+  type InventoryItem,
+  type Peptide,
+  type Cycle,
+  type Escalation,
+  type EscalationForm,
+  emptyEscalationForm,
+  type InfoRow,
+  UNITS,
+  type PeptideSortKey,
+  MY_STACK_DETAIL_HISTORY_KEY,
+  historyStateRecord,
+  PEPTIDE_SORT_GROUPS,
+  SORT_OPTION_LABEL_KEYS,
+  NO_TIMELINES,
+  vialCarouselItemWidth,
+  ADD_SLOT,
+  vialCarouselItemGap,
+  asPeptide,
+  getVialFillPct,
+  sortPeptides,
+  FREQ_KEYS,
+  INTAKE_TIME_CONFIG,
+  REMINDER_OPTIONS,
+  parseStoredDay,
+  mergeCatalogEntries,
+  withEffectiveEscalationUnit,
+  cycleAsIntakePlanDraft,
+  type RecoverableMutation,
+  planChangeSubmissionIdentity,
+  versionAsIntakePlanDraft,
+  versionSnapshot,
+} from './page/model'
+import { AddStageTile, AddVialTile } from './page/stackTiles'
+import { DosePlanActions } from './page/DosePlanActions'
 
-interface InventoryItem {
-  id: string; user_id: string; name: string
-  batch_number: string | null; batch_source: string | null; batch_file_url: string | null
-  vials_count: number; vials_initial: number | null; mg_per_vial: number; created_at: string
-  pk_profile_id: string | null
-}
-// ─── Peptid-Typen ─────────────────────────────────────────────────────────────
-interface Peptide extends StackItem {
-  name: string; default_method: string
-  vial_amount_mg: number | null; vial_amount_unit: string | null
-  reconstitution_ml: number | null
-  syringe_type: string | null; notes: string | null
-  vials_in_stock: number | null; vials_initial: number | null
-  reconstitution_date: string | null; expiry_days: number | null
-  batch_number: string | null; batch_source: string | null; batch_file_url: string | null
-  inventory_item_id: string | null
-  pk_profile_id: string | null
-  archived: boolean
-  archived_at: string | null
-}
-interface Cycle {
-  id: string; stack_item_id: string; name: string
-  dose: number | null; unit: string | null; method: string
-  frequency: string; x_days_interval: number | null
-  schedule_days: string[] | null
-  start_date: string; end_date: string | null; active: boolean
-  intake_time: string | null; intake_time_custom: string | null
-  schedule_history: ScheduleSegment[] | null
-  reminder: string | null
-  created_at: string
-}
-interface Escalation {
-  id: string; cycle_id: string
-  increase_amount: number; unit: string
-  start_type: 'date' | 'after_days' | 'after_weeks'
-  start_date: string | null; start_after_days: number | null
-  notes: string | null
-}
-interface EscalationForm {
-  increase_amount: string; unit: string
-  start_type: 'date' | 'after_days' | 'after_weeks'
-  start_date: string; start_after_days: string; notes: string
-}
-const emptyEscalationForm = (unit: string): EscalationForm => ({
-  increase_amount: '', unit,
-  start_type: 'after_weeks', start_date: format(new Date(), 'yyyy-MM-dd'),
-  start_after_days: '2', notes: '',
-})
-
-type InfoRow = {
-  label: string
-  value?: string
-  valueNode?: ReactNode
-  wide?: boolean
-}
-// ─── Konstanten ───────────────────────────────────────────────────────────────
-const UNITS   = ['mcg','mg','IU','ml','nmol']
-
-type PeptideSortKey =
-  | 'active_name'
-  | 'created_desc' | 'created_asc'
-  | 'name_asc' | 'name_desc'
-  | 'expiry_asc' | 'expiry_desc'
-  | 'fill_asc' | 'fill_desc'
-  | 'recon_asc' | 'recon_desc'
-  | 'stock_asc' | 'stock_desc'
-
-const MY_STACK_DETAIL_HISTORY_KEY = 'myStackDetailId'
-
-function historyStateRecord(state: unknown): Record<string, unknown> {
-  return state !== null && typeof state === 'object' && !Array.isArray(state)
-    ? state as Record<string, unknown>
-    : {}
-}
-
-// Jede Gruppe sagt, welche Angabe sie braucht. Fehlt sie im offenen Reiter,
-// wird die Gruppe nicht angeboten — eine Sortierung, die nichts bewegt, sieht
-// aus wie ein Fehler.
-const PEPTIDE_SORT_GROUPS: { labelKey: string; options: PeptideSortKey[]; needs?: SortAbility }[] = [
-  { labelKey: 'my_stack_sort_group_created', options: ['created_desc', 'created_asc'] },
-  { labelKey: 'sort_group_name', options: ['name_asc', 'name_desc'] },
-  { labelKey: 'sort_group_expiry', options: ['expiry_asc', 'expiry_desc'], needs: 'expiry' },
-  { labelKey: 'sort_group_fill', options: ['fill_asc', 'fill_desc'], needs: 'fill' },
-  { labelKey: 'sort_group_recon', options: ['recon_asc', 'recon_desc'], needs: 'recon' },
-  { labelKey: 'sort_group_stock', options: ['stock_asc', 'stock_desc'], needs: 'stock' },
-]
-
-const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
-  active_name: 'sort_option_active_name',
-  created_desc: 'my_stack_sort_created_desc',
-  created_asc: 'my_stack_sort_created_asc',
-  name_asc: 'sort_option_name_asc',
-  name_desc: 'sort_option_name_desc',
-  expiry_asc: 'sort_option_expiry_asc',
-  expiry_desc: 'sort_option_expiry_desc',
-  fill_asc: 'sort_option_fill_asc',
-  fill_desc: 'sort_option_fill_desc',
-  recon_asc: 'sort_option_recon_asc',
-  recon_desc: 'sort_option_recon_desc',
-  stock_asc: 'sort_option_stock_asc',
-  stock_desc: 'sort_option_stock_desc',
-}
-
-const NO_TIMELINES: CycleTimeline[] = []
-const vialCarouselItemWidth = 'min(17rem, 70vw)'
-/** Der Platz der „Neu"-Kachel im Karussell, vor der ersten Substanz. */
-const ADD_SLOT = -1
-const vialCarouselItemGap = '0.75rem'
-
-function asPeptide(item: LoadedStackItem): Peptide {
-  const legacy = item as LoadedStackItem & Partial<Peptide>
-  const peptide: Peptide = {
-    ...legacy,
-    name: item.display_name,
-    default_method: legacy.default_method ?? 'Andere',
-    vial_amount_mg: legacy.vial_amount_mg ?? null,
-    vial_amount_unit: legacy.vial_amount_unit ?? null,
-    reconstitution_ml: legacy.reconstitution_ml ?? null,
-    syringe_type: legacy.syringe_type ?? null,
-    vials_in_stock: legacy.vials_in_stock ?? null,
-    vials_initial: legacy.vials_initial ?? null,
-    reconstitution_date: legacy.reconstitution_date ?? null,
-    expiry_days: legacy.expiry_days ?? null,
-    batch_number: legacy.batch_number ?? null,
-    batch_source: legacy.batch_source ?? null,
-    batch_file_url: legacy.batch_file_url ?? null,
-    inventory_item_id: legacy.inventory_item_id ?? null,
-    pk_profile_id: legacy.pk_profile_id ?? null,
-  }
-  return withVialInventory(peptide)
-}
-
-/**
- * Fuehrt ein Vial seinen Bestand im neuen Modell (`stack_item_inventory` in
- * Vials), sind die Altspalten eingefroren: die Datenbank bucht nur noch dort
- * ab. Liste, Vial-Grafik, Sortierung und Haltbarkeitshinweis lesen weiter die
- * Altnamen — hier bekommen sie die Werte aus dem Bestand.
- *
- * `vials_in_stock` zaehlt dann ALLE Vials (der Nachkommateil ist das
- * angemischte), `vials_initial` die Packungsgroesse; `getVialFillPct` rechnet
- * damit wie bisher. Die Lager-Verknuepfung (`inventory_items`) entfaellt —
- * ihre ungeoeffneten Vials stecken im Bestand.
- */
-function withVialInventory(p: Peptide): Peptide {
-  const inv = p.inventory
-  if (anbruchArt(p.dosage_form) !== 'vial' || !inv || !vialBuchtUeberBestand(inv, p.ingredients)) return p
-  return {
-    ...p,
-    vials_in_stock: inv.enabled ? inv.remaining_quantity : null,
-    vials_initial: inv.enabled ? inv.package_quantity : null,
-    reconstitution_date: inv.opened_at ?? null,
-    expiry_days: inv.use_within_days ?? null,
-    reconstitution_ml: inv.reconstitution_ml ?? p.reconstitution_ml,
-    batch_number: inv.batch_number,
-    batch_source: inv.batch_source ?? null,
-    batch_file_url: inv.batch_file_url ?? null,
-    inventory_item_id: null,
-  }
-}
-
-
-/** Rest im aktuellen Vial in % — gleiche Logik wie die Vial-Anzeige in der Liste. */
-function getVialFillPct(p: Peptide): number | null {
-  const stock = p.vials_in_stock ?? 0
-  if ((p.vials_initial ?? 0) <= 0 && stock <= 0) return null
-  if (stock <= 0) return 0
-  return stock % 1 === 0 ? 100 : (stock % 1) * 100
-}
-
-function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
-  const av = a ?? null
-  const bv = b ?? null
-  if (av === null && bv === null) return 0
-  if (av === null) return 1
-  if (bv === null) return -1
-  const diff = av - bv
-  return asc ? diff : -diff
-}
-
-function compareNullableDate(a: string | null | undefined, b: string | null | undefined, asc: boolean): number {
-  const av = a || null
-  const bv = b || null
-  if (!av && !bv) return 0
-  if (!av) return 1
-  if (!bv) return -1
-  const diff = av.localeCompare(bv)
-  return asc ? diff : -diff
-}
-
-function sortPeptides(list: Peptide[], sortBy: PeptideSortKey, activeIds: Set<string>): Peptide[] {
-  return [...list].sort((a, b) => {
-    switch (sortBy) {
-      case 'active_name': {
-        // Default order: active peptides first (alphabetically), then inactive ones (alphabetically).
-        const rank = (p: Peptide) => (activeIds.has(p.id) ? 0 : 1)
-        return rank(a) - rank(b) || a.name.localeCompare(b.name)
-      }
-      // `created_at` kann bei alten Zeilen fehlen — dann hinten einsortieren,
-      // statt die ganze Liste durcheinanderzubringen.
-      case 'created_desc': return (b.created_at ?? '').localeCompare(a.created_at ?? '')
-      case 'created_asc': return (a.created_at ?? '').localeCompare(b.created_at ?? '')
-      case 'name_asc': return a.name.localeCompare(b.name)
-      case 'name_desc': return b.name.localeCompare(a.name)
-      case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
-      case 'expiry_desc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), false)
-      case 'fill_asc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), true)
-      case 'fill_desc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), false)
-      case 'recon_asc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, true)
-      case 'recon_desc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, false)
-      case 'stock_asc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, true)
-      case 'stock_desc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, false)
-      default: return 0
-    }
-  })
-}
-
-const FREQ_KEYS: Record<string,string> = {
-  'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x',
-  'Jeden 2. Tag':'freq_jeden2',
-  '5 Tage an / 2 aus':'freq_5an2aus','Mo-Fr':'freq_mofr','Wöchentlich':'freq_woechentlich',
-  'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
-  'Bei Bedarf':'freq_bei_bedarf',
-}
-const INTAKE_TIME_CONFIG = {
-  morgens: { labelKey: 'morgens', icon: Sunrise, time: '08:00' },
-  mittags: { labelKey: 'mittags', icon: Sun,  time: '12:00' },
-  abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
-  custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
-} as const
-const ROUTINE_GROUP_TO_INTAKE_TIME = {
-  morning: 'morgens',
-  midday: 'mittags',
-  evening: 'abends',
-} as const
-const INTAKE_TIME_TO_ROUTINE_GROUP: Record<string, RoutineGroup> = Object.fromEntries(
-  Object.entries(ROUTINE_GROUP_TO_INTAKE_TIME).map(([group, intakeTime]) => [intakeTime, group]),
-) as Record<string, RoutineGroup>
-const REMINDER_OPTIONS = [
-  { value: '1day',    labelKey: 'reminder_1day' },
-  { value: '2h',      labelKey: 'reminder_2h' },
-  { value: 'on_time', labelKey: 'reminder_on_time' },
-]
-
-// ─── Formular-Typen ───────────────────────────────────────────────────────────
-
-function parseStoredDay(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
-  const parsed = parseISO(value)
-  return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === value ? parsed : null
-}
-
-function mergeCatalogEntries(
-  current: SubstanceCatalogEntry[],
-  additions: SubstanceCatalogEntry[],
-): SubstanceCatalogEntry[] {
-  const entriesById = new Map(current.map(entry => [entry.id, entry]))
-  additions.forEach(entry => entriesById.set(entry.id, entry))
-  return [...entriesById.values()]
-}
-
-function escalationFormStartDate(cycle: Cycle, form: EscalationForm): Date | null {
-  if (form.start_type === 'date') return parseStoredDay(form.start_date)
-  const offset = Number(form.start_after_days)
-  if (!Number.isFinite(offset) || !Number.isInteger(offset) || offset <= 0) return null
-  return addDays(parseISO(cycle.start_date), offset * (form.start_type === 'after_weeks' ? 7 : 1))
-}
-
-function withEffectiveEscalationUnit(cycle: Cycle, form: EscalationForm): EscalationForm {
-  const start = escalationFormStartDate(cycle, form)
-  return { ...form, unit: start ? scheduleForDay(cycle, start).unit ?? '' : '' }
-}
-
-export function DosePlanActions({
-  trackingLevel,
-  onPermanent,
-  onTitration,
-}: {
-  trackingLevel: TrackingLevel
-  onPermanent: () => void
-  onTitration: () => void
-}) {
-  const { t } = useTranslation()
-  const capabilities = dosePlanCapabilities(trackingLevel)
-  if (!capabilities.permanent) return null
-
-  return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      <button
-        type="button"
-        onClick={onPermanent}
-        className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-      >
-        <CalendarPlus size={13} aria-hidden="true" /> {t('dose_plan_new_standard', { defaultValue: 'Neue Standarddosis ab …' })}
-      </button>
-      <button
-        type="button"
-        onClick={onTitration}
-        className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/50 hover:bg-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
-      >
-        <Plus size={13} aria-hidden="true" /> {t('dose_plan_add_titration', { defaultValue: 'Titrationsschritt hinzufügen' })}
-      </button>
-    </div>
-  )
-}
-
-// Schedule-relevante Felder eines Standes (für Vergleich + Segmentaufbau).
-
-function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
-  const segment = scheduleForDay(cycle, day)
-  // Jeder Einnahmezeitpunkt, nicht nur der erste. Vorher nahm der Assistent
-  // `…split(',').find(Boolean)` — beim Bearbeiten eines „2x taeglich"-Zyklus
-  // fiel die zweite Einnahme damit still weg, und Speichern loeschte sie.
-  const slotKeys = (segment.intake_time ?? '').split(',').map(key => key.trim()).filter(Boolean)
-  const slotTimes = (segment.intake_time_custom ?? '').split(',').map(time => time.trim())
-  // Die Mengen je Zeitpunkt. Steht dort nichts, gilt ueberall die eine Menge
-  // des Zyklus — so war es bei jedem Plan vor dieser Runde.
-  const slotDoses = (segment.slot_doses ?? '').split(',').map(wert => wert.trim())
-  // Leer heisst „an jedem Tag" — so stand es in jedem Plan vor dieser Runde.
-  const slotDays = (segment.slot_days ?? '').split(',')
-  const slots: IntakeSlotDraft[] = slotKeys.map((key, index) => {
-    const eigene = Number(slotDoses[index])
-    return {
-      routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
-      time: slotTimes[index] || null,
-      dose: (slotDoses[index] ?? '') !== '' && Number.isFinite(eigene) ? eigene : segment.dose,
-      weekdays: (slotDays[index] ?? '').split('|').map(tag => tag.trim()).filter(Boolean),
-    }
-  })
-  return {
-    id: cycle.id,
-    name: cycle.name,
-    unit: segment.unit,
-    method: cycle.method,
-    // Alte Frequenztexte werden auf die vier Formen abgebildet — „Wöchentlich"
-    // ist ein Abstand von einer Woche, „Mo-Fr" sind fuenf Wochentage. Sie
-    // bedeuten dasselbe, und ein bestehender Zyklus verliert beim Oeffnen
-    // nichts. Die Tageszahl der alten „2x taeglich" steckt in den
-    // Einnahmezeitpunkten, nicht im Rhythmus.
-    rhythm: rhythmFromStorage(segment),
-    startDate: format(new Date(), 'yyyy-MM-dd'),
-    endDate: cycle.end_date,
-    slots: slots.length > 0
-      ? slots
-      : [{ routineGroup: 'morning' as const, time: null, dose: segment.dose, weekdays: [] }],
-    reminders: cycle.reminder && cycle.reminder !== 'none'
-      ? cycle.reminder.split(',').filter(Boolean)
-      : [],
-  }
-}
-
-interface RecoverableMutation {
-  key: string
-  committed: boolean
-}
-
-function planChangeSubmissionIdentity(submission: PlanChangeSubmission): string {
-  const { target, effective, snapshot } = submission
-  return JSON.stringify({
-    target: [target.mode, target.cycleId, target.versionId],
-    effective: [effective.kind, effective.localDate],
-    snapshot: [
-      snapshot.frequency,
-      snapshot.x_days_interval,
-      snapshot.interval_unit,
-      snapshot.cycle_on_days,
-      snapshot.cycle_off_days,
-      snapshot.schedule_days,
-      snapshot.intake_time,
-      snapshot.intake_time_custom,
-      snapshot.slot_doses,
-      snapshot.slot_days,
-      snapshot.dose,
-      snapshot.unit,
-      snapshot.method,
-    ],
-    changeKind: submission.changeKind,
-    timeZone: submission.timeZone,
-  })
-}
-
-function versionAsIntakePlanDraft(
-  timeline: CycleTimeline,
-  version: CyclePlanVersion,
-  timeZone: string,
-): IntakePlanDraft {
-  const slotKeys = version.intake_time.split(',').map(key => key.trim()).filter(Boolean)
-  const slotTimes = (version.intake_time_custom ?? '').split(',').map(time => time.trim())
-  const slotDoses = (version.slot_doses ?? '').split(',').map(value => value.trim())
-  const slotDays = (version.slot_days ?? '').split(',')
-  const slots: IntakeSlotDraft[] = slotKeys.map((key, index) => {
-    const ownDose = Number(slotDoses[index])
-    return {
-      routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
-      time: slotTimes[index] || null,
-      dose: (slotDoses[index] ?? '') !== '' && Number.isFinite(ownDose) ? ownDose : version.dose,
-      weekdays: (slotDays[index] ?? '').split('|').map(day => day.trim()).filter(Boolean),
-    }
-  })
-  const frequency = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }[version.frequency] ?? version.frequency
-  const startDate = version.effective_kind === 'local_date'
-    ? version.effective_local_date ?? localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10)
-    : localDateTimeKey(new Date(version.effective_at ?? timeline.cycle.started_at), timeZone).slice(0, 10)
-
-  return {
-    id: version.id,
-    name: 'Einnahmeplan',
-    unit: version.unit,
-    method: version.method,
-    rhythm: rhythmFromStorage({
-      frequency,
-      x_days_interval: version.x_days_interval,
-      interval_unit: version.interval_unit,
-      cycle_on_days: version.cycle_on_days,
-      cycle_off_days: version.cycle_off_days,
-      schedule_days: version.schedule_days,
-    }),
-    startDate,
-    endDate: timeline.cycle.ended_at
-      ? localDateTimeKey(new Date(timeline.cycle.ended_at), timeZone).slice(0, 10)
-      : null,
-    slots: slots.length > 0
-      ? slots
-      : [{ routineGroup: 'morning', time: null, dose: version.dose, weekdays: [] }],
-    reminders: [],
-  }
-}
-
-function versionSnapshot(version: CyclePlanVersion): PlanScheduleSnapshot {
-  return {
-    frequency: version.frequency,
-    x_days_interval: version.x_days_interval,
-    interval_unit: version.interval_unit,
-    cycle_on_days: version.cycle_on_days,
-    cycle_off_days: version.cycle_off_days,
-    schedule_days: version.schedule_days,
-    intake_time: version.intake_time,
-    intake_time_custom: version.intake_time_custom,
-    slot_doses: version.slot_doses,
-    slot_days: version.slot_days,
-    dose: version.dose,
-    unit: version.unit,
-    method: version.method,
-  }
-}
-
-// Empty "ghost" vial that adds a new substance when clicked — nur noch im
-// leeren Stack; im Karussell steht `AddStageTile`.
-function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: string; obKey?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      {...(obKey ? { 'data-ob': obKey } : {})}
-      className="group mx-auto flex w-20 flex-col items-center sm:w-24"
-    >
-      <div className={`flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36`}>
-        <span className={`flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]`}>
-          <Plus size={18} strokeWidth={1.45} />
-        </span>
-        <span className="px-2 text-center text-[10px] font-semibold leading-tight">{label}</span>
-      </div>
-    </button>
-  )
-}
-
-// „Neue Substanz" im Karussell. Sie steht vor der ersten Substanz und ist
-// so gross wie die Objekte daneben — als kleines Kaestchen in einem Platz
-// fuer ein Vial sah man sie am Rand nicht, und niemand kam auf die Idee,
-// nach links zu wischen. Die Zeile unter der Karte ist dieselbe wie bei den
-// Objekten, damit alles auf einer Standlinie steht.
-function AddStageTile({ active, title, hint, onClick }: { active: boolean; title: string; hint: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={title}
-      className="group flex h-full min-h-0 w-full flex-col items-center focus-visible:outline-none"
-    >
-      <span className="flex min-h-0 w-full flex-1 items-end justify-center">
-        {/* Volle Breite und ein Schimmer am Rand: steht die erste Substanz
-            in der Mitte, lugt von der Karte nur der rechte Rand herein. Der
-            muss auffallen, sonst weiss niemand, dass links noch etwas ist. */}
-        <span className={`flex h-[78%] w-full flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed px-5 text-center transition-[border-color,box-shadow] duration-300 group-focus-visible:border-cyan-300 ${
-          active
-            ? 'border-cyan-300/55 bg-[radial-gradient(ellipse_at_50%_40%,rgba(34,211,238,0.14),rgba(15,23,42,0.35)_70%)]'
-            : 'border-cyan-300/60 bg-cyan-400/[0.05] shadow-[0_0_28px_rgba(34,211,238,0.22)]'
-        }`}>
-          <span className={`flex h-16 w-16 items-center justify-center rounded-full border text-cyan-200 transition-all duration-500 ${
-            active
-              ? 'border-cyan-300/50 bg-cyan-300/15 shadow-[0_0_40px_rgba(34,211,238,0.28)]'
-              : 'border-cyan-300/25 bg-cyan-300/[0.06] shadow-[0_0_24px_rgba(34,211,238,0.12)]'
-          }`}>
-            <Plus size={30} strokeWidth={1.6} aria-hidden="true" />
-          </span>
-          <span className="text-lg font-bold leading-tight text-white">{title}</span>
-          <span className="text-sm leading-snug text-slate-400">{hint}</span>
-        </span>
-      </span>
-      <span aria-hidden="true" className="mt-1 shrink-0 text-xs">{'\u00a0'}</span>
-    </button>
-  )
-}
+export { DosePlanActions }
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 

@@ -36,8 +36,14 @@ describe('My Stack dose-plan actions', () => {
 })
 
 describe('My Stack page vial view', () => {
+  // Die Seite ist in `page/` aufgeteilt — gelesen wird alles, was dazugehoert.
+  const pageParts = () => readdirSync(new URL('./page/', import.meta.url))
+    .filter(name => /\.(ts|tsx)$/.test(name) && !/\.test\./.test(name))
+    .sort()
+    .map(name => readFileSync(new URL(`./page/${name}`, import.meta.url), 'utf8'))
   const source = () => [
     readFileSync(new URL('./MyStackPage.tsx', import.meta.url), 'utf8'),
+    ...pageParts(),
     readFileSync(new URL('./components/StackArchive.tsx', import.meta.url), 'utf8'),
     readFileSync(new URL('./services/stackItems.ts', import.meta.url), 'utf8'),
     readFileSync(new URL('./extensions/peptide/VialRenderer.tsx', import.meta.url), 'utf8'),
