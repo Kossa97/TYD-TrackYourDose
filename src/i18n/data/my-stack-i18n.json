@@ -523,7 +523,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1049,7 +1050,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1575,7 +1577,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2101,7 +2104,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2627,7 +2631,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3153,7 +3158,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3679,7 +3685,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4205,7 +4212,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4731,7 +4739,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5257,7 +5266,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5783,7 +5793,8 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6309,6 +6320,7 @@
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
-    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
   }
 }

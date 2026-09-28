@@ -229,6 +229,13 @@ const STEP_LABELS: Record<WizardStep, { key: string; defaultValue: string }> = {
   review: { key: 'my_stack_step_review', defaultValue: 'Zusammenfassung' },
 }
 
+/** Der Grund eines fehlgeschlagenen Speicherns, kurz — fuer die technische Zeile. */
+function fehlerText(error: unknown): string {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'message' in error) return String((error as { message: unknown }).message)
+  return String(error)
+}
+
 function stepForInvalidField(field: string): WizardStep {
   if (field === 'displayName' || field === 'category') return 'substance'
   if (field === 'dosageForm') return 'dosage_form'
@@ -295,6 +302,7 @@ export function StackItemWizard({
   const [planPrefill, setPlanPrefill] = useState<IntakePlanDraft | null>(() => (planEditContext ? state.draft.plan : null))
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveErrorDetail, setSaveErrorDetail] = useState<string | null>(null)
   const [planEffective, setPlanEffective] = useState<PlanEffectiveDraft>(() => (
     planEditContext?.target.mode === 'replace_future'
       ? {
@@ -510,6 +518,7 @@ export function StackItemWizard({
     dispatch({ type: 'step_selected', step })
     setShowErrors(false)
     setSaveError(null)
+    setSaveErrorDetail(null)
     setDuplicateCandidate(null)
     setPkIntentError(null)
     requestAnimationFrame(() => {
@@ -678,6 +687,7 @@ export function StackItemWizard({
 
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
+    setSaveErrorDetail(null)
     const invalidField = firstInvalidField(state, !metadataOnly)
     if (invalidField) {
       const invalidStep = stepForInvalidField(invalidField)
@@ -725,6 +735,29 @@ export function StackItemWizard({
         if (editOverview && state.step !== 'plan') selectStep('plan')
         setSaveError(String(t(field === 'inventory.reconstitutionMl' ? 'my_stack_stock_liquid_invalid' : 'my_stack_stock_days_invalid')))
         focusField(field)
+        return
+      }
+    }
+
+    // Der Speicherdienst prueft den GANZEN Eintrag, nicht nur den gerade
+    // offenen Schritt. Im Modus „Einnahmeplan" sieht der Assistent die
+    // Substanz-Schritte nicht; fehlte dort etwas, kam nur „konnte nicht
+    // gespeichert werden". Jetzt vorher: gibt es den Schritt hier, springt der
+    // Assistent hin, sonst sagt er, was wo fehlt.
+    if (!planEditContext) {
+      const itemField = firstInvalidField({ ...state, step: 'review' }, false)
+      if (itemField) {
+        const itemStep = stepForInvalidField(itemField)
+        if (steps.includes(itemStep)) {
+          setShowErrors(true)
+          if (state.step !== itemStep) dispatch({ type: 'step_selected', step: itemStep })
+          focusField(itemField)
+        } else {
+          setSaveError(String(t('my_stack_save_item_incomplete', {
+            defaultValue: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
+            area: t(STEP_LABELS[itemStep].key, { defaultValue: STEP_LABELS[itemStep].defaultValue }),
+          })))
+        }
         return
       }
     }
@@ -821,6 +854,7 @@ export function StackItemWizard({
 
     setSaving(true)
     setSaveError(null)
+    setSaveErrorDetail(null)
     try {
       if (planEditContext) {
         if (!onSavePlanChange) throw new Error('Plan change handler is required')
@@ -843,10 +877,15 @@ export function StackItemWizard({
         await onSave(draftForSave, mode, setupIdempotencyKey)
       }
       onClose()
-    } catch {
+    } catch (error) {
+      // Den Grund nicht verschlucken: in der Konsole ganz, in der Meldung als
+      // kleine technische Zeile. Sonst bleibt nur „konnte nicht gespeichert
+      // werden", und niemand kann sagen, woran es lag.
+      console.error('[StackItemWizard] Speichern fehlgeschlagen', error)
       setSaveError(String(t('my_stack_save_error', {
         defaultValue: 'Speichern ist fehlgeschlagen. Deine Eingaben bleiben erhalten. Bitte versuche es erneut.',
       })))
+      setSaveErrorDetail(fehlerText(error))
     } finally {
       setSaving(false)
     }
@@ -1678,10 +1717,17 @@ export function StackItemWizard({
             />
           ) : renderStep()}
           {saveError && (
-            <p role="alert" className="mt-5 flex items-start gap-2 rounded-2xl border border-rose-400/25 bg-rose-400/[0.07] p-4 text-sm text-rose-100">
+            <div role="alert" className="mt-5 flex items-start gap-2 rounded-2xl border border-rose-400/25 bg-rose-400/[0.07] p-4 text-sm text-rose-100">
               <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
-              {saveError}
-            </p>
+              <div className="min-w-0">
+                <p>{saveError}</p>
+                {saveErrorDetail && (
+                  <p data-save-error-detail className="mt-1.5 break-words font-mono text-[11px] leading-snug text-rose-200/70">
+                    {saveErrorDetail}
+                  </p>
+                )}
+              </div>
+            </div>
           )}
         </main>
 

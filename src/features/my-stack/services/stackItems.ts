@@ -478,13 +478,14 @@ export async function saveStackItem(
   draft: StackItemDraft | StackItemSetupDraft,
 ): Promise<SavedStackItemRow> {
   const validationErrors = validateStackItemDraft(draft)
-  if (
-    !draft.displayName.trim()
-    || !draft.category
-    || Object.keys(validationErrors).length > 0
-    || !draft.dosageForm
-  ) {
-    throw new Error('Invalid stack item draft')
+  const probleme = [
+    !draft.displayName.trim() && 'displayName',
+    !draft.category && 'category',
+    !draft.dosageForm && 'dosageForm',
+    ...Object.keys(validationErrors).map(key => `item.${key}`),
+  ].filter((problem): problem is string => Boolean(problem))
+  if (probleme.length > 0) {
+    throw new Error(`Invalid stack item draft: ${probleme.join(', ')}`)
   }
 
   const params: SaveStackItemRpcParams = {
@@ -516,16 +517,19 @@ export async function saveStackItemSetup(
       || !Number.isFinite(draft.inventory.remainingQuantity)
       || draft.inventory.remainingQuantity < 0
     )
-  if (
-    !draft.displayName.trim()
-    || !draft.category
-    || !draft.dosageForm
-    || Object.keys(itemErrors).length > 0
-    || Object.keys(planErrors).length > 0
-    || invalidInventory
-    || !idempotencyKey.trim()
-  ) {
-    throw new Error('Invalid stack item setup draft')
+  // Welche Pruefung scheitert, steht in der Meldung: ohne das sieht man in
+  // der App nur „konnte nicht gespeichert werden" und weiss nicht, warum.
+  const probleme = [
+    !draft.displayName.trim() && 'displayName',
+    !draft.category && 'category',
+    !draft.dosageForm && 'dosageForm',
+    ...Object.keys(itemErrors).map(key => `item.${key}`),
+    ...Object.keys(planErrors).map(key => `plan.${key}`),
+    invalidInventory && 'inventory',
+    !idempotencyKey.trim() && 'idempotencyKey',
+  ].filter((problem): problem is string => Boolean(problem))
+  if (probleme.length > 0) {
+    throw new Error(`Invalid stack item setup draft: ${probleme.join(', ')}`)
   }
 
   const params: SaveStackItemSetupRpcParams = {

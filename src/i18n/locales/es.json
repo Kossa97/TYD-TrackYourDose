@@ -1449,5 +1449,6 @@
   "rechner_scale_empty": "No result yet",
   "rechner_scale_exact": "Exact target mark",
   "rechner_scale_capacity_unknown": "Select a syringe",
-  "my_stack_go_to_add_tile": "Go to the “New substance” tile"
+  "my_stack_go_to_add_tile": "Go to the “New substance” tile",
+  "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
 }

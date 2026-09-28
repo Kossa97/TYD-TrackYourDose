@@ -1615,3 +1615,49 @@ describe('StackItemWizard — Bearbeiten-Übersicht', () => {
     expect(screen.getByRole('progressbar')).toBeTruthy()
   })
 })
+
+describe('StackItemWizard — Speichern mit Grund statt Sammelmeldung', () => {
+  const weekdayPlan: IntakePlanDraft = {
+    ...existingPlan,
+    rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Fr'] },
+    slots: [
+      { routineGroup: 'evening', time: null, dose: 100, weekdays: ['Mo'] },
+      { routineGroup: 'morning', time: null, dose: 100, weekdays: ['Fr'] },
+    ],
+  }
+
+  it('zeigt beim Fehlschlag den technischen Grund in einer eigenen Zeile', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { onSave } = renderWizard({ existingItem: existingVitaminD, existingPlan: weekdayPlan, intent: 'plan' })
+    onSave.mockRejectedValueOnce(new Error('Invalid stack item setup draft: plan.method'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(document.querySelector('[data-save-error-detail]')?.textContent)
+      .toBe('Invalid stack item setup draft: plan.method'))
+    expect(screen.getByText('my_stack_save_error')).toBeTruthy()
+    expect(error).toHaveBeenCalled()
+    error.mockRestore()
+  })
+
+  it('sagt im Plan-Modus, dass bei der Substanz etwas fehlt, statt es erst beim Speichern scheitern zu lassen', async () => {
+    const unvollstaendig = {
+      ...existingVitaminD,
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_value: null }],
+    } as StackItem
+    const { onSave } = renderWizard({ existingItem: unvollstaendig, existingPlan: weekdayPlan, intent: 'plan' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(screen.getByText('my_stack_save_item_incomplete')).toBeTruthy())
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('speichert einen vollständigen Wochentagsplan ohne Umweg', async () => {
+    const { onSave } = renderWizard({ existingItem: existingVitaminD, existingPlan: weekdayPlan, intent: 'plan' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+  })
+})
