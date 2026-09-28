@@ -1886,7 +1886,7 @@
       "file_type": "code",
       "norm_label": "fielderror",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L20"
+      "source_location": "L19"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_inputfield",
@@ -1899,7 +1899,7 @@
       "file_type": "code",
       "norm_label": "inputfield",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L19"
+      "source_location": "L18"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_liquidresult",
@@ -1912,7 +1912,7 @@
       "file_type": "code",
       "norm_label": "liquidresult",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L21"
+      "source_location": "L20"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_liquidunit",
@@ -14260,7 +14260,7 @@
       "file_type": "code",
       "norm_label": "basefactor()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L33"
+      "source_location": "L31"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_calculateliquid",
@@ -14272,7 +14272,7 @@
       "file_type": "code",
       "norm_label": "calculateliquid()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L75"
+      "source_location": "L73"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_completewithdrawals",
@@ -14284,7 +14284,7 @@
       "file_type": "code",
       "norm_label": "completewithdrawals()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L65"
+      "source_location": "L63"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_convertliquidvalue",
@@ -14296,7 +14296,7 @@
       "file_type": "code",
       "norm_label": "convertliquidvalue()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L43"
+      "source_location": "L41"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_exceeds",
@@ -14308,7 +14308,7 @@
       "file_type": "code",
       "norm_label": "exceeds()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L61"
+      "source_location": "L59"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_positivefinite",
@@ -14320,7 +14320,7 @@
       "file_type": "code",
       "norm_label": "positivefinite()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L32"
+      "source_location": "L30"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_scaledratio",
@@ -14332,7 +14332,7 @@
       "file_type": "code",
       "norm_label": "scaledratio()",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L36"
+      "source_location": "L34"
     },
     {
       "id": "src_features_rechner_lib_liquidcalculation_test_values",
@@ -88244,7 +88244,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L33",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -88256,7 +88256,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L126",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -88268,7 +88268,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L131",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -88280,7 +88280,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L149",
+      "source_location": "L146",
       "weight": 1.0
     },
     {
@@ -88292,7 +88292,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L83",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -88304,7 +88304,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L99",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -88316,7 +88316,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L99",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -88328,7 +88328,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L44",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -88340,7 +88340,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L49",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
@@ -88352,7 +88352,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L57",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -88364,7 +88364,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L57",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -88376,7 +88376,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L38",
+      "source_location": "L36",
       "weight": 1.0
     },
     {
@@ -206417,7 +206417,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L19",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -206428,7 +206428,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L20",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -206439,7 +206439,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L21",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -206461,7 +206461,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L32",
+      "source_location": "L30",
       "weight": 1.0
     },
     {
@@ -206472,7 +206472,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L33",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -206483,7 +206483,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L36",
+      "source_location": "L34",
       "weight": 1.0
     },
     {
@@ -206505,7 +206505,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L43",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -206527,7 +206527,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L61",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -206538,7 +206538,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L65",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -206549,7 +206549,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/rechner/lib/liquidCalculation.ts",
-      "source_location": "L75",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -221355,5 +221355,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "becaef4d41ebc3ec4c6788aac9be19a1b34e3009"
+  "built_at_commit": "dcb4eecdc3c79937b6af9c873e3ad791c3618fe6"
 }
