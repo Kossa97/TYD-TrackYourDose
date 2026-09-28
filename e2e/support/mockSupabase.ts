@@ -90,7 +90,8 @@ function parseSelect(select: string): SelectField[] {
         i++
       }
       const [alias, table] = token.includes(':') ? token.split(':') : [token, token]
-      fields.push({ alias, table: table.replace(/!.*$/, ''), children: parseSelect(inner) })
+      if (table.includes('!')) throw new Error(`Einbettung mit Hinweis ${table} nicht nachgebildet`)
+      fields.push({ alias, table, children: parseSelect(inner) })
     } else if (token) {
       fields.push({ alias: token })
     }
@@ -128,10 +129,10 @@ function matches(row: Row, column: string, filter: string): boolean {
         const list = value.replace(/^\(|\)$/g, '').split(',').map(entry => entry.replace(/^"|"$/g, ''))
         return list.includes(String(cell))
       }
-      case 'gt': return String(cell) > value
-      case 'gte': return String(cell) >= value
-      case 'lt': return String(cell) < value
-      case 'lte': return String(cell) <= value
+      case 'gt': return compare(cell, value) > 0
+      case 'gte': return compare(cell, value) >= 0
+      case 'lt': return compare(cell, value) < 0
+      case 'lte': return compare(cell, value) <= 0
       case 'ilike': {
         const pattern = new RegExp(`^${value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/%/g, '.*')}$`, 'i')
         return pattern.test(String(cell ?? ''))
@@ -140,6 +141,17 @@ function matches(row: Row, column: string, filter: string): boolean {
     }
   })()
   return negate ? !result : result
+}
+
+/** Wie Postgres: Zahlen als Zahlen, alles andere als Text (ISO-Daten sortieren so richtig). */
+function compare(left: unknown, right: unknown): number {
+  if (left == null && right == null) return 0
+  if (left == null) return 1
+  if (right == null) return -1
+  const a = Number(left)
+  const b = Number(right)
+  if (typeof left !== 'boolean' && left !== '' && right !== '' && Number.isFinite(a) && Number.isFinite(b)) return a - b
+  return String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0
 }
 
 const RESERVED_PARAMS = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns'])
@@ -151,8 +163,12 @@ export class MockSupabase {
   /** Zaehlt jede Anfrage je `METHODE pfad`. */
   readonly log: string[] = []
   private readonly rpcHandlers = new Map<string, (params: Record<string, unknown>) => unknown>()
+  /** Die Uhr der Zeilen (`created_at`, `updated_at`) — dieselbe, die der Test dem Browser gibt. */
+  private readonly now: () => Date
 
-  constructor() {
+  constructor(options: { now?: Date } = {}) {
+    const fixed = options.now
+    this.now = fixed ? () => new Date(fixed) : () => new Date()
     this.registerMyStackRpcs()
     this.seedCatalog()
   }
@@ -189,7 +205,7 @@ export class MockSupabase {
   }
 
   insert(name: string, row: Row): Row {
-    const now = new Date().toISOString()
+    const now = this.now().toISOString()
     const full = { id: randomUUID(), created_at: now, updated_at: now, ...row }
     this.table(name).push(full)
     return full
@@ -298,15 +314,16 @@ export class MockSupabase {
     const rows = this.table(tableName)
     const selected = () => rows.filter(row => filters.every(([column, filter]) => {
       if (column === 'or' || column === 'and') throw new Error(`${column}-Filter nicht nachgebildet`)
+      if (column.includes('.')) throw new Error(`Filter auf eingebettete Spalte ${column} nicht nachgebildet`)
       return matches(row, column, filter)
     }))
 
     const respond = (result: Row[]) => {
       const shaped = result.map(row => this.shape(tableName, row, parseSelect(url.searchParams.get('select') ?? '*')))
-      if (method === 'HEAD' || prefer.includes('count=')) {
-        const range = `0-${Math.max(0, shaped.length - 1)}/${shaped.length}`
-        if (method === 'HEAD') return route.fulfill({ status: 200, headers: { ...corsHeaders(), 'content-range': range } })
-      }
+      const headers = prefer.includes('count=')
+        ? { ...corsHeaders(), 'content-range': `${shaped.length ? `0-${shaped.length - 1}` : '*'}/${shaped.length}` }
+        : corsHeaders()
+      if (method === 'HEAD') return route.fulfill({ status: 200, headers })
       if (wantsObject) {
         if (shaped.length !== 1) {
           return route.fulfill({
@@ -315,9 +332,9 @@ export class MockSupabase {
             json: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned', details: `${shaped.length} rows`, hint: null },
           })
         }
-        return route.fulfill({ headers: corsHeaders(), json: shaped[0] })
+        return route.fulfill({ headers, json: shaped[0] })
       }
-      return route.fulfill({ headers: corsHeaders(), json: shaped })
+      return route.fulfill({ headers, json: shaped })
     }
 
     if (method === 'GET' || method === 'HEAD') {
@@ -338,7 +355,7 @@ export class MockSupabase {
         if (prefer.includes('resolution=merge-duplicates')) {
           const conflict = (url.searchParams.get('on_conflict') ?? 'id').split(',')
           const existing = rows.find(candidate => conflict.every(column => candidate[column] === row[column]))
-          if (existing) return Object.assign(existing, row, { updated_at: new Date().toISOString() })
+          if (existing) return Object.assign(existing, row, { updated_at: this.now().toISOString() })
         }
         return this.insert(tableName, { user_id: TEST_USER.id, ...row })
       })
@@ -346,7 +363,7 @@ export class MockSupabase {
     }
 
     if (method === 'PATCH') {
-      const changed = selected().map(row => Object.assign(row, body, { updated_at: new Date().toISOString() }))
+      const changed = selected().map(row => Object.assign(row, body, { updated_at: this.now().toISOString() }))
       return returnRows ? respond(changed) : route.fulfill({ status: 204, headers: corsHeaders() })
     }
 
@@ -400,7 +417,7 @@ export class MockSupabase {
       if (id) {
         saved = this.table('stack_items').find(row => row.id === id)!
         if (!saved) throw new Error(`stack_item ${String(id)} fehlt`)
-        Object.assign(saved, fields, { updated_at: new Date().toISOString() })
+        Object.assign(saved, fields, { updated_at: this.now().toISOString() })
         this.tables.set('stack_item_ingredients', this.table('stack_item_ingredients').filter(row => row.stack_item_id !== id))
       } else {
         saved = this.insert('stack_items', {
@@ -414,7 +431,10 @@ export class MockSupabase {
       for (const ingredient of ingredients) {
         this.insert('stack_item_ingredients', { ...ingredient, stack_item_id: saved.id })
       }
-      if (inventory) {
+      const existingInventory = this.table('stack_item_inventory').find(row => row.stack_item_id === saved.id)
+      if (inventory && existingInventory) {
+        Object.assign(existingInventory, inventory, { updated_at: this.now().toISOString() })
+      } else if (inventory) {
         this.insert('stack_item_inventory', {
           user_id: TEST_USER.id,
           stack_item_id: saved.id,
@@ -502,9 +522,8 @@ function sortRows(rows: Row[], order: string): Row[] {
   })
   return [...rows].sort((a, b) => {
     for (const { column, descending } of keys) {
-      const left = String(a[column] ?? '')
-      const right = String(b[column] ?? '')
-      if (left !== right) return (left < right ? -1 : 1) * (descending ? -1 : 1)
+      const order = compare(a[column], b[column])
+      if (order !== 0) return order * (descending ? -1 : 1)
     }
     return 0
   })

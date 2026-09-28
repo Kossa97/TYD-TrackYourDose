@@ -1,6 +1,6 @@
 import { expect, test } from './support/fixtures'
 import { RpcError } from './support/mockSupabase'
-import { expectStep, next, seedBpc157, stageObject } from './support/myStack'
+import { expectStep, next, seedBpc157, seedPeptide, stageObject } from './support/myStack'
 
 /**
  * My Stack auf dem Geraet: Anlegen, Bearbeiten, Plan aendern, Speichern.
@@ -108,6 +108,46 @@ test('Plan ändern: neue Menge ab sofort wird eine neue Planstufe', async ({ pag
   // Die alte Stufe bleibt im Verlauf; auf dem Bildschirm steht die neue Menge.
   expect(mock.table('cycle_plan_versions')).toHaveLength(2)
   await expect(page.getByText('500 mcg').first()).toBeVisible()
+})
+
+test('Archivieren des letzten Eintrags: die Bühne zeigt, was die Zeile darüber beschreibt', async ({ page, mock }) => {
+  for (const name of ['BPC-157', 'GHK-Cu', 'TB-500']) seedPeptide(mock, name, { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  await page.getByRole('button', { name: 'Zu TB-500' }).click()
+  await expect(page.getByText('3 / 3')).toBeVisible()
+  await expect(stageObject(page, 'TB-500')).toBeInViewport({ ratio: 0.9 })
+
+  await stageObject(page, 'TB-500').click()
+  await page.getByRole('dialog', { name: 'TB-500' }).getByRole('button', { name: 'Löschen' }).click()
+  await page.getByRole('dialog', { name: 'Substanz entfernen' }).getByRole('button', { name: 'Archivieren (behalten)' }).click()
+
+  await expect(page.getByRole('button', { name: 'Zu TB-500' })).toHaveCount(0)
+  expect(mock.table('stack_items').find(row => row.display_name === 'TB-500')).toMatchObject({ archived: true })
+  // Aktiv ist wieder der erste, und genau der steht in der Mitte — die alte
+  // Scrollposition allein landete auf dem Nachbarn.
+  await expect(page.getByText('1 / 2')).toBeVisible()
+  await expect(stageObject(page, 'BPC-157')).toBeInViewport({ ratio: 0.9 })
+  await expect(stageObject(page, 'GHK-Cu')).not.toBeInViewport({ ratio: 0.5 })
+})
+
+test('Reiter wechseln: der aktive Eintrag bleibt, wo er dabei ist — und steht in der Mitte', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'HCG', { startDate: '2026-09-01', category: 'hormone' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  // Alle: BPC-157, HCG, TB-500 (sortiert nach Name).
+  await page.getByRole('button', { name: 'Zu TB-500' }).click()
+  await expect(page.getByText('3 / 3')).toBeVisible()
+
+  // Peptide: TB-500 steht dort an anderer Stelle — und bleibt aktiv.
+  await page.getByRole('tab', { name: /^Peptide/ }).click()
+  await expect(page.getByText('2 / 2')).toBeVisible()
+  await expect(stageObject(page, 'TB-500')).toBeInViewport({ ratio: 0.9 })
+
+  // Hormone: TB-500 ist nicht dabei — der erste des Reiters.
+  await page.getByRole('tab', { name: /^Hormone/ }).click()
+  await expect(page.getByText('1 / 1')).toBeVisible()
+  await expect(stageObject(page, 'HCG')).toBeInViewport({ ratio: 0.9 })
 })
 
 test('Speichern scheitert: Meldung mit Grund, Assistent bleibt offen, nichts angelegt', async ({ page, mock }) => {

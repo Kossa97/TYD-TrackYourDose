@@ -38,7 +38,8 @@ export default defineConfig({
   webServer: {
     command: `npx vite build --outDir e2e/.dist --emptyOutDir && npx vite preview --outDir e2e/.dist --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
+    // Immer neu bauen: ein noch laufender Server hielte einen alten Stand.
+    reuseExistingServer: false,
     timeout: 240_000,
     // Ohne DSN: kein Sentry in den Tests.
     env: { VITE_SENTRY_DSN: '' },

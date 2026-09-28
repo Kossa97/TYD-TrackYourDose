@@ -24,26 +24,34 @@ export function stageObject(page: Page, name: string): Locator {
 }
 
 /**
- * BPC-157 als Vial mit taeglichem Plan anlegen — so, wie der Assistent es
- * speichert, aber ohne durch ihn zu gehen.
+ * Ein Peptid (Katalogname) als Vial mit taeglichem Plan anlegen — so, wie der
+ * Assistent es speichert, aber ohne durch ihn zu gehen.
  */
-export function seedBpc157(mock: MockSupabase, options: { startDate: string }): void {
+export function seedPeptide(
+  mock: MockSupabase,
+  name: string,
+  options: { startDate: string; category?: string },
+): void {
   mock.callRpc('save_stack_item_with_plan', {
     p_item: {
-      id: null, display_name: 'BPC-157', category: 'peptide', tracking_level: 'complete', dosage_form: 'vial',
+      id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: 'vial',
       brand: null, color_hex: '#10b981', notes: null, pk_profile_method: null,
       inventory: { enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null, batch_number: null, expires_at: null },
     },
     p_ingredients: [{
-      catalog_substance_id: mock.catalogId('BPC-157'), custom_name: 'BPC-157',
+      catalog_substance_id: mock.catalogId(name), custom_name: name,
       amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml', position: 0,
     }],
     p_plan: {
-      id: null, name: 'BPC-157', dose: 250, unit: 'mcg', method: 'Subkutan', frequency: 'Täglich',
+      id: null, name, dose: 250, unit: 'mcg', method: 'Subkutan', frequency: 'Täglich',
       x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null, schedule_days: [],
       start_date: options.startDate, end_date: null, intake_time: 'morgens', intake_time_custom: null,
       slot_doses: null, slot_days: null, reminder: [], timezone: 'Europe/Berlin',
     },
-    p_idempotency_key: 'seed-bpc-157',
+    p_idempotency_key: `seed-${name}`,
   })
+}
+
+export function seedBpc157(mock: MockSupabase, options: { startDate: string }): void {
+  seedPeptide(mock, 'BPC-157', options)
 }

@@ -1392,31 +1392,39 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (!first) return
     setActivePeptideId(first.id)
     setAddTileActive(false)
-    requestAnimationFrame(() => {
-      const item = vialCarouselRef.current?.querySelector<HTMLElement>('[data-vial-index="0"]')
-      item?.scrollIntoView({ block: 'nearest', inline: 'center' })
-      updateVialFocus()
-    })
+    zentriereSlot(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, loading])
-  // Nach dem Anlegen steht der neue Eintrag in der Mitte. Ohne das blieb das
-  // Karussell, wo es war — beim ersten Eintrag auf der „Neu"-Kachel, waehrend
-  // die Zeile darueber schon den neuen Eintrag beschrieb.
+  // Aendert sich die Liste auf der Buehne — neu geladen nach dem Speichern,
+  // umsortiert, archiviert, gesucht —, rueckt der aktive Eintrag wieder in die
+  // Mitte. Sonst stuende ein anderer Eintrag dort, als die Zeile darueber
+  // beschreibt: die Scrollposition kennt nur Pixel, keine Eintraege.
+  const stageKey = stagePeptides.map(p => p.id).join('|')
+  useEffect(() => {
+    if (viewMode !== 'vials' || loading || addTileActive || stagePeptides.length === 0) return
+    zentriereSlot(activeIndex)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageKey])
+  // Nach dem Anlegen steht der neue Eintrag in der Mitte — sobald er in der
+  // geladenen Liste steht. Ohne das blieb das Karussell, wo es war: beim
+  // ersten Eintrag auf der „Neu"-Kachel, waehrend die Zeile darueber schon den
+  // neuen Eintrag beschrieb.
   useEffect(() => {
     if (!neuZentrieren) return
-    setNeuZentrieren(null)
     const index = stagePeptides.findIndex(p => p.id === neuZentrieren)
-    // Im aktuellen Reiter oder in der Suche nicht sichtbar: nichts verschieben.
-    if (viewMode !== 'vials' || index < 0) return
+    if (index < 0) {
+      // Geladen, aber im aktuellen Reiter oder in der Suche nicht sichtbar:
+      // nichts verschieben. Noch nicht geladen (Neuladen gescheitert): warten.
+      if (peptides.some(p => p.id === neuZentrieren)) setNeuZentrieren(null)
+      return
+    }
+    setNeuZentrieren(null)
+    if (viewMode !== 'vials') return
     setActivePeptideId(neuZentrieren)
     setAddTileActive(false)
-    requestAnimationFrame(() => {
-      vialCarouselRef.current
-        ?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
-        ?.scrollIntoView({ block: 'nearest', inline: 'center' })
-      updateVialFocus()
-    })
-  }, [neuZentrieren, stagePeptides, viewMode])
+    zentriereSlot(index)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [neuZentrieren, stageKey])
   const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
   /**
    * `snap-always`: ein Wisch geht genau einen Eintrag weit.
@@ -1473,19 +1481,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    *
    * Welcher Eintrag dann auf der Buehne steht, muss hier NICHT gesetzt werden:
    * `activeIndex` faellt ueber `Math.max(0, findIndex(...))` von selbst auf den
-   * ersten des Reiters, sobald der bisherige nicht mehr dabei ist. Zu tun
-   * bleibt nur, was keine Ableitung erledigen kann — das Karussell an den
-   * Anfang rollen und das Licht neu rechnen.
+   * ersten des Reiters, sobald der bisherige nicht mehr dabei ist. Auch das
+   * Rollen nicht: die Liste aendert sich, und der Effekt an `stageKey` stellt
+   * den aktiven Eintrag in die Mitte — den bisherigen, wenn er im Reiter
+   * steht, sonst den ersten. Nur von der „Neu"-Kachel muss es selbst weg:
+   * zeigt der neue Reiter dieselbe Liste, laeuft der Effekt nicht.
    */
   const reiterWechseln = (key: StackTabKey) => {
     setActiveTab(key)
-    setAddTileActive(false)
-    requestAnimationFrame(() => {
-      vialCarouselRef.current
-        ?.querySelector<HTMLElement>('[data-vial-index="0"]')
-        ?.scrollIntoView({ block: 'nearest', inline: 'center' })
-      updateVialFocus()
-    })
+    if (addTileActive) {
+      setAddTileActive(false)
+      zentriereSlot(activeIndex)
+    }
   }
 
   /**
@@ -1498,6 +1505,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const slotSelector = (slot: number) => (
     slot === ADD_SLOT ? '[data-vial-add]' : `[data-vial-index="${slot}"]`
   )
+  /**
+   * Einen Platz sofort in die Mitte stellen, ohne Animation — fuer alles, was
+   * nicht der Nutzer angestossen hat (Laden, Reiter, neue Liste). Ein noch
+   * laufendes Ziel aus `selectSlot` gilt dann nicht mehr.
+   */
+  function zentriereSlot(slot: number) {
+    vialTargetIndexRef.current = null
+    requestAnimationFrame(() => {
+      vialCarouselRef.current
+        ?.querySelector<HTMLElement>(slotSelector(slot))
+        ?.scrollIntoView({ block: 'nearest', inline: 'center' })
+      updateVialFocus()
+    })
+  }
   const scrollToSlot = (slot: number) => {
     vialCarouselRef.current
       ?.querySelector<HTMLElement>(slotSelector(slot))

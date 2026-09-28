@@ -14,7 +14,7 @@ export const NOW = new Date('2026-09-28T10:00:00+02:00')
  */
 export const test = base.extend<{ mock: MockSupabase }>({
   mock: async ({ page }, provide) => {
-    const mock = new MockSupabase()
+    const mock = new MockSupabase({ now: NOW })
     const pageErrors: string[] = []
     page.on('pageerror', error => pageErrors.push(error.message))
     await page.clock.install({ time: NOW })
