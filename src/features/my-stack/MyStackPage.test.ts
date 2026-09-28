@@ -258,8 +258,9 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-add-slot')
     // Dieselbe Höhe wie die Standplätze der Objekte, damit die Kachel auf
     // derselben Linie steht statt daneben zu schweben.
-    expect(text).toContain('data-vial-add\n                    data-vial-add-slot')
-    expect(text).toContain("className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2")
+    // Der Platz der Kachel ist gebaut wie der eines Objekts: volle Höhe,
+    // unten ausgerichtet, dieselbe Zeile für den Füllstand darunter.
+    expect(text).toMatch(/data-vial-add-slot[\s\S]{0,400}flex h-full min-h-0 origin-bottom shrink-0 flex-col/)
 
     expect(text).toContain('flex items-center')
   })
@@ -267,9 +268,10 @@ describe('My Stack page vial view', () => {
   test('keeps Neue Substanz illuminated while its carousel tile is active', () => {
     const text = source()
 
+    expect(text).toContain('<AddStageTile')
     expect(text).toContain('active={addTileActive}')
-    expect(text).toContain("active ? 'border-cyan-400/45 bg-slate-900/40 text-cyan-200'")
-    expect(text).toContain("active ? 'border-cyan-300/35 bg-cyan-300/10 shadow-[0_0_30px_rgba(34,211,238,0.18)]'")
+    // Steht die Kachel in der Mitte, ist keine Substanz zugleich aktiv.
+    expect(text).toContain('const isActive = !addTileActive && p.id === activePeptide.id')
   })
 
   test('shows the fill percentage directly under the active vial in My Stack', () => {
@@ -388,15 +390,18 @@ describe('My Stack page vial view', () => {
 
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
     const text = source()
-    const selectHandler = text.slice(text.indexOf('const selectPeptideIndex'), text.indexOf('const getClosestVialIndex'))
+    // Plaetze statt Indizes: -1 ist die „Neu"-Kachel, 0 … n-1 die Substanzen.
+    const selectHandler = text.slice(text.indexOf('const selectSlot'), text.indexOf('const getClosestSlot'))
     const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
     const offsetHandler = text.slice(text.indexOf('const selectPeptideOffset'), text.indexOf('const handleVialCarouselPointerDown'))
 
     expect(text).toContain('vialTargetIndexRef')
-    expect(selectHandler).toContain('vialTargetIndexRef.current = index')
+    expect(selectHandler).toContain('vialTargetIndexRef.current = slot')
     expect(selectHandler).not.toContain('setActivePeptideId(next.id)')
-    expect(scrollHandler).toContain('if (vialTargetIndexRef.current === closestIndex)')
-    expect(offsetHandler).toContain('vialTargetIndexRef.current ?? activeIndex')
+    expect(scrollHandler).toContain('if (target === closestSlot) vialTargetIndexRef.current = null')
+    // Waehrend der Fahrt gilt das Ziel — auch fuer die Kachel.
+    expect(scrollHandler).toContain('target !== null && target !== closestSlot ? target === ADD_SLOT')
+    expect(offsetHandler).toContain('vialTargetIndexRef.current ?? currentSlot')
   })
 
   test('drives the carousel liquid with the shared spring physics engine', () => {
@@ -671,7 +676,9 @@ describe('My Stack page vial view', () => {
     const start = text.indexOf('const handleVialCarouselItemClick =')
     const handler = text.slice(start, text.indexOf('\n  }', start))
 
-    expect(handler).toContain('if (index !== activeIndex)')
+    // `currentSlot`, nicht `activeIndex`: steht die „Neu"-Kachel in der
+    // Mitte, ist auch die erste Substanz nur ein Nachbar.
+    expect(handler).toContain('if (index !== currentSlot)')
     expect(handler).toContain('selectPeptideIndex(index)')
     expect(handler).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
   })

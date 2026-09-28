@@ -191,6 +191,8 @@ const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
 
 const NO_TIMELINES: CycleTimeline[] = []
 const vialCarouselItemWidth = 'min(17rem, 70vw)'
+/** Der Platz der „Neu"-Kachel im Karussell, vor der ersten Substanz. */
+const ADD_SLOT = -1
 const vialCarouselItemGap = '0.75rem'
 
 function asPeptide(item: LoadedStackItem): Peptide {
@@ -535,8 +537,9 @@ function versionSnapshot(version: CyclePlanVersion): PlanScheduleSnapshot {
   }
 }
 
-// Empty "ghost" vial that adds a new substance when clicked.
-function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () => void; label: string; active?: boolean; obKey?: string }) {
+// Empty "ghost" vial that adds a new substance when clicked — nur noch im
+// leeren Stack; im Karussell steht `AddStageTile`.
+function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: string; obKey?: string }) {
   return (
     <button
       type="button"
@@ -545,12 +548,8 @@ function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () =>
       {...(obKey ? { 'data-ob': obKey } : {})}
       className="group mx-auto flex w-20 flex-col items-center sm:w-24"
     >
-      <div className={`flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed ${
-        active ? 'border-cyan-400/45 bg-slate-900/40 text-cyan-200' : 'border-slate-600/55 bg-slate-900/25 text-slate-500'
-      } transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36`}>
-        <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-cyan-200 ${
-          active ? 'border-cyan-300/35 bg-cyan-300/10 shadow-[0_0_30px_rgba(34,211,238,0.18)]' : 'border-cyan-300/15 bg-cyan-300/[0.03] shadow-[0_0_22px_rgba(34,211,238,0.08)]'
-        } transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]`}>
+      <div className={`flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36`}>
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]`}>
           <Plus size={18} strokeWidth={1.45} />
         </span>
         <span className="px-2 text-center text-[10px] font-semibold leading-tight">{label}</span>
@@ -570,7 +569,6 @@ function AddStageTile({ active, title, hint, onClick }: { active: boolean; title
       type="button"
       onClick={onClick}
       aria-label={title}
-      data-vial-add-tile
       className="group flex h-full min-h-0 w-full flex-col items-center focus-visible:outline-none"
     >
       <span className="flex min-h-0 w-full flex-1 items-end justify-center">
@@ -2039,48 +2037,48 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     })
   }
 
-  const scrollToPeptideIndex = (index: number) => {
-    const carousel = vialCarouselRef.current
-    const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
-    item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  /**
+   * Plaetze im Karussell: -1 ist die „Neu"-Kachel, 0 … n-1 sind die
+   * Substanzen. Alle Wege — Wisch, Ziehen, Pfeil, Rad, Punkt, Antippen —
+   * rechnen in diesen Plaetzen. Solange die Kachel nur ein Sonderfall der
+   * Pfeile war, sprang sie beim Ziehen zurueck, und ein Tipp auf die
+   * Nachbarsubstanz oeffnete gleich deren Vollbild.
+   */
+  const slotSelector = (slot: number) => (
+    slot === ADD_SLOT ? '[data-vial-add]' : `[data-vial-index="${slot}"]`
+  )
+  const scrollToSlot = (slot: number) => {
+    vialCarouselRef.current
+      ?.querySelector<HTMLElement>(slotSelector(slot))
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
     window.requestAnimationFrame(updateVialFocus)
   }
-  const selectPeptideIndex = (index: number) => {
-    if (!stagePeptides[index]) return
-    vialTargetIndexRef.current = index
-    setAddTileActive(false)
-    scrollToPeptideIndex(index)
+  const selectSlot = (slot: number) => {
+    if (slot !== ADD_SLOT && !stagePeptides[slot]) return
+    vialTargetIndexRef.current = slot
+    setAddTileActive(slot === ADD_SLOT)
+    scrollToSlot(slot)
   }
-  const getClosestVialIndex = (carousel: HTMLDivElement) => {
-    const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index]'))
+  const selectPeptideIndex = (index: number) => selectSlot(index)
+  const selectAddTile = () => selectSlot(ADD_SLOT)
+  const currentSlot = addTileActive ? ADD_SLOT : activeIndex
+  const getClosestSlot = (carousel: HTMLDivElement) => {
+    const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index], [data-vial-add]'))
     const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
-    let closestIndex = activeIndex
+    let closestSlot = currentSlot
     let closestDistance = Number.POSITIVE_INFINITY
 
     for (const item of items) {
-      const index = Number(item.dataset.vialIndex)
+      const slot = item.hasAttribute('data-vial-add') ? ADD_SLOT : Number(item.dataset.vialIndex)
       const itemCenter = item.offsetLeft + item.offsetWidth / 2
       const distance = Math.abs(itemCenter - carouselCenter)
-      if (Number.isFinite(index) && distance < closestDistance) {
+      if (Number.isFinite(slot) && distance < closestDistance) {
         closestDistance = distance
-        closestIndex = index
+        closestSlot = slot
       }
     }
 
-    return closestIndex
-  }
-  // True when the leading "add substance" tile is the carousel item closest to center.
-  const isAddTileClosest = (carousel: HTMLDivElement) => {
-    const addEl = carousel.querySelector<HTMLElement>('[data-vial-add]')
-    if (!addEl) return false
-    const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
-    const addDistance = Math.abs(addEl.offsetLeft + addEl.offsetWidth / 2 - carouselCenter)
-    let closestPeptideDistance = Number.POSITIVE_INFINITY
-    for (const item of carousel.querySelectorAll<HTMLElement>('[data-vial-index]')) {
-      const distance = Math.abs(item.offsetLeft + item.offsetWidth / 2 - carouselCenter)
-      if (distance < closestPeptideDistance) closestPeptideDistance = distance
-    }
-    return addDistance < closestPeptideDistance
+    return closestSlot
   }
   const handleVialCarouselScroll = (e: ReactUIEvent<HTMLDivElement>) => {
     const carousel = vialCarouselRef.current
@@ -2099,8 +2097,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
     vialScrollFrameRef.current = window.requestAnimationFrame(() => {
-      const closestIndex = getClosestVialIndex(carousel)
-      const next = stagePeptides[closestIndex]
+      const closestSlot = getClosestSlot(carousel)
+      const next = stagePeptides[closestSlot]
       if (next && next.id !== activePeptideId) {
         // Ein Klick je Eintrag, den das Karussell passiert — wie am Rad einer
         // Uhr. Hier und nirgends sonst: jede Auswahl, ob Wisch, Punkt, Pfeil
@@ -2109,10 +2107,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         void hapticTick()
         setActivePeptideId(next.id)
       }
-      if (vialTargetIndexRef.current === closestIndex) {
-        vialTargetIndexRef.current = null
-      }
-      setAddTileActive(isAddTileClosest(carousel))
+      const target = vialTargetIndexRef.current
+      if (target === closestSlot) vialTargetIndexRef.current = null
+      // Waehrend einer gezielten Fahrt gilt das Ziel, nicht der
+      // Zwischenstand: sonst flackert die Markierung der Kachel, und ein
+      // zweiter Pfeildruck rechnete vom falschen Platz aus.
+      setAddTileActive(target !== null && target !== closestSlot ? target === ADD_SLOT : closestSlot === ADD_SLOT)
       vialScrollFrameRef.current = null
     })
   }
@@ -2120,15 +2120,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const carousel = vialCarouselRef.current
     if (!carousel) return
 
-    selectPeptideIndex(getClosestVialIndex(carousel))
-  }
-  const selectAddTile = () => {
-    vialTargetIndexRef.current = null
-    setAddTileActive(true)
-    vialCarouselRef.current
-      ?.querySelector<HTMLElement>('[data-vial-add]')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    window.requestAnimationFrame(updateVialFocus)
+    selectSlot(getClosestSlot(carousel))
   }
   /**
    * Pfeile und Rad laufen im Kreis — und die „Neu"-Kachel gehoert dazu. Sie
@@ -2138,13 +2130,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const selectPeptideOffset = (offset: number) => {
     if (stagePeptides.length === 0) return
     const plaetze = stagePeptides.length + 1
-    const jetzt = addTileActive && vialTargetIndexRef.current === null
-      ? -1
-      : vialTargetIndexRef.current ?? activeIndex
-    const naechster = ((jetzt + 1 + offset) % plaetze + plaetze) % plaetze - 1
+    const jetzt = vialTargetIndexRef.current ?? currentSlot
     pushVialSlosh(offset > 0 ? 1 : -1)
-    if (naechster === -1) selectAddTile()
-    else selectPeptideIndex(naechster)
+    selectSlot(((jetzt + 1 + offset) % plaetze + plaetze) % plaetze - 1)
   }
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialTargetIndexRef.current = null
@@ -2196,7 +2184,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
   const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
-    if (stagePeptides.length === 0 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+    if (stagePeptides.length <= 1 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
     e.preventDefault()
     if (vialWheelCooldownRef.current !== null) return
 
@@ -2215,8 +2203,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    */
   const handleVialCarouselItemClick = (index: number) => {
     if (vialSuppressClickRef.current) return
-    if (index !== activeIndex) {
-      pushVialSlosh(index > activeIndex ? 1 : -1)
+    if (index !== currentSlot) {
+      pushVialSlosh(index > currentSlot ? 1 : -1)
       selectPeptideIndex(index)
       return
     }
@@ -2238,7 +2226,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const handleVialCarouselItemKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
     if (e.key !== 'Enter' && e.key !== ' ') return
     e.preventDefault()
-    if (index !== activeIndex) pushVialSlosh(index > activeIndex ? 1 : -1)
+    if (index !== currentSlot) pushVialSlosh(index > currentSlot ? 1 : -1)
     selectPeptideIndex(index)
   }
 
@@ -2900,7 +2888,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     />
                   </div>
                   {stagePeptides.map((p, index) => {
-                    const isActive = p.id === activePeptide.id
+                    // Steht die Kachel in der Mitte, ist keine Substanz aktiv.
+                    const isActive = !addTileActive && p.id === activePeptide.id
                     const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
                     // Only forms whose fill level says something show it. A
@@ -3026,10 +3015,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         aria-label={String(t('my_stack_go_to_item', { defaultValue: 'Zu {{name}}', name: p.name }))}
                         aria-current={aktuell || undefined}
                         data-vial-dot={index}
-                        className="-my-[7px] flex h-6 min-w-5 items-center justify-center rounded-full px-[5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                        className="group -my-[7px] flex h-6 min-w-5 items-center justify-center rounded-full px-[5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                       >
                         <span className={`h-2.5 rounded-full transition-all duration-300 ${
-                          aktuell ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700'
+                          aktuell ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 group-hover:bg-slate-500'
                         }`} />
                       </button>
                     )

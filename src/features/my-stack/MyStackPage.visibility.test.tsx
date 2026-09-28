@@ -541,7 +541,15 @@ describe('MyStackPage non-vial visibility', () => {
     expect(plus.getAttribute('aria-current')).toBe('true')
     expect(document.querySelector('[data-vial-dot="0"]')?.hasAttribute('aria-current')).toBe(false)
 
-    // Und vorwärts wieder zur ersten.
+    // Steht die Kachel in der Mitte, ist die erste Substanz nur ein Nachbar:
+    // ein Tipp holt sie in die Mitte, statt gleich ihr Vollbild zu öffnen.
+    fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
+    expect(screen.queryByRole('dialog', { name: 'Existing Premium Vial' })).toBeNull()
+    expect(document.querySelector('[data-vial-dot="0"]')?.getAttribute('aria-current')).toBe('true')
+
+    // Über das „+" wieder zur Kachel, über den Punkt wieder zurück.
+    fireEvent.click(plus)
+    expect(plus.getAttribute('aria-current')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'my_stack_go_to_item' }))
     expect(document.querySelector('[data-vial-dot="0"]')?.getAttribute('aria-current')).toBe('true')
   })
