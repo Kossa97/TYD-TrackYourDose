@@ -1525,6 +1525,20 @@ main.flex-1 {
   }
 }
 
+/* iOS vergroessert die Seite, sobald ein Eingabefeld mit weniger als 16 px
+   Schrift den Fokus bekommt — und zoomt in der Home-Screen-App danach nicht
+   wieder heraus. Dann liegen Knoepfe (etwa das X der Suche) ausserhalb des
+   Bildes. Nur auf iOS (-webkit-touch-callout gibt es nur dort) und nur die
+   Schriftgroesse: 16 px sind die Grenze, unter der Safari zoomt.
+   !important, weil Utilities wie text-sm sonst gewinnen. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 /* Gesperrt, aber antippbar: sieht aus wie gesperrt, reagiert nicht auf Hover. */
 [aria-disabled="true"] { cursor: not-allowed; }
 

@@ -2603,6 +2603,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') closeSearch() }}
+                // Leer verlassen heisst: doch nicht suchen. Auf dem Handy gibt
+                // es kein Escape — ohne das bliebe nur das kleine X.
+                onBlur={() => { if (!search.trim()) closeSearch() }}
               />
             </div>
 
@@ -2630,6 +2633,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             {/* Lupe / Schließen */}
             <button
               type="button"
+              // Den Fokus im Suchfeld lassen: sonst schlosse es beim Antippen
+              // schon ueber onBlur, und der Klick hier oeffnete es gleich wieder.
+              onMouseDown={e => { if (searchOpen) e.preventDefault() }}
               onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
               aria-label={searchOpen ? t('close') : t('peptid_suchen')}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"

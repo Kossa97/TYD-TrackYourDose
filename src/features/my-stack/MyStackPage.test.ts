@@ -234,6 +234,15 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-position className="mb-2 mt-1')
   })
 
+  test('laesst iOS beim Tippen in ein Eingabefeld nicht hineinzoomen', () => {
+    // Unter 16 px Schrift zoomt Safari beim Fokus — in der Home-Screen-App
+    // bleibt die Seite danach vergroessert, und das X der Suche liegt
+    // ausserhalb des Bildes.
+    const css = readFileSync(join(process.cwd(), 'src/index.css'), 'utf8')
+    expect(css).toContain('@supports (-webkit-touch-callout: none)')
+    expect(css).toContain('font-size: max(16px, 1em) !important;')
+  })
+
   test('hält die Positionszeile gleich hoch — Punkte, Leiste oder nichts', () => {
     // Die Buehne darueber fuellt den Rest. War die Zeile mal 10 px (Punkte),
     // mal 4 px (Leiste), mal gar nicht da (ein Eintrag), wuchs und schrumpfte
