@@ -559,6 +559,45 @@ function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () =>
   )
 }
 
+// „Neue Substanz" im Karussell. Sie steht vor der ersten Substanz und ist
+// so gross wie die Objekte daneben — als kleines Kaestchen in einem Platz
+// fuer ein Vial sah man sie am Rand nicht, und niemand kam auf die Idee,
+// nach links zu wischen. Die Zeile unter der Karte ist dieselbe wie bei den
+// Objekten, damit alles auf einer Standlinie steht.
+function AddStageTile({ active, title, hint, onClick }: { active: boolean; title: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={title}
+      data-vial-add-tile
+      className="group flex h-full min-h-0 w-full flex-col items-center focus-visible:outline-none"
+    >
+      <span className="flex min-h-0 w-full flex-1 items-end justify-center">
+        {/* Volle Breite und ein Schimmer am Rand: steht die erste Substanz
+            in der Mitte, lugt von der Karte nur der rechte Rand herein. Der
+            muss auffallen, sonst weiss niemand, dass links noch etwas ist. */}
+        <span className={`flex h-[78%] w-full flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed px-5 text-center transition-[border-color,box-shadow] duration-300 group-focus-visible:border-cyan-300 ${
+          active
+            ? 'border-cyan-300/55 bg-[radial-gradient(ellipse_at_50%_40%,rgba(34,211,238,0.14),rgba(15,23,42,0.35)_70%)]'
+            : 'border-cyan-300/60 bg-cyan-400/[0.05] shadow-[0_0_28px_rgba(34,211,238,0.22)]'
+        }`}>
+          <span className={`flex h-16 w-16 items-center justify-center rounded-full border text-cyan-200 transition-all duration-500 ${
+            active
+              ? 'border-cyan-300/50 bg-cyan-300/15 shadow-[0_0_40px_rgba(34,211,238,0.28)]'
+              : 'border-cyan-300/25 bg-cyan-300/[0.06] shadow-[0_0_24px_rgba(34,211,238,0.12)]'
+          }`}>
+            <Plus size={30} strokeWidth={1.6} aria-hidden="true" />
+          </span>
+          <span className="text-lg font-bold leading-tight text-white">{title}</span>
+          <span className="text-sm leading-snug text-slate-400">{hint}</span>
+        </span>
+      </span>
+      <span aria-hidden="true" className="mt-1 shrink-0 text-xs">{'\u00a0'}</span>
+    </button>
+  )
+}
+
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 
 interface MyStackPageProps {
@@ -2083,12 +2122,29 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
     selectPeptideIndex(getClosestVialIndex(carousel))
   }
+  const selectAddTile = () => {
+    vialTargetIndexRef.current = null
+    setAddTileActive(true)
+    vialCarouselRef.current
+      ?.querySelector<HTMLElement>('[data-vial-add]')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    window.requestAnimationFrame(updateVialFocus)
+  }
+  /**
+   * Pfeile und Rad laufen im Kreis — und die „Neu"-Kachel gehoert dazu. Sie
+   * steht vor der ersten Substanz; wer auf der ersten „zurueck" tippt, landet
+   * bei ihr, statt ungesehen ans Ende zu springen.
+   */
   const selectPeptideOffset = (offset: number) => {
     if (stagePeptides.length === 0) return
-    const baseIndex = vialTargetIndexRef.current ?? activeIndex
-    const nextIndex = (baseIndex + offset + stagePeptides.length) % stagePeptides.length
+    const plaetze = stagePeptides.length + 1
+    const jetzt = addTileActive && vialTargetIndexRef.current === null
+      ? -1
+      : vialTargetIndexRef.current ?? activeIndex
+    const naechster = ((jetzt + 1 + offset) % plaetze + plaetze) % plaetze - 1
     pushVialSlosh(offset > 0 ? 1 : -1)
-    selectPeptideIndex(nextIndex)
+    if (naechster === -1) selectAddTile()
+    else selectPeptideIndex(naechster)
   }
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialTargetIndexRef.current = null
@@ -2140,7 +2196,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
   const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
-    if (stagePeptides.length <= 1 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+    if (stagePeptides.length === 0 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
     e.preventDefault()
     if (vialWheelCooldownRef.current !== null) return
 
@@ -2728,7 +2784,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   >
                     <ChevronLeft size={18} />
                   </button>
-                  {addTileActive ? <div aria-hidden /> : (() => {
+                  {addTileActive ? (
+                    <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-xs font-semibold text-cyan-200">
+                      {t('neues_peptid_title')}
+                    </span>
+                  ) : (() => {
                     const days = expiryDaysLeft(activePeptide)
                     const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     const expiryLabel = days === null
@@ -2819,15 +2879,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom items-end shrink-0 rounded-2xl px-2 py-2 ${
+                    // Wie ein Nachbar-Objekt gedimmt, nicht staerker: der Rand
+                    // der Karte soll links hereinlugen und zeigen, dass dort
+                    // noch etwas steht.
+                    className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                    } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
+                    } ${addTileActive ? 'scale-100' : 'scale-[0.88] opacity-65'}`}
                     style={{ width: vialCarouselItemWidth }}
                   >
-                    <AddVialTile
+                    <AddStageTile
                       active={addTileActive}
-                      onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
-                      label={t('neues_peptid_title')}
+                      title={String(t('neues_peptid_title'))}
+                      hint={String(t('my_stack_add_tile_hint', { defaultValue: 'Peptid, Medikament, Hormon, Supplement …' }))}
+                      onClick={() => {
+                        if (vialSuppressClickRef.current) return
+                        // Erst holen, dann tippen — wie bei den Objekten.
+                        if (addTileActive) handleNewPeptide()
+                        else selectAddTile()
+                      }}
                     />
                   </div>
                   {stagePeptides.map((p, index) => {
@@ -2922,37 +2991,59 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
                 {/* Wo bin ich. Bei 70 % Breite sind die Nachbarn nur noch
                     angeschnitten — ohne diese Zeile wuesste niemand, ob nach
-                    dem dritten Wisch noch fuenf kommen oder einer. Bis zu
-                    sieben Eintraege als Punkte zum Antippen, darueber eine
+                    dem dritten Wisch noch fuenf kommen oder einer. Vorn steht
+                    ein „+" fuer die „Neu"-Kachel: sie liegt links von der
+                    ersten Substanz, und ohne diesen Hinweis sucht sie dort
+                    niemand. Bis zu sieben Substanzen als Punkte, darueber eine
                     Leiste, weil fuenfzehn Punkte niemand mehr zaehlt.
-                    Die Zeile ist immer gleich hoch (h-2.5, so hoch wie ein
-                    Punkt) und steht auch bei nur einem Eintrag leer da:
-                    Punkte, Leiste oder nichts duerfen die Buehne darueber
-                    nicht groesser oder kleiner machen. */}
-                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center gap-1.5" aria-hidden={stagePeptides.length <= 1 || undefined}>
-                  {stagePeptides.length > 1 && (stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => scrollToPeptideIndex(index)}
-                      aria-label={p.name}
-                      aria-current={index === activeIndex}
-                      data-vial-dot={index}
-                      className={`h-2.5 rounded-full transition-all duration-300 ${
-                        index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
-                      }`}
-                    />
-                  )) : (
-                    <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
+                    Die Zeile ist immer gleich hoch (h-2.5): Punkte, Leiste
+                    oder „+" duerfen die Buehne darueber nicht groesser oder
+                    kleiner machen. Die Knoepfe sind 24 px hoch und ragen per
+                    negativem Rand ueber die Zeile hinaus — gross genug zum
+                    Treffen, ohne die Zeile zu strecken. */}
+                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={selectAddTile}
+                    aria-label={String(t('neues_peptid_title'))}
+                    aria-current={addTileActive || undefined}
+                    data-vial-add-dot
+                    className="-my-[7px] flex h-6 min-w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                  >
+                    <span className={`flex h-4 w-4 items-center justify-center rounded-full transition-colors duration-300 ${
+                      addTileActive ? 'bg-cyan-300 text-slate-950' : 'bg-cyan-300/15 text-cyan-200'
+                    }`}>
+                      <Plus size={11} strokeWidth={2.6} aria-hidden="true" />
+                    </span>
+                  </button>
+                  {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => {
+                    const aktuell = !addTileActive && index === activeIndex
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => selectPeptideIndex(index)}
+                        aria-label={String(t('my_stack_go_to_item', { defaultValue: 'Zu {{name}}', name: p.name }))}
+                        aria-current={aktuell || undefined}
+                        data-vial-dot={index}
+                        className="-my-[7px] flex h-6 min-w-5 items-center justify-center rounded-full px-[5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                      >
+                        <span className={`h-2.5 rounded-full transition-all duration-300 ${
+                          aktuell ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700'
+                        }`} />
+                      </button>
+                    )
+                  }) : (
+                    <div className="ml-1.5 h-1 w-24 overflow-hidden rounded-full bg-slate-800">
                       <div
-                        className="h-full rounded-full bg-cyan-300 transition-all duration-300"
+                        className={`h-full rounded-full transition-all duration-300 ${addTileActive ? 'bg-slate-600' : 'bg-cyan-300'}`}
                         style={{
                           width: `${100 / stagePeptides.length}%`,
                           marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
                         }}
                       />
                     </div>
-                  ))}
+                  )}
                 </div>
 
 

@@ -258,7 +258,8 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-add-slot')
     // Dieselbe Höhe wie die Standplätze der Objekte, damit die Kachel auf
     // derselben Linie steht statt daneben zu schweben.
-    expect(text).toContain('flex h-full min-h-0 origin-bottom items-end')
+    expect(text).toContain('data-vial-add\n                    data-vial-add-slot')
+    expect(text).toContain("className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2")
 
     expect(text).toContain('flex items-center')
   })

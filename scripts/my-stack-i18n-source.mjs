@@ -521,6 +521,8 @@ export const MY_STACK_EN = {
   my_stack_tab_locked: 'No substances under “{{category}}” yet.',
   my_stack_plan_remove_locked: 'This step carries the plan and can’t be removed.',
   my_stack_open_new_locked: 'Nothing unopened left in stock.',
+  my_stack_add_tile_hint: 'Peptide, medication, hormone, supplement …',
+  my_stack_go_to_item: 'Go to {{name}}',
 }
 
 export const MY_STACK_DE = {
@@ -1045,6 +1047,8 @@ export const MY_STACK_DE = {
   my_stack_tab_locked: 'Noch keine Substanz unter „{{category}}“.',
   my_stack_plan_remove_locked: 'Diese Stufe trägt den Plan und lässt sich nicht entfernen.',
   my_stack_open_new_locked: 'Nichts Ungeöffnetes mehr im Bestand.',
+  my_stack_add_tile_hint: 'Peptid, Medikament, Hormon, Supplement …',
+  my_stack_go_to_item: 'Zu {{name}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

@@ -529,6 +529,23 @@ describe('MyStackPage non-vial visibility', () => {
     }
   })
 
+  it('macht die „Neu"-Kachel in der Positionszeile und mit dem Zurück-Pfeil erreichbar', async () => {
+    await renderPage()
+    const plus = document.querySelector<HTMLElement>('[data-vial-add-dot]')!
+    expect(plus).not.toBeNull()
+    expect(plus.hasAttribute('aria-current')).toBe(false)
+    expect(document.querySelector('[data-vial-dot="0"]')?.getAttribute('aria-current')).toBe('true')
+
+    // Von der ersten Substanz zurück landet man bei der Kachel, nicht am Ende.
+    fireEvent.click(screen.getByRole('button', { name: 'Vorheriges Peptid' }))
+    expect(plus.getAttribute('aria-current')).toBe('true')
+    expect(document.querySelector('[data-vial-dot="0"]')?.hasAttribute('aria-current')).toBe(false)
+
+    // Und vorwärts wieder zur ersten.
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_go_to_item' }))
+    expect(document.querySelector('[data-vial-dot="0"]')?.getAttribute('aria-current')).toBe('true')
+  })
+
   it('keeps vertical scrolling available in list mode', async () => {
     localStorage.setItem('tyd_peptide_view', 'list')
     await renderPage()
