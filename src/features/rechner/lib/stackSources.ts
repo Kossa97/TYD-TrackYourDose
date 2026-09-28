@@ -34,7 +34,7 @@ function calculatorAmount(
 
 export function getCalculatorSources(items: LoadedStackItem[]): CalculatorSource[] {
   return items.flatMap(item => {
-    if (item.archived || item.configuration_status !== 'complete') return []
+    if (item.archived) return []
 
     const legacy = item as LoadedStackItem & LegacyFields
     const legacyAmount = calculatorAmount(legacy.vial_amount_mg, legacy.vial_amount_unit ?? 'mg')

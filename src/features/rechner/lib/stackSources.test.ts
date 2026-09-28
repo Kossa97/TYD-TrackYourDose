@@ -181,11 +181,11 @@ describe('getCalculatorSources', () => {
     expect(getCalculatorSources([item({ reconstitution_ml: value })])[0].diluentMl).toBeNull()
   })
 
-  it('excludes archived, review-required and non-calculable records', () => {
+  it('includes calculable review records and excludes archived or non-calculable records', () => {
     expect(getCalculatorSources([
       item({ archived: true }), item({ configuration_status: 'needs_review' }),
       item({ dosage_form: 'tablet' }), item({ dosage_form: 'ampoule' }),
-    ])).toEqual([])
+    ])).toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null }])
   })
 
   it.each(['with_amount', 'intake_only'] as const)('uses an available stored strength at tracking level %s', trackingLevel => {

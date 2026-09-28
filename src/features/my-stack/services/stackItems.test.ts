@@ -742,9 +742,13 @@ describe('stack item service', () => {
       }),
     }
 
-    await expect(loadStackItems(client, false, { includeInventory: false })).resolves.toEqual([loadedItem])
+    await expect(loadStackItems(client, false, {
+      includeInventory: false,
+      includeIngredientCatalog: false,
+    })).resolves.toEqual([loadedItem])
     expect(selectedColumns).toContain('stack_item_ingredients')
     expect(selectedColumns).not.toContain('stack_item_inventory')
+    expect(selectedColumns).not.toContain('substance_catalog')
   })
 
   it.each([

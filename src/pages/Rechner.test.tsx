@@ -97,6 +97,10 @@ it('offers saved ampoules and IU vials from My Stack as calculator sources', asy
   fireEvent.change(picker, { target: { value: iuVial.value } })
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('5000')
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('iu')
+  expect(mocks.load).toHaveBeenCalledWith(expect.anything(), false, {
+    includeInventory: false,
+    includeIngredientCatalog: false,
+  })
 })
 
 it('explains stack loading failures and allows retry while manual calculation works', async () => {
