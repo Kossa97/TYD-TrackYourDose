@@ -1,0 +1,57 @@
+import { describe, expect, it } from 'vitest'
+import type { ErrorEvent } from '@sentry/react'
+import { initMonitoring, reportError, scrubBreadcrumb, scrubEvent, scrubMessage, scrubUrl } from './monitoring'
+
+describe('Monitoring — nur Bekanntes geht raus', () => {
+  it('lässt nur Meldungen mit bekanntem, datenfreiem Wortlaut durch', () => {
+    expect(scrubMessage('Invalid stack item setup draft: plan.method, inventory')).toBe('Invalid stack item setup draft: plan.method, inventory')
+    expect(scrubMessage('Failed to fetch')).toBe('Failed to fetch')
+    expect(scrubMessage("Cannot read properties of undefined (reading 'id')")).toBe("Cannot read properties of undefined (reading 'id')")
+    // Alles Unbekannte — auch Postgres-Meldungen mit Zeilen oder Namen — nicht.
+    expect(scrubMessage('new row violates check constraint. Failing row contains (a1, Testosteron, 250)')).toBe('[entfernt]')
+    expect(scrubMessage('Non-Error promise rejection captured with value: BPC-157 250 mcg')).toBe('[entfernt]')
+  })
+
+  it('kürzt URLs auf den Pfad ohne Parameter, IDs und Storage-Objekte', () => {
+    expect(scrubUrl('https://x.supabase.co/rest/v1/dose_logs?select=dose&user_id=eq.123')).toBe('https://x.supabase.co/rest/v1/dose_logs')
+    expect(scrubUrl('https://app/my-stack/0b5a2c1e-1111-4a2b-9c3d-123456789abc#x')).toBe('https://app/my-stack/:id')
+    expect(scrubUrl('https://x.supabase.co/storage/v1/object/batch-files/0b5a2c1e-1111-4a2b-9c3d-123456789abc/171.pdf'))
+      .toBe('https://x.supabase.co/storage/v1/object/batch-files/…')
+    expect(scrubUrl('https://x.supabase.co/storage/v1/object/public/batch-files/u/171.pdf'))
+      .toBe('https://x.supabase.co/storage/v1/object/public/batch-files/…')
+  })
+
+  it('behält nur Seitenwechsel und Netzwerkaufrufe — keine Klicks, keine Konsole', () => {
+    expect(scrubBreadcrumb({ category: 'ui.click', message: 'svg[aria-label="BPC-157, 5 mg, 80%"]' })).toBeNull()
+    expect(scrubBreadcrumb({ category: 'ui.input', message: 'input#dose' })).toBeNull()
+    expect(scrubBreadcrumb({ category: 'console', message: '{"dose": 250}' })).toBeNull()
+    expect(scrubBreadcrumb({ category: 'fetch', data: { url: 'https://x/rest/v1/stack_items?user_id=eq.1', method: 'GET', status_code: 200, request_body_size: 10 } }))
+      .toMatchObject({ category: 'fetch', data: { url: 'https://x/rest/v1/stack_items', method: 'GET', status_code: 200 } })
+    expect(scrubBreadcrumb({ category: 'navigation', data: { from: '/a?x=1', to: '/b#y' } }))
+      .toMatchObject({ data: { from: '/a', to: '/b' } })
+  })
+
+  it('räumt ein ganzes Ereignis auf', () => {
+    const event = scrubEvent({
+      type: undefined,
+      user: { id: 'u1', email: 'a@b.c' },
+      extra: { draft: { dose: 250 } },
+      contexts: { state: { dose: 250 } },
+      request: { url: 'https://app/my-stack?x=1', data: '{"dose":250}', cookies: { a: 'b' }, headers: { authorization: 'x' } },
+      exception: { values: [{ type: 'Error', value: 'Failing row contains (1, 2)' }] },
+      breadcrumbs: [{ category: 'ui.click', message: 'x' }, { category: 'navigation', data: { from: '/a?x=1', to: '/b' } }],
+    } as unknown as ErrorEvent)
+
+    expect(event.user).toBeUndefined()
+    expect(event.extra).toBeUndefined()
+    expect(event.contexts).toBeUndefined()
+    expect(event.request).toEqual({ url: 'https://app/my-stack' })
+    expect(event.exception?.values?.[0]).toMatchObject({ type: 'Error', value: '[entfernt]' })
+    expect(event.breadcrumbs).toHaveLength(1)
+  })
+
+  it('lädt ohne DSN nichts und meldet nichts', async () => {
+    expect(await initMonitoring('')).toBe(false)
+    expect(() => reportError(new Error('x'), 'test')).not.toThrow()
+  })
+})

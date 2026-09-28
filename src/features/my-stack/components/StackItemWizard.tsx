@@ -61,6 +61,7 @@ import { ProductInventorySection } from './ProductInventorySection'
 import { StrengthEditor } from './StrengthEditor'
 import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
+import { reportError } from '../../../lib/monitoring'
 import { gueltigeFluessigkeit, gueltigeHaltbarkeit } from '../lib/bestand'
 
 /**
@@ -899,6 +900,7 @@ export function StackItemWizard({
       // kleine technische Zeile. Sonst bleibt nur „konnte nicht gespeichert
       // werden", und niemand kann sagen, woran es lag.
       console.error('[StackItemWizard] Speichern fehlgeschlagen', error)
+      reportError(error, planEditContext ? 'stack-item-wizard.plan-change' : 'stack-item-wizard.save')
       setSaveError(String(t('my_stack_save_error', {
         defaultValue: 'Speichern ist fehlgeschlagen. Deine Eingaben bleiben erhalten. Bitte versuche es erneut.',
       })))

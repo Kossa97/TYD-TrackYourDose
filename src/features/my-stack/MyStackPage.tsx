@@ -50,6 +50,7 @@ import { cyclePeriod } from './lib/planCard'
 import { getRandomStackItemColor } from './lib/colors'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { FEATURES } from '../../config/features'
+import { reportError } from '../../lib/monitoring'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
 import { orderTimelines } from './lib/planLabels'
@@ -546,7 +547,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       loadCycles(),
       ...(FEATURES.planTimelineV2 ? [loadTimelines(true)] : []),
     ])
-    if (neuGeladen.some(ergebnis => ergebnis.status === 'rejected')) toast.error(t('error'))
+    const nichtGeladen = neuGeladen.filter((ergebnis): ergebnis is PromiseRejectedResult => ergebnis.status === 'rejected')
+    if (nichtGeladen.length > 0) {
+      toast.error(t('error'))
+      nichtGeladen.forEach(ergebnis => reportError(ergebnis.reason, 'my-stack.reload-after-save'))
+    }
     setExpandedId(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }

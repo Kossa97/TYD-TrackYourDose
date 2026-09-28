@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   return {
   define: {
     'import.meta.env.VITE_PUBLIC_SITE_URL': JSON.stringify(env.VITE_PUBLIC_SITE_URL || (publicHost ? `https://${publicHost}` : '')),
+    // Fuer Fehlerberichte: production/preview/development und die Commit-Kennung.
+    'import.meta.env.VITE_DEPLOY_ENV': JSON.stringify(env.VERCEL_ENV || ''),
+    'import.meta.env.VITE_RELEASE': JSON.stringify(env.VERCEL_GIT_COMMIT_SHA || ''),
   },
   server: {
     proxy: {

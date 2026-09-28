@@ -4,6 +4,7 @@ import './index.css'
 import { applyDirection, i18nReady } from './i18n'
 import App from './App.tsx'
 import { installDenyFeedback } from './lib/denyFeedback'
+import { initMonitoring, reactRootErrorOptions } from './lib/monitoring'
 const DEV_SW_RESET_KEY = 'tyd_dev_sw_reset'
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
@@ -35,9 +36,12 @@ applyDirection(savedLang)
 // Gesperrte Knoepfe (aria-disabled) antworten app-weit mit rotem Wackelrahmen.
 installDenyFeedback()
 
+// Fehler-Monitoring (Sentry) — nur mit VITE_SENTRY_DSN, siehe lib/monitoring.ts.
+void initMonitoring()
+
 i18nReady.finally(() => {
   const root = document.getElementById('root')!
   const app = <StrictMode><App /></StrictMode>
-  if (root.hasChildNodes()) hydrateRoot(root, app)
-  else createRoot(root).render(app)
+  if (root.hasChildNodes()) hydrateRoot(root, app, reactRootErrorOptions)
+  else createRoot(root, reactRootErrorOptions).render(app)
 })
