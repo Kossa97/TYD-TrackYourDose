@@ -80,6 +80,25 @@ it('imports concentration references without inventing container contents and cl
   expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('')
 })
 
+it('offers saved ampoules and IU vials from My Stack as calculator sources', async () => {
+  mocks.load.mockResolvedValue([
+    { id: 'ampoule', display_name: 'Testosteron', category: 'hormone', dosage_form: 'ampoule', archived: false, configuration_status: 'complete', tracking_level: 'complete', ingredients: [{ id: 'testosterone', custom_name: '', amount_value: 250, amount_unit: 'mg', basis_value: 1, basis_unit: 'ml', position: 0, substance_catalog: null }] },
+    { id: 'iu-vial', display_name: 'HCG', category: 'hormone', dosage_form: 'vial', archived: false, configuration_status: 'complete', tracking_level: 'complete', ingredients: [{ id: 'hcg', custom_name: '', amount_value: 5000, amount_unit: 'IU', basis_value: 1, basis_unit: 'vial', position: 0, substance_catalog: null }] },
+  ])
+  setup()
+
+  const picker = await screen.findByLabelText('Werte aus Mein Stack')
+  const ampoule = within(picker).getByRole('option', { name: 'Testosteron' }) as HTMLOptionElement
+  fireEvent.change(picker, { target: { value: ampoule.value } })
+  expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('250')
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('mg')
+
+  const iuVial = within(picker).getByRole('option', { name: 'HCG' }) as HTMLOptionElement
+  fireEvent.change(picker, { target: { value: iuVial.value } })
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('5000')
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('iu')
+})
+
 it('explains stack loading failures and allows retry while manual calculation works', async () => {
   mocks.load.mockRejectedValueOnce(new Error('network')).mockResolvedValue([])
   setup()

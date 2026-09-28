@@ -3,7 +3,8 @@ import type { LoadedStackItem } from '../../my-stack/services/stackItems'
 export interface CalculatorSource {
   id: string
   label: string
-  vialAmountMg: number
+  amount: number
+  unit: 'mg' | 'iu'
   diluentMl: number | null
   isReference?: true
 }
@@ -18,53 +19,57 @@ function positive(value: number | null | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0
 }
 
-function massInMg(value: number | null | undefined, unit: string | null | undefined): number | null {
+function calculatorAmount(
+  value: number | null | undefined,
+  unit: string | null | undefined,
+): Pick<CalculatorSource, 'amount' | 'unit'> | null {
   if (!positive(value)) return null
   const normalizedUnit = unit?.trim().toLowerCase()
+  if (normalizedUnit === 'iu') return { amount: value, unit: 'iu' }
   const factor = normalizedUnit === 'mg' ? 1 : normalizedUnit === 'mcg' ? 0.001 : normalizedUnit === 'g' ? 1000 : null
   if (factor === null) return null
   const mg = value * factor
-  return positive(mg) ? mg : null
+  return positive(mg) ? { amount: mg, unit: 'mg' } : null
 }
 
 export function getCalculatorSources(items: LoadedStackItem[]): CalculatorSource[] {
   return items.flatMap(item => {
-    if (item.archived || item.configuration_status !== 'complete'
-      || item.tracking_level !== 'complete' || item.dosage_form !== 'vial') return []
+    if (item.archived || item.configuration_status !== 'complete') return []
 
     const legacy = item as LoadedStackItem & LegacyFields
-    const legacyMg = massInMg(legacy.vial_amount_mg, legacy.vial_amount_unit ?? 'mg')
+    const legacyAmount = calculatorAmount(legacy.vial_amount_mg, legacy.vial_amount_unit ?? 'mg')
     const legacyMl = positive(legacy.reconstitution_ml) ? legacy.reconstitution_ml : null
     const inventory = item.inventory
     const mixedMl = inventory?.enabled && inventory.package_unit === 'vial' && positive(inventory.reconstitution_ml)
       ? inventory.reconstitution_ml : legacyMl
     if (item.ingredients.length === 0) {
-      return legacyMg === null ? [] : [{
-        id: item.id, label: item.display_name, vialAmountMg: legacyMg, diluentMl: mixedMl,
+      return item.dosage_form !== 'vial' || legacyAmount === null ? [] : [{
+        id: item.id, label: item.display_name, ...legacyAmount, diluentMl: mixedMl,
       }]
     }
 
     const isBlend = item.ingredients.length > 1
     return item.ingredients.flatMap((ingredient, index) => {
-      const mg = massInMg(ingredient.amount_value, ingredient.amount_unit)
-      if (mg === null) return []
+      const activeAmount = calculatorAmount(ingredient.amount_value, ingredient.amount_unit)
+      if (activeAmount === null) return []
       const basisUnit = ingredient.basis_unit?.trim().toLowerCase()
       const basis = ingredient.basis_value
-      const unsetPowderVolume = basisUnit === 'ml' && basis == null
+      const unsetPowderVolume = item.dosage_form === 'vial' && basisUnit === 'ml' && basis == null
         && (item.category === 'peptide' || item.category === 'other')
       if (!unsetPowderVolume && !positive(basis)) return []
-      if (basisUnit !== 'vial' && basisUnit !== 'ml') return []
+      if (basisUnit !== 'ml' && !(item.dosage_form === 'vial' && basisUnit === 'vial')) return []
 
-      const vialAmountMg = basisUnit === 'vial' ? mg / basis! : mg
+      const amount = basisUnit === 'vial' ? activeAmount.amount / basis! : activeAmount.amount
       const diluentMl = basisUnit === 'ml' && !unsetPowderVolume ? basis! : mixedMl
-      if (!positive(vialAmountMg)) return []
+      if (!positive(amount)) return []
 
       const ingredientName = ingredient.custom_name.trim()
         || ingredient.substance_catalog?.canonical_name || String(index + 1)
       return [{
         id: isBlend ? `${item.id}:${ingredient.id ?? index}` : item.id,
         label: isBlend ? `${item.display_name} · ${ingredientName}` : item.display_name,
-        vialAmountMg,
+        amount,
+        unit: activeAmount.unit,
         diluentMl,
         ...(basisUnit === 'ml' && !unsetPowderVolume ? { isReference: true as const } : {}),
       }]

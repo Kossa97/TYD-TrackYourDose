@@ -35,24 +35,41 @@ function inventory(overrides: Partial<StackItemInventory> = {}): StackItemInvent
 describe('getCalculatorSources', () => {
   it('imports a new wizard vial without legacy amount or assumed diluent', () => {
     expect(getCalculatorSources([item()])).toEqual([
-      { id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: null },
+      { id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null },
+    ])
+  })
+
+  it('imports calculable liquid strengths from ampoules and IU vials', () => {
+    expect(getCalculatorSources([
+      item({
+        id: 'ampoule', dosage_form: 'ampoule',
+        ingredients: [ingredient({ amount_value: 250, basis_value: 1, basis_unit: 'ml' })],
+      }),
+      item({
+        id: 'iu-vial',
+        ingredients: [ingredient({ amount_value: 5000, amount_unit: 'IU', basis_value: 1, basis_unit: 'vial' })],
+      }),
+    ])).toEqual([
+      { id: 'ampoule', label: 'Product', amount: 250, unit: 'mg', diluentMl: 1, isReference: true },
+      { id: 'iu-vial', label: 'Product', amount: 5000, unit: 'iu', diluentMl: null },
     ])
   })
 
   it.each([['mcg', 5000, 5], ['mg', 5, 5], ['g', 0.005, 5]])(
     'normalizes structured %s amounts to mg', (unit, value, expected) => {
-      expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_unit: unit, amount_value: value })] })])[0].vialAmountMg).toBe(expected)
+      expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_unit: unit, amount_value: value })] })])[0])
+        .toMatchObject({ amount: expected, unit: 'mg' })
     },
   )
 
   it('normalizes a strength given for multiple vials to one vial', () => {
     expect(getCalculatorSources([item({ ingredients: [ingredient({ basis_value: 2, basis_unit: 'Vial' })], reconstitution_ml: 3 })])[0])
-      .toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 5, diluentMl: 3 })
+      .toEqual({ id: 'item-1', label: 'Product', amount: 5, unit: 'mg', diluentMl: 3 })
   })
 
   it('imports a mass per volume strength as a concentration-equivalent reference', () => {
     expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_value: 20, basis_value: 2, basis_unit: 'mL' })], reconstitution_ml: 5 })])[0])
-      .toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 20, diluentMl: 2, isReference: true })
+      .toEqual({ id: 'item-1', label: 'Product', amount: 20, unit: 'mg', diluentMl: 2, isReference: true })
   })
 
   it('distinguishes a ready-made per-mL reference from a known full-vial amount', () => {
@@ -63,14 +80,14 @@ describe('getCalculatorSources', () => {
     const wholeVial = item({ id: 'whole', ingredients: [ingredient({ amount_value: 10, basis_value: 1, basis_unit: 'vial' })] })
 
     expect(getCalculatorSources([readySolution, wholeVial])).toEqual([
-      { id: 'ready', label: 'Product', vialAmountMg: 250, diluentMl: 1, isReference: true },
-      { id: 'whole', label: 'Product', vialAmountMg: 10, diluentMl: null },
+      { id: 'ready', label: 'Product', amount: 250, unit: 'mg', diluentMl: 1, isReference: true },
+      { id: 'whole', label: 'Product', amount: 10, unit: 'mg', diluentMl: null },
     ])
   })
 
   it('prefers current structured mass over frozen legacy mass', () => {
     expect(getCalculatorSources([item({ vial_amount_mg: 999, vial_amount_unit: 'mg' })]))
-      .toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: null }])
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null }])
   })
 
   it('prefers the current ready-solution reference over frozen legacy concentration', () => {
@@ -78,19 +95,19 @@ describe('getCalculatorSources', () => {
       category: 'hormone',
       ingredients: [ingredient({ amount_value: 10, basis_value: 2, basis_unit: 'ml' })],
       vial_amount_mg: 10, vial_amount_unit: 'mg', reconstitution_ml: 5,
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2, isReference: true }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: 2, isReference: true }])
   })
 
   it('prefers enabled vial inventory dilution over frozen legacy dilution', () => {
     expect(getCalculatorSources([item({ inventory: inventory(), reconstitution_ml: 2 })]))
-      .toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 1.5 }])
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: 1.5 }])
   })
 
   it('preserves a ready-solution reference when inventory also contains dilution', () => {
     expect(getCalculatorSources([item({
       category: 'hormone', inventory: inventory(),
       ingredients: [ingredient({ amount_value: 250, basis_value: 1, basis_unit: 'ml' })],
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 250, diluentMl: 1, isReference: true }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', amount: 250, unit: 'mg', diluentMl: 1, isReference: true }])
   })
 
   it.each([{ enabled: false }, { package_unit: 'ml' }])('ignores inapplicable inventory dilution %j', overrides => {
@@ -106,19 +123,19 @@ describe('getCalculatorSources', () => {
     expect(getCalculatorSources([item({
       ingredients: [ingredient({ amount_value: 10, basis_value: 2, basis_unit: 'ml' })],
       vial_amount_mg: 20, vial_amount_unit: 'mg', reconstitution_ml: 4,
-    })])[0]).toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2, isReference: true })
+    })])[0]).toEqual({ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: 2, isReference: true })
   })
 
   it('imports a powder vial whose mixing volume has not been entered', () => {
     expect(getCalculatorSources([item({ ingredients: [ingredient({ basis_value: null, basis_unit: 'ml' })] })])[0])
-      .toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: null })
+      .toEqual({ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null })
   })
 
   it.each(['peptide', 'other'] as const)('uses inventory dilution for a %s powder with unset volume basis', category => {
     expect(getCalculatorSources([item({
       category, inventory: inventory(),
       ingredients: [ingredient({ basis_value: null, basis_unit: 'ml' })],
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 1.5 }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: 1.5 }])
   })
 
   it('does not invent a ready-solution concentration from inventory dilution when its basis is absent', () => {
@@ -130,21 +147,23 @@ describe('getCalculatorSources', () => {
 
   it('imports a unit-aware legacy vial only when no structured ingredients exist', () => {
     expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: 5000, vial_amount_unit: 'mcg', reconstitution_ml: 2 })]))
-      .toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 5, diluentMl: 2 }])
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 5, unit: 'mg', diluentMl: 2 }])
   })
 
   it('uses current inventory dilution with a legacy-only mass', () => {
     expect(getCalculatorSources([item({
       ingredients: [], inventory: inventory(),
       vial_amount_mg: 5000, vial_amount_unit: 'mcg', reconstitution_ml: 2,
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 5, diluentMl: 1.5 }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', amount: 5, unit: 'mg', diluentMl: 1.5 }])
   })
 
   it('supports legacy records whose amount unit was not stored', () => {
-    expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: 5 })])[0].vialAmountMg).toBe(5)
+    expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: 5 })])[0])
+      .toMatchObject({ amount: 5, unit: 'mg' })
   })
 
-  it.each(['IU', '%'])('never falls back to legacy when structured %s is unsupported', unit => {
+  it('never falls back to legacy when the structured unit is unsupported', () => {
+    const unit = '%'
     expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_unit: unit })], vial_amount_mg: 5, vial_amount_unit: 'mg' })])).toEqual([])
   })
 
@@ -162,12 +181,16 @@ describe('getCalculatorSources', () => {
     expect(getCalculatorSources([item({ reconstitution_ml: value })])[0].diluentMl).toBeNull()
   })
 
-  it('excludes archived, incomplete, review-required and non-vial records', () => {
+  it('excludes archived, review-required and non-calculable records', () => {
     expect(getCalculatorSources([
       item({ archived: true }), item({ configuration_status: 'needs_review' }),
-      item({ tracking_level: 'with_amount' }), item({ tracking_level: 'intake_only' }),
       item({ dosage_form: 'tablet' }), item({ dosage_form: 'ampoule' }),
     ])).toEqual([])
+  })
+
+  it.each(['with_amount', 'intake_only'] as const)('uses an available stored strength at tracking level %s', trackingLevel => {
+    expect(getCalculatorSources([item({ tracking_level: trackingLevel })]))
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null }])
   })
 
   it('exposes each eligible blend ingredient with an explicit label and unique id', () => {
@@ -176,13 +199,15 @@ describe('getCalculatorSources', () => {
       ingredient({ id: 'second', custom_name: 'B', amount_value: 5, position: 1 }),
       ingredient({ id: 'third', custom_name: 'C', amount_unit: 'IU', position: 2 }),
     ] })])).toEqual([
-      { id: 'item-1:first', label: 'Product · A', vialAmountMg: 2, diluentMl: null },
-      { id: 'item-1:second', label: 'Product · B', vialAmountMg: 5, diluentMl: null },
+      { id: 'item-1:first', label: 'Product · A', amount: 2, unit: 'mg', diluentMl: null },
+      { id: 'item-1:second', label: 'Product · B', amount: 5, unit: 'mg', diluentMl: null },
+      { id: 'item-1:third', label: 'Product · C', amount: 10, unit: 'iu', diluentMl: null },
     ])
   })
 
-  it('rejects legacy IU and invalid legacy mass', () => {
-    expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: 10, vial_amount_unit: 'IU' })])).toEqual([])
+  it('imports legacy IU and rejects invalid legacy amounts', () => {
+    expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: 10, vial_amount_unit: 'IU' })]))
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 10, unit: 'iu', diluentMl: null }])
     expect(getCalculatorSources([item({ ingredients: [], vial_amount_mg: -1 })])).toEqual([])
   })
 })
