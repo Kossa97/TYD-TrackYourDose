@@ -6,8 +6,8 @@
 .rechner-page .rechner-segments button[aria-pressed="true"] { color: var(--accent); background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--border-strong); }
 .rechner-dose-pane, .rechner-units-pane { flex: 1; min-height: 0; }
 .rechner-units-pane { overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: 12px; }
-.rechner-workspace { height: 100%; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 224px; gap: 18px; direction: ltr; }
-.rechner-scroll-form { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; padding: 2px 8px 24px 2px; scroll-padding-block: 14px; }
+.rechner-workspace { height: 100%; min-height: 0; display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 18px; direction: ltr; }
+.rechner-scroll-form { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; padding: 2px 2px 24px 8px; scroll-padding-block: 14px; }
 .rechner-form-toolbar { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .rechner-card { border: 1px solid var(--border); border-radius: 22px; padding: 22px; background: var(--surface); box-shadow: var(--shadow-card); margin-bottom: 14px; min-width: 0; }
 .rechner-card h2 { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 750; line-height: 1.35; margin: 0 0 22px; }
@@ -73,8 +73,8 @@
 .rechner-summary dd { color: var(--text); text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0; }
 .rechner-disclaimer { text-align: center; padding: 12px 4px; }
 @media (max-width: 650px) {
-  .rechner-workspace { grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; }
-  .rechner-scroll-form { padding-right: 3px; }
+  .rechner-workspace { grid-template-columns: 104px minmax(0, 1fr); gap: 8px; }
+  .rechner-scroll-form { padding-left: 3px; }
   .rechner-card { padding: 14px 12px; border-radius: 17px; }
   .rechner-card h2 { font-size: 15px; gap: 8px; margin-bottom: 16px; }
   .rechner-card h2 > svg { display: none; }

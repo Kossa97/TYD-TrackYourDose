@@ -150,6 +150,10 @@ export function DoseCalculator() {
   ].join('\n') : ''
 
   return <div className="rechner-workspace">
+    <aside className="rechner-syringe-rail" aria-label={t('rechner_syringe_preview')}>
+      <SyringeScale drawUnits={result.drawUnits} capacityMl={capacityMl} capacityUnits={capacityUnits}
+        minorStep={scale.minorStep} majorStep={scale.majorStep} />
+    </aside>
     <form className="rechner-scroll-form" aria-label={t('rechner_inputs')} onSubmit={event => event.preventDefault()}>
       <div className="rechner-form-toolbar">
         <p className="rechner-muted">{t('rechner_live_hint')}</p>
@@ -254,9 +258,5 @@ export function DoseCalculator() {
       </section>
       <p className="rechner-muted rechner-disclaimer">{t('info_disclaimer')}</p>
     </form>
-    <aside className="rechner-syringe-rail" aria-label={t('rechner_syringe_preview')}>
-      <SyringeScale drawUnits={result.drawUnits} capacityMl={capacityMl} capacityUnits={capacityUnits}
-        minorStep={scale.minorStep} majorStep={scale.majorStep} />
-    </aside>
   </div>
 }
