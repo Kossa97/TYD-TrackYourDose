@@ -7,10 +7,10 @@ import { I18nextProvider, initReactI18next } from 'react-i18next'
 import de from '../i18n/locales/de.json'
 import { Rechner } from './Rechner'
 
-const mocks = vi.hoisted(() => ({ load: vi.fn(), user: { id: 'calculator-user' } }))
+const mocks = vi.hoisted(() => ({ load: vi.fn(), from: vi.fn(), user: { id: 'calculator-user' } }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }))
 vi.mock('../lib/supabase', () => ({ supabase: {
-  from: () => ({ select: () => ({ eq: () => ({ not: () => ({ order: () => Promise.resolve({ data: [] }) }) }) }) }),
+  from: mocks.from,
 } }))
 vi.mock('../features/my-stack/services/stackItems', () => ({ loadStackItems: mocks.load }))
 
@@ -97,10 +97,34 @@ it('offers saved ampoules and IU vials from My Stack as calculator sources', asy
   fireEvent.change(picker, { target: { value: iuVial.value } })
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('5000')
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('iu')
-  expect(mocks.load).toHaveBeenCalledWith(expect.anything(), false, {
-    includeInventory: false,
-    includeIngredientCatalog: false,
-  })
+})
+
+it('loads database-shaped catalog entries through the real service and autofills saved mixing volume', async () => {
+  const { loadStackItems } = await vi.importActual<typeof import('../features/my-stack/services/stackItems')>(
+    '../features/my-stack/services/stackItems',
+  )
+  mocks.load.mockImplementation(loadStackItems)
+  mocks.from.mockImplementation(() => ({
+    select: (columns: string) => ({ eq: () => ({ order: async () => ({ error: null, data: [{
+      id: 'catalog-vial', display_name: 'Gespeicherte Substanz', category: 'peptide',
+      dosage_form: 'vial', archived: false, configuration_status: 'complete',
+      reconstitution_ml: null,
+      ...(columns.includes('inventory:stack_item_inventory') ? {
+        inventory: { enabled: true, package_unit: 'vial', reconstitution_ml: 1.5 },
+      } : {}),
+      ingredients: [{ id: 'ingredient', custom_name: null, catalog_substance_id: 'catalog',
+        amount_value: 10, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial', position: 0 }],
+    }] }) }) }),
+  }))
+  setup()
+  const picker = await screen.findByLabelText('Werte aus Mein Stack')
+  fireEvent.change(picker, { target: { value: 'catalog-vial' } })
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('10')
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('mg')
+  expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('1.5')
+  enter('Gewünschte Menge', '1000')
+  expect(screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' }).textContent).toContain('0,15 mL')
 })
 
 it('explains stack loading failures and allows retry while manual calculation works', async () => {

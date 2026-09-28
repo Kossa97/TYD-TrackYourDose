@@ -34,12 +34,10 @@ export function DoseCalculator() {
   useEffect(() => {
     if (!user) return
     let active = true
-    loadStackItems(supabase as unknown as StackItemQueryClient, false, {
-      includeInventory: false,
-      includeIngredientCatalog: false,
-    }).then(items => {
+    loadStackItems(supabase as unknown as StackItemQueryClient, false).then(items => {
       if (active) setStack({ owner: user.id, attempt: reload, sources: getCalculatorSources(items), error: false })
-    }).catch(() => {
+    }).catch(error => {
+      console.error('[Rechner] Stack selection failed:', error)
       if (active) setStack({ owner: user.id, attempt: reload, sources: [], error: true })
     })
     return () => { active = false }

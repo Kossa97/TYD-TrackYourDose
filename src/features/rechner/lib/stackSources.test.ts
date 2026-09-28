@@ -33,6 +33,18 @@ function inventory(overrides: Partial<StackItemInventory> = {}): StackItemInvent
 }
 
 describe('getCalculatorSources', () => {
+  it('accepts database catalog ingredients with a null custom name', () => {
+    // save_stack_item stores SQL NULL for the custom name of catalog entries.
+    const catalogIngredient = JSON.parse(JSON.stringify({
+      ...ingredient(), custom_name: null, catalog_substance_id: 'catalog-1',
+      substance_catalog: { canonical_name: 'Catalog substance' },
+    }))
+    expect(getCalculatorSources([item({ ingredients: [catalogIngredient] }), item({ id: 'custom' })]))
+      .toHaveLength(2)
+    expect(getCalculatorSources([item({ ingredients: [catalogIngredient, ingredient({ id: 'second' })] })])[0].label)
+      .toBe('Product · Catalog substance')
+  })
+
   it('imports a new wizard vial without legacy amount or assumed diluent', () => {
     expect(getCalculatorSources([item()])).toEqual([
       { id: 'item-1', label: 'Product', amount: 10, unit: 'mg', diluentMl: null },

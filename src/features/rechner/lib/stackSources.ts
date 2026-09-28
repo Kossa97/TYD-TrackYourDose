@@ -63,7 +63,7 @@ export function getCalculatorSources(items: LoadedStackItem[]): CalculatorSource
       const diluentMl = basisUnit === 'ml' && !unsetPowderVolume ? basis! : mixedMl
       if (!positive(amount)) return []
 
-      const ingredientName = ingredient.custom_name.trim()
+      const ingredientName = ingredient.custom_name?.trim()
         || ingredient.substance_catalog?.canonical_name || String(index + 1)
       return [{
         id: isBlend ? `${item.id}:${ingredient.id ?? index}` : item.id,
