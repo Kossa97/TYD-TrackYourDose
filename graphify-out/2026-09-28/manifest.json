@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790561613.8429651,
-    "seen": 1790561652.585825,
+    "mtime": 1790561993.2109876,
+    "seen": 1790562031.7385657,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5310,15 +5310,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.test.ts": {
-    "mtime": 1790561478.5540638,
-    "seen": 1790561652.5854957,
-    "ast_hash": "bc9c1c4a2a7cf979323c2f4d5715e787",
+    "mtime": 1790561864.9858642,
+    "seen": 1790562031.738245,
+    "ast_hash": "e6524182939693227117c7c450a3d131",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.ts": {
-    "mtime": 1790561350.655519,
-    "seen": 1790561652.585497,
-    "ast_hash": "5bfa96a25764f3e67848f5843929e0fd",
+    "mtime": 1790561801.0625088,
+    "seen": 1790562031.7382462,
+    "ast_hash": "13264a617875db11464c2ede392bc77c",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/localDays.ts": {
@@ -5358,9 +5358,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planLabels.ts": {
-    "mtime": 1790561388.9728684,
-    "seen": 1790561652.5854988,
-    "ast_hash": "8ae84ed360b5104d1d12b122607c82b8",
+    "mtime": 1790561801.0627446,
+    "seen": 1790562031.7382483,
+    "ast_hash": "a1f1bd6268992697b04603812c2a9000",
     "semantic_hash": ""
   },
   "scripts/sql/my-stack-bestand.test.sql": {
@@ -5430,9 +5430,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlannedStepsReview.tsx": {
-    "mtime": 1790561314.3743625,
-    "seen": 1790561652.585359,
-    "ast_hash": "121aff07fa3c54c0309c922298e7edf9",
+    "mtime": 1790561831.149202,
+    "seen": 1790562031.7381158,
+    "ast_hash": "f5106e7c2859f6914622f73e1eb509fe",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/Bestand.test.tsx": {
