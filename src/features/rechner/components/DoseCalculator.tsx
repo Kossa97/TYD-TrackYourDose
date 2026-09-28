@@ -13,11 +13,11 @@ import { SyringeScale } from './SyringeScale'
 import { CopyCalculation } from './CopyCalculation'
 
 const initialValues: LiquidValues = {
-  mode: 'amount', amount: '', volume: '2', concentration: '', container: '', target: '', frequency: '',
+  mode: 'amount', amount: '', volume: '2', concentration: '', container: '', target: '',
   sourceUnit: 'mg', targetUnit: 'mcg', capacityMl: '0.5', capacityUnits: '50',
 }
 const sourceUnits: LiquidUnit[] = ['mg', 'mcg', 'g', 'iu']
-type NumericField = 'amount' | 'volume' | 'concentration' | 'container' | 'target' | 'frequency'
+type NumericField = 'amount' | 'volume' | 'concentration' | 'container' | 'target'
 const inputNumber = (value: number | null) => value !== null && Number.isFinite(value) && value > 0 ? String(value) : ''
 
 export function DoseCalculator() {
@@ -61,7 +61,7 @@ export function DoseCalculator() {
   const labels: Record<NumericField, string> = {
     amount: t('rechner_solution_amount'), volume: t('rechner_solution_volume'),
     concentration: t('rechner_known_concentration'), container: t('rechner_container_volume'),
-    target: t('rechner_target'), frequency: t('rechner_weekly_frequency'),
+    target: t('rechner_target'),
   }
   const valid = result.drawMl !== null && result.drawUnits !== null
   const error = result.error ? t({
@@ -83,7 +83,7 @@ export function DoseCalculator() {
   }
   const edit = (field: NumericField, value: string) => {
     setValues(current => ({ ...current, [field]: value }))
-    if (field !== 'target' && field !== 'frequency') setSelected('')
+    if (field !== 'target') setSelected('')
   }
   const changeSourceUnit = (next: LiquidUnit) => {
     const familyChanged = (values.sourceUnit === 'iu') !== (next === 'iu')
@@ -150,7 +150,6 @@ export function DoseCalculator() {
     ...(scale.minorStep === null ? [] : [`${t('rechner_graduation_label')}: ${format(scale.minorStep)}`]),
     tickNote,
     ...(result.fullWithdrawals === null ? [] : [`${t('rechner_full_withdrawals')}: ${format(result.fullWithdrawals)}`]),
-    ...(result.days === null ? [] : [`${t('rechner_duration')}: ${t('rechner_days', { value: format(result.days) })} (${values.frequency} / ${t('rechner_week')})`]),
     t('rechner_precision_note'),
   ].join('\n') : ''
 
@@ -229,7 +228,6 @@ export function DoseCalculator() {
           {input('target', targetUnitSelect)}
           {unitNotice && <p className="rechner-muted" role="status">{t(unitNotice)}</p>}
           {error && <p className="rechner-error" role="alert">{error}</p>}
-          {input('frequency')}
           <SyringeFields key={resetVersion} idPrefix="dose-syringe" capacityMl={values.capacityMl} capacityUnits={values.capacityUnits}
             onChange={(ml, units) => setValues(current => ({ ...current, capacityMl: ml, capacityUnits: units }))}
             onGraduationChange={setGraduation} />
@@ -244,11 +242,9 @@ export function DoseCalculator() {
             <dl className="rechner-result-grid">
               <div><dt>{t('rechner_converter_volume')}</dt><dd>{format(result.drawMl!)} mL</dd></div>
               <div><dt>{t('rechner_full_withdrawals')}</dt><dd>{result.fullWithdrawals === null ? '—' : format(result.fullWithdrawals)}</dd></div>
-              <div className="rechner-duration"><dt>{t('rechner_duration')}</dt><dd>{result.days === null ? '—' : t('rechner_days', { value: format(result.days) })}</dd></div>
             </dl>
             <p className="rechner-tick-note">{tickNote}</p>
           </div> : <p className="rechner-muted">{t('rechner_liquid_empty')}</p>}
-        <p className="rechner-muted rechner-result-note">{t('rechner_duration_hint')}</p>
         {valid && <><p className="rechner-muted">{t('rechner_precision_note')}</p><CopyCalculation key={summary} text={summary} /></>}
       </section>
       <p className="rechner-muted rechner-disclaimer">{t('info_disclaimer')}</p>
