@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/main.tsx": {
-    "mtime": 1790613535.1821358,
-    "seen": 1790613838.6015003,
-    "ast_hash": "677109cff35a1c1733aa6c3152fe443b",
+    "mtime": 1790614137.863166,
+    "seen": 1790614393.332709,
+    "ast_hash": "37fbab22779222bc0e916df13ecf13ff",
     "semantic_hash": ""
   },
   "src/pages/Auth.tsx": {
@@ -1446,9 +1446,9 @@
     "semantic_hash": ""
   },
   "vite.config.ts": {
-    "mtime": 1789927455.6407425,
-    "seen": 1789927683.0404465,
-    "ast_hash": "d948360242f50c8d7d7828c75276731b",
+    "mtime": 1790614137.863274,
+    "seen": 1790614393.3328297,
+    "ast_hash": "4169c1349b8bcb0985484851476c75d3",
     "semantic_hash": ""
   },
   "vitest.config.ts": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790613600.1156104,
-    "seen": 1790613838.6010587,
-    "ast_hash": "b86840827c5ff20bff35629d1d9d088b",
+    "mtime": 1790614137.8640368,
+    "seen": 1790614393.3322701,
+    "ast_hash": "6e8f3002450320782e523b86bc661c48",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790613662.629309,
-    "seen": 1790613838.6016064,
+    "mtime": 1790614295.8893466,
+    "seen": 1790614393.3328114,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5706,15 +5706,15 @@
     "semantic_hash": ""
   },
   "src/lib/monitoring.test.ts": {
-    "mtime": 1790613498.2172992,
-    "seen": 1790613838.601466,
-    "ast_hash": "7373a8ac06f225ee869c73ffa2b660cd",
+    "mtime": 1790614203.61838,
+    "seen": 1790614393.3326764,
+    "ast_hash": "3ffb6ce155f0e7af377255d573fb336d",
     "semantic_hash": ""
   },
   "src/lib/monitoring.ts": {
-    "mtime": 1790613498.2169924,
-    "seen": 1790613838.6014674,
-    "ast_hash": "df86679fd46186be66e76ec5e9050f7d",
+    "mtime": 1790614114.7293358,
+    "seen": 1790614393.3326776,
+    "ast_hash": "05798691f1880c6bb64e8cea837093d5",
     "semantic_hash": ""
   }
 }
