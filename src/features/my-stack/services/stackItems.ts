@@ -473,17 +473,46 @@ export async function loadStackItems(
   return data ?? []
 }
 
+/**
+ * Was am Eintrag fehlt, bevor er gespeichert werden darf — als Liste von
+ * Namen („displayName", „item.ingredients", …). Dieselbe Pruefung nutzen
+ * Dienst und Assistent: der Assistent kann so VOR dem Speichern sagen, was
+ * fehlt, statt dass es hier scheitert und nur „konnte nicht gespeichert
+ * werden" ankommt.
+ */
+export function stackItemProblems(draft: StackItemDraft): string[] {
+  return [
+    !draft.displayName.trim() && 'displayName',
+    !draft.category && 'category',
+    // `dosageForm` meldet schon validateStackItemDraft.
+    ...Object.keys(validateStackItemDraft(draft)).map(key => `item.${key}`),
+  ].filter((problem): problem is string => Boolean(problem))
+}
+
+/** Wie `stackItemProblems`, dazu Plan und Bestand — fuer „mit Plan speichern". */
+export function stackItemSetupProblems(draft: StackItemSetupDraft): string[] {
+  const invalidInventory = draft.inventory.enabled
+    && (
+      draft.inventory.packageQuantity == null
+      || !Number.isFinite(draft.inventory.packageQuantity)
+      || draft.inventory.packageQuantity <= 0
+      || !draft.inventory.packageUnit?.trim()
+      || draft.inventory.remainingQuantity == null
+      || !Number.isFinite(draft.inventory.remainingQuantity)
+      || draft.inventory.remainingQuantity < 0
+    )
+  return [
+    ...stackItemProblems(draft),
+    ...Object.keys(validateIntakePlan(draft.plan, draft.trackingLevel)).map(key => `plan.${key}`),
+    ...(invalidInventory ? ['inventory'] : []),
+  ]
+}
+
 export async function saveStackItem(
   client: StackItemRpcClient,
   draft: StackItemDraft | StackItemSetupDraft,
 ): Promise<SavedStackItemRow> {
-  const validationErrors = validateStackItemDraft(draft)
-  const probleme = [
-    !draft.displayName.trim() && 'displayName',
-    !draft.category && 'category',
-    !draft.dosageForm && 'dosageForm',
-    ...Object.keys(validationErrors).map(key => `item.${key}`),
-  ].filter((problem): problem is string => Boolean(problem))
+  const probleme = stackItemProblems(draft)
   if (probleme.length > 0) {
     throw new Error(`Invalid stack item draft: ${probleme.join(', ')}`)
   }
@@ -505,29 +534,12 @@ export async function saveStackItemSetup(
   draft: StackItemSetupDraft,
   idempotencyKey: string,
 ): Promise<SavedStackItemRow> {
-  const itemErrors = validateStackItemDraft(draft)
-  const planErrors = validateIntakePlan(draft.plan, draft.trackingLevel)
-  const invalidInventory = draft.inventory.enabled
-    && (
-      draft.inventory.packageQuantity == null
-      || !Number.isFinite(draft.inventory.packageQuantity)
-      || draft.inventory.packageQuantity <= 0
-      || !draft.inventory.packageUnit?.trim()
-      || draft.inventory.remainingQuantity == null
-      || !Number.isFinite(draft.inventory.remainingQuantity)
-      || draft.inventory.remainingQuantity < 0
-    )
   // Welche Pruefung scheitert, steht in der Meldung: ohne das sieht man in
   // der App nur „konnte nicht gespeichert werden" und weiss nicht, warum.
   const probleme = [
-    !draft.displayName.trim() && 'displayName',
-    !draft.category && 'category',
-    !draft.dosageForm && 'dosageForm',
-    ...Object.keys(itemErrors).map(key => `item.${key}`),
-    ...Object.keys(planErrors).map(key => `plan.${key}`),
-    invalidInventory && 'inventory',
-    !idempotencyKey.trim() && 'idempotencyKey',
-  ].filter((problem): problem is string => Boolean(problem))
+    ...stackItemSetupProblems(draft),
+    ...(!idempotencyKey.trim() ? ['idempotencyKey'] : []),
+  ]
   if (probleme.length > 0) {
     throw new Error(`Invalid stack item setup draft: ${probleme.join(', ')}`)
   }

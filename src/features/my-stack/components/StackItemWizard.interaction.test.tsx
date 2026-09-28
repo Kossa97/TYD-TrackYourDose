@@ -1653,6 +1653,33 @@ describe('StackItemWizard — Speichern mit Grund statt Sammelmeldung', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
+  it('nennt einen unvollständigen Bestand, bevor der Speicherdienst ihn ablehnt', async () => {
+    const mitBestand = {
+      ...existingVitaminD,
+      inventory: { enabled: true, package_quantity: null, package_unit: null, remaining_quantity: null, expires_at: null },
+    } as unknown as StackItem
+    const { onSave } = renderWizard({ existingItem: mitBestand, existingPlan: weekdayPlan, intent: 'plan' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(screen.getByText('my_stack_save_item_incomplete')).toBeTruthy())
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('springt zum fehlenden Schritt, wenn es ihn in diesem Ablauf gibt', async () => {
+    const unvollstaendig = {
+      ...existingVitaminD,
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_value: null }],
+    } as StackItem
+    const { onSave } = renderWizard({ existingItem: unvollstaendig, existingPlan, metadataOnly: true })
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(screen.getByLabelText('my_stack_basis_value')).toBeTruthy())
+    expect(screen.queryByText('my_stack_save_item_incomplete')).toBeNull()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
   it('speichert einen vollständigen Wochentagsplan ohne Umweg', async () => {
     const { onSave } = renderWizard({ existingItem: existingVitaminD, existingPlan: weekdayPlan, intent: 'plan' })
 

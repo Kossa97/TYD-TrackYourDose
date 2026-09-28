@@ -26,6 +26,8 @@ import {
   type StackItemQueryClient,
   type StackItemRpcClient,
   type StackItemSetupRpcClient,
+  stackItemProblems,
+  stackItemSetupProblems,
 } from './stackItems'
 import type { PlanRpcClient } from './planLifecycle'
 
@@ -624,6 +626,18 @@ describe('stack item service', () => {
       'save_stack_item_with_plan',
       expect.objectContaining({ p_plan: expect.objectContaining({ id: 'cycle-1', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) }),
     )
+  })
+
+  it('names the failing checks, so a failed save says why', async () => {
+    const mockClient = setupRpcClient()
+
+    await expect(saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: { ...completeSetupDraft.plan, method: ' ' },
+      inventory: { ...completeSetupDraft.inventory, enabled: true, packageQuantity: null },
+    }, setupTestKey)).rejects.toThrow('Invalid stack item setup draft: plan.method, inventory')
+    expect(stackItemSetupProblems(completeSetupDraft)).toEqual([])
+    expect(stackItemProblems({ ...completeSetupDraft, displayName: ' ' })).toEqual(['displayName'])
   })
 
   it.each([

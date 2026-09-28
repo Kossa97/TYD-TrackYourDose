@@ -1121,11 +1121,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         toast.error(t('my_stack_stock_save_failed'))
       }
     }
-    await Promise.all([
+    // Gespeichert ist ab hier. Scheitert nur das Neuladen, ist das kein
+    // „Speichern fehlgeschlagen" — sonst speicherte man dasselbe ein zweites Mal.
+    const neuGeladen = await Promise.allSettled([
       loadPeptides(),
       loadCycles(),
       ...(FEATURES.planTimelineV2 ? [loadTimelines(true)] : []),
     ])
+    if (neuGeladen.some(ergebnis => ergebnis.status === 'rejected')) toast.error(t('error'))
     setExpandedId(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }

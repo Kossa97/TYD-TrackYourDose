@@ -21,7 +21,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { findDuplicate, planScheduleSnapshot } from '../services/stackItems'
+import { findDuplicate, planScheduleSnapshot, stackItemProblems, stackItemSetupProblems } from '../services/stackItems'
 import { localDateTimeKey, type PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import {
@@ -514,6 +514,30 @@ export function StackItemWizard({
     })
   }
 
+  /**
+   * Zu einem fehlenden Feld fuehren. Liegt sein Schritt in diesem Ablauf,
+   * springt der Assistent hin; sonst (etwa Wirkstaerke im Modus
+   * „Einnahmeplan") sagt er, wo bei der Substanz etwas fehlt — statt auf
+   * einen Schritt zu springen, den es hier nicht gibt.
+   */
+  function zeigeFehlendesFeld(field: string): void {
+    const step = stepForInvalidField(field)
+    if (steps.includes(step)) {
+      setShowErrors(true)
+      if (state.step !== step) dispatch({ type: 'step_selected', step })
+      focusField(field)
+      return
+    }
+    zeigeFehlendenBereich(t(STEP_LABELS[step].key, { defaultValue: STEP_LABELS[step].defaultValue }))
+  }
+
+  function zeigeFehlendenBereich(area: unknown): void {
+    setSaveError(String(t('my_stack_save_item_incomplete', {
+      defaultValue: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
+      area,
+    })))
+  }
+
   function selectStep(step: WizardStep): void {
     dispatch({ type: 'step_selected', step })
     setShowErrors(false)
@@ -687,13 +711,16 @@ export function StackItemWizard({
 
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
+    setSaveError(null)
     setSaveErrorDetail(null)
+    // Erst der offene Schritt, dann der ganze Eintrag — wie ihn der
+    // Speicherdienst prueft. Im Modus „Einnahmeplan" sieht der Assistent die
+    // Substanz-Schritte nicht; fehlte dort etwas, kam frueher nur „konnte
+    // nicht gespeichert werden".
     const invalidField = firstInvalidField(state, !metadataOnly)
+      ?? (planEditContext ? null : firstInvalidField({ ...state, step: 'review' }, !metadataOnly))
     if (invalidField) {
-      const invalidStep = stepForInvalidField(invalidField)
-      setShowErrors(true)
-      if (state.step !== invalidStep) dispatch({ type: 'step_selected', step: invalidStep })
-      focusField(invalidField)
+      zeigeFehlendesFeld(invalidField)
       return
     }
 
@@ -739,25 +766,15 @@ export function StackItemWizard({
       }
     }
 
-    // Der Speicherdienst prueft den GANZEN Eintrag, nicht nur den gerade
-    // offenen Schritt. Im Modus „Einnahmeplan" sieht der Assistent die
-    // Substanz-Schritte nicht; fehlte dort etwas, kam nur „konnte nicht
-    // gespeichert werden". Jetzt vorher: gibt es den Schritt hier, springt der
-    // Assistent hin, sonst sagt er, was wo fehlt.
+    // Was der Assistent nicht als Feld kennt, prueft der Dienst trotzdem —
+    // etwa einen unvollstaendigen Bestand. Dieselbe Pruefung, vorher.
     if (!planEditContext) {
-      const itemField = firstInvalidField({ ...state, step: 'review' }, false)
-      if (itemField) {
-        const itemStep = stepForInvalidField(itemField)
-        if (steps.includes(itemStep)) {
-          setShowErrors(true)
-          if (state.step !== itemStep) dispatch({ type: 'step_selected', step: itemStep })
-          focusField(itemField)
-        } else {
-          setSaveError(String(t('my_stack_save_item_incomplete', {
-            defaultValue: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
-            area: t(STEP_LABELS[itemStep].key, { defaultValue: STEP_LABELS[itemStep].defaultValue }),
-          })))
-        }
+      const draftToCheck = { ...state.draft, pkProfileMethod }
+      const probleme = metadataOnly ? stackItemProblems(draftToCheck) : stackItemSetupProblems(draftToCheck)
+      if (probleme.length > 0) {
+        zeigeFehlendenBereich(probleme.includes('inventory')
+          ? t('my_stack_inventory_summary', { defaultValue: 'Bestand' })
+          : probleme.join(', '))
         return
       }
     }
