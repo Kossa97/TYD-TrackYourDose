@@ -7,8 +7,8 @@ export interface RouteLayoutMode {
 export function routeLayoutMode(pathname: string): RouteLayoutMode {
   const injectionFullscreen = pathname === '/injektionen'
   return {
-    lockViewport: injectionFullscreen || pathname === '/my-stack',
+    lockViewport: injectionFullscreen || pathname === '/my-stack' || pathname === '/rechner',
     hideBottomNav: injectionFullscreen,
-    hideFloatingFaq: injectionFullscreen,
+    hideFloatingFaq: injectionFullscreen || pathname === '/rechner',
   }
 }

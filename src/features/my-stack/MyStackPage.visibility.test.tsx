@@ -401,10 +401,10 @@ vi.mock('./lib/colorMigration', () => ({
 }))
 
 vi.mock('react-hot-toast', () => ({
-  default: {
+  default: Object.assign(vi.fn(), {
     error: vi.fn(),
     success: vi.fn(),
-  },
+  }),
 }))
 
 function visibleCardFor(name: string): HTMLElement | null {
