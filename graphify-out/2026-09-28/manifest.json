@@ -3240,15 +3240,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790610605.2305417,
-    "seen": 1790612388.5237544,
-    "ast_hash": "b80b9e0dd956660f0feda03ea936c97b",
+    "mtime": 1790612899.4695349,
+    "seen": 1790613115.1068585,
+    "ast_hash": "a3586e433dfa5955b79128574457d045",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790612083.4409847,
-    "seen": 1790612388.523756,
-    "ast_hash": "e79a2628ead72cea14229f1263a9419b",
+    "mtime": 1790612946.5747242,
+    "seen": 1790613115.1068604,
+    "ast_hash": "0b025e469962bf229d86ebe1ff5dae3a",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790612340.2452304,
-    "seen": 1790612388.524384,
+    "mtime": 1790613060.5692732,
+    "seen": 1790613115.1075578,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5652,9 +5652,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StageDetailView.tsx": {
-    "mtime": 1790611893.1313095,
-    "seen": 1790612388.5239532,
-    "ast_hash": "bf93034e08529db0f2335a8fadbc578a",
+    "mtime": 1790612899.4713356,
+    "seen": 1790613115.107211,
+    "ast_hash": "44b17206a956df3fb66fb50a3f2a3095",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/SubstanceInfoSheet.tsx": {
@@ -5664,9 +5664,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialCarousel.tsx": {
-    "mtime": 1790612104.9542873,
-    "seen": 1790612388.5239558,
-    "ast_hash": "c7e3f9ca91313c383f19dbc32528418b",
+    "mtime": 1790612899.4711864,
+    "seen": 1790613115.1072135,
+    "ast_hash": "0c11cc8bb65d5bf5ab6a29ec09e54b44",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialPositionRow.tsx": {
@@ -5676,9 +5676,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/model.ts": {
-    "mtime": 1790610136.9697616,
-    "seen": 1790612388.5239575,
-    "ast_hash": "47d80a9ff8d35342caa56461603caa88",
+    "mtime": 1790612899.4818342,
+    "seen": 1790613115.1072168,
+    "ast_hash": "e244116768390f056b5bd66b635f47ef",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/stackTiles.tsx": {
@@ -5688,9 +5688,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/useMyStackData.ts": {
-    "mtime": 1790610454.3987303,
-    "seen": 1790612388.5240064,
-    "ast_hash": "1107f3dd6435a3d538e5c7355d620d6a",
+    "mtime": 1790612899.470969,
+    "seen": 1790613115.1072192,
+    "ast_hash": "a857f069794167187d9e90329c4508f2",
     "semantic_hash": ""
   }
 }
