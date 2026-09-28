@@ -1530,12 +1530,12 @@ main.flex-1 {
    wieder heraus. Dann liegen Knoepfe (etwa das X der Suche) ausserhalb des
    Bildes. Nur auf iOS (-webkit-touch-callout gibt es nur dort) und nur die
    Schriftgroesse: 16 px sind die Grenze, unter der Safari zoomt.
-   !important, weil Utilities wie text-sm sonst gewinnen. */
+   !important, weil Utilities wie text-sm und Inline-Stile sonst gewinnen.
+   Felder, die ausdruecklich groesser gesetzt sind (text-lg und aufwaerts),
+   bleiben ausgenommen — die Regel soll nur anheben, nie verkleinern. */
 @supports (-webkit-touch-callout: none) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  select,
-  textarea {
-    font-size: max(16px, 1em) !important;
+  :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"], [type="color"]), select, textarea):not(.text-lg, .text-xl, .text-2xl, .text-3xl, .text-4xl) {
+    font-size: 16px !important;
   }
 }
 

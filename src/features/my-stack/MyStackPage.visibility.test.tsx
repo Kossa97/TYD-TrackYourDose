@@ -572,19 +572,24 @@ describe('MyStackPage non-vial visibility', () => {
     expect(document.querySelector('[data-vial-add-dot]')?.getAttribute('aria-label')).toBe('my_stack_go_to_add_tile')
   })
 
-  it('schließt die Suche, wenn man sie leer verlässt, und behält eine laufende', async () => {
+  it('nimmt beim Schließen der Suche den Fokus mit (keine Tastatur, kein unsichtbares Filtern)', async () => {
     await renderPage()
     fireEvent.click(screen.getByRole('button', { name: 'peptid_suchen' }))
     const feld = screen.getByPlaceholderText('peptid_suchen')
-    expect(screen.getByRole('button', { name: 'close' })).toBeTruthy()
+    feld.focus()
+    fireEvent.change(feld, { target: { value: 'Vi' } })
+    expect(document.activeElement).toBe(feld)
 
-    fireEvent.blur(feld)
-    expect(screen.queryByRole('button', { name: 'close' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
 
+    expect(document.activeElement).not.toBe(feld)
+    expect((feld as HTMLInputElement).value).toBe('')
+
+    // Escape ebenso.
     fireEvent.click(screen.getByRole('button', { name: 'peptid_suchen' }))
-    fireEvent.change(screen.getByPlaceholderText('peptid_suchen'), { target: { value: 'Vial' } })
-    fireEvent.blur(screen.getByPlaceholderText('peptid_suchen'))
-    expect(screen.getByRole('button', { name: 'close' })).toBeTruthy()
+    feld.focus()
+    fireEvent.keyDown(feld, { key: 'Escape' })
+    expect(document.activeElement).not.toBe(feld)
   })
 
   it('keeps vertical scrolling available in list mode', async () => {
