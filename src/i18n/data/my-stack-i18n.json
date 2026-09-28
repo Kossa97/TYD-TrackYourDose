@@ -522,7 +522,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1047,7 +1048,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1572,7 +1574,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2097,7 +2100,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2622,7 +2626,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3147,7 +3152,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3672,7 +3678,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4197,7 +4204,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4722,7 +4730,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5247,7 +5256,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5772,7 +5782,8 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6297,6 +6308,7 @@
     "my_stack_plan_remove_locked": "This step carries the plan and can’t be removed.",
     "my_stack_open_new_locked": "Nothing unopened left in stock.",
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
-    "my_stack_go_to_item": "Go to {{name}}"
+    "my_stack_go_to_item": "Go to {{name}}",
+    "my_stack_go_to_add_tile": "Go to the “New substance” tile"
   }
 }

@@ -1068,6 +1068,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const handleNewPeptide = () => {
     setEditingPeptideId(null)
     setWizardCycleId(null)
+    setWizardNeuerZyklus(false)
     setPlanEditContext(null)
     setWizardIntent(undefined)
     setWizardInitialColor(getRandomStackItemColor())
@@ -2584,9 +2585,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
         <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
           <FlaskConical size={18} className="shrink-0 text-sky-400" />
-          <h2 className="whitespace-nowrap font-semibold text-white">{t('meine_peptide')}</h2>
+          <h2 className="min-w-0 truncate font-semibold text-white">{t('meine_peptide')}</h2>
           {peptides.length > 0 && (
-            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
+            <span className="badge shrink-0 bg-slate-700 text-slate-400">{peptides.length}</span>
           )}
         </div>
 
@@ -2608,21 +2609,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             {!searchOpen && <div className="flex-1" />}
 
             {/* Neue Substanz — die Hauptaktion der Seite, deshalb als einziger
-                Knopf gefuellt. Die „Neu"-Kachel im Karussell steht links vor
-                der ersten Substanz und ist nur per Wisch zu finden; von hier
-                aus braucht man sie nicht zu kennen. */}
-            {!searchOpen && (
-              <button
-                type="button"
-                onClick={() => { setFilterOpen(false); handleNewPeptide() }}
-                aria-label={String(t('neues_peptid_title'))}
-                title={String(t('neues_peptid_title'))}
-                data-my-stack-add
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.28)] transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
-              >
-                <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
-              </button>
-            )}
+                Knopf gefuellt, in beiden Ansichten. Die „Neu"-Kachel im
+                Karussell steht links vor der ersten Substanz und ist nur per
+                Wisch zu finden; von hier aus braucht man sie nicht zu kennen.
+                Der gestrichelte Knopf ueber der Liste ist damit entfallen.
+                Er bleibt auch bei offener Suche stehen: findet sie nichts,
+                ist genau das der Moment, die Substanz anzulegen. */}
+            <button
+              type="button"
+              onClick={handleNewPeptide}
+              aria-label={String(t('neues_peptid_title'))}
+              title={String(t('neues_peptid_title'))}
+              data-my-stack-add
+              data-ob="btn-peptid-anlegen"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.28)] transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+            >
+              <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
+            </button>
 
             {/* Lupe / Schließen */}
             <button
@@ -2745,17 +2748,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 {t('lab_retry', { defaultValue: 'Erneut versuchen' })}
               </button>
             </div>
-          )}
-
-          {!loading && peptides.length > 0 && viewMode === 'list' && (
-            <button
-              type="button"
-              data-ob="btn-peptid-anlegen"
-              onClick={handleNewPeptide}
-              className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-            >
-              <Plus size={15} /> {t('neues_peptid_title')}
-            </button>
           )}
 
           {!loading && peptides.length === 0 && (
@@ -3011,7 +3003,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <button
                     type="button"
                     onClick={selectAddTile}
-                    aria-label={String(t('neues_peptid_title'))}
+                    aria-label={String(t('my_stack_go_to_add_tile', { defaultValue: 'Zur Kachel „Neue Substanz“' }))}
                     aria-current={addTileActive || undefined}
                     data-vial-add-dot
                     className="-my-[7px] flex h-6 min-w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"

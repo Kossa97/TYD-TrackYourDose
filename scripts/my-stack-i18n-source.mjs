@@ -523,6 +523,7 @@ export const MY_STACK_EN = {
   my_stack_open_new_locked: 'Nothing unopened left in stock.',
   my_stack_add_tile_hint: 'Peptide, medication, hormone, supplement …',
   my_stack_go_to_item: 'Go to {{name}}',
+  my_stack_go_to_add_tile: 'Go to the “New substance” tile',
 }
 
 export const MY_STACK_DE = {
@@ -1049,6 +1050,7 @@ export const MY_STACK_DE = {
   my_stack_open_new_locked: 'Nichts Ungeöffnetes mehr im Bestand.',
   my_stack_add_tile_hint: 'Peptid, Medikament, Hormon, Supplement …',
   my_stack_go_to_item: 'Zu {{name}}',
+  my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

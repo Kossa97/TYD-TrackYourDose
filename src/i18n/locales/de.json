@@ -1619,5 +1619,6 @@
   "my_stack_plan_remove_locked": "Diese Stufe trägt den Plan und lässt sich nicht entfernen.",
   "my_stack_open_new_locked": "Nichts Ungeöffnetes mehr im Bestand.",
   "my_stack_add_tile_hint": "Peptid, Medikament, Hormon, Supplement …",
-  "my_stack_go_to_item": "Zu {{name}}"
+  "my_stack_go_to_item": "Zu {{name}}",
+  "my_stack_go_to_add_tile": "Zur Kachel „Neue Substanz“"
 }

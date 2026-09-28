@@ -563,6 +563,13 @@ describe('MyStackPage non-vial visibility', () => {
 
     const wizard = await screen.findByRole('dialog', { name: 'stack-item-wizard' })
     expect(within(wizard).getByTestId('wizard-item-id').textContent).toBe('')
+
+    // Bleibt bei offener Suche stehen — ohne Treffer will man genau anlegen.
+    fireEvent.click(screen.getByRole('button', { name: 'peptid_suchen' }))
+    expect(document.querySelector('[data-my-stack-add]')).not.toBeNull()
+    // Der Punkt vor der Positionszeile hat einen eigenen Namen: er oeffnet
+    // nichts, er faehrt nur zur Kachel.
+    expect(document.querySelector('[data-vial-add-dot]')?.getAttribute('aria-label')).toBe('my_stack_go_to_add_tile')
   })
 
   it('keeps vertical scrolling available in list mode', async () => {
@@ -955,9 +962,9 @@ describe('MyStackPage non-vial visibility', () => {
         <MyStackPage stackDataClient={stackDataClient as never} />
       </MemoryRouter>,
     )
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'neues_peptid_title' }).length).toBeGreaterThan(0))
+    await waitFor(() => expect(document.querySelector('[data-my-stack-add]')).not.toBeNull())
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'neues_peptid_title' })[0])
+    fireEvent.click(document.querySelector<HTMLElement>('[data-my-stack-add]')!)
     fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
@@ -1462,8 +1469,8 @@ describe('MyStackPage non-vial visibility', () => {
         <MyStackPage stackDataClient={client as never} />
       </MemoryRouter>,
     )
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'neues_peptid_title' }).length).toBeGreaterThan(0))
-    fireEvent.click(screen.getAllByRole('button', { name: 'neues_peptid_title' })[0])
+    await waitFor(() => expect(document.querySelector('[data-my-stack-add]')).not.toBeNull())
+    fireEvent.click(document.querySelector<HTMLElement>('[data-my-stack-add]')!)
     fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
 
     expect(await screen.findByTestId('plan-management-cycle-created')).toBeTruthy()
