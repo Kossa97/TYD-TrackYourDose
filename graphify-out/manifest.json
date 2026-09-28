@@ -702,87 +702,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1790554002.8273497,
-    "seen": 1790554326.7931035,
-    "ast_hash": "ff72ca55e9421dfb6e77a27c1652fed4",
+    "mtime": 1790557413.5591028,
+    "seen": 1790557598.4109993,
+    "ast_hash": "13113c190bbcedbd3b7b677c436111f3",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1790554002.8233497,
-    "seen": 1790554326.7931044,
-    "ast_hash": "04b442e03229568fd8091015fc1dde32",
+    "mtime": 1790557413.5591028,
+    "seen": 1790557598.4110007,
+    "ast_hash": "5798e3499af1de08d79d498b0894ba5d",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1790554002.8273497,
-    "seen": 1790554326.7931051,
-    "ast_hash": "01f04cec44c5194bdb17e2267be93065",
+    "mtime": 1790557413.5591028,
+    "seen": 1790557598.4110017,
+    "ast_hash": "18afad720da3b037af414524d8f92b49",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1790554002.8273497,
-    "seen": 1790554326.7931063,
-    "ast_hash": "00efaf42d000841e3d8b283bc4154313",
+    "mtime": 1790557413.5631027,
+    "seen": 1790557598.4110022,
+    "ast_hash": "762fb3c1aee1edc4cd86be4a5337aeaf",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1790554002.8273497,
-    "seen": 1790554326.7931075,
-    "ast_hash": "601e30cfe21956e9f4608b6e496ed874",
+    "mtime": 1790557413.5631027,
+    "seen": 1790557598.4110029,
+    "ast_hash": "6901e19cbb154022e5c898645e383a4f",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1790554002.8313496,
-    "seen": 1790554326.7931087,
-    "ast_hash": "dbece0df628aebc6b3ab542a122d856b",
+    "mtime": 1790557413.5631027,
+    "seen": 1790557598.4110034,
+    "ast_hash": "81ccf98d8f0e017f16f819d380e99a7b",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1790554002.8313496,
-    "seen": 1790554326.7931104,
-    "ast_hash": "c2cabfbcd1759ab6c5b588336f359df0",
+    "mtime": 1790557413.5631027,
+    "seen": 1790557598.4110038,
+    "ast_hash": "af7b51b2d512d5463702b887efb73424",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1790554002.8313496,
-    "seen": 1790554326.7931113,
-    "ast_hash": "1fd84fab37cb9619bd52dd966e3125e8",
+    "mtime": 1790557413.5671027,
+    "seen": 1790557598.411005,
+    "ast_hash": "900f56c9b1eaf344c8e8fe28970dff78",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1790554002.8313496,
-    "seen": 1790554326.7931123,
-    "ast_hash": "f78e21c283b6f9d4fce8cdd87e1a6986",
+    "mtime": 1790557413.5671027,
+    "seen": 1790557598.4110055,
+    "ast_hash": "3143dd5a31cc56165545d0c988c62268",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1790554002.8353496,
-    "seen": 1790554326.7931132,
-    "ast_hash": "3b8dd19031d554545ef16383652b667f",
+    "mtime": 1790557413.5671027,
+    "seen": 1790557598.4110062,
+    "ast_hash": "6deeaf506b596fd814aa13941381b19b",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1790554002.8353496,
-    "seen": 1790554326.7931144,
-    "ast_hash": "cf5cdc87a625872519617deabaf9709b",
+    "mtime": 1790557413.5671027,
+    "seen": 1790557598.4110067,
+    "ast_hash": "758739b2fb7baaecdbf3adba08e394bc",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1790554002.8353496,
-    "seen": 1790554326.7931154,
-    "ast_hash": "a67db99f8ec6058bbedf7b741e13b71d",
+    "mtime": 1790557413.5711026,
+    "seen": 1790557598.4110072,
+    "ast_hash": "c5ad3b2c12250dc12cbe46b119f20451",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1790554002.8353496,
-    "seen": 1790554326.793116,
-    "ast_hash": "809bbda2c20080d81a55b50c593311a6",
+    "mtime": 1790557413.5711026,
+    "seen": 1790557598.4110076,
+    "ast_hash": "df9fccec30232085ffbfc99111a6aec7",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1790554002.8353496,
-    "seen": 1790554326.793117,
-    "ast_hash": "9ac17954d956c5947cb455e4ce00bfa6",
+    "mtime": 1790557413.5711026,
+    "seen": 1790557598.4110086,
+    "ast_hash": "b448deb77d4d05a3e25aaaba90a2c40a",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -3078,9 +3078,9 @@
     "semantic_hash": ""
   },
   "scripts/my-stack-i18n-source.mjs": {
-    "mtime": 1790554002.7305365,
-    "seen": 1790554326.792529,
-    "ast_hash": "493ade34532d16889daa8417102ace84",
+    "mtime": 1790557413.4608529,
+    "seen": 1790557598.4102163,
+    "ast_hash": "cc87bafc8ad77b949e5daf2dde4a797d",
     "semantic_hash": ""
   },
   "scripts/pk-profile-source.mjs": {
@@ -3246,15 +3246,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790557076.5359268,
-    "seen": 1790557255.0498452,
-    "ast_hash": "213926bc3a27ec1334eec3ec659f37bc",
+    "mtime": 1790557413.4597876,
+    "seen": 1790557598.4104657,
+    "ast_hash": "a28398e9065357aaa271c236a5f83a01",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1790557171.7372494,
-    "seen": 1790557255.0498478,
-    "ast_hash": "e093c09c283e6b7aa41cf5be933a0b29",
+    "mtime": 1790557413.460496,
+    "seen": 1790557598.4104674,
+    "ast_hash": "3ab8ac0825079343c68a178d8d6a58e9",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/CourseTimezoneReview.test.tsx": {
@@ -3942,9 +3942,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1790554002.730936,
-    "seen": 1790554326.7929406,
-    "ast_hash": "875afe35558762aadbe6fa3687b1a69a",
+    "mtime": 1790557413.4610562,
+    "seen": 1790557598.4106672,
+    "ast_hash": "ac8d13f2ec58eabdaed7d384d94c1a56",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4650,9 +4650,9 @@
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
-    "mtime": 1790554002.7433496,
-    "seen": 1790554326.7930725,
-    "ast_hash": "9b67ad46fd13ced6c677b5bf8d223f36",
+    "mtime": 1790557413.4671028,
+    "seen": 1790557598.41095,
+    "ast_hash": "ac27dcd20285c1b15f1806dff2e14b71",
     "semantic_hash": ""
   },
   "src/i18n/planDataErrors.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790557196.1350899,
-    "seen": 1790557255.050346,
+    "mtime": 1790557514.1991086,
+    "seen": 1790557598.4111636,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
