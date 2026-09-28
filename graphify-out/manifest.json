@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790558847.9549806,
-    "seen": 1790559031.8006787,
-    "ast_hash": "547665fa3c2e1655245b8ac1ac4261ca",
+    "mtime": 1790564082.4496236,
+    "seen": 1790564365.3864064,
+    "ast_hash": "18f234488bb49063994c38866bcb362b",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3384,9 +3384,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1790563688.9350176,
-    "seen": 1790563840.7028382,
-    "ast_hash": "4e08aa93c138f5d5fde2e04794c98bc3",
+    "mtime": 1790564186.6013472,
+    "seen": 1790564365.3864455,
+    "ast_hash": "cc7d879726eac27af002084f062c0216",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790563647.04117,
-    "seen": 1790563840.70284,
-    "ast_hash": "757cc27d38ac178b3bdc0f4a42c1c754",
+    "mtime": 1790564082.448294,
+    "seen": 1790564365.386447,
+    "ast_hash": "1e6b984c7d905b3cd4c03dc56f2f45d0",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4212,15 +4212,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.test.ts": {
-    "mtime": 1790374115.2363813,
-    "seen": 1790374154.1576822,
-    "ast_hash": "949036db72582893dbf1a584184d7a33",
+    "mtime": 1790564212.908303,
+    "seen": 1790564365.3865771,
+    "ast_hash": "59867bf6f72887185149fdd70befdadd",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.ts": {
-    "mtime": 1790563593.0184193,
-    "seen": 1790563840.7029681,
-    "ast_hash": "3c572bff4fc767cfbef2ab7de0eb6072",
+    "mtime": 1790564082.4473217,
+    "seen": 1790564365.3865778,
+    "ast_hash": "5f55bb9b23a564bf2d9db2fc66da9cf3",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/substanceCatalog.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790563801.5990243,
-    "seen": 1790563840.703255,
+    "mtime": 1790564327.1790555,
+    "seen": 1790564365.3868132,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
