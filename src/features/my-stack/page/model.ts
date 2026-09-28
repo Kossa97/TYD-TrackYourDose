@@ -167,7 +167,7 @@ export function asPeptide(item: LoadedStackItem): Peptide {
  * damit wie bisher. Die Lager-Verknuepfung (`inventory_items`) entfaellt —
  * ihre ungeoeffneten Vials stecken im Bestand.
  */
-export function withVialInventory(p: Peptide): Peptide {
+function withVialInventory(p: Peptide): Peptide {
   const inv = p.inventory
   if (anbruchArt(p.dosage_form) !== 'vial' || !inv || !vialBuchtUeberBestand(inv, p.ingredients)) return p
   return {
@@ -193,7 +193,7 @@ export function getVialFillPct(p: Peptide): number | null {
   return stock % 1 === 0 ? 100 : (stock % 1) * 100
 }
 
-export function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
+function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
   const av = a ?? null
   const bv = b ?? null
   if (av === null && bv === null) return 0
@@ -203,7 +203,7 @@ export function compareNullableNum(a: number | null | undefined, b: number | nul
   return asc ? diff : -diff
 }
 
-export function compareNullableDate(a: string | null | undefined, b: string | null | undefined, asc: boolean): number {
+function compareNullableDate(a: string | null | undefined, b: string | null | undefined, asc: boolean): number {
   const av = a || null
   const bv = b || null
   if (!av && !bv) return 0
@@ -253,12 +253,12 @@ export const INTAKE_TIME_CONFIG = {
   abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
   custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
 } as const
-export const ROUTINE_GROUP_TO_INTAKE_TIME = {
+const ROUTINE_GROUP_TO_INTAKE_TIME = {
   morning: 'morgens',
   midday: 'mittags',
   evening: 'abends',
 } as const
-export const INTAKE_TIME_TO_ROUTINE_GROUP: Record<string, RoutineGroup> = Object.fromEntries(
+const INTAKE_TIME_TO_ROUTINE_GROUP: Record<string, RoutineGroup> = Object.fromEntries(
   Object.entries(ROUTINE_GROUP_TO_INTAKE_TIME).map(([group, intakeTime]) => [intakeTime, group]),
 ) as Record<string, RoutineGroup>
 export const REMINDER_OPTIONS = [
@@ -284,7 +284,7 @@ export function mergeCatalogEntries(
   return [...entriesById.values()]
 }
 
-export function escalationFormStartDate(cycle: Cycle, form: EscalationForm): Date | null {
+function escalationFormStartDate(cycle: Cycle, form: EscalationForm): Date | null {
   if (form.start_type === 'date') return parseStoredDay(form.start_date)
   const offset = Number(form.start_after_days)
   if (!Number.isFinite(offset) || !Number.isInteger(offset) || offset <= 0) return null

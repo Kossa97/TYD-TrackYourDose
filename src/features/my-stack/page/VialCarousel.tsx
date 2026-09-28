@@ -55,7 +55,7 @@ export function VialCarousel({
 }: {
   loading: boolean
   viewMode: "vials" | "list"
-  activePeptide: Peptide
+  activePeptide: Peptide | null
   reiterLeiste: ReactNode
   selectPeptideOffset: (offset: number) => void
   addTileActive: boolean

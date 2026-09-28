@@ -116,9 +116,7 @@ import { LegacyCycleManager } from './page/LegacyCycleManager'
 import { SubstanceInfoSheet } from './page/SubstanceInfoSheet'
 import { RekonstitutionDialog } from './page/RekonstitutionDialog'
 import { EscalationFormSheet } from './page/EscalationFormSheet'
-import { DosePlanActions } from './page/DosePlanActions'
 
-export { DosePlanActions }
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 

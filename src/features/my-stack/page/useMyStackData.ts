@@ -25,6 +25,12 @@ export function useMyStackData({ stackDataClient, userId }: {
   userId: string | undefined
 }) {
   const { t } = useTranslation()
+  // Wie vorher `user!.id`: ohne Nutzer scheitert das Laden sichtbar, statt
+  // mit user_id = undefined still eine leere Liste zu liefern.
+  const requireUserId = (): string => {
+    if (!userId) throw new Error('My Stack: kein angemeldeter Nutzer')
+    return userId
+  }
   const [inventory, setInventory]             = useState<InventoryItem[]>([])
   const [peptides, setPeptides]               = useState<Peptide[]>([])
   const [loading, setLoading]                 = useState(true)
@@ -41,7 +47,7 @@ export function useMyStackData({ stackDataClient, userId }: {
   const [escalations, setEscalations]             = useState<Escalation[]>([])
 
   const loadInventory = async () => {
-    const { data } = await supabase.from('inventory_items').select('*').eq('user_id', userId!).order('name')
+    const { data } = await supabase.from('inventory_items').select('*').eq('user_id', requireUserId()).order('name')
     if (data) setInventory(data as InventoryItem[])
   }
   const publishPeptides = (snapshot: {
@@ -81,7 +87,7 @@ export function useMyStackData({ stackDataClient, userId }: {
     }
   }
   const loadCycles = async () => {
-    const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', userId!)
+    const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', requireUserId())
     if (data) setCycles(data as Cycle[])
   }
   const loadTimelines = async (throwOnError = false) => {
@@ -89,7 +95,7 @@ export function useMyStackData({ stackDataClient, userId }: {
     setTimelineLoading(true)
     setTimelineLoadError(false)
     try {
-      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, userId!, { includeUnavailable: true }))
+      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, requireUserId(), { includeUnavailable: true }))
     } catch (error) {
       setTimelineLoadError(true)
       if (throwOnError) throw error
@@ -98,7 +104,7 @@ export function useMyStackData({ stackDataClient, userId }: {
     }
   }
   const loadEscalations = async () => {
-    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', userId!).order('start_after_days').order('start_date')
+    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', requireUserId()).order('start_after_days').order('start_date')
     if (data) setEscalations(data as Escalation[])
   }
   useEffect(() => {

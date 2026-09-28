@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { DosePlanActions } from './MyStackPage'
+import { DosePlanActions } from './page/DosePlanActions'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -35,12 +35,13 @@ describe('My Stack dose-plan actions', () => {
   })
 })
 
+// Die Seite ist in `page/` aufgeteilt — gelesen wird alles, was dazugehoert.
+const pageParts = () => readdirSync(new URL('./page/', import.meta.url))
+  .filter(name => /\.(ts|tsx)$/.test(name) && !/\.test\./.test(name))
+  .sort()
+  .map(name => readFileSync(new URL(`./page/${name}`, import.meta.url), 'utf8'))
+
 describe('My Stack page vial view', () => {
-  // Die Seite ist in `page/` aufgeteilt — gelesen wird alles, was dazugehoert.
-  const pageParts = () => readdirSync(new URL('./page/', import.meta.url))
-    .filter(name => /\.(ts|tsx)$/.test(name) && !/\.test\./.test(name))
-    .sort()
-    .map(name => readFileSync(new URL(`./page/${name}`, import.meta.url), 'utf8'))
   const source = () => [
     readFileSync(new URL('./MyStackPage.tsx', import.meta.url), 'utf8'),
     ...pageParts(),
@@ -342,10 +343,10 @@ describe('My Stack page vial view', () => {
     // Alle Einzelheiten und Aktionen gehoeren in den Zyklusverwalter. In der
     // Uebersicht bleibt nur der Name mit einem eindeutigen Weg hinein.
     const text = source()
-    const knopf = text.slice(
-      text.indexOf('data-stack-detail="zyklus"'),
-      text.indexOf('data-stack-detail="verwalten"'),
-    )
+    // Bis zum Ende genau dieses Blocks — nicht bis zum Ende aller Dateien.
+    const start = text.indexOf('data-stack-detail="zyklus"')
+    expect(start).toBeGreaterThan(-1)
+    const knopf = text.slice(start, text.indexOf('</div>}', start))
 
     expect(knopf).toContain("{activeCycle.name} {t('zyklus')}")
     expect(knopf).toContain('data-active-cycle-indicator')
@@ -491,7 +492,9 @@ describe('My Stack page vial view', () => {
     // „Stufe zurücknehmen" hängt am RPC `remove_plan_segment`; es ist eine
     // Funktion, keine tote Zeile.
     const text = source()
-    const verwalter = text.slice(text.indexOf('{cycleManagerPeptide && !FEATURES.planTimelineV2 && (() => {'))
+    // Der Verwalter steht seit der Aufteilung in einer eigenen Datei — nur
+    // sie zaehlt, sonst faenden die Pruefungen dieselben Zeilen in der Liste.
+    const verwalter = readFileSync(new URL('./page/LegacyCycleManager.tsx', import.meta.url), 'utf8')
 
     expect(text).toContain('const planStufenListe = (c: Cycle) => {')
     expect(verwalter).toContain('{planStufenListe(c)}')
@@ -851,10 +854,7 @@ describe('My Stack modular integration', () => {
   // Die Seite samt ihrer ausgelagerten Teile in page/.
   const source = () => [
     readFileSync(new URL('./MyStackPage.tsx', import.meta.url), 'utf8'),
-    ...readdirSync(new URL('./page/', import.meta.url))
-      .filter(name => /\.(ts|tsx)$/.test(name) && !/\.test\./.test(name))
-      .sort()
-      .map(name => readFileSync(new URL(`./page/${name}`, import.meta.url), 'utf8')),
+    ...pageParts(),
   ].join('\n')
   const componentSource = (name: string) => readFileSync(
     new URL(`./components/${name}.tsx`, import.meta.url),

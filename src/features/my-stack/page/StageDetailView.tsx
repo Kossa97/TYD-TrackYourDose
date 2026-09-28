@@ -27,7 +27,7 @@ export function StageDetailView({
   eintragDetails,
 }: {
   detailUrsprung: DOMRect | null
-  activePeptide: Peptide
+  activePeptide: Peptide | null
   detailHistoryPeptideId: string | null
   closeStageDetail: () => void
   sloshEngine: SloshEngine
