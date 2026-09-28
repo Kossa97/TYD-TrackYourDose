@@ -23,6 +23,13 @@ describe('Layout injection tracker fullscreen route', () => {
 })
 
 describe('Layout viewport ownership', () => {
+  it('gives the calculator its own scrolling area without a floating control over the syringe', () => {
+    expect(routeLayoutMode('/rechner')).toEqual({
+      lockViewport: true,
+      hideBottomNav: false,
+      hideFloatingFaq: true,
+    })
+  })
   it('locks My Stack to the app viewport without hiding its bottom navigation', () => {
     const source = readFileSync(new URL('./Layout.tsx', import.meta.url), 'utf8')
 

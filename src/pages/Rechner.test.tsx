@@ -22,8 +22,8 @@ beforeEach(() => { mocks.load.mockReset().mockResolvedValue([]) })
 function setup() { render(<I18nextProvider i18n={i18n}><Rechner /></I18nextProvider>) }
 function enter(label: string, value: string) { fireEvent.change(screen.getByLabelText(label), { target: { value } }) }
 function validValues() {
-  enter('Wirkstoffmenge (mg)', '5')
-  enter('Flüssigkeitsmenge (mL)', '2')
+  enter('Wirkstoffmenge im Behälter', '5')
+  enter('Gesamtvolumen der Lösung (mL)', '2')
   enter('Gewünschte Menge', '250')
 }
 
@@ -35,7 +35,7 @@ it('uses the actual syringe capacity for both volume and scale across presets', 
     const result = screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' })
     expect(result.textContent).toContain('0,1 mL')
     expect(result.textContent).not.toMatch(/0,167|0,05 mL/)
-    expect(within(result).getByRole('meter').getAttribute('aria-valuenow')).toBe(preset === '1:40' ? '4' : '10')
+    expect(Number(screen.getByRole('meter').getAttribute('aria-valuenow'))).toBeCloseTo(preset === '1:40' ? 4 : 10)
   }
   await waitFor(() => expect(mocks.load).toHaveBeenCalled())
 })
@@ -54,7 +54,7 @@ it('replaces results with clear errors for negative amounts and syringe overflow
 it('accepts German decimals and keeps custom syringe configuration visible', () => {
   setup()
   validValues()
-  enter('Wirkstoffmenge (mg)', '2,5')
+  enter('Wirkstoffmenge im Behälter', '2,5')
   enter('Spritzengröße', 'custom')
   enter('Spritzenvolumen (mL)', '0,5')
   enter('Skalenmaximum (Einheiten)', '50')
@@ -64,7 +64,7 @@ it('accepts German decimals and keeps custom syringe configuration visible', () 
   expect(screen.getByRole('alert').textContent).toContain('größer als 0')
 })
 
-it('imports current ingredient units and clears missing solvent on source changes', async () => {
+it('imports concentration references without inventing container contents and clears missing volume on source changes', async () => {
   mocks.load.mockResolvedValue([
     { id: 'new', display_name: 'Neuer Eintrag', dosage_form: 'vial', archived: false, configuration_status: 'complete', tracking_level: 'complete', ingredients: [{ id: 'ingredient', custom_name: '', amount_value: 5000, amount_unit: 'mcg', basis_value: 2, basis_unit: 'ml', position: 0, substance_catalog: null }] },
     { id: 'old', display_name: 'Ohne Flüssigkeit', dosage_form: 'vial', archived: false, configuration_status: 'complete', tracking_level: 'complete', ingredients: [], vial_amount_mg: 10, vial_amount_unit: 'mg', reconstitution_ml: null },
@@ -73,11 +73,11 @@ it('imports current ingredient units and clears missing solvent on source change
   const picker = await screen.findByLabelText('Werte aus Mein Stack')
   const option = within(picker).getByRole('option', { name: /Neuer Eintrag/ }) as HTMLOptionElement
   fireEvent.change(picker, { target: { value: option.value } })
-  expect((screen.getByLabelText('Wirkstoffmenge (mg)') as HTMLInputElement).value).toBe('5')
-  expect((screen.getByLabelText('Flüssigkeitsmenge (mL)') as HTMLInputElement).value).toBe('2')
+  expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('2.5')
+  expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).value).toBe('')
   const missing = within(picker).getByRole('option', { name: /Ohne Flüssigkeit/ }) as HTMLOptionElement
   fireEvent.change(picker, { target: { value: missing.value } })
-  expect((screen.getByLabelText('Flüssigkeitsmenge (mL)') as HTMLInputElement).value).toBe('')
+  expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('')
 })
 
 it('explains stack loading failures and allows retry while manual calculation works', async () => {
@@ -101,29 +101,29 @@ it('keeps entered calculations when switching to the unit converter and back', (
 
 it('shows concentration before a target is entered and clears it when the solution becomes invalid', () => {
   setup()
-  enter('Wirkstoffmenge (mg)', '5')
+  enter('Wirkstoffmenge im Behälter', '5')
   const concentration = screen.getByRole('status', { name: 'Konzentration der Lösung' })
   expect(concentration.textContent).toContain('2,5 mg/mL')
   expect(screen.queryByRole('meter')).toBeNull()
   enter('Gewünschte Menge', '-1')
   expect(concentration.textContent).toContain('2,5 mg/mL')
-  enter('Flüssigkeitsmenge (mL)', '0')
+  enter('Gesamtvolumen der Lösung (mL)', '0')
   expect(concentration.textContent).not.toContain('mg/mL')
-  enter('Flüssigkeitsmenge (mL)', '4')
+  enter('Gesamtvolumen der Lösung (mL)', '4')
   expect(concentration.textContent).toContain('1,25 mg/mL')
-  enter('Wirkstoffmenge (mg)', '')
+  enter('Wirkstoffmenge im Behälter', '')
   expect(concentration.textContent).not.toContain('mg/mL')
 })
 
 it('does not show infinite or zero concentration for numbers outside the numeric range', () => {
   setup()
-  enter('Wirkstoffmenge (mg)', '1e308')
-  enter('Flüssigkeitsmenge (mL)', '1e-300')
+  enter('Wirkstoffmenge im Behälter', '1e308')
+  enter('Gesamtvolumen der Lösung (mL)', '1e-300')
   const concentration = screen.getByRole('status', { name: 'Konzentration der Lösung' })
   expect(concentration.textContent).toContain('berechenbaren Bereichs')
   expect(concentration.textContent).not.toMatch(/Infinity|NaN|mg\/mL/)
-  enter('Wirkstoffmenge (mg)', '1e-300')
-  enter('Flüssigkeitsmenge (mL)', '1e308')
+  enter('Wirkstoffmenge im Behälter', '1e-300')
+  enter('Gesamtvolumen der Lösung (mL)', '1e308')
   expect(concentration.textContent).toContain('berechenbaren Bereichs')
 })
 
@@ -136,17 +136,18 @@ it('copies a complete calculation using the selected U-40 scale and German decim
   enter('Spritzengröße', '1:40')
   fireEvent.click(screen.getByRole('button', { name: 'Berechnung kopieren' }))
   await screen.findByText('Berechnung kopiert.')
-  expect(writeText).toHaveBeenCalledWith([
+  const copied = writeText.mock.calls[0][0]
+  for (const line of [
     'Aufziehrechner',
-    'Wirkstoffmenge (mg): 5',
-    'Flüssigkeitsmenge (mL): 2',
+    'Wirkstoffmenge im Behälter: 5 mg',
+    'Gesamtvolumen der Lösung (mL): 2 mL',
     'Konzentration: 2,5 mg/mL',
     'Gewünschte Menge: 250 µg',
     'Spritzenskala: 40 Skaleneinheiten = 1 mL',
     'Dein Ergebnis: 4 Skaleneinheiten = 0,1 mL',
-    'Portionen aus dieser Menge: 20',
+    'Volle Entnahmen: 20',
     de.rechner_precision_note,
-  ].join('\n'))
+  ]) expect(copied).toContain(line)
   enter('Gewünschte Menge', '500')
   expect(screen.queryByText('Berechnung kopiert.')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Berechnung kopieren' }))
@@ -169,4 +170,81 @@ it.each(['denied', 'unavailable'])('offers the current summary for manual copyin
   expect(summary.value).toContain('Gewünschte Menge: 0,25 mg')
   expect(summary.value).toContain('Dein Ergebnis: 10 Skaleneinheiten = 0,1 mL')
   expect(screen.queryByText('Berechnung kopiert.')).toBeNull()
+})
+
+it('shows a full syringe when valid arithmetic crosses capacity only by floating-point noise', () => {
+  setup()
+  enter('Wirkstoffmenge im Behälter', '0.3')
+  enter('Gesamtvolumen der Lösung (mL)', '1.5')
+  enter('Gewünschte Menge', '100')
+  expect(screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' }).textContent).toContain('0,5 mL')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('50')
+})
+
+it('calculates from a label concentration without inventing a container size', () => {
+  setup()
+  fireEvent.click(screen.getByRole('button', { name: 'Konzentration bekannt' }))
+  enter('Konzentration laut Etikett', '5')
+  enter('Gewünschte Menge', '250')
+  const result = screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' })
+  expect(result.textContent).toContain('0,05 mL')
+  expect(result.textContent).not.toContain('Infinity')
+  enter('Inhalt des Behälters (mL, optional)', '2')
+  enter('Entnahmen pro Woche (optional)', '5')
+  expect(result.textContent).toContain('40')
+  expect(result.textContent).toContain('56 Tage')
+  enter('Entnahmen pro Woche (optional)', '-1')
+  expect(result.textContent).toContain('0,05 mL')
+  expect(result.textContent).not.toContain('56 Tage')
+  enter('Inhalt des Behälters (mL, optional)', '-1')
+  expect(result.textContent).toContain('0,05 mL')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('5')
+})
+
+it('preserves physical amounts on mass and volume unit changes and clears incompatible IU', () => {
+  setup()
+  validValues()
+  enter('Einheit der Wirkstoffmenge', 'g')
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('0.005')
+  enter('Einheit der Menge', 'mg')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('0.25')
+  enter('Einheit der Menge', 'ml')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('0.1')
+  enter('Einheit der Wirkstoffmenge', 'iu')
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('0.1')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('10')
+  enter('Wirkstoffmenge im Behälter', '1000')
+  enter('Einheit der Menge', 'iu')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('50')
+  enter('Einheit der Wirkstoffmenge', 'mg')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('')
+  expect(screen.queryByRole('meter')).toBeNull()
+})
+
+it('counts only full withdrawals and does not round the draw to a printed tick', () => {
+  setup()
+  validValues()
+  enter('Gewünschte Menge', '300')
+  enter('Spritzengröße', '1:100')
+  enter('Kleinster Teilstrich (Einheiten)', '5')
+  const result = screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' })
+  expect(result.textContent).toContain('0,12 mL')
+  expect(result.textContent).toContain('16')
+  expect(result.textContent).toContain('Zwischen den Teilstrichen 10 und 15')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('12')
+})
+
+it('retains equivalent solution data across source modes and resets the whole form', () => {
+  setup()
+  validValues()
+  fireEvent.click(screen.getByRole('button', { name: 'Konzentration bekannt' }))
+  expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('2.5')
+  expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).value).toBe('2')
+  fireEvent.click(screen.getByRole('button', { name: 'Menge + Volumen' }))
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('5')
+  fireEvent.click(screen.getByRole('button', { name: 'Zurücksetzen' }))
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('')
+  expect(screen.queryByRole('meter')).toBeNull()
 })

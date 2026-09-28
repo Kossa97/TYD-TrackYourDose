@@ -52,7 +52,20 @@ describe('getCalculatorSources', () => {
 
   it('imports a mass per volume strength as a concentration-equivalent reference', () => {
     expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_value: 20, basis_value: 2, basis_unit: 'mL' })], reconstitution_ml: 5 })])[0])
-      .toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 20, diluentMl: 2 })
+      .toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 20, diluentMl: 2, isReference: true })
+  })
+
+  it('distinguishes a ready-made per-mL reference from a known full-vial amount', () => {
+    const readySolution = item({
+      id: 'ready', category: 'hormone',
+      ingredients: [ingredient({ amount_value: 250, basis_value: 1, basis_unit: 'ml' })],
+    })
+    const wholeVial = item({ id: 'whole', ingredients: [ingredient({ amount_value: 10, basis_value: 1, basis_unit: 'vial' })] })
+
+    expect(getCalculatorSources([readySolution, wholeVial])).toEqual([
+      { id: 'ready', label: 'Product', vialAmountMg: 250, diluentMl: 1, isReference: true },
+      { id: 'whole', label: 'Product', vialAmountMg: 10, diluentMl: null },
+    ])
   })
 
   it('prefers current structured mass over frozen legacy mass', () => {
@@ -65,7 +78,7 @@ describe('getCalculatorSources', () => {
       category: 'hormone',
       ingredients: [ingredient({ amount_value: 10, basis_value: 2, basis_unit: 'ml' })],
       vial_amount_mg: 10, vial_amount_unit: 'mg', reconstitution_ml: 5,
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2 }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2, isReference: true }])
   })
 
   it('prefers enabled vial inventory dilution over frozen legacy dilution', () => {
@@ -77,7 +90,7 @@ describe('getCalculatorSources', () => {
     expect(getCalculatorSources([item({
       category: 'hormone', inventory: inventory(),
       ingredients: [ingredient({ amount_value: 250, basis_value: 1, basis_unit: 'ml' })],
-    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 250, diluentMl: 1 }])
+    })])).toEqual([{ id: 'item-1', label: 'Product', vialAmountMg: 250, diluentMl: 1, isReference: true }])
   })
 
   it.each([{ enabled: false }, { package_unit: 'ml' }])('ignores inapplicable inventory dilution %j', overrides => {
@@ -93,7 +106,7 @@ describe('getCalculatorSources', () => {
     expect(getCalculatorSources([item({
       ingredients: [ingredient({ amount_value: 10, basis_value: 2, basis_unit: 'ml' })],
       vial_amount_mg: 20, vial_amount_unit: 'mg', reconstitution_ml: 4,
-    })])[0]).toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2 })
+    })])[0]).toEqual({ id: 'item-1', label: 'Product', vialAmountMg: 10, diluentMl: 2, isReference: true })
   })
 
   it('imports a powder vial whose mixing volume has not been entered', () => {

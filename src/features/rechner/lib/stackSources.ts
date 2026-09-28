@@ -5,6 +5,7 @@ export interface CalculatorSource {
   label: string
   vialAmountMg: number
   diluentMl: number | null
+  isReference?: true
 }
 
 type LegacyFields = {
@@ -65,6 +66,7 @@ export function getCalculatorSources(items: LoadedStackItem[]): CalculatorSource
         label: isBlend ? `${item.display_name} · ${ingredientName}` : item.display_name,
         vialAmountMg,
         diluentMl,
+        ...(basisUnit === 'ml' && !unsetPowderVolume ? { isReference: true as const } : {}),
       }]
     })
   })
