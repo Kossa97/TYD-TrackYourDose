@@ -168,6 +168,17 @@ describe('groupPlanCardSlots', () => {
     }))).toHaveLength(2)
   })
 
+  it('vereinigt getrennte Tage und behält die Leiste, solange sie nicht alle Plantage abdeckt', () => {
+    const [morgens] = planCardSlots(snapshot())
+    const grouped = groupPlanCardSlots(
+      [{ ...morgens, days: ['Mo'] }, { ...morgens, id: 'morgens#1', days: ['Mi'] }],
+      ['Mo', 'Mi', 'Fr'],
+    )
+
+    expect(grouped).toHaveLength(1)
+    expect(grouped[0]).toMatchObject({ id: morgens.id, days: ['Mo', 'Mi'] })
+  })
+
   it('nimmt eine auf alle sieben Tage vereinigte Einnahme als „jeden Tag"', () => {
     const verteilt = snapshot({
       intake_time: 'morgens,morgens', intake_time_custom: '08:00,08:00', slot_doses: '50,50', slot_days: 'Mo|Di|Mi,Do|Fr|Sa|So',
