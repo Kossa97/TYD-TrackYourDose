@@ -9,7 +9,7 @@ import {
   CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, SlidersHorizontal,
   X, FileText, ExternalLink,
-  Archive, Info, RefreshCw, Clock, AlertTriangle,
+  Archive, Info, RefreshCw, Clock,
   RotateCcw, Flag, Pause, Play, type LucideIcon,
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
@@ -55,7 +55,6 @@ import { planSegments, planVersionSegments, stufenText } from './lib/planSegment
 import { cyclePeriod } from './lib/planCard'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
-import { DoseUnitControl } from './components/DoseUnitControl'
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
@@ -87,7 +86,7 @@ import {
   type EscalationForm,
   emptyEscalationForm,
   type InfoRow,
-  UNITS,
+  
   type PeptideSortKey,
   MY_STACK_DETAIL_HISTORY_KEY,
   historyStateRecord,
@@ -114,6 +113,10 @@ import { AddStageTile, AddVialTile } from './page/stackTiles'
 import { StackTabBar } from './page/StackTabBar'
 import { VialPositionRow } from './page/VialPositionRow'
 import { useMyStackData } from './page/useMyStackData'
+import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
+import { SubstanceInfoSheet } from './page/SubstanceInfoSheet'
+import { RekonstitutionDialog } from './page/RekonstitutionDialog'
+import { EscalationFormSheet } from './page/EscalationFormSheet'
 import { DosePlanActions } from './page/DosePlanActions'
 
 export { DosePlanActions }
@@ -3097,85 +3100,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       )}
 
       {/* ══ SUBSTANZ ENTFERNEN: ARCHIVIEREN vs. ENDGÜLTIG LÖSCHEN ═══════════════ */}
-      {deletePromptPeptide && (
-        <div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
-          data-app-modal
-          data-archive-delete-confirmation={deletePromptFromArchive ? '' : undefined}
-          onClick={() => {
-            if (deletingPeptide) return
-            setDeletePromptFromArchive(false)
-            setDeletePromptPeptide(null)
-            window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())
-          }}
-        >
-          <div
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-peptide-title"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-300">
-                <AlertTriangle size={20} />
-              </span>
-              <div className="min-w-0">
-                <h2 id="delete-peptide-title" className="text-lg font-bold text-white">{t('substanz_entfernen_title')}</h2>
-                <p className="mt-0.5 truncate text-sm text-slate-400">{deletePromptPeptide.name}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              {!deletePromptFromArchive && (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                  <p className="flex items-center gap-1.5 text-sm font-semibold text-cyan-300">
-                    <Archive size={15} /> {t('archivieren_behalten')}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">{t('archivieren_behalten_desc')}</p>
-                </div>
-              )}
-              <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-red-300">
-                  <Trash2 size={15} /> {t('endgueltig_loeschen')}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">{t('endgueltig_loeschen_desc')}</p>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2">
-              {!deletePromptFromArchive && (
-                <button
-                  type="button"
-                  onClick={() => archivePeptide(deletePromptPeptide)}
-                  disabled={deletingPeptide}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/15 px-4 text-sm font-bold text-cyan-200 transition-colors hover:border-cyan-400/60 hover:bg-cyan-500/25 disabled:opacity-50"
-                >
-                  <Archive size={16} /> {t('archivieren_behalten')}
-                </button>
-              )}
-              <button
-                type="button"
-                autoFocus={deletePromptFromArchive}
-                onClick={() => hardDeletePeptide(deletePromptPeptide)}
-                disabled={deletingPeptide}
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/15 px-4 text-sm font-bold text-red-200 transition-colors hover:border-red-400/60 hover:bg-red-500/25 disabled:opacity-50"
-              >
-                <Trash2 size={16} /> {t('endgueltig_loeschen')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDeletePromptFromArchive(false); setDeletePromptPeptide(null); window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus()) }}
-                data-app-back-close
-                disabled={deletingPeptide}
-                className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-50"
-              >
-                {t('cancel')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteSubstanceDialog
+        deletePromptPeptide={deletePromptPeptide}
+        deletePromptFromArchive={deletePromptFromArchive}
+        deletingPeptide={deletingPeptide}
+        setDeletePromptFromArchive={setDeletePromptFromArchive}
+        setDeletePromptPeptide={setDeletePromptPeptide}
+        archiveCloseButtonRef={archiveCloseButtonRef}
+        archivePeptide={archivePeptide}
+        hardDeletePeptide={hardDeletePeptide}
+      />
 
       {/* ══ ARCHIV ══════════════════════════════════════════════════════════════ */}
       {archiveViewOpen && (
@@ -3525,376 +3459,35 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           `save_stack_item_with_plan`. */}
 
       {/* DOSISANPASSUNG-FORMULAR */}
-      {showEscForm && eForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal data-app-back-dirty-on-interaction
-          onClick={() => setShowEscForm(false)}>
-          <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh]"
-            onClick={e => e.stopPropagation()}>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-orange-400" />
-                <h2 className="text-lg font-bold">
-                  {editingEscId ? t('esc_bearbeiten') : t('dose_plan_add_titration', { defaultValue: 'Titrationsschritt hinzufügen' })}
-                </h2>
-              </div>
-              {escForCycle && <p className="text-slate-400 text-sm mt-0.5 ml-6">{escForCycle.name}</p>}
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                {t('dose_plan_titration_disclaimer', {
-                  defaultValue: 'Die App dokumentiert deinen Titrationsplan; sie empfiehlt weder eine Dosis noch eine Titration.',
-                })}
-              </p>
-            </div>
-
-            <div data-ob="esc-core" className="space-y-4">
-            <div data-ob="esc-amount">
-              <label className="label">Absolute Zieldosis</label>
-              <div className="flex gap-2">
-                <input className="input flex-1" type="number"
-                  value={eForm.increase_amount}
-                  onChange={e => setEForm(f => f ? { ...f, increase_amount: e.target.value } : f)} />
-                <DoseUnitControl
-                  label={t('einheit_label')}
-                  unit={eForm.unit}
-                  units={UNITS}
-                  locked
-                  className="w-28"
-                  onChange={() => undefined}
-                />
-              </div>
-            </div>
-
-            <div data-ob="esc-when">
-              <label className="label">{t('ab_wann_label')}</label>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  { value: 'date',        labelKey: 'festes_datum' },
-                  { value: 'after_days',  labelKey: 'nach_x_tagen' },
-                  { value: 'after_weeks', labelKey: 'nach_x_wochen' },
-                ] as const).map(opt => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setEForm(f => {
-                      if (!f || !escForCycle) return f
-                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_type: opt.value })
-                    })}
-                    className={`py-2.5 rounded-xl text-xs font-medium transition-colors ${
-                      eForm.start_type === opt.value ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}>
-                    {t(opt.labelKey)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {eForm.start_type === 'date' && (
-              <div data-ob="esc-when-detail">
-                <label className="label">{t('datum_label')}</label>
-                <input className="input" type="date" value={eForm.start_date}
-                  onChange={e => setEForm(f => {
-                    if (!f || !escForCycle) return f
-                    return withEffectiveEscalationUnit(escForCycle, { ...f, start_date: e.target.value })
-                  })} />
-              </div>
-            )}
-            {eForm.start_type === 'after_days' && (
-              <div data-ob="esc-when-detail">
-                <label className="label">{t('tage_nach_start')}</label>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
-                  <input className="input w-24" type="number" min="1"
-                    value={eForm.start_after_days}
-                    onChange={e => setEForm(f => {
-                      if (!f || !escForCycle) return f
-                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_after_days: e.target.value })
-                    })} />
-                  <span className="text-slate-400 text-sm shrink-0">{t('tagen_suffix')}</span>
-                </div>
-              </div>
-            )}
-            {eForm.start_type === 'after_weeks' && (
-              <div data-ob="esc-when-detail">
-                <label className="label">{t('wochen_nach_start')}</label>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
-                  <input className="input w-24" type="number" min="1"
-                    value={eForm.start_after_days}
-                    onChange={e => setEForm(f => {
-                      if (!f || !escForCycle) return f
-                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_after_days: e.target.value })
-                    })} />
-                  <span className="text-slate-400 text-sm shrink-0">{t('wochen_suffix')}</span>
-                </div>
-              </div>
-            )}
-
-            <div data-ob="esc-notes">
-              <label className="label">{t('notizen_optional')}</label>
-              <textarea className="input resize-none" rows={2}
-                placeholder={t('esc_notes_placeholder')}
-                value={eForm.notes}
-                onChange={e => setEForm(f => f ? { ...f, notes: e.target.value } : f)} />
-            </div>
-
-            </div>{/* /esc-core */}
-
-            <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
-              <button data-ob="btn-esc-save" className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
-                {savingEsc ? t('loading') : t('save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EscalationFormSheet
+        showEscForm={showEscForm}
+        eForm={eForm}
+        setShowEscForm={setShowEscForm}
+        editingEscId={editingEscId}
+        escForCycle={escForCycle}
+        setEForm={setEForm}
+        saveEsc={saveEsc}
+        savingEsc={savingEsc}
+      />
 
       {/* ══ REKONSTITUTION DIALOG ═════════════════════════════════════════════ */}
-      {rekonstitutionTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-white text-lg">{t('rekonstitution_wdh_title')}</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {t('rekonstitution_wdh_desc')}
-            </p>
-            <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
-                checked={rekonstitutionDontAsk}
-                onChange={e => setRekonstitutionDontAsk(e.target.checked)} />
-              {t('nicht_mehr_fragen')}
-            </label>
-            <div className="flex gap-3 pt-1">
-              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setRekonstitutionTarget(null)}>{t('no')}</button>
-              <button onClick={confirmRekonstitution}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-colors text-sm">
-                {t('yes')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RekonstitutionDialog
+        rekonstitutionTarget={rekonstitutionTarget}
+        rekonstitutionDontAsk={rekonstitutionDontAsk}
+        setRekonstitutionDontAsk={setRekonstitutionDontAsk}
+        setRekonstitutionTarget={setRekonstitutionTarget}
+        confirmRekonstitution={confirmRekonstitution}
+      />
 
       {/* ══ PLANÄNDERUNG: RÜCKWIRKEND ODER AB HEUTE ═══════════════════════════ */}
 
       {/* ══ INFO-SHEET ═══════════════════════════════════════════════════════ */}
-      {infoPeptide && (() => {
-        const p = infoPeptide
-        const syringeMl    = p.syringe_type?.split(':')[0]
-        const syringeUnits = p.syringe_type?.split(':')[1]
-        const isImage = p.batch_file_url ? /\.(jpe?g|png|webp)$/i.test(p.batch_file_url) : false
-        const isPdf   = p.batch_file_url ? /\.pdf$/i.test(p.batch_file_url) : false
-        const invItem = inventory.find(i => i.id === p.inventory_item_id)
-
-        let expiryDays: number | null = null
-        let expiryDate: string | null = null
-        if (p.reconstitution_date && p.expiry_days) {
-          const exp = addDays(parseISO(p.reconstitution_date), p.expiry_days)
-          expiryDays = expiryDaysLeft(p)
-          expiryDate = format(exp, 'dd.MM.yyyy')
-        }
-
-        return (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
-            onClick={() => setInfoPeptide(null)}>
-            <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh] motion-fade-up"
-              onClick={e => e.stopPropagation()}>
-
-              <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-4 flex items-center justify-between z-10">
-                <div className="flex items-center gap-2">
-                  <FileText size={18} className="text-sky-400" />
-                  <h2 className="font-bold text-white text-lg">{p.name}</h2>
-                </div>
-                <button onClick={() => setInfoPeptide(null)} data-app-back-close className="p-1.5 text-slate-400 hover:text-white">
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="px-5 py-4 space-y-4 stagger-in">
-
-                {/* Inventar-Verknüpfung */}
-                {invItem && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/10 border border-sky-500/20">
-                    <Archive size={13} className="text-sky-400 shrink-0" />
-                    <p className="text-sky-400 text-xs">{t('aus_inventar_badge')} <span className="font-medium">{invItem.name}</span> · {invItem.mg_per_vial} mg/Vial</p>
-                  </div>
-                )}
-
-                {/* Dosierung */}
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('dosierung_section')}</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                      <p className="text-slate-400 text-xs">{t('applikation_info')}</p>
-                      <p className="text-white font-semibold mt-0.5">{methodLabel(t, p.default_method)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rekonstitution */}
-                {(p.vial_amount_mg || p.reconstitution_ml) && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('wirkstoff_rekonstitution')}</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {p.vial_amount_mg && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
-                          <p className="text-sky-400 text-base font-bold">{p.vial_amount_mg}</p>
-                          <p className="text-slate-500 text-xs mt-0.5">{p.vial_amount_unit ?? 'mg'} / Vial</p>
-                        </div>
-                      )}
-                      {p.reconstitution_ml && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
-                          <p className="text-sky-400 text-base font-bold">{p.reconstitution_ml}</p>
-                          <p className="text-slate-500 text-xs mt-0.5">{t('ml_fluessigkeit')}</p>
-                        </div>
-                      )}
-                      {syringeMl && syringeUnits && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
-                          <p className="text-sky-400 text-base font-bold">{syringeMl} mL</p>
-                          <p className="text-slate-500 text-xs mt-0.5">{syringeUnits} {t('einh_kurz')}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Haltbarkeit */}
-                {(p.reconstitution_date || expiryDate) && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('haltbarkeit_section_info')}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {p.reconstitution_date && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                          <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
-                          <p className="text-white font-semibold mt-0.5">{format(parseISO(p.reconstitution_date), 'dd.MM.yyyy')}</p>
-                        </div>
-                      )}
-                      {expiryDate && expiryDays !== null && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                          <p className="text-slate-400 text-xs">{t('ablauf_label')}</p>
-                          <p className={`font-semibold mt-0.5 ${expiryDays > 7 ? 'text-emerald-400' : expiryDays >= 0 ? 'text-amber-400' : 'text-red-400'}`}>
-                            {expiryDate}
-                          </p>
-                          <p className={`text-xs ${expiryDays > 7 ? 'text-emerald-500' : expiryDays >= 0 ? 'text-amber-500' : 'text-red-500'}`}>
-                            {expiryDays > 0 ? t('noch_n_tage_ablauf', { n: expiryDays }) : expiryDays === 0 ? t('my_stack_expires_today') : t('abgelaufen_warn')}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bestand */}
-                {(p.vials_in_stock !== null || p.vials_initial) && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('bestand_section')}</p>
-                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white font-semibold">{p.vials_in_stock ?? 0} Vials</span>
-                        {(p.vials_initial ?? 0) > 0 && (
-                          <span className="text-slate-400 text-xs">{t('von_n_gesamt', { n: p.vials_initial })}</span>
-                        )}
-                      </div>
-                      {(p.vials_initial ?? 0) > 0 && (() => {
-                        const pct = Math.max(0, Math.min(100, ((p.vials_in_stock ?? 0) / p.vials_initial!) * 100))
-                        const bar = pct > 50 ? 'bg-emerald-500' : pct > 25 ? 'bg-amber-500' : 'bg-red-500'
-                        const txt = pct > 50 ? 'text-emerald-400' : pct > 25 ? 'text-amber-400' : 'text-red-400'
-                        return (
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className={`text-xs font-bold shrink-0 ${txt}`}>{Math.round(pct)}%</span>
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Batch */}
-                {(p.batch_number || p.batch_source) && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('batch_herkunft_section')}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {p.batch_number && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                          <p className="text-slate-400 text-xs">{t('batch')}</p>
-                          <p className="text-white font-medium mt-0.5 text-sm">{p.batch_number}</p>
-                        </div>
-                      )}
-                      {p.batch_source && (
-                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
-                          <p className="text-slate-400 text-xs">{t('quelle')}</p>
-                          <p className="text-white font-medium mt-0.5 text-sm">{p.batch_source}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Dokument */}
-                {p.batch_file_url && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('analyse_dokument_section')}</p>
-                    {isImage && (
-                      <a href={p.batch_file_url} target="_blank" rel="noopener noreferrer">
-                        <img src={p.batch_file_url} alt="Batch-Dokument"
-                          className="w-full rounded-xl border border-slate-700 object-contain max-h-64" />
-                      </a>
-                    )}
-                    {isPdf && (
-                      <a href={p.batch_file_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-sky-500/40 transition-colors">
-                        <FileText size={20} className="text-sky-400 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium">{t('pdf_oeffnen')}</p>
-                          <p className="text-slate-500 text-xs truncate">{p.batch_file_url.split('/').pop()}</p>
-                        </div>
-                        <ExternalLink size={14} className="text-slate-500 shrink-0" />
-                      </a>
-                    )}
-                    {!isImage && !isPdf && (
-                      <a href={p.batch_file_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sky-400 text-sm hover:underline">
-                        <ExternalLink size={14} /> {t('dokument_oeffnen')}
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Notizen */}
-                {p.notes && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('notizen_section')}</p>
-                    <p className="text-slate-300 text-sm bg-slate-800/60 border border-slate-800 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
-                  </div>
-                )}
-
-                {p.pk_profile_id && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInfoPeptide(null)
-                      navigate(`/simulation?pk=${p.pk_profile_id}`)
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-colors"
-                    style={{
-                      color: 'var(--accent)',
-                      background: 'var(--accent-weak)',
-                      border: '1px solid var(--accent-border)',
-                    }}
-                  >
-                    <Activity size={16} />
-                    Blutspiegel simulieren
-                  </button>
-                )}
-              </div>
-
-              <div className="px-5 pb-8 pt-2">
-                <button className="btn-secondary w-full" onClick={() => setInfoPeptide(null)}>{t('close')}</button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+      <SubstanceInfoSheet
+        infoPeptide={infoPeptide}
+        inventory={inventory}
+        setInfoPeptide={setInfoPeptide}
+        navigate={navigate}
+      />
     </div>
   )
 }
