@@ -100,6 +100,57 @@ export function versionRhythm(version: PlanScheduleSnapshot): IntakeRhythm {
   })
 }
 
+function planTage(version: PlanScheduleSnapshot, rhythmus = versionRhythm(version)): string[] | null {
+  return rhythmus.kind === 'weekdays' ? rhythmus.weekdays : null
+}
+
+// Dieselbe gespeicherte Tageszeit, Uhrzeit und Menge.
+const einnahmeSchluessel = (slot: PlanCardSlot) => `${slot.key}|${slot.time}|${slot.dose ?? ''}|${slot.unit ?? ''}`
+
+function tageVereinigen(links: string[], rechts: string[]): string[] {
+  return WEEKDAY_KEYS.filter(tag => links.includes(tag) || rechts.includes(tag))
+}
+
+// Leer heisst „an jedem Tag" — das ueberschneidet sich mit allem.
+function ueberschneidungsfrei(links: string[], rechts: string[]): boolean {
+  return links.length > 0 && rechts.length > 0 && !links.some(tag => rechts.includes(tag))
+}
+
+// Alle sieben Tage, oder alle Tage des Plans: das sagt schon der Rhythmus.
+function tageKuerzen(tage: string[], planDays: readonly string[] | null): string[] {
+  if (tage.length === WEEKDAY_KEYS.length) return []
+  if (tage.length > 0 && planDays && planDays.length > 0 && planDays.every(tag => tage.includes(tag))) return []
+  return tage
+}
+
+/**
+ * Fasst Eintraege mit gleichem Schluessel zusammen — aber nur, wenn sich ihre
+ * Tage nicht ueberschneiden. Zwei gleiche Einnahmen am SELBEN Tag sind zwei
+ * Einnahmen (2 × 50 mg morgens), keine; zusammengelegt stuende die halbe
+ * Menge da.
+ */
+function zusammenfassen<T>(
+  eintraege: readonly T[],
+  schluessel: (eintrag: T) => string,
+  tage: (eintrag: T) => string[],
+  vereinigen: (ziel: T, dazu: T) => T,
+): T[] {
+  const gruppen: T[] = []
+  const nachSchluessel = new Map<string, number[]>()
+  for (const eintrag of eintraege) {
+    const k = schluessel(eintrag)
+    const kandidaten = nachSchluessel.get(k) ?? []
+    const index = kandidaten.find(i => ueberschneidungsfrei(tage(gruppen[i]), tage(eintrag)))
+    if (index === undefined) {
+      nachSchluessel.set(k, [...kandidaten, gruppen.length])
+      gruppen.push(eintrag)
+    } else {
+      gruppen[index] = vereinigen(gruppen[index], eintrag)
+    }
+  }
+  return gruppen
+}
+
 /**
  * Gleiche Einnahmen zusammenfassen — fuer die Anzeige, nicht fuer die Daten.
  *
@@ -108,38 +159,26 @@ export function versionRhythm(version: PlanScheduleSnapshot): IntakeRhythm {
  * morgens, …). Einzeln gezeigt stand dieselbe Einnahme doppelt da, jede mit
  * einer eigenen Tagesleiste, und die Karte zaehlte vier Einnahmezeiten.
  *
- * Zusammen gehoert, was dieselbe Tageszeit, Uhrzeit und Menge hat; die Tage
- * werden vereinigt. Deckt eine Einnahme alle Tage des Plans ab, verliert sie
- * ihre Tagesleiste — die Tage stehen schon im Rhythmus darueber. Weicht sie
- * ab („abends nur montags"), bleibt die Leiste.
+ * Zusammen gehoert, was dieselbe Tageszeit, Uhrzeit und Menge hat und an
+ * verschiedenen Tagen liegt; die Tage werden vereinigt. Deckt eine Einnahme
+ * alle Tage des Plans ab, verliert sie ihre Tagesleiste — die Tage stehen
+ * schon im Rhythmus darueber. Weicht sie ab („abends nur montags"), bleibt
+ * die Leiste.
  *
  * `planDays`: die Tage des Rhythmus bei „bestimmte Wochentage", sonst null.
  */
 export function groupPlanCardSlots(slots: readonly PlanCardSlot[], planDays: readonly string[] | null): PlanCardSlot[] {
-  const gruppen = new Map<string, PlanCardSlot>()
-  for (const slot of slots) {
-    const schluessel = `${slot.routineGroup}|${slot.time}|${slot.dose ?? ''}|${slot.unit ?? ''}`
-    const vorhanden = gruppen.get(schluessel)
-    if (!vorhanden) {
-      gruppen.set(schluessel, { ...slot, days: [...slot.days] })
-      continue
-    }
-    // Leer heisst „an jedem Tag des Plans" — das schluckt jede Auswahl.
-    vorhanden.days = vorhanden.days.length === 0 || slot.days.length === 0
-      ? []
-      : WEEKDAY_KEYS.filter(tag => vorhanden.days.includes(tag) || slot.days.includes(tag))
-  }
-  return [...gruppen.values()].map(slot => (
-    slot.days.length > 0 && planDays && planDays.length > 0 && planDays.every(tag => slot.days.includes(tag))
-      ? { ...slot, days: [] }
-      : slot
-  ))
+  return zusammenfassen(
+    slots,
+    einnahmeSchluessel,
+    slot => slot.days,
+    (ziel, dazu) => ({ ...ziel, days: tageVereinigen(ziel.days, dazu.days) }),
+  ).map(slot => ({ ...slot, days: tageKuerzen(slot.days, planDays) }))
 }
 
 /** Die Einnahmen einer Stufe so, wie Karte und Verlauf sie zeigen. */
-export function planDisplaySlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
-  const rhythmus = versionRhythm(version)
-  return groupPlanCardSlots(planCardSlots(version), rhythmus.kind === 'weekdays' ? rhythmus.weekdays : null)
+export function planDisplaySlots(version: PlanScheduleSnapshot, rhythmus = versionRhythm(version)): PlanCardSlot[] {
+  return groupPlanCardSlots(planCardSlots(version), planTage(version, rhythmus))
 }
 
 export type PlanSlotChange = 'initial' | 'same' | 'increased' | 'decreased' | 'changed' | 'new' | 'removed'
@@ -184,19 +223,46 @@ export function planStepRows(
   version: PlanScheduleSnapshot,
   previousVersion: PlanScheduleSnapshot | null,
 ): PlanStepRow[] {
-  const jetzt = planDisplaySlots(version)
-  if (!previousVersion) return jetzt.map(slot => ({ slot, previous: null, change: 'initial' }))
-
-  const vorher = new Map(planDisplaySlots(previousVersion).map(slot => [slot.id, slot]))
-  const zeilen: PlanStepRow[] = jetzt.map(slot => {
-    const alt = vorher.get(slot.id) ?? null
-    vorher.delete(slot.id)
-    return { slot, previous: alt, change: alt ? vergleiche(slot, alt) : 'new' }
-  })
-  for (const entfallen of vorher.values()) {
-    zeilen.push({ slot: entfallen, previous: entfallen, change: 'removed' })
+  // Verglichen wird je GESPEICHERTER Einnahme — nur dort ist die Zuordnung
+  // stabil. Zusammengefasst wird erst danach, fuer die Anzeige: sonst haengt
+  // die Zuordnung an der Gruppierung, und die haengt an den Mengen (aus
+  // „Mo 50, Fr 100" → „beide 75" wuerde „geaendert" plus „entfaellt").
+  const jetzt = planCardSlots(version)
+  const zeilen: PlanStepRow[] = []
+  if (!previousVersion) {
+    zeilen.push(...jetzt.map(slot => ({ slot, previous: null, change: 'initial' as const })))
+  } else {
+    const vorher = new Map(planCardSlots(previousVersion).map(slot => [slot.id, slot]))
+    for (const slot of jetzt) {
+      const alt = vorher.get(slot.id) ?? null
+      vorher.delete(slot.id)
+      zeilen.push({ slot, previous: alt, change: alt ? vergleiche(slot, alt) : 'new' })
+    }
+    for (const entfallen of vorher.values()) {
+      zeilen.push({ slot: entfallen, previous: entfallen, change: 'removed' })
+    }
   }
-  return zeilen
+
+  const tageJetzt = planTage(version)
+  const tageVorher = previousVersion ? planTage(previousVersion) : null
+  return zusammenfassen(
+    zeilen,
+    zeile => `${zeile.change}|${einnahmeSchluessel(zeile.slot)}|${zeile.previous ? einnahmeSchluessel(zeile.previous) : ''}`,
+    zeile => zeile.slot.days,
+    (ziel, dazu) => ({
+      ...ziel,
+      slot: { ...ziel.slot, days: tageVereinigen(ziel.slot.days, dazu.slot.days) },
+      previous: ziel.previous && dazu.previous
+        ? { ...ziel.previous, days: tageVereinigen(ziel.previous.days, dazu.previous.days) }
+        : ziel.previous,
+    }),
+  ).map(zeile => ({
+    ...zeile,
+    // Eine entfallene Einnahme stammt aus der Stufe davor — ihre Tage gegen
+    // deren Rhythmus.
+    slot: { ...zeile.slot, days: tageKuerzen(zeile.slot.days, zeile.change === 'removed' ? tageVorher : tageJetzt) },
+    previous: zeile.previous ? { ...zeile.previous, days: tageKuerzen(zeile.previous.days, tageVorher) } : null,
+  }))
 }
 
 /** Kalendertage von `from` bis `to` (beide `YYYY-MM-DD`), beide mitgezaehlt. */

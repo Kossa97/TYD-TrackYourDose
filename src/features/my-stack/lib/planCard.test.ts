@@ -159,12 +159,46 @@ describe('planDisplaySlots — gleiche Einnahmen zusammengefasst', () => {
 })
 
 describe('groupPlanCardSlots', () => {
-  it('schluckt eine Tagesauswahl, sobald eine gleiche Einnahme an jedem Tag liegt', () => {
-    const [morgens] = planCardSlots(snapshot())
-    const grouped = groupPlanCardSlots([{ ...morgens, days: ['Mo'] }, { ...morgens, id: 'morgens#1', days: [] }], null)
+  it('lässt zwei gleiche Einnahmen am selben Tag getrennt — sonst stünde die halbe Menge da', () => {
+    const doppelt = snapshot({ intake_time: 'morgens,morgens', intake_time_custom: '08:00,08:00', slot_doses: '50,50' })
 
-    expect(grouped).toHaveLength(1)
-    expect(grouped[0].days).toEqual([])
-    expect(grouped[0].id).toBe(morgens.id)
+    expect(planDisplaySlots(doppelt)).toHaveLength(2)
+    expect(planDisplaySlots(snapshot({
+      intake_time: 'morgens,morgens', intake_time_custom: '08:00,08:00', slot_doses: '50,50', slot_days: 'Mo,',
+    }))).toHaveLength(2)
+  })
+
+  it('nimmt eine auf alle sieben Tage vereinigte Einnahme als „jeden Tag"', () => {
+    const verteilt = snapshot({
+      intake_time: 'morgens,morgens', intake_time_custom: '08:00,08:00', slot_doses: '50,50', slot_days: 'Mo|Di|Mi,Do|Fr|Sa|So',
+    })
+
+    expect(planDisplaySlots(verteilt).map(slot => slot.days)).toEqual([[]])
+  })
+})
+
+describe('planStepRows — zusammengefasst erst nach dem Vergleich', () => {
+  const moUndFr = (dosen: string) => snapshot({
+    frequency: 'weekdays',
+    schedule_days: ['Mo', 'Fr'],
+    intake_time: 'morgens,morgens',
+    intake_time_custom: '08:00,08:00',
+    slot_doses: dosen,
+    slot_days: 'Mo,Fr',
+    unit: 'mg',
+  })
+
+  it('macht aus unterschiedlichen Tagesmengen keine entfallene Einnahme', () => {
+    const rows = planStepRows(moUndFr('75,75'), moUndFr('50,100'))
+
+    expect(rows.map(row => row.change).sort()).toEqual(['decreased', 'increased'])
+    expect(rows.some(row => row.change === 'removed' || row.change === 'new')).toBe(false)
+  })
+
+  it('fasst gleich geänderte Tage zu einer Zeile ohne Tagesleiste zusammen', () => {
+    const rows = planStepRows(moUndFr('75,75'), moUndFr('50,50'))
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ change: 'increased', slot: { dose: 75, days: [] }, previous: { dose: 50, days: [] } })
   })
 })

@@ -2,7 +2,7 @@ import { Trash2, Undo2 } from 'lucide-react'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { formatLocalDay } from '../lib/localDays'
 import { planCardSlots, planDisplaySlots } from '../lib/planCard'
-import { routineLabel, type Translate } from '../lib/planLabels'
+import { routineLabel, weekdayLabel, type Translate } from '../lib/planLabels'
 import type { ReviewStep } from '../lib/planAdoption'
 import { CurrentSlotRow, RoutineIcon } from './planCardParts'
 
@@ -120,7 +120,11 @@ export function PlannedStepsReview({
               <>
                 <ul className="mt-3 space-y-2">
                   {planCardSlots(step.proposed).map(slot => {
-                    const label = `${routineLabel(slot, t)} · ${slot.time}`
+                    // Hier bleibt jede gespeicherte Einnahme eine eigene Zeile —
+                    // jede hat ihr eigenes Mengenfeld. Damit man weiss, welches
+                    // Feld zu welchem Tag gehoert, stehen die Tage mit dabei.
+                    const tage = slot.days.map(day => weekdayLabel(day, language)).join(', ')
+                    const label = [routineLabel(slot, t), slot.time, tage].filter(Boolean).join(' · ')
                     const isNew = step.newSlotIds.includes(slot.id)
                     return (
                       <li key={slot.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">

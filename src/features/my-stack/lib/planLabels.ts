@@ -29,7 +29,8 @@ export function rhythmLabel(version: CyclePlanVersion, t: Translate): string {
 
 /** „Bei Bedarf" hat keine Einnahmezeiten — die gespeicherte Tageszeit bedeutet dort nichts. */
 export function versionSlots(version: CyclePlanVersion): PlanCardSlot[] {
-  return isOnDemandRhythm(versionRhythm(version)) ? [] : planDisplaySlots(version)
+  const rhythmus = versionRhythm(version)
+  return isOnDemandRhythm(rhythmus) ? [] : planDisplaySlots(version, rhythmus)
 }
 
 export function slotDoseLabel(slot: PlanCardSlot): string | null {
