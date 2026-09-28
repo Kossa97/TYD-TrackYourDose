@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlaskConical, RotateCcw, Syringe } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
@@ -115,26 +115,23 @@ export function DoseCalculator() {
       : { amount: inputNumber(concentration !== null && container !== null ? concentration * container : null), volume: values.container }) })
     setSelected(''); setUnitNotice('')
   }
-  const input = (field: NumericField, suffix?: string) => <div className="rechner-field">
+  const input = (field: NumericField, suffix?: ReactNode) => <div className="rechner-field">
     <label htmlFor={`dose-${field}`}>{labels[field]}</label>
-    <div className="rechner-input-group">
+    <div className={`rechner-input-group${suffix && typeof suffix !== 'string' ? ' rechner-input-with-unit' : ''}`}>
       <input id={`dose-${field}`} type="text" inputMode="decimal" autoComplete="off" className="rechner-input"
         value={values[field]} aria-invalid={Boolean(result.fieldErrors[field])}
         aria-describedby={result.fieldErrors[field] ? `dose-${field}-error` : undefined}
         onChange={event => edit(field, event.target.value)} />
-      {suffix && <span className="rechner-input-suffix" aria-hidden="true">{suffix}</span>}
+      {typeof suffix === 'string' ? <span className="rechner-input-suffix" aria-hidden="true">{suffix}</span> : suffix}
     </div>
     {result.fieldErrors[field] && <span className="rechner-error" id={`dose-${field}-error`}>
       {t(result.fieldErrors[field] === 'numeric_range' ? 'rechner_numeric_range' : 'rechner_positive')}
     </span>}
   </div>
-  const sourceUnitSelect = <label className="rechner-field" htmlFor="dose-source-unit">
-    <span>{t('rechner_source_unit')}</span>
-    <select id="dose-source-unit" className="rechner-select" value={values.sourceUnit}
-      onChange={event => changeSourceUnit(event.target.value as LiquidUnit)}>
-      {sourceUnits.map(unit => <option key={unit} value={unit}>{unitLabel(unit)}{values.mode === 'concentration' ? '/mL' : ''}</option>)}
-    </select>
-  </label>
+  const sourceUnitSelect = <select id="dose-source-unit" className="rechner-select" value={values.sourceUnit}
+    aria-label={t('rechner_source_unit')} onChange={event => changeSourceUnit(event.target.value as LiquidUnit)}>
+    {sourceUnits.map(unit => <option key={unit} value={unit}>{unitLabel(unit)}{values.mode === 'concentration' ? '/mL' : ''}</option>)}
+  </select>
   const summary = valid ? [
     t('rechner_dose_tab'), ...(source ? [`${t('rechner_stack_source')}: ${source.label}`] : []),
     ...(values.mode === 'amount' && result.concentration !== null ? [
@@ -195,9 +192,7 @@ export function DoseCalculator() {
                 <p className="rechner-muted">{t(selected ? 'rechner_source_note' : 'rechner_stack_hint')}</p>
               </> : <p className="rechner-muted">{t('rechner_stack_empty')}</p>}
           </div>}
-          <div className="rechner-quantity-fields">
-            {input(values.mode === 'amount' ? 'amount' : 'concentration')}{sourceUnitSelect}
-          </div>
+          {input(values.mode === 'amount' ? 'amount' : 'concentration', sourceUnitSelect)}
           {values.mode === 'amount' ? <>
             {input('volume', 'mL')}
             <div className="rechner-volume-presets" role="group" aria-label={t('rechner_volume_presets')}>
