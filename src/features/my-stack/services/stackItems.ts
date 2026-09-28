@@ -181,8 +181,7 @@ export interface StackItemMutationClient {
   }
 }
 
-const STACK_ITEM_COLUMNS = `
-  *,
+const STACK_ITEM_INVENTORY_COLUMNS = `
   inventory:stack_item_inventory(
     id,
     enabled,
@@ -196,7 +195,10 @@ const STACK_ITEM_COLUMNS = `
     opened_at,
     use_within_days,
     reconstitution_ml
-  ),
+  )
+`
+
+const STACK_ITEM_INGREDIENT_COLUMNS = `
   ingredients:stack_item_ingredients(
     id,
     stack_item_id,
@@ -219,6 +221,14 @@ const STACK_ITEM_COLUMNS = `
     )
   )
 `
+
+function stackItemColumns(includeInventory: boolean): string {
+  return `
+    *,
+    ${includeInventory ? `${STACK_ITEM_INVENTORY_COLUMNS},` : ''}
+    ${STACK_ITEM_INGREDIENT_COLUMNS}
+  `
+}
 
 function throwIfError(error: ServiceError | null): void {
   if (error) throw new Error(error.message)
@@ -462,10 +472,11 @@ function stackItemAsDraft(item: StackItem): StackItemDraft {
 export async function loadStackItems(
   client: StackItemQueryClient,
   archived: boolean,
+  options: { includeInventory?: boolean } = {},
 ): Promise<LoadedStackItem[]> {
   const { data, error } = await client
     .from('stack_items')
-    .select(STACK_ITEM_COLUMNS)
+    .select(stackItemColumns(options.includeInventory !== false))
     .eq('archived', archived)
     .order('created_at', { ascending: false })
 
