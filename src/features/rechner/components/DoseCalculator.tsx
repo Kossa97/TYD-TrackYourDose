@@ -132,6 +132,11 @@ export function DoseCalculator() {
     aria-label={t('rechner_source_unit')} onChange={event => changeSourceUnit(event.target.value as LiquidUnit)}>
     {sourceUnits.map(unit => <option key={unit} value={unit}>{unitLabel(unit)}{values.mode === 'concentration' ? '/mL' : ''}</option>)}
   </select>
+  const targetUnitSelect = <select id="dose-unit" className="rechner-select" value={values.targetUnit}
+    aria-label={t('rechner_target_unit')} onChange={event => changeTargetUnit(event.target.value as TargetUnit)}>
+    {(values.sourceUnit === 'iu' ? ['iu', 'ml'] as const : ['mcg', 'mg', 'g', 'ml'] as const)
+      .map(unit => <option key={unit} value={unit}>{unitLabel(unit)}</option>)}
+  </select>
   const summary = valid ? [
     t('rechner_dose_tab'), ...(source ? [`${t('rechner_stack_source')}: ${source.label}`] : []),
     ...(values.mode === 'amount' && result.concentration !== null ? [
@@ -221,23 +226,13 @@ export function DoseCalculator() {
       <section className="rechner-card" aria-labelledby="dose-target-title">
         <h2 id="dose-target-title"><span className="rechner-step-number">2</span><Syringe size={18} aria-hidden="true" />{t('rechner_withdrawal')}</h2>
         <div className="rechner-step-content">
-          <div className="rechner-quantity-fields">
-            {input('target')}
-            <label className="rechner-field" htmlFor="dose-unit">
-              <span>{t('rechner_target_unit')}</span>
-              <select id="dose-unit" className="rechner-select" value={values.targetUnit}
-                onChange={event => changeTargetUnit(event.target.value as TargetUnit)}>
-                {(values.sourceUnit === 'iu' ? ['iu', 'ml'] as const : ['mcg', 'mg', 'g', 'ml'] as const)
-                  .map(unit => <option key={unit} value={unit}>{unitLabel(unit)}</option>)}
-              </select>
-            </label>
-          </div>
+          {input('target', targetUnitSelect)}
           {unitNotice && <p className="rechner-muted" role="status">{t(unitNotice)}</p>}
           {error && <p className="rechner-error" role="alert">{error}</p>}
           {input('frequency')}
           <SyringeFields key={resetVersion} idPrefix="dose-syringe" capacityMl={values.capacityMl} capacityUnits={values.capacityUnits}
             onChange={(ml, units) => setValues(current => ({ ...current, capacityMl: ml, capacityUnits: units }))}
-            graduation={graduation} onGraduationChange={setGraduation} />
+            onGraduationChange={setGraduation} />
         </div>
       </section>
       <section className="rechner-card rechner-result-card" aria-labelledby="dose-result-title">
