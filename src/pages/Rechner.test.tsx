@@ -70,7 +70,7 @@ it('imports concentration references without inventing container contents and cl
     { id: 'old', display_name: 'Ohne Flüssigkeit', dosage_form: 'vial', archived: false, configuration_status: 'complete', tracking_level: 'complete', ingredients: [], vial_amount_mg: 10, vial_amount_unit: 'mg', reconstitution_ml: null },
   ])
   setup()
-  const picker = await screen.findByLabelText('Werte aus Mein Stack')
+  const picker = await screen.findByLabelText('Aus deinen Substanzen')
   const option = within(picker).getByRole('option', { name: /Neuer Eintrag/ }) as HTMLOptionElement
   fireEvent.change(picker, { target: { value: option.value } })
   expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('2.5')
@@ -87,7 +87,7 @@ it('offers saved ampoules and IU vials from My Stack as calculator sources', asy
   ])
   setup()
 
-  const picker = await screen.findByLabelText('Werte aus Mein Stack')
+  const picker = await screen.findByLabelText('Aus deinen Substanzen')
   const ampoule = within(picker).getByRole('option', { name: 'Testosteron' }) as HTMLOptionElement
   fireEvent.change(picker, { target: { value: ampoule.value } })
   expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('250')
@@ -117,7 +117,7 @@ it('loads database-shaped catalog entries through the real service and autofills
     }] }) }) }),
   }))
   setup()
-  const picker = await screen.findByLabelText('Werte aus Mein Stack')
+  const picker = await screen.findByLabelText('Aus deinen Substanzen')
   fireEvent.change(picker, { target: { value: 'catalog-vial' } })
   expect(screen.queryByRole('alert')).toBeNull()
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('10')
