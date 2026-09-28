@@ -42,20 +42,18 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItemIngredient } from './services/stackItems'
-import { searchSubstanceCatalog } from './services/substanceCatalog'
-import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from './types'
+import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup, type LoadedStackItemIngredient } from './services/stackItems'
+import type { StackItem, StackItemSetupDraft } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
 import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
 import { denyProps } from '../../lib/denyFeedback'
-import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
+import { filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities } from './lib/stackSort'
 import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
 import { cyclePeriod } from './lib/planCard'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
-import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { DoseUnitControl } from './components/DoseUnitControl'
 import { FEATURES } from '../../config/features'
@@ -83,7 +81,6 @@ import {
 } from '../../lib/planTimeline'
 import type { PlanChangeSubmission, PlanEditContext } from './lib/wizardState'
 import {
-  type InventoryItem,
   type Peptide,
   type Cycle,
   type Escalation,
@@ -100,14 +97,12 @@ import {
   vialCarouselItemWidth,
   ADD_SLOT,
   vialCarouselItemGap,
-  asPeptide,
   getVialFillPct,
   sortPeptides,
   FREQ_KEYS,
   INTAKE_TIME_CONFIG,
   REMINDER_OPTIONS,
   parseStoredDay,
-  mergeCatalogEntries,
   withEffectiveEscalationUnit,
   cycleAsIntakePlanDraft,
   type RecoverableMutation,
@@ -116,6 +111,9 @@ import {
   versionSnapshot,
 } from './page/model'
 import { AddStageTile, AddVialTile } from './page/stackTiles'
+import { StackTabBar } from './page/StackTabBar'
+import { VialPositionRow } from './page/VialPositionRow'
+import { useMyStackData } from './page/useMyStackData'
 import { DosePlanActions } from './page/DosePlanActions'
 
 export { DosePlanActions }
@@ -142,22 +140,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [zyklusBtnNew,   dismissZyklusBtn]     = useNew('zyklus_btn')
 
   // ── Inventar ─────────────────────────────────────────────────────────────
-  const [inventory, setInventory]             = useState<InventoryItem[]>([])
+  // ── Laden ─────────────────────────────────────────────────────────────────
+  // Stack, Zyklen, Zeitleisten, Bestand, Katalog und Dosisanpassungen — samt
+  // erstem Laden beim Oeffnen. Siehe page/useMyStackData.ts.
+  const {
+    inventory, peptides, setPeptides, loading, initialLoad, loaderFading,
+    cycles, cycleTimelines, setCycleTimelines, timelineLoadError, setTimelineLoadError,
+    timelineLoading, setTimelineLoading, catalogEntries, catalogUnavailable,
+    archivedPeptides, escalations,
+    loadInventory, publishPeptides, loadPeptides, loadArchived, loadCycles, loadTimelines, loadEscalations,
+  } = useMyStackData({ stackDataClient, userId: user?.id })
 
   // ── Peptide ───────────────────────────────────────────────────────────────
-  const [peptides, setPeptides]               = useState<Peptide[]>([])
-  const [loading, setLoading]                 = useState(true)
-  const [initialLoad, setInitialLoad]         = useState(true)
-  const [loaderFading, setLoaderFading]       = useState(false)
-  const [cycles, setCycles]                   = useState<Cycle[]>([])
-  const [cycleTimelines, setCycleTimelines]   = useState<CycleTimeline[]>([])
-  const [timelineLoadError, setTimelineLoadError] = useState(false)
-  const [timelineLoading, setTimelineLoading] = useState(false)
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [showPeptideForm, setShowPeptideForm] = useState(false)
   const [editingPeptideId, setEditingPeptideId] = useState<string | null>(null)
-  const [catalogEntries, setCatalogEntries] = useState<SubstanceCatalogEntry[]>([])
-  const [catalogUnavailable, setCatalogUnavailable] = useState(false)
   const [wizardInitialColor, setWizardInitialColor] = useState('')
   const [wizardIntent, setWizardIntent] = useState<'pk' | 'plan' | undefined>()
   const [wizardCycleId, setWizardCycleId] = useState<string | null>(null)
@@ -171,7 +168,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [searchOpen, setSearchOpen]           = useState(false)
   const [filterOpen, setFilterOpen]           = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
-  const initialLoadPromiseRef = useRef<Promise<void> | null>(null)
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
   const [activeTab, setActiveTab]             = useState<StackTabKey>('all')
   const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
@@ -218,7 +214,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [deletePromptFromArchive, setDeletePromptFromArchive] = useState(false)
   const [deletingPeptide, setDeletingPeptide]     = useState(false)
   const [archiveViewOpen, setArchiveViewOpen]     = useState(false)
-  const [archivedPeptides, setArchivedPeptides]   = useState<Peptide[]>([])
   const [archiveInfoPeptide, setArchiveInfoPeptide] = useState<Peptide | null>(null)
   const [archiveCyclesOpen, setArchiveCyclesOpen] = useState(false)
   const archiveInfoBackButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -226,7 +221,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const archiveCloseButtonRef = useRef<HTMLButtonElement | null>(null)
 
   // ── Dosisanpassungen ──────────────────────────────────────────────────────
-  const [escalations, setEscalations]             = useState<Escalation[]>([])
   const [showEscForm, setShowEscForm]             = useState(false)
   const [escForCycle, setEscForCycle]             = useState<Cycle | null>(null)
   const [editingEscId, setEditingEscId]           = useState<string | null>(null)
@@ -298,106 +292,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }, [archiveViewOpen])
 
-  // ── Laden ─────────────────────────────────────────────────────────────────
-  const loadInventory = async () => {
-    const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user!.id).order('name')
-    if (data) setInventory(data as InventoryItem[])
-  }
-  const publishPeptides = (snapshot: {
-    peptides: Peptide[]
-    catalogEntries: SubstanceCatalogEntry[]
-  }) => {
-    setCatalogEntries(current => mergeCatalogEntries(
-      current,
-      snapshot.catalogEntries,
-    ))
-    setPeptides(snapshot.peptides)
-  }
-  const loadPeptides = async (publish = true) => {
-    let data = await loadStackItems(stackDataClient as never, false)
-    if (!isLocalColorMigrationComplete(localStorage)) {
-      const archived = await loadStackItems(stackDataClient as never, true)
-      const migrated = await migrateLocalColors(stackDataClient as never, [...data, ...archived], localStorage)
-      if (migrated) data = await loadStackItems(stackDataClient as never, false)
-    }
-    const snapshot = {
-      peptides: data.map(asPeptide),
-      catalogEntries: data.flatMap(item => item.ingredients.map(ingredient => ingredient.substance_catalog).filter(
-        (entry): entry is SubstanceCatalogEntry => entry !== null,
-      )),
-    }
-    if (publish) publishPeptides(snapshot)
-    return snapshot
-  }
-  const loadArchived = async () => {
-    try {
-      const data = await loadStackItems(supabase as never, true)
-      setArchivedPeptides(data
-        .map(asPeptide)
-        .sort((a, b) => (b.archived_at ?? '').localeCompare(a.archived_at ?? '')))
-    } catch {
-      toast.error(t('error'))
-    }
-  }
-  const loadCycles = async () => {
-    const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', user!.id)
-    if (data) setCycles(data as Cycle[])
-  }
-  const loadTimelines = async (throwOnError = false) => {
-    if (!FEATURES.planTimelineV2) return
-    setTimelineLoading(true)
-    setTimelineLoadError(false)
-    try {
-      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }))
-    } catch (error) {
-      setTimelineLoadError(true)
-      if (throwOnError) throw error
-    } finally {
-      setTimelineLoading(false)
-    }
-  }
-  const loadEscalations = async () => {
-    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user!.id).order('start_after_days').order('start_date')
-    if (data) setEscalations(data as Escalation[])
-  }
-  useEffect(() => {
-    // Leaving the page before the queries settle, or within the loader's fade,
-    // must not write state into an unmounted component: the fade timer would
-    // otherwise still fire half a second later.
-    let cancelled = false
-    let fadeTimer: number | undefined
-
-    if (!initialLoadPromiseRef.current) {
-      initialLoadPromiseRef.current = Promise.all([
-        loadPeptides(),
-        loadCycles(),
-      ]).then(() => undefined)
-
-      void Promise.allSettled([
-        loadInventory(),
-        loadTimelines(),
-        loadEscalations(),
-        searchSubstanceCatalog(supabase as never, '').then(result => {
-          setCatalogEntries(current => mergeCatalogEntries(current, result.entries))
-          setCatalogUnavailable(result.unavailable)
-        }),
-      ])
-    }
-
-    initialLoadPromiseRef.current
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
-        // Fade out the full-screen loader, then unmount it (same as The Lab).
-        setLoaderFading(true)
-        fadeTimer = window.setTimeout(() => setInitialLoad(false), 500)
-      })
-
-    return () => {
-      cancelled = true
-      if (fadeTimer !== undefined) window.clearTimeout(fadeTimer)
-    }
-  }, [])
 
 
   useEffect(() => {
@@ -2054,54 +1948,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // allein — sonst verschwaende sie mit dem Karussell, und man kaeme aus dem
   // Reiter nicht mehr heraus.
   const reiterLeiste = (
-    <>
-      {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
-          Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
-          Inhalt sagt, dass die App das auch kann; versteckt saehe
-          das niemand. Die Leiste wischt waagerecht, das Karussell
-          darunter auch: deshalb ist sie flach, mit Pillen, und
-          deutlich abgesetzt. */}
-      <div
-        data-stack-tabs
-        role="tablist"
-        aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-        className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x px-3 pb-1"
-      >
-        {STACK_TABS.map(reiter => {
-          const anzahl = reiterZaehler.get(reiter.key) ?? 0
-          const offen = reiter.key === offenerReiter
-          const reiterName = String(t(reiter.labelKey, { defaultValue: reiter.defaultValue }))
-          return (
-            <button
-              key={reiter.key}
-              type="button"
-              role="tab"
-              aria-selected={offen}
-              data-stack-tab={reiter.key}
-              data-stack-tab-count={anzahl}
-              {...denyProps(anzahl === 0, String(t('my_stack_tab_locked', {
-                defaultValue: 'Noch keine Substanz unter „{{category}}“.',
-                category: reiterName,
-              })))}
-              onClick={() => { if (anzahl > 0) reiterWechseln(reiter.key) }}
-              className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
-                ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
-                : anzahl === 0
-                  ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
-                  : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
-              }`}
-            >
-              {reiterName}
-              {anzahl > 0 && (
-                <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
-                  {anzahl}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </>
+    <StackTabBar counts={reiterZaehler} openTab={offenerReiter} onSelect={reiterWechseln} />
   )
 
   return (
@@ -2516,62 +2363,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 </SloshProvider>
                 </div>
 
-                {/* Wo bin ich. Bei 70 % Breite sind die Nachbarn nur noch
-                    angeschnitten — ohne diese Zeile wuesste niemand, ob nach
-                    dem dritten Wisch noch fuenf kommen oder einer. Vorn steht
-                    ein „+" fuer die „Neu"-Kachel: sie liegt links von der
-                    ersten Substanz, und ohne diesen Hinweis sucht sie dort
-                    niemand. Bis zu sieben Substanzen als Punkte, darueber eine
-                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt.
-                    Die Zeile ist immer gleich hoch (h-2.5): Punkte, Leiste
-                    oder „+" duerfen die Buehne darueber nicht groesser oder
-                    kleiner machen. Die Knoepfe sind 24 px hoch und ragen per
-                    negativem Rand ueber die Zeile hinaus — gross genug zum
-                    Treffen, ohne die Zeile zu strecken. */}
-                <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={selectAddTile}
-                    aria-label={String(t('my_stack_go_to_add_tile', { defaultValue: 'Zur Kachel „Neue Substanz“' }))}
-                    aria-current={addTileActive || undefined}
-                    data-vial-add-dot
-                    className="-my-[7px] flex h-6 min-w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                  >
-                    <span className={`flex h-4 w-4 items-center justify-center rounded-full transition-colors duration-300 ${
-                      addTileActive ? 'bg-cyan-300 text-slate-950' : 'bg-cyan-300/15 text-cyan-200'
-                    }`}>
-                      <Plus size={11} strokeWidth={2.6} aria-hidden="true" />
-                    </span>
-                  </button>
-                  {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => {
-                    const aktuell = !addTileActive && index === activeIndex
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => selectPeptideIndex(index)}
-                        aria-label={String(t('my_stack_go_to_item', { defaultValue: 'Zu {{name}}', name: p.name }))}
-                        aria-current={aktuell || undefined}
-                        data-vial-dot={index}
-                        className="group -my-[7px] flex h-6 min-w-5 items-center justify-center rounded-full px-[5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                      >
-                        <span className={`h-2.5 rounded-full transition-all duration-300 ${
-                          aktuell ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 group-hover:bg-slate-500'
-                        }`} />
-                      </button>
-                    )
-                  }) : (
-                    <div className="ml-1.5 h-1 w-24 overflow-hidden rounded-full bg-slate-800">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${addTileActive ? 'bg-slate-600' : 'bg-cyan-300'}`}
-                        style={{
-                          width: `${100 / stagePeptides.length}%`,
-                          marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                <VialPositionRow
+                  stagePeptides={stagePeptides}
+                  activeIndex={activeIndex}
+                  addTileActive={addTileActive}
+                  selectAddTile={selectAddTile}
+                  selectPeptideIndex={selectPeptideIndex}
+                />
 
 
               </div>

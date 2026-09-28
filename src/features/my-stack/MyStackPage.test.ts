@@ -848,7 +848,14 @@ describe('My Stack page vial view', () => {
 })
 
 describe('My Stack modular integration', () => {
-  const source = () => readFileSync(new URL('./MyStackPage.tsx', import.meta.url), 'utf8')
+  // Die Seite samt ihrer ausgelagerten Teile in page/.
+  const source = () => [
+    readFileSync(new URL('./MyStackPage.tsx', import.meta.url), 'utf8'),
+    ...readdirSync(new URL('./page/', import.meta.url))
+      .filter(name => /\.(ts|tsx)$/.test(name) && !/\.test\./.test(name))
+      .sort()
+      .map(name => readFileSync(new URL(`./page/${name}`, import.meta.url), 'utf8')),
+  ].join('\n')
   const componentSource = (name: string) => readFileSync(
     new URL(`./components/${name}.tsx`, import.meta.url),
     'utf8',
