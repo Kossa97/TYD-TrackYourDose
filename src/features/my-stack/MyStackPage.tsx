@@ -2607,6 +2607,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
             {!searchOpen && <div className="flex-1" />}
 
+            {/* Neue Substanz — die Hauptaktion der Seite, deshalb als einziger
+                Knopf gefuellt. Die „Neu"-Kachel im Karussell steht links vor
+                der ersten Substanz und ist nur per Wisch zu finden; von hier
+                aus braucht man sie nicht zu kennen. */}
+            {!searchOpen && (
+              <button
+                type="button"
+                onClick={() => { setFilterOpen(false); handleNewPeptide() }}
+                aria-label={String(t('neues_peptid_title'))}
+                title={String(t('neues_peptid_title'))}
+                data-my-stack-add
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.28)] transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+              >
+                <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            )}
+
             {/* Lupe / Schließen */}
             <button
               type="button"
