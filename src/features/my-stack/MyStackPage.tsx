@@ -17,11 +17,9 @@ import { format, parseISO, addDays } from 'date-fns'
 import { effectiveQuantity, scheduleForDay } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
 import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
-import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
+import { useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
-import { ExpiredBadge } from './components/ExpiredBadge'
-import { expiryDaysLeft } from '../../lib/peptideExpiry'
 import { hapticTick } from '../../lib/haptics'
 import {
   detailAbschnitte, LEER_AUSBLENDEN, wirkstoffBezug,
@@ -37,7 +35,6 @@ import {
   uploadBatchDocument,
 } from './services/stackInventory'
 import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
-import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup } from './services/stackItems'
@@ -50,7 +47,7 @@ import { filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities } from './lib/stackSort'
 import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
 import { cyclePeriod } from './lib/planCard'
-import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
+import { getRandomStackItemColor } from './lib/colors'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
@@ -90,10 +87,10 @@ import {
   PEPTIDE_SORT_GROUPS,
   
   NO_TIMELINES,
-  vialCarouselItemWidth,
+  
   ADD_SLOT,
-  vialCarouselItemGap,
-  getVialFillPct,
+  
+  
   sortPeptides,
   FREQ_KEYS,
   INTAKE_TIME_CONFIG,
@@ -106,11 +103,11 @@ import {
   versionAsIntakePlanDraft,
   versionSnapshot,
 } from './page/model'
-import { AddStageTile, AddVialTile } from './page/stackTiles'
+import { AddVialTile } from './page/stackTiles'
 import { StackTabBar } from './page/StackTabBar'
-import { VialPositionRow } from './page/VialPositionRow'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
+import { VialCarousel } from './page/VialCarousel'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
@@ -2020,238 +2017,35 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             <div className="shrink-0 pt-1">{reiterLeiste}</div>
           )}
 
-          {!loading && viewMode === 'vials' && activePeptide && (
-            <div data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col">
-              <div className="flex min-h-0 flex-1 flex-col pt-1">
-                {reiterLeiste}
-
-                <div className="mb-1 flex shrink-0 items-center justify-between px-3">
-                  <button
-                    type="button"
-                    onClick={() => selectPeptideOffset(-1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                    aria-label="Vorheriges Peptid"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  {addTileActive ? (
-                    <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-xs font-semibold text-cyan-200">
-                      {t('neues_peptid_title')}
-                    </span>
-                  ) : (() => {
-                    const days = expiryDaysLeft(activePeptide)
-                    const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                    const expiryLabel = days === null
-                      ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                      : days > 0
-                        ? `Haltbar: ${days} ${days === 1 ? 'Tag' : 'Tage'}`
-                        : t('my_stack_expires_today')
-                    const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
-
-                    return (
-                      <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                        {/* Abgelaufen: Alarm und „seit X Tagen" im Wechsel. Der
-                            `key` laesst den Takt je Substanz mit dem Alarm beginnen. */}
-                        {days !== null && days < 0
-                          ? <ExpiredBadge key={activePeptide.id} daysSince={-days} />
-                          : <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>}
-                        <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
-                          {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
-                        </span>
-                        <span className="rounded-full bg-slate-900 px-2.5 py-1 font-semibold tabular-nums text-slate-500">
-                          {activeIndex + 1} / {stagePeptides.length}
-                        </span>
-                      </div>
-                    )
-                  })()}
-                  <button
-                    type="button"
-                    onClick={() => selectPeptideOffset(1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                    aria-label="Nächstes Peptid"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-
-                <div className="relative -mx-3 flex min-h-0 flex-1 flex-col">
-                  {/* Der breite, weichgezeichnete Spot ueber der ganzen
-                      Flaeche liess das Objekt in Dunst schweben. Was „steht
-                      auf etwas" macht, ist ein SCHMALER Schatten direkt unter
-                      ihm — und ein Licht, das nur die Mitte trifft, nicht die
-                      ganze Bahn. */}
-                  <div
-                    data-vial-detail="carousel-spotlight"
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-1/4 top-6 bottom-14 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.16),rgba(34,211,238,0.05)_46%,transparent_74%)] blur-2xl"
-                  />
-                  <div
-                    data-vial-detail="carousel-contact-shadow"
-                    aria-hidden="true"
-                    className="pointer-events-none absolute bottom-[3.25rem] left-1/2 h-3 w-[38%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)] blur-[6px]"
-                  />
-                <SloshProvider engine={sloshEngine}>
-                <div
-                  data-vial-carousel-strip
-                  ref={vialCarouselRef}
-                  onScroll={handleVialCarouselScroll}
-                  onPointerDown={handleVialCarouselPointerDown}
-                  onPointerMove={handleVialCarouselPointerMove}
-                  onPointerUp={handleVialCarouselPointerUp}
-                  onPointerCancel={handleVialCarouselPointerUp}
-                  onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-                    isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
-                  }`}
-                  style={{
-                    gap: vialCarouselItemGap,
-                    // Die Vollbildbuehne besitzt nur die waagerechte Geste.
-                    // Vertikales Wischen darf weder die Seite verschieben
-                    // noch auf iOS den Gummiband-Effekt ausloesen.
-                    touchAction: 'pan-x',
-                    // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
-                    // nur noch herein. Damit man trotzdem weiss, wie viele es
-                    // sind, stehen die Punkte darunter — sie sind hier keine
-                    // Zierde, sondern der Ersatz fuer das, was die Breite
-                    // verdeckt.
-                    paddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2)`,
-                    // Acht Pixel Schlupf, und zwar mit Absicht: ohne sie waere
-                    // das Fangfenster (Streifenbreite minus diesem Rand) genau
-                    // so breit wie ein Eintrag. Bei Gleichstand faellt das
-                    // Einrasten laut Spezifikation von „mittig" auf „an die
-                    // Kante" zurueck, und ein halbes Pixel Rundung entscheidet,
-                    // welche der beiden Regeln gerade gilt. Genau so sah der
-                    // Sprung aus, der nach dem Wischen kam: 25 bis 33 px
-                    // daneben, und beim naechsten Anlass zurueck.
-                    scrollPaddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2 - 8px)`,
-                  }}
-                >
-                  <div
-                    data-vial-add
-                    data-vial-add-slot
-                    // Wie ein Nachbar-Objekt gedimmt, nicht staerker: der Rand
-                    // der Karte soll links hereinlugen und zeigen, dass dort
-                    // noch etwas steht.
-                    className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2 ${
-                      isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                    } ${addTileActive ? 'scale-100' : 'scale-[0.88] opacity-65'}`}
-                    style={{ width: vialCarouselItemWidth }}
-                  >
-                    <AddStageTile
-                      active={addTileActive}
-                      title={String(t('neues_peptid_title'))}
-                      hint={String(t('my_stack_add_tile_hint', { defaultValue: 'Peptid, Medikament, Hormon, Supplement …' }))}
-                      onClick={() => {
-                        if (vialSuppressClickRef.current) return
-                        // Erst holen, dann tippen — wie bei den Objekten.
-                        if (addTileActive) handleNewPeptide()
-                        else selectAddTile()
-                      }}
-                    />
-                  </div>
-                  {stagePeptides.map((p, index) => {
-                    // Steht die Kachel in der Mitte, ist keine Substanz aktiv.
-                    const isActive = !addTileActive && p.id === activePeptide.id
-                    const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
-                    const vialPct = Math.round(getVialFillPct(p) ?? 100)
-                    // Only forms whose fill level says something show it. A
-                    // sealed ampoule would otherwise read "100 %" forever.
-                    const showsFillPct = getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill ?? false
-
-                    return (
-                      <div
-                        key={p.id}
-                        data-vial-index={index}
-                        // `origin-bottom`: alle Objekte stehen auf DERSELBEN
-                        // Standlinie. Ohne das skaliert jedes um seine eigene
-                        // Mitte, also schrumpfen die Nachbarn nach oben UND
-                        // unten weg und schweben ueber dem Boden. Beim
-                        // Formular-Karussell war das laengst entschieden; hier
-                        // fehlte es, und bei 70 % Breite faellt es auf.
-                        className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2 ${
-                          isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                        } ${
-                          isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
-                        }`}
-                        style={{ width: vialCarouselItemWidth }}
-                        aria-label={p.name}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => handleVialCarouselItemClick(index)}
-                        onKeyDown={e => handleVialCarouselItemKeyDown(e, index)}
-                      >
-                        {/* Eingepasst statt fest bemessen: jede Form bringt
-                            eigene Pixelmasse mit — ein Pen ist 589 px hoch,
-                            eine Kapsel 364 px breit. `StageFit` misst und
-                            skaliert, damit beide die Flaeche fuellen, ohne
-                            dass in elf Dateien elf neue Zahlen stehen.
-
-                            `size="large"` und nicht `carousel`: die Buehne ist
-                            gross, also muss die GEZEICHNETE Vorlage gross
-                            sein. Mit `carousel` (80–125 px) lag der Faktor bei
-                            rund 3 — und eine CSS-Skalierung vergroessert nicht
-                            die Zeichnung, sondern das fertige Bild: laufende
-                            Animationen und SVG-Filter (`feGaussianBlur` in
-                            Vial und Tube) legen die Form auf eine eigene
-                            Ebene, die in ihrer Layoutgroesse gerastert und
-                            danach hochgezogen wird. Dazu ist die kleine
-                            Zeichnung fuer klein entworfen: 1-px-Linien werden
-                            zu 3-px-Balken, der Schriftanteil ist zu fett. Mit
-                            `large` liegt der Faktor zwischen 0,64 (Pen) und
-                            1,3 (Vial) — meist also VERKLEINERN, und das ist
-                            immer scharf. Die Groesse auf dem Schirm aendert
-                            sich nicht: eingepasst wird in dieselbe Flaeche. */}
-                        <StageFit
-                          className="min-h-0 w-full flex-1"
-                          maxScale={1.6}
-                          targetHeightRatio={getDosageForm(p.dosage_form).stageHeightRatio ?? 1}
-                        >
-                          <StackStage
-                            key={animationEpoch}
-                            item={{ ...p, color_hex: peptideColor }}
-                            fillPct={vialPct}
-                            animateOnMount={true}
-                            isActive={isActive}
-                            size="large"
-                            stageLightRef={handle => {
-                              const handles = vialStageLightHandlesRef.current
-                              if (handle) handles.set(index, handle)
-                              else handles.delete(index)
-                            }}
-                          />
-                        </StageFit>
-                        {/* Die Zeile steht IMMER, auch wenn nichts darin steht.
-                            Sonst waere jeder Eintrag ohne Fuellstand — ein
-                            Spray, ein Pflaster — eine Zeile kuerzer als einer
-                            mit, und die Positionsleiste darunter huepfte bei
-                            jedem Wisch mit. Reserviert wird der Platz mit
-                            einem geschuetzten Leerzeichen; fuer die Vorlesung
-                            ist die leere Zeile ausgeblendet. */}
-                        <p
-                          className="mt-1 shrink-0 text-center text-xs font-semibold tabular-nums text-slate-400"
-                          aria-hidden={isActive && showsFillPct ? undefined : true}
-                        >
-                          {isActive && showsFillPct ? `${Math.round(vialPct)}%` : '\u00a0'}
-                        </p>
-                      </div>
-                    )
-                  })}
-                </div>
-                </SloshProvider>
-                </div>
-
-                <VialPositionRow
-                  stagePeptides={stagePeptides}
-                  activeIndex={activeIndex}
-                  addTileActive={addTileActive}
-                  selectAddTile={selectAddTile}
-                  selectPeptideIndex={selectPeptideIndex}
-                />
-
-
-              </div>
-            </div>
-          )}
+          <VialCarousel
+            loading={loading}
+            viewMode={viewMode}
+            activePeptide={activePeptide}
+            reiterLeiste={reiterLeiste}
+            selectPeptideOffset={selectPeptideOffset}
+            addTileActive={addTileActive}
+            cyclesOf={cyclesOf}
+            activeIndex={activeIndex}
+            stagePeptides={stagePeptides}
+            sloshEngine={sloshEngine}
+            vialCarouselRef={vialCarouselRef}
+            handleVialCarouselScroll={handleVialCarouselScroll}
+            handleVialCarouselPointerDown={handleVialCarouselPointerDown}
+            handleVialCarouselPointerMove={handleVialCarouselPointerMove}
+            handleVialCarouselPointerUp={handleVialCarouselPointerUp}
+            handleVialCarouselWheel={handleVialCarouselWheel}
+            vialSnapClassName={vialSnapClassName}
+            isVialCarouselDragging={isVialCarouselDragging}
+            vialItemSnapClassName={vialItemSnapClassName}
+            vialSuppressClickRef={vialSuppressClickRef}
+            handleNewPeptide={handleNewPeptide}
+            selectAddTile={selectAddTile}
+            handleVialCarouselItemClick={handleVialCarouselItemClick}
+            handleVialCarouselItemKeyDown={handleVialCarouselItemKeyDown}
+            animationEpoch={animationEpoch}
+            vialStageLightHandlesRef={vialStageLightHandlesRef}
+            selectPeptideIndex={selectPeptideIndex}
+          />
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
           <StackListView

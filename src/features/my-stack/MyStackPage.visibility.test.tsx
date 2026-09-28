@@ -1794,7 +1794,10 @@ describe('MyStackPage non-vial visibility', () => {
 
 describe('Füllstandsanzeige im Karussell', () => {
   it('bindet die Prozentzeile an die Form statt an die Darreichungsform', () => {
-    const source = readFileSync(resolve('src/features/my-stack/MyStackPage.tsx'), 'utf8')
+    // Die Buehne liegt seit der Aufteilung in page/VialCarousel.tsx.
+    const source = ['MyStackPage.tsx', 'page/VialCarousel.tsx']
+      .map(file => readFileSync(resolve(`src/features/my-stack/${file}`), 'utf8'))
+      .join('\n')
 
     expect(source).toContain('hasMeaningfulFill')
     expect(source).toContain('isActive && showsFillPct')
