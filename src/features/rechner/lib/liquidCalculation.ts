@@ -9,21 +9,19 @@ export type LiquidValues = {
   concentration: string
   container: string
   target: string
-  frequency: string
   sourceUnit: LiquidUnit
   targetUnit: TargetUnit
   capacityMl: string
   capacityUnits: string
 }
 
-type InputField = 'amount' | 'volume' | 'concentration' | 'container' | 'target' | 'frequency' | 'capacityMl' | 'capacityUnits'
+type InputField = 'amount' | 'volume' | 'concentration' | 'container' | 'target' | 'capacityMl' | 'capacityUnits'
 type FieldError = 'positive' | 'numeric_range'
 type LiquidResult = {
   concentration: number | null
   drawMl: number | null
   drawUnits: number | null
   fullWithdrawals: number | null
-  days: number | null
   error: FieldError | 'incompatible_units' | 'exceeds_container' | 'exceeds_syringe' | null
   fieldErrors: Partial<Record<InputField, FieldError>>
   concentrationError: boolean
@@ -74,7 +72,7 @@ function completeWithdrawals(container: number, draw: number): number | null {
 
 export function calculateLiquid(values: LiquidValues): LiquidResult {
   const result: LiquidResult = {
-    concentration: null, drawMl: null, drawUnits: null, fullWithdrawals: null, days: null,
+    concentration: null, drawMl: null, drawUnits: null, fullWithdrawals: null,
     error: null, fieldErrors: {}, concentrationError: false,
   }
   const read = (field: InputField): number | null => {
@@ -113,7 +111,6 @@ export function calculateLiquid(values: LiquidValues): LiquidResult {
   const target = read('target')
   const capacityMl = read('capacityMl')
   const capacityUnits = read('capacityUnits')
-  const frequency = read('frequency')
   result.error = result.fieldErrors.target ?? result.fieldErrors.capacityMl ?? result.fieldErrors.capacityUnits ?? null
   if (values.targetUnit !== 'ml' && concentrationProblem) result.error ??= concentrationProblem
   if (result.error || target === null || capacityMl === null || capacityUnits === null) return result
@@ -147,8 +144,5 @@ export function calculateLiquid(values: LiquidValues): LiquidResult {
   result.drawMl = drawMl
   result.drawUnits = drawUnits
   if (container !== null) result.fullWithdrawals = completeWithdrawals(container, drawMl)
-  if (result.fullWithdrawals !== null && frequency !== null) {
-    result.days = result.fullWithdrawals === 0 ? 0 : scaledRatio(result.fullWithdrawals, 7, frequency)
-  }
   return result
 }

@@ -3,14 +3,14 @@ import { calculateLiquid, convertLiquidValue, type LiquidValues } from './liquid
 
 const values = (overrides: Partial<LiquidValues> = {}): LiquidValues => ({
   mode: 'amount', amount: '5', volume: '2', concentration: '', container: '',
-  target: '250', frequency: '', sourceUnit: 'mg', targetUnit: 'mcg', capacityMl: '1', capacityUnits: '100',
+  target: '250', sourceUnit: 'mg', targetUnit: 'mcg', capacityMl: '1', capacityUnits: '100',
   ...overrides,
 })
 
 describe('liquid calculation', () => {
   it('uses final total volume to calculate a draw and complete withdrawals', () => {
-    expect(calculateLiquid(values({ frequency: '5' }))).toEqual({
-      concentration: 2.5, drawMl: 0.1, drawUnits: 10, fullWithdrawals: 20, days: 28,
+    expect(calculateLiquid(values())).toEqual({
+      concentration: 2.5, drawMl: 0.1, drawUnits: 10, fullWithdrawals: 20,
       error: null, fieldErrors: {}, concentrationError: false,
     })
   })
@@ -36,12 +36,12 @@ describe('liquid calculation', () => {
 
   it('accepts a known concentration without requiring a container', () => {
     expect(calculateLiquid(values({ mode: 'concentration', concentration: '2500', sourceUnit: 'mcg' })))
-      .toMatchObject({ concentration: 2.5, drawMl: 0.1, drawUnits: 10, fullWithdrawals: null, days: null, error: null })
+      .toMatchObject({ concentration: 2.5, drawMl: 0.1, drawUnits: 10, fullWithdrawals: null, error: null })
   })
 
-  it('counts only complete withdrawals and derives days from weekly frequency', () => {
-    expect(calculateLiquid(values({ mode: 'concentration', concentration: '2', container: '1', target: '300', frequency: '3,5' })))
-      .toMatchObject({ drawMl: 0.15, fullWithdrawals: 6, days: 12 })
+  it('counts only complete withdrawals', () => {
+    expect(calculateLiquid(values({ mode: 'concentration', concentration: '2', container: '1', target: '300' })))
+      .toMatchObject({ drawMl: 0.15, fullWithdrawals: 6 })
   })
 
   it('does not lose a withdrawal to floating point division', () => {
@@ -84,9 +84,9 @@ describe('liquid calculation', () => {
       .toMatchObject({ concentration: null, concentrationError: true, drawMl: 0.2, fullWithdrawals: 10, error: null, fieldErrors: { amount: 'positive' } })
   })
 
-  it('keeps optional errors separate from a valid draw', () => {
-    expect(calculateLiquid(values({ mode: 'concentration', concentration: '2.5', container: '-2', frequency: 'no' })))
-      .toMatchObject({ drawMl: 0.1, drawUnits: 10, fullWithdrawals: null, days: null, error: null, fieldErrors: { container: 'positive', frequency: 'positive' } })
+  it('keeps an optional container error separate from a valid draw', () => {
+    expect(calculateLiquid(values({ mode: 'concentration', concentration: '2.5', container: '-2' })))
+      .toMatchObject({ drawMl: 0.1, drawUnits: 10, fullWithdrawals: null, error: null, fieldErrors: { container: 'positive' } })
   })
 
   it('ignores inputs belonging to the other source mode', () => {
@@ -141,12 +141,7 @@ describe('liquid calculation', () => {
 
   it('omits a withdrawal count outside safe integer range', () => {
     expect(calculateLiquid(values({ targetUnit: 'ml', target: '1e-20' })))
-      .toMatchObject({ drawMl: 1e-20, fullWithdrawals: null, days: null, error: null })
-  })
-
-  it('omits overflow in optional days without losing the draw or count', () => {
-    expect(calculateLiquid(values({ frequency: '5e-324' })))
-      .toMatchObject({ drawMl: 0.1, fullWithdrawals: 20, days: null, error: null })
+      .toMatchObject({ drawMl: 1e-20, fullWithdrawals: null, error: null })
   })
 })
 

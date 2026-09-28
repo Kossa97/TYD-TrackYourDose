@@ -181,6 +181,15 @@ it('shows a full syringe when valid arithmetic crosses capacity only by floating
   expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('50')
 })
 
+it('keeps scheduling and calendar duration out of the draw calculator', () => {
+  setup()
+  validValues()
+  expect(screen.queryByLabelText('Entnahmen pro Woche (optional)')).toBeNull()
+  expect(screen.queryByText('Rechnerische Reichweite')).toBeNull()
+  expect(screen.queryByText(/Reichweite nach Verbrauch/)).toBeNull()
+  expect(screen.getByText('Volle Entnahmen')).toBeTruthy()
+})
+
 it('calculates from a label concentration without inventing a container size', () => {
   setup()
   fireEvent.click(screen.getByRole('button', { name: 'Konzentration bekannt' }))
@@ -190,12 +199,7 @@ it('calculates from a label concentration without inventing a container size', (
   expect(result.textContent).toContain('0,05 mL')
   expect(result.textContent).not.toContain('Infinity')
   enter('Inhalt des Behälters (mL, optional)', '2')
-  enter('Entnahmen pro Woche (optional)', '5')
   expect(result.textContent).toContain('40')
-  expect(result.textContent).toContain('56 Tage')
-  enter('Entnahmen pro Woche (optional)', '-1')
-  expect(result.textContent).toContain('0,05 mL')
-  expect(result.textContent).not.toContain('56 Tage')
   enter('Inhalt des Behälters (mL, optional)', '-1')
   expect(result.textContent).toContain('0,05 mL')
   expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('5')

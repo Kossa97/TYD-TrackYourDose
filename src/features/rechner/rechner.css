@@ -59,9 +59,7 @@
 .rechner-result-grid > div { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 13px; padding: 14px; }
 .rechner-result-grid dt { font-size: 11px; color: var(--text-dim); margin-bottom: 7px; }
 .rechner-result-grid dd { font-size: 20px; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.rechner-duration { grid-column: 1 / -1; }
 .rechner-tick-note { font-size: 13px; line-height: 1.65; color: var(--accent); }
-.rechner-result-note { margin: 16px 0 8px; }
 .rechner-copy { display: grid; gap: 8px; margin-top: 18px; }
 .rechner-page .rechner-copy-button { width: 100%; border: 1px solid var(--border-strong); color: var(--text); }
 .rechner-copy-button:disabled { cursor: wait; opacity: 0.65; }
