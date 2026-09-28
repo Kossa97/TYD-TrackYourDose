@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790615626.694593,
-    "seen": 1790615957.5922258,
-    "ast_hash": "8e3852e5e3ca21860d6f429889478390",
+    "mtime": 1790616847.6918497,
+    "seen": 1790617005.1851485,
+    "ast_hash": "7b602cdea7097fc61d390327336cf667",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790615839.2174385,
-    "seen": 1790615957.5933478,
+    "mtime": 1790616916.7975025,
+    "seen": 1790617005.1863356,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5718,27 +5718,27 @@
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
-    "mtime": 1790615525.8757594,
-    "seen": 1790615957.5916371,
-    "ast_hash": "c4b4f292e40c6efb503ad5b0e2408c79",
+    "mtime": 1790616791.2309592,
+    "seen": 1790617005.184589,
+    "ast_hash": "5bf05d8b4de854cddbdd3686bc2580d0",
     "semantic_hash": ""
   },
   "e2e/support/fixtures.ts": {
-    "mtime": 1790615626.6934152,
-    "seen": 1790615957.5916412,
-    "ast_hash": "845d77940bb0ad408028771fe02a62db",
+    "mtime": 1790616328.1057842,
+    "seen": 1790617005.1845922,
+    "ast_hash": "3046f3ea74b4e65224177fd6a1ca8eb9",
     "semantic_hash": ""
   },
   "e2e/support/mockSupabase.ts": {
-    "mtime": 1790615626.693708,
-    "seen": 1790615957.5916436,
-    "ast_hash": "af4eb623fc2348ef79478ac07b5b9692",
+    "mtime": 1790616328.105619,
+    "seen": 1790617005.184595,
+    "ast_hash": "304d23d7867c689d6eeb9607c0384523",
     "semantic_hash": ""
   },
   "e2e/support/myStack.ts": {
-    "mtime": 1790615379.2456346,
-    "seen": 1790615957.5916462,
-    "ast_hash": "1cdeef9f6c1ffbb6e0fa8c1bd44f8829",
+    "mtime": 1790616769.1357925,
+    "seen": 1790617005.1845987,
+    "ast_hash": "be8ded10a21f6f9e90c54dd64ac9cbd6",
     "semantic_hash": ""
   },
   "e2e/tsconfig.json": {
@@ -5748,9 +5748,9 @@
     "semantic_hash": ""
   },
   "playwright.config.ts": {
-    "mtime": 1790614689.5660412,
-    "seen": 1790615957.5916731,
-    "ast_hash": "92f4a39042b564cfc43558bbbd4dc6cf",
+    "mtime": 1790616328.1059499,
+    "seen": 1790617005.184628,
+    "ast_hash": "7ab364bb60b60177265488d0b99a1ba4",
     "semantic_hash": ""
   }
 }
