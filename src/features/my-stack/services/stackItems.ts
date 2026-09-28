@@ -181,8 +181,7 @@ export interface StackItemMutationClient {
   }
 }
 
-const STACK_ITEM_COLUMNS = `
-  *,
+const STACK_ITEM_INVENTORY_COLUMNS = `
   inventory:stack_item_inventory(
     id,
     enabled,
@@ -196,8 +195,10 @@ const STACK_ITEM_COLUMNS = `
     opened_at,
     use_within_days,
     reconstitution_ml
-  ),
-  ingredients:stack_item_ingredients(
+  )
+`
+
+const STACK_ITEM_INGREDIENT_FIELDS = `
     id,
     stack_item_id,
     catalog_substance_id,
@@ -206,7 +207,10 @@ const STACK_ITEM_COLUMNS = `
     amount_unit,
     basis_value,
     basis_unit,
-    position,
+    position
+`
+
+const STACK_ITEM_INGREDIENT_CATALOG_COLUMNS = `
     substance_catalog(
       id,
       canonical_name,
@@ -217,8 +221,23 @@ const STACK_ITEM_COLUMNS = `
       pk_profile_id,
       active
     )
-  )
 `
+
+function stackItemIngredientColumns(includeCatalog: boolean): string {
+  return `
+    ingredients:stack_item_ingredients(
+      ${STACK_ITEM_INGREDIENT_FIELDS}${includeCatalog ? `,${STACK_ITEM_INGREDIENT_CATALOG_COLUMNS}` : ''}
+    )
+  `
+}
+
+function stackItemColumns(options: { includeInventory: boolean; includeIngredientCatalog: boolean }): string {
+  return `
+    *,
+    ${options.includeInventory ? `${STACK_ITEM_INVENTORY_COLUMNS},` : ''}
+    ${stackItemIngredientColumns(options.includeIngredientCatalog)}
+  `
+}
 
 function throwIfError(error: ServiceError | null): void {
   if (error) throw new Error(error.message)
@@ -462,10 +481,14 @@ function stackItemAsDraft(item: StackItem): StackItemDraft {
 export async function loadStackItems(
   client: StackItemQueryClient,
   archived: boolean,
+  options: { includeInventory?: boolean; includeIngredientCatalog?: boolean } = {},
 ): Promise<LoadedStackItem[]> {
   const { data, error } = await client
     .from('stack_items')
-    .select(STACK_ITEM_COLUMNS)
+    .select(stackItemColumns({
+      includeInventory: options.includeInventory !== false,
+      includeIngredientCatalog: options.includeIngredientCatalog !== false,
+    }))
     .eq('archived', archived)
     .order('created_at', { ascending: false })
 

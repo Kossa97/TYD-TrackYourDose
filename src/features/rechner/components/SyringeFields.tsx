@@ -34,14 +34,6 @@ export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, o
   }
   return (
     <div className="rechner-syringe">
-      {onGraduationChange && <div className="rechner-syringe-presets" role="group" aria-label={`${t('spritzengroesse')} U-100`}>
-        {presets.filter(item => item.step).sort((a, b) => a.units - b.units).map(item => <button key={item.units}
-          type="button" className="rechner-syringe-preset" aria-pressed={selection === `${item.ml}:${item.units}`}
-          aria-label={`${item.units} ${t('einh_kurz')} ${formatCalculatorNumber(item.ml, i18n.language)} mL · U-100`}
-          onClick={() => choosePreset(`${item.ml}:${item.units}`)}>
-          <strong>{item.units}</strong><span>{formatCalculatorNumber(item.ml, i18n.language)} mL</span>
-        </button>)}
-      </div>}
       <label className="rechner-field" htmlFor={`${idPrefix}-preset`}>
         <span>{t('spritzengroesse')}</span>
         <select id={`${idPrefix}-preset`} className="rechner-select" value={selection} onChange={event => choosePreset(event.target.value)}>
@@ -51,6 +43,14 @@ export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, o
           <option value="custom">{t('eigene_werte')}</option>
         </select>
       </label>
+      {onGraduationChange && <div className="rechner-syringe-presets" role="group" aria-label={`${t('spritzengroesse')} U-100`}>
+        {presets.filter(item => item.step).sort((a, b) => a.units - b.units).map(item => <button key={item.units}
+          type="button" className="rechner-syringe-preset" aria-pressed={selection === `${item.ml}:${item.units}`}
+          aria-label={`${item.units} ${t('einh_kurz')} ${formatCalculatorNumber(item.ml, i18n.language)} mL · U-100`}
+          onClick={() => choosePreset(`${item.ml}:${item.units}`)}>
+          <strong>{item.units}</strong><span>{formatCalculatorNumber(item.ml, i18n.language)} mL</span>
+        </button>)}
+      </div>}
       {selection === 'custom' && <div className="rechner-fields">
         {[
           { key: 'ml', label: t('rechner_capacity'), value: capacityMl, parsed: ml, change: (v: string) => onChange(v, capacityUnits) },

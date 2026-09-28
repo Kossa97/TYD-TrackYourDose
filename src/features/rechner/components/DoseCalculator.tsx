@@ -36,7 +36,8 @@ export function DoseCalculator() {
     let active = true
     loadStackItems(supabase as unknown as StackItemQueryClient, false).then(items => {
       if (active) setStack({ owner: user.id, attempt: reload, sources: getCalculatorSources(items), error: false })
-    }).catch(() => {
+    }).catch(error => {
+      console.error('[Rechner] Stack selection failed:', error)
       if (active) setStack({ owner: user.id, attempt: reload, sources: [], error: true })
     })
     return () => { active = false }
@@ -183,14 +184,20 @@ export function DoseCalculator() {
                   <span>{t('rechner_stack_source')}</span>
                   <select id="dose-source" className="rechner-select" value={selected} onChange={event => {
                     const next = currentStack.sources.find(item => item.id === event.target.value)
+                    const nextSourceUnit = next?.unit ?? 'mg'
                     setSelected(event.target.value)
-                    setValues(current => ({ ...current, mode: next?.isReference ? 'concentration' : 'amount', sourceUnit: 'mg',
-                      amount: next ? String(next.vialAmountMg) : '', volume: next?.diluentMl == null ? '' : String(next.diluentMl),
-                      concentration: next?.isReference && next.diluentMl ? inputNumber(next.vialAmountMg / next.diluentMl) : '',
-                      container: '',
-                      targetUnit: current.targetUnit === 'iu' ? 'mcg' : current.targetUnit,
-                      target: current.targetUnit === 'iu' ? '' : current.target,
-                    }))
+                    setValues(current => {
+                      const familyChanged = (current.sourceUnit === 'iu') !== (nextSourceUnit === 'iu')
+                      return { ...current, mode: next?.isReference ? 'concentration' : 'amount', sourceUnit: nextSourceUnit,
+                        amount: next ? String(next.amount) : '', volume: next?.diluentMl == null ? '' : String(next.diluentMl),
+                        concentration: next?.isReference && next.diluentMl ? inputNumber(next.amount / next.diluentMl) : '',
+                        container: '',
+                        targetUnit: familyChanged && current.targetUnit !== 'ml'
+                          ? nextSourceUnit === 'iu' ? 'iu' : 'mcg'
+                          : current.targetUnit,
+                        target: familyChanged && current.targetUnit !== 'ml' ? '' : current.target,
+                      }
+                    })
                     setUnitNotice('')
                   }}>
                     <option value="">{t('rechner_manual')}</option>

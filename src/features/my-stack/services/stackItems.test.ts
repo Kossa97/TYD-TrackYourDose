@@ -725,6 +725,32 @@ describe('stack item service', () => {
     expect(String((calls[1] as unknown[])[1])).toContain('inventory:stack_item_inventory')
   })
 
+  it('loads calculator values without the restricted inventory relation', async () => {
+    let selectedColumns = ''
+    const client: StackItemQueryClient = {
+      from: () => ({
+        select: columns => {
+          selectedColumns = columns
+          return {
+            eq: () => ({
+              order: async () => selectedColumns.includes('stack_item_inventory')
+                ? { data: null, error: { message: 'permission denied for table stack_item_inventory' } }
+                : { data: [loadedItem], error: null },
+            }),
+          }
+        },
+      }),
+    }
+
+    await expect(loadStackItems(client, false, {
+      includeInventory: false,
+      includeIngredientCatalog: false,
+    })).resolves.toEqual([loadedItem])
+    expect(selectedColumns).toContain('stack_item_ingredients')
+    expect(selectedColumns).not.toContain('stack_item_inventory')
+    expect(selectedColumns).not.toContain('substance_catalog')
+  })
+
   it.each([
     ['archiveStackItem', archiveStackItem, true],
     ['restoreStackItem', restoreStackItem, false],
