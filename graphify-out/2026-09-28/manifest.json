@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790559139.2112052,
-    "seen": 1790559181.8670583,
+    "mtime": 1790561613.8429651,
+    "seen": 1790561652.585825,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5310,15 +5310,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.test.ts": {
-    "mtime": 1790103538.6271155,
-    "seen": 1790103719.911564,
-    "ast_hash": "52f66d2df3cb09b75e4dd77896be5c47",
+    "mtime": 1790561478.5540638,
+    "seen": 1790561652.5854957,
+    "ast_hash": "bc9c1c4a2a7cf979323c2f4d5715e787",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.ts": {
-    "mtime": 1790116678.3513718,
-    "seen": 1790117096.9748027,
-    "ast_hash": "a14002d47e12c7a1afb1a562c8c22c71",
+    "mtime": 1790561350.655519,
+    "seen": 1790561652.585497,
+    "ast_hash": "5bfa96a25764f3e67848f5843929e0fd",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/localDays.ts": {
@@ -5340,9 +5340,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanSummaryCard.test.tsx": {
-    "mtime": 1790374115.2302744,
-    "seen": 1790374154.1572433,
-    "ast_hash": "e052aba7e3c8776be8e56eb08b7f2a1e",
+    "mtime": 1790561496.780061,
+    "seen": 1790561652.5853553,
+    "ast_hash": "fc4dcf5515b6c2f033df5a2b8d40755b",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanSummaryCard.tsx": {
@@ -5358,9 +5358,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planLabels.ts": {
-    "mtime": 1790124852.975534,
-    "seen": 1790125206.8516872,
-    "ast_hash": "5cd002b3b6829a78188ede6b98b4426d",
+    "mtime": 1790561388.9728684,
+    "seen": 1790561652.5854988,
+    "ast_hash": "8ae84ed360b5104d1d12b122607c82b8",
     "semantic_hash": ""
   },
   "scripts/sql/my-stack-bestand.test.sql": {
@@ -5430,9 +5430,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlannedStepsReview.tsx": {
-    "mtime": 1790469817.4171777,
-    "seen": 1790469982.176507,
-    "ast_hash": "e27c49c9573047354ba6e3d03c6bca23",
+    "mtime": 1790561314.3743625,
+    "seen": 1790561652.585359,
+    "ast_hash": "121aff07fa3c54c0309c922298e7edf9",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/Bestand.test.tsx": {
