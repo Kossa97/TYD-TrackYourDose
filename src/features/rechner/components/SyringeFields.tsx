@@ -1,19 +1,17 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCalculatorNumber, parseDecimalInput } from '../lib/units'
-import { getSyringeGraduation } from '../lib/syringeGraduation'
 
 const presets = [
   { ml: 1, units: 100, step: '2' }, { ml: 0.5, units: 50, step: '1' }, { ml: 0.3, units: 30, step: '1' },
   { ml: 2, units: 200 }, { ml: 1, units: 40 },
 ]
 
-export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, graduation = '', onGraduationChange }: {
+export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, onGraduationChange }: {
   idPrefix: string
   capacityMl: string
   capacityUnits: string
   onChange: (ml: string, units: string) => void
-  graduation?: string
   onGraduationChange?: (step: string) => void
 }) {
   const { t, i18n } = useTranslation()
@@ -22,8 +20,6 @@ export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, g
   const units = parseDecimalInput(capacityUnits)
   const preset = presets.find(p => p.ml === ml && p.units === units)
   const selection = custom || !preset ? 'custom' : `${preset.ml}:${preset.units}`
-  const invalidGraduation = graduation.trim() !== ''
-    && getSyringeGraduation(units ?? NaN, parseDecimalInput(graduation)).minorStep === null
   const choosePreset = (value: string) => {
     if (value === 'custom') {
       setCustom(true)
@@ -70,16 +66,6 @@ export function SyringeFields({ idPrefix, capacityMl, capacityUnits, onChange, g
             {invalid && <span id={`${idPrefix}-${field.key}-error`} className="rechner-error">{t('rechner_positive')}</span>}
           </label>
         })}
-      </div>}
-      {onGraduationChange && <div className="rechner-syringe-graduation">
-        <label className="rechner-field" htmlFor={`${idPrefix}-graduation`}>
-          <span>{t('rechner_graduation_label')}</span>
-          <input id={`${idPrefix}-graduation`} className="rechner-input" type="text" inputMode="decimal" autoComplete="off"
-            value={graduation} onChange={event => onGraduationChange(event.target.value)} aria-invalid={invalidGraduation}
-            aria-describedby={`${idPrefix}-graduation-hint${invalidGraduation ? ` ${idPrefix}-graduation-error` : ''}`} />
-        </label>
-        <p id={`${idPrefix}-graduation-hint`} className="rechner-muted">{t('rechner_graduation_hint')}</p>
-        {invalidGraduation && <p id={`${idPrefix}-graduation-error`} className="rechner-error">{t('rechner_graduation_invalid')}</p>}
       </div>}
       <p className="rechner-muted">{t('rechner_scale_note')}</p>
     </div>

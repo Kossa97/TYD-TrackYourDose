@@ -204,6 +204,8 @@ it('calculates from a label concentration without inventing a container size', (
 it('preserves physical amounts on mass and volume unit changes and clears incompatible IU', () => {
   setup()
   validValues()
+  expect(screen.getByLabelText('Gewünschte Menge').parentElement)
+    .toBe(screen.getByLabelText('Einheit der Menge').parentElement)
   enter('Einheit der Wirkstoffmenge', 'g')
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('0.005')
   enter('Einheit der Menge', 'mg')
@@ -222,17 +224,17 @@ it('preserves physical amounts on mass and volume unit changes and clears incomp
   expect(screen.queryByRole('meter')).toBeNull()
 })
 
-it('counts only full withdrawals and does not round the draw to a printed tick', () => {
+it('uses the preset graduation without exposing a technical graduation field', () => {
   setup()
   validValues()
-  enter('Gewünschte Menge', '300')
+  enter('Gewünschte Menge', '325')
   enter('Spritzengröße', '1:100')
-  enter('Kleinster Teilstrich (Einheiten)', '5')
+  expect(screen.queryByLabelText('Kleinster Teilstrich (Einheiten)')).toBeNull()
   const result = screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' })
-  expect(result.textContent).toContain('0,12 mL')
-  expect(result.textContent).toContain('16')
-  expect(result.textContent).toContain('Zwischen den Teilstrichen 10 und 15')
-  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('12')
+  expect(result.textContent).toContain('0,13 mL')
+  expect(result.textContent).toContain('15')
+  expect(result.textContent).toContain('Zwischen den Teilstrichen 12 und 14')
+  expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('13')
 })
 
 it('retains equivalent solution data across source modes and resets the whole form', () => {
