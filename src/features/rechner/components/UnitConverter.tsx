@@ -116,6 +116,11 @@ export function UnitConverter() {
               </select>
             </div>
           </div>
+          <div className="rechner-converter-swap">
+            <button type="button" className="rechner-button" onClick={() => { setFrom(to); setTo(from) }}>
+              <ArrowDownUp size={15} aria-hidden="true" /> {t('rechner_converter_swap')}
+            </button>
+          </div>
           <div className="rechner-field">
             <label htmlFor="converter-result">{t('rechner_converter_to')}</label>
             <div className="rechner-converter-input rechner-converter-output">
@@ -129,12 +134,7 @@ export function UnitConverter() {
             </div>
           </div>
         </div>
-        <div className="rechner-converter-actions">
-          <span id="converter-result-hint" className="rechner-muted">{t('rechner_converter_live_result')}</span>
-          <button type="button" className="rechner-button" onClick={() => { setFrom(to); setTo(from) }}>
-            <ArrowDownUp size={15} aria-hidden="true" /> {t('rechner_converter_swap')}
-          </button>
-        </div>
+        <span id="converter-result-hint" className="rechner-muted rechner-converter-result-hint">{t('rechner_converter_live_result')}</span>
         {marker && <p id="converter-marker-hint" className="rechner-muted">
           {t('rechner_converter_units_for')} <strong>{marker}</strong>
         </p>}
