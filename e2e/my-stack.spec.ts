@@ -210,3 +210,39 @@ test('Speichern scheitert: Meldung mit Grund, Assistent bleibt offen, nichts ang
   await expect(wizard).toBeVisible()
   expect(mock.table('stack_items')).toHaveLength(0)
 })
+
+test('Öffnen: die Oberfläche bewegt sich sofort, auch wenn der Sichtbarkeitswächter nur einmal meldet', async ({ page, mock }) => {
+  seedBpc157(mock, { startDate: '2026-09-01' })
+  // Wie auf dem iPhone beobachtet: nach der ersten Meldung („draussen" — das
+  // Karussell steht da noch auf der Neu-Kachel) kommt lange keine mehr.
+  await page.addInitScript(() => {
+    const Original = window.IntersectionObserver
+    window.IntersectionObserver = class extends Original {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        let erste = true
+        super((entries, observer) => {
+          if (!erste) return
+          erste = false
+          callback(entries, observer)
+        }, options)
+      }
+    }
+  })
+  await page.goto('/my-stack')
+  const rim = stageObject(page, 'BPC-157').locator('[data-vial-detail="liquid-rim"]')
+  await expect(rim).toBeAttached()
+
+  // Zehn Blicke im Abstand von 100 ms: die Oberflaeche aendert sich fast jedes Mal.
+  const wechsel = await rim.evaluate(async element => {
+    let zuletzt = element.getAttribute('d')
+    let anzahl = 0
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      const jetzt = element.getAttribute('d')
+      if (jetzt !== zuletzt) anzahl++
+      zuletzt = jetzt
+    }
+    return anzahl
+  })
+  expect(wechsel).toBeGreaterThanOrEqual(6)
+})

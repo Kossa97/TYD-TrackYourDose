@@ -8,6 +8,16 @@ function clamp01(wert: number): number {
   return Number.isFinite(wert) ? Math.max(0, Math.min(1, wert)) : 0
 }
 
+/** Ueberlappt das Element seinen Rahmen (null: den Bildschirm)? */
+function imRahmen(element: Element | null, rahmen: Element | null): boolean {
+  if (!element) return false
+  const r = element.getBoundingClientRect()
+  const b = rahmen
+    ? rahmen.getBoundingClientRect()
+    : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
+  return r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom
+}
+
 /** Der naechste waagerecht scrollende Vorfahr — oder null fuer den Bildschirm. */
 function scrollContainer(element: Element): Element | null {
   for (let node = element.parentElement; node; node = node.parentElement) {
@@ -16,6 +26,9 @@ function scrollContainer(element: Element): Element | null {
   }
   return null
 }
+
+/** Wie oft ein ruhendes Vial selbst nachsieht, ob es inzwischen im Bild steht (s). */
+const LAGE_PRUEFEN_ALLE_S = 0.3
 
 function easeOutCubic(value: number): number {
   return 1 - Math.pow(1 - value, 3)
@@ -105,6 +118,10 @@ export function LiquidGraphic({
   // damit sofort — auch wenn die Maschine gerade steht (Vollbild-Flug,
   // verborgener Tab) und ihr Zuruecksetzen verpasst wurde.
   const lastStateRef = useRef<SloshState | null>(null)
+  // Der Rahmen des Beobachters (Karussell-Streifen, sonst der Bildschirm) und
+  // wann ein ruhendes Vial zuletzt selbst nachgesehen hat.
+  const rahmenRef = useRef<Element | null>(null)
+  const lageGeprueftRef = useRef(-Infinity)
   const bodyRef = useRef<SVGPathElement | null>(null)
   const surfaceRef = useRef<SVGPathElement | null>(null)
   const glowRef = useRef<SVGPathElement | null>(null)
@@ -121,7 +138,18 @@ export function LiquidGraphic({
   const draw = useCallback(
     (s: SloshState) => {
       lastStateRef.current = s
-      if (!visibleRef.current) return
+      if (!visibleRef.current) {
+        // Nicht allein auf den Beobachter warten. Beim Oeffnen steht das
+        // Karussell erst auf der „Neu"-Kachel und springt ein Bild spaeter
+        // zur Substanz; die erste Meldung lautet daher „draussen". Die
+        // naechste liess auf dem iPhone sichtbar auf sich warten — so lange
+        // stand die Oberflaeche nach dem Auffuellen still.
+        if (s.time - lageGeprueftRef.current < LAGE_PRUEFEN_ALLE_S) return
+        lageGeprueftRef.current = s.time
+        if (!imRahmen(svgRef.current, rahmenRef.current)) return
+        visibleRef.current = true
+        setVisible(true)
+      }
       const stage = stageRef.current
       const stageFocus = stage.focus
       const stageShift = stage.lightOffset * 10
@@ -167,6 +195,7 @@ export function LiquidGraphic({
   useEffect(() => {
     const target = svgRef.current
     if (!target || typeof IntersectionObserver === 'undefined') return
+    rahmenRef.current = scrollContainer(target)
     // Rahmen ist der Karussell-Streifen, denn er schneidet ab — nicht der
     // Bildschirm. Ohne Vorlauf: schon ein Rand von einer halben Breite hielt
     // beide Nachbarn wach und kostete mehr als das Doppelte. Ein
@@ -180,7 +209,7 @@ export function LiquidGraphic({
         setVisible(sichtbar)
         if (sichtbar && !war && lastStateRef.current) drawRef.current(lastStateRef.current)
       },
-      { root: scrollContainer(target) },
+      { root: rahmenRef.current },
     )
     observer.observe(target)
     return () => observer.disconnect()
