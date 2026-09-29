@@ -184,14 +184,13 @@ export function DoseCalculator() {
         minorStep={scale.minorStep} majorStep={scale.majorStep} />
     </aside>
     <form className="rechner-scroll-form" aria-label={t('rechner_inputs')} onSubmit={event => event.preventDefault()}>
-      <div className="rechner-form-toolbar">
-        <p className="rechner-muted">{t('rechner_live_hint')}</p>
-        <button type="button" className="rechner-button" onClick={reset} aria-label={t('rechner_reset')}>
-          <RotateCcw size={16} aria-hidden="true" /><span>{t('rechner_reset')}</span>
-        </button>
-      </div>
       <section className="rechner-card" aria-labelledby="dose-solution-title">
-        <h2 id="dose-solution-title"><span className="rechner-step-number">1</span><FlaskConical size={18} aria-hidden="true" />{t('rechner_step_solution')}</h2>
+        <div className="rechner-card-heading">
+          <h2 id="dose-solution-title"><span className="rechner-step-number">1</span><FlaskConical size={18} aria-hidden="true" />{t('rechner_step_solution')}</h2>
+          <button type="button" className="rechner-button rechner-reset-button" onClick={reset} aria-label={t('rechner_reset')} title={t('rechner_reset')}>
+            <RotateCcw size={16} aria-hidden="true" /><span>{t('rechner_reset')}</span>
+          </button>
+        </div>
         <div className="rechner-step-content">
           <div className="rechner-source-modes" role="group" aria-label={t('rechner_solution_mode')}>
             {(['amount', 'concentration'] as const).map(mode => <button key={mode} type="button"
@@ -248,7 +247,7 @@ export function DoseCalculator() {
           {values.mode === 'amount' ? <>
             {input('volume', 'mL')}
             <div className="rechner-volume-presets" role="group" aria-label={t('rechner_volume_presets')}>
-              {[1, 2, 3, 5].map(ml => <button type="button" key={ml} aria-pressed={parseDecimalInput(values.volume) === ml}
+              {[1, 2, 5, 10].map(ml => <button type="button" key={ml} aria-pressed={parseDecimalInput(values.volume) === ml}
                 disabled={sourceLocked}
                 onClick={() => edit('volume', String(ml))}>{ml} mL</button>)}
             </div>
