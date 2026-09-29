@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1790615531.200539,
-    "seen": 1790615957.5916705,
-    "ast_hash": "8731211190ae1af40ad78d8c517f3e08",
+    "mtime": 1790647294.3238323,
+    "seen": 1790647444.6649191,
+    "ast_hash": "ec019b7216ac2e93ee23c154bcfabb14",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -1446,9 +1446,9 @@
     "semantic_hash": ""
   },
   "vite.config.ts": {
-    "mtime": 1790614137.863274,
-    "seen": 1790614393.3328297,
-    "ast_hash": "4169c1349b8bcb0985484851476c75d3",
+    "mtime": 1790647385.422092,
+    "seen": 1790647444.6662683,
+    "ast_hash": "bac54c149deaa46663cfb56751720584",
     "semantic_hash": ""
   },
   "vitest.config.ts": {
