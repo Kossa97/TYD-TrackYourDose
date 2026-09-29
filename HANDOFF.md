@@ -3,6 +3,15 @@
 
 ---
 
+## Offen — für den Nutzer (Stand 29.09.2026)
+
+- [ ] **Vercel: `VITE_ANTHROPIC_KEY` → `ANTHROPIC_API_KEY`.** Nicht dringend: der Schlüssel wird nur serverseitig in `api/peptide-ai.js` gelesen (liest `ANTHROPIC_API_KEY` schon zuerst). Aber `VITE_`-Variablen landen im Browser-Bundle, sobald App-Code sie anfasst. Weg: in Vercel neuen Eintrag `ANTHROPIC_API_KEY` (Secret, Production + Preview) mit dem Schlüssel anlegen — der alte ist „Sensitive" und nicht mehr auslesbar, ggf. in console.anthropic.com einen neuen erzeugen —, dann `VITE_ANTHROPIC_KEY` löschen, neu deployen, alten Schlüssel bei Anthropic widerrufen.
+
+## Betrieb (Stand 29.09.2026)
+
+- **Fehler-Monitoring: Sentry**, Organisation `devin-koslowski`, Projekt `javascript-react`, Region EU (`de.sentry.io`). `VITE_SENTRY_DSN` und `SENTRY_AUTH_TOKEN` stehen in Vercel. Filter vor dem Senden: `src/lib/monitoring.ts` (nur bekannte Fehlertexte, keine Nutzerdaten). IP-Speicherung in Sentry ausgeschaltet. Source-Maps lädt der Build hoch (`vite.config.ts`) und löscht sie danach. Der Sentry-Connector ist mit Claude verbunden: „schau in Sentry" genügt.
+- **Gerätetests:** `npm run test:e2e` (Playwright, iPhone 13/SE, Pixel 7, nachgebildetes Supabase in `e2e/support/`). Laufen bei jedem Push als GitHub Action (`.github/workflows/e2e.yml`).
+
 ## 0. Projektstatus
 
 **Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil, Injektionsstellen-Rotation — international in 14 Sprachen.
