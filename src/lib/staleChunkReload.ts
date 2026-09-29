@@ -1,25 +1,32 @@
+import { lazy, useEffect, useRef, type ComponentType } from 'react'
+import { useLocation } from 'react-router-dom'
+
 /**
  * Veraltete Version nach einem Deployment.
  *
- * Die installierte App laeuft mit dem Stand, den der Service Worker
- * zwischengespeichert hat. Wird inzwischen neu ausgeliefert, tragen die
- * Programmteile neue Namen — und ein Teil, den die alte Version erst beim
- * Oeffnen einer Seite nachlaedt (etwa den Kalender), gibt es nicht mehr. Der
- * Import scheitert, React meldet einen Absturz.
+ * Der Service Worker (src/sw.ts) uebernimmt eine neue Version sofort
+ * (`skipWaiting` + `clientsClaim`) und raeumt den alten Zwischenspeicher
+ * weg — waehrend die alte Version im Fenster weiterlaeuft. Laedt sie danach
+ * einen Programmteil nach (etwa den Kalender), gibt es ihn nicht mehr:
+ * JAVASCRIPT-REACT-2.
  *
- * Statt dessen: einmal neu laden, dann kommt die aktuelle Version. Nicht
- * endlos — scheitert es gleich danach wieder, liegt es nicht am alten Stand,
- * und der Fehler geht normal weiter (und an Sentry).
+ * Deshalb zwei Stufen:
+ * 1. Ursache: Hat eine neue Version uebernommen, laedt die App beim
+ *    naechsten Seitenwechsel neu — nicht sofort, damit niemand ein halb
+ *    ausgefuelltes Formular verliert. Ein Seitenwechsel verwirft ohnehin,
+ *    was auf der alten Seite stand. (`ReloadOnUpdate`)
+ * 2. Netz: Scheitert eine Seite trotzdem beim Nachladen, einmal neu laden.
+ *    Hoechstens einmal, bis wieder etwas geladen hat; nicht ohne Netz; und
+ *    nicht endlos wartend. (`lazyPage`)
  */
 
-const RELOAD_KEY = 'tyd_stale_chunk_reload_at'
-const LOOP_GUARD_MS = 10_000
+const RELOAD_KEY = 'tyd_stale_chunk_reload'
+const RELOAD_TIMEOUT_MS = 8_000
 
 const CHUNK_LOAD_MESSAGES = [
   /Failed to fetch dynamically imported module/i, // Chrome, Edge
   /Importing a module script failed/i, // Safari
   /error loading dynamically imported module/i, // Firefox
-  /Unable to preload CSS/i, // Vite
 ]
 
 export function isChunkLoadError(error: unknown): boolean {
@@ -27,17 +34,25 @@ export function isChunkLoadError(error: unknown): boolean {
   return error.name === 'ChunkLoadError' || CHUNK_LOAD_MESSAGES.some(pattern => pattern.test(error.message))
 }
 
+function storage(): Storage | null {
+  try { return window.sessionStorage } catch { return null }
+}
+
 /**
- * Laedt die Seite neu, wenn das nicht gerade eben schon passiert ist.
- * `true`: es wird neu geladen. `false`: gerade erst — nicht noch einmal.
+ * Laedt die Seite neu, wenn in dieser Sitzung seit dem letzten Erfolg noch
+ * nicht neu geladen wurde. `true`: es wird neu geladen.
+ *
+ * Ohne Netz nicht: dann liegt es nicht am alten Stand, und ein Neuladen
+ * braechte nur die Offline-Seite des Browsers. Ohne Speicher auch nicht —
+ * ohne Merker liesse sich eine Schleife nicht verhindern.
  */
-export function reloadForStaleChunk(now = Date.now(), reload = () => window.location.reload()): boolean {
-  // Ohne Speicher gibt es keinen Merker gegen eine Schleife — dann lieber
-  // nicht neu laden und den Fehler normal melden.
+export function reloadForStaleChunk(reload = () => window.location.reload()): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return false
+  const merker = storage()
+  if (!merker) return false
   try {
-    const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0)
-    if (now - last < LOOP_GUARD_MS) return false
-    sessionStorage.setItem(RELOAD_KEY, String(now))
+    if (merker.getItem(RELOAD_KEY)) return false
+    merker.setItem(RELOAD_KEY, '1')
   } catch {
     return false
   }
@@ -45,20 +60,66 @@ export function reloadForStaleChunk(now = Date.now(), reload = () => window.loca
   return true
 }
 
+/** Etwas hat geladen: die App laeuft — ein spaeterer Fehler darf wieder neu laden. */
+export function markChunkLoaded(): void {
+  try { storage()?.removeItem(RELOAD_KEY) } catch { /* ohne Speicher: nichts zu merken */ }
+}
+
 /**
- * Fuer `React.lazy`: scheitert das Nachladen an einem veralteten Stand, wird
- * neu geladen, und bis dahin bleibt die Ladeanzeige stehen.
+ * Nachladen mit Netz. Bis das Neuladen greift, bleibt die Ladeanzeige stehen —
+ * greift es nicht (abgebrochen, WebView ohne reload), kommt nach einigen
+ * Sekunden doch der urspruengliche Fehler.
  */
 export function importWithReload<T>(load: () => Promise<T>): () => Promise<T> {
-  return () => load().catch(error => {
-    if (isChunkLoadError(error) && reloadForStaleChunk()) return new Promise<T>(() => {})
-    throw error
+  return () => load().then(
+    module => {
+      markChunkLoaded()
+      return module
+    },
+    error => {
+      if (!isChunkLoadError(error) || !reloadForStaleChunk()) throw error
+      return new Promise<T>((_, reject) => { window.setTimeout(() => reject(error), RELOAD_TIMEOUT_MS) })
+    },
+  )
+}
+
+/**
+ * Eine nachgeladene Seite. `name` ist der benannte Export des Moduls.
+ * Neue Seiten bitte hierueber, nicht mit blossem `lazy(() => import(...))` —
+ * sonst fehlt ihnen der Schutz.
+ */
+export function lazyPage<M extends Record<string, unknown>, K extends keyof M>(
+  load: () => Promise<M>,
+  name: K,
+) {
+  return lazy(importWithReload(() => load().then(module => ({ default: module[name] as ComponentType }))))
+}
+
+let updateTookOver = false
+
+/**
+ * Merkt sich, wenn eine neue Version des Service Workers die Seite
+ * uebernimmt. Nur bei einem Wechsel — nicht beim allerersten Einrichten, wo
+ * es noch keinen alten Stand gab.
+ */
+export function installUpdateWatch(): void {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
+  const hadController = Boolean(navigator.serviceWorker.controller)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) updateTookOver = true
   })
 }
 
-/** Vite meldet gescheiterte Vorab-Ladungen eigens; dort genauso. */
-export function installStaleChunkReload(): void {
-  window.addEventListener('vite:preloadError', event => {
-    if (reloadForStaleChunk()) event.preventDefault()
-  })
+/** Im Router: beim naechsten Seitenwechsel nach einer Uebernahme neu laden. */
+export function ReloadOnUpdate() {
+  const { pathname } = useLocation()
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    if (updateTookOver) window.location.reload()
+  }, [pathname])
+  return null
 }

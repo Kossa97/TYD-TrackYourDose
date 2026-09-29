@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { importWithReload, isChunkLoadError, reloadForStaleChunk } from './staleChunkReload'
+import { importWithReload, isChunkLoadError, markChunkLoaded, reloadForStaleChunk } from './staleChunkReload'
 
 function memoryStorage() {
   const map = new Map<string, string>()
@@ -7,13 +7,15 @@ function memoryStorage() {
     getItem: (key: string) => map.get(key) ?? null,
     setItem: (key: string, value: string) => { map.set(key, value) },
     removeItem: (key: string) => { map.delete(key) },
-    clear: () => map.clear(),
   }
 }
 
 describe('veraltete Programmteile nach einem Deployment', () => {
-  beforeEach(() => { vi.stubGlobal('sessionStorage', memoryStorage()) })
-  afterEach(() => { vi.unstubAllGlobals() })
+  beforeEach(() => {
+    vi.stubGlobal('window', { sessionStorage: memoryStorage(), setTimeout, location: { reload: vi.fn() } })
+    vi.stubGlobal('navigator', { onLine: true })
+  })
+  afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
   it('erkennt gescheiterte Imports in Chrome, Safari und Firefox — und sonst nichts', () => {
     expect(isChunkLoadError(new TypeError('Failed to fetch dynamically imported module: https://app/assets/Dashboard-abc.js'))).toBe(true)
@@ -23,24 +25,38 @@ describe('veraltete Programmteile nach einem Deployment', () => {
     expect(isChunkLoadError('Failed to fetch dynamically imported module')).toBe(false)
   })
 
-  it('lädt einmal neu, aber nicht in einer Schleife', () => {
+  it('lädt höchstens einmal neu, bis wieder etwas geladen hat', () => {
     const reload = vi.fn()
-    expect(reloadForStaleChunk(100_000, reload)).toBe(true)
-    // Gleich danach scheitert es wieder: dann liegt es nicht am alten Stand.
-    expect(reloadForStaleChunk(105_000, reload)).toBe(false)
-    expect(reloadForStaleChunk(200_000, reload)).toBe(true)
+    expect(reloadForStaleChunk(reload)).toBe(true)
+    // Scheitert es danach wieder — egal wann —, liegt es nicht am alten Stand.
+    expect(reloadForStaleChunk(reload)).toBe(false)
+    markChunkLoaded()
+    expect(reloadForStaleChunk(reload)).toBe(true)
     expect(reload).toHaveBeenCalledTimes(2)
   })
 
-  it('lädt ohne Speicher nicht neu (kein Schutz gegen Schleifen)', () => {
-    vi.stubGlobal('sessionStorage', { getItem: () => { throw new Error('blocked') }, setItem: () => {} })
+  it('lädt ohne Netz oder ohne Speicher nicht neu', () => {
     const reload = vi.fn()
-    expect(reloadForStaleChunk(100_000, reload)).toBe(false)
+    vi.stubGlobal('navigator', { onLine: false })
+    expect(reloadForStaleChunk(reload)).toBe(false)
+    vi.stubGlobal('navigator', { onLine: true })
+    vi.stubGlobal('window', { get sessionStorage(): Storage { throw new Error('blocked') } })
+    expect(reloadForStaleChunk(reload)).toBe(false)
     expect(reload).not.toHaveBeenCalled()
   })
 
-  it('reicht andere Fehler beim Import unverändert weiter', async () => {
+  it('reicht andere Fehler unverändert weiter', async () => {
     const fehler = new SyntaxError('Unexpected token')
     await expect(importWithReload(() => Promise.reject(fehler))()).rejects.toBe(fehler)
+  })
+
+  it('wartet nicht ewig, wenn das Neuladen nicht greift', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('window', { sessionStorage: memoryStorage(), setTimeout: globalThis.setTimeout, location: { reload: () => {} } })
+    const fehler = new TypeError('Importing a module script failed.')
+    const laden = importWithReload(() => Promise.reject(fehler))()
+    const ergebnis = expect(laden).rejects.toBe(fehler)
+    await vi.advanceTimersByTimeAsync(8_000)
+    await ergebnis
   })
 })

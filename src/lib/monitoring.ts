@@ -39,6 +39,7 @@ const SAFE_MESSAGES: readonly RegExp[] = [
   /^NetworkError when attempting to fetch resource\.?$/,
   /^The (operation|user) (was )?abort(ed|ed a request)\.?$/i,
   /^Failed to fetch dynamically imported module/,
+  /^error loading dynamically imported module/,
   /^Importing a module script failed\.?$/,
   /^Loading (CSS )?chunk \d+ failed/,
   // Typfehler der Browser. Was in Klammern steht, ist QUELLTEXT (der
@@ -156,18 +157,28 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
  * Browser und System, grob: Name und Hauptversion („Safari 18", „iOS 18").
  * Ohne das war nicht zu sagen, auf welchem Geraet ein Fehler auftrat — die
  * vollstaendige Kennung (User-Agent) geht bewusst nicht mit.
+ *
+ * Die Kennungen sind teils eingefroren: Chrome auf Android meldet immer
+ * „Android 10; K", iOS 26 noch „OS 18_6", ein iPad nennt sich „Macintosh".
+ * Wo das erkennbar ist, steht keine Version statt einer falschen; auf iOS
+ * gilt die Safari-Version, die der des Systems folgt.
  */
-export function platformTags(userAgent: string): { browser: string; os: string } {
-  const version = (pattern: RegExp) => userAgent.match(pattern)?.[1] ?? '?'
-  const os = /iPhone|iPad|iPod/.test(userAgent) ? `iOS ${version(/OS (\d+)_/)}`
-    : /Android/.test(userAgent) ? `Android ${version(/Android (\d+)/)}`
+export function platformTags(userAgent: string, touchPoints = 0): { browser: string; os: string } {
+  const version = (pattern: RegExp) => userAgent.match(pattern)?.[1] ?? null
+  const mit = (name: string, v: string | null) => (v ? `${name} ${v}` : name)
+  const safari = version(/Version\/(\d+)/)
+  const ipad = /Macintosh/.test(userAgent) && touchPoints > 1
+  const os = /iPhone|iPad|iPod/.test(userAgent) || ipad ? mit(ipad || /iPad/.test(userAgent) ? 'iPadOS' : 'iOS', safari ?? version(/OS (\d+)_/))
+    : /Android/.test(userAgent) ? mit('Android', /Android 10; K\)/.test(userAgent) ? null : version(/Android (\d+)/))
       : /Windows/.test(userAgent) ? 'Windows'
         : /Mac OS X/.test(userAgent) ? 'macOS'
           : /Linux/.test(userAgent) ? 'Linux' : 'andere'
-  const browser = /Edg\//.test(userAgent) ? `Edge ${version(/Edg\/(\d+)/)}`
-    : /(CriOS|Chrome)\//.test(userAgent) ? `Chrome ${version(/(?:CriOS|Chrome)\/(\d+)/)}`
-      : /(FxiOS|Firefox)\//.test(userAgent) ? `Firefox ${version(/(?:FxiOS|Firefox)\/(\d+)/)}`
-        : /Safari\//.test(userAgent) ? `Safari ${version(/Version\/(\d+)/)}` : 'andere'
+  const browser = /Edg(A|iOS)?\//.test(userAgent) ? mit('Edge', version(/Edg(?:A|iOS)?\/(\d+)/))
+    : /SamsungBrowser\//.test(userAgent) ? mit('Samsung Internet', version(/SamsungBrowser\/(\d+)/))
+      : /OPR\//.test(userAgent) ? mit('Opera', version(/OPR\/(\d+)/))
+        : /(CriOS|Chrome)\//.test(userAgent) ? mit('Chrome', version(/(?:CriOS|Chrome)\/(\d+)/))
+          : /(FxiOS|Firefox)\//.test(userAgent) ? mit('Firefox', version(/(?:FxiOS|Firefox)\/(\d+)/))
+            : /Safari\//.test(userAgent) ? mit('Safari', safari) : 'andere'
   return { browser, os }
 }
 
@@ -181,6 +192,7 @@ let sentry: SentryModule | null = null
 export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined): Promise<boolean> {
   if (!dsn) return false
   const Sentry = await import('@sentry/react')
+  const plattform = platformTags(navigator.userAgent, navigator.maxTouchPoints ?? 0)
   Sentry.init({
     dsn,
     environment: (import.meta.env.VITE_DEPLOY_ENV as string | undefined) || import.meta.env.MODE,
@@ -206,7 +218,7 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
     integrations: defaults => defaults.filter(integration => integration.name !== 'BrowserSession'),
     beforeSend: event => {
       const scrubbed = scrubEvent(event)
-      scrubbed.tags = { ...scrubbed.tags, ...platformTags(navigator.userAgent) }
+      scrubbed.tags = { ...scrubbed.tags, ...plattform }
       return scrubbed
     },
     beforeBreadcrumb: breadcrumb => scrubBreadcrumb(breadcrumb),

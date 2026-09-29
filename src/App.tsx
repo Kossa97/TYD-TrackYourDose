@@ -1,5 +1,5 @@
-import { lazy, Suspense, type ReactNode } from 'react'
-import { importWithReload } from './lib/staleChunkReload'
+import { Suspense, type ReactNode } from 'react'
+import { lazyPage, ReloadOnUpdate } from './lib/staleChunkReload'
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
@@ -15,25 +15,25 @@ import { BefundPreview } from './pages/__BefundPreview'
 import { PdfThemesPreview } from './pages/__PdfThemesPreview'
 import { AppBackNavigation } from './components/navigation/AppBackNavigation'
 
-const Home = lazy(importWithReload(() => import('./pages/Home').then(m => ({ default: m.Home }))))
-const Dashboard = lazy(importWithReload(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard }))))
-const MyStackPage = lazy(importWithReload(() => import('./features/my-stack/MyStackPage').then(m => ({ default: m.MyStackPage }))))
-const Tagebuch = lazy(importWithReload(() => import('./pages/Tagebuch').then(m => ({ default: m.Tagebuch }))))
-const Bewertungen = lazy(importWithReload(() => import('./pages/Bewertungen').then(m => ({ default: m.Bewertungen }))))
-const Profil = lazy(importWithReload(() => import('./pages/Profil').then(m => ({ default: m.Profil }))))
-const PublicProfile = lazy(importWithReload(() => import('./pages/PublicProfile').then(m => ({ default: m.PublicProfile }))))
-const FAQ = lazy(importWithReload(() => import('./pages/FAQ').then(m => ({ default: m.FAQ }))))
-const Rechner = lazy(importWithReload(() => import('./pages/Rechner').then(m => ({ default: m.Rechner }))))
-const Blutwerte = lazy(importWithReload(() => import('./pages/Blutwerte').then(m => ({ default: m.Blutwerte }))))
-const Health = lazy(importWithReload(() => import('./pages/Health').then(m => ({ default: m.Health }))))
-const TheLab = lazy(importWithReload(() => import('./pages/TheLab').then(m => ({ default: m.TheLab }))))
-const StudyDetail = lazy(importWithReload(() => import('./pages/StudyDetail').then(m => ({ default: m.StudyDetail }))))
-const AdminPanel = lazy(importWithReload(() => import('./pages/lab/AdminPanel').then(m => ({ default: m.AdminPanel }))))
-const InjektionsTracker = lazy(importWithReload(() => import('./pages/InjektionsTracker').then(m => ({ default: m.InjektionsTracker }))))
-const Progress = lazy(importWithReload(() => import('./pages/Progress').then(m => ({ default: m.Progress }))))
-const PdfProtokoll = lazy(importWithReload(() => import('./pages/PdfProtokoll').then(m => ({ default: m.PdfProtokoll }))))
-const Protokoll = lazy(importWithReload(() => import('./pages/Protokoll').then(m => ({ default: m.Protokoll }))))
-const BlutspiegelSimulation = lazy(importWithReload(() => import('./pages/BlutspiegelSimulation').then(m => ({ default: m.BlutspiegelSimulation }))))
+const Home = lazyPage(() => import('./pages/Home'), 'Home')
+const Dashboard = lazyPage(() => import('./pages/Dashboard'), 'Dashboard')
+const MyStackPage = lazyPage(() => import('./features/my-stack/MyStackPage'), 'MyStackPage')
+const Tagebuch = lazyPage(() => import('./pages/Tagebuch'), 'Tagebuch')
+const Bewertungen = lazyPage(() => import('./pages/Bewertungen'), 'Bewertungen')
+const Profil = lazyPage(() => import('./pages/Profil'), 'Profil')
+const PublicProfile = lazyPage(() => import('./pages/PublicProfile'), 'PublicProfile')
+const FAQ = lazyPage(() => import('./pages/FAQ'), 'FAQ')
+const Rechner = lazyPage(() => import('./pages/Rechner'), 'Rechner')
+const Blutwerte = lazyPage(() => import('./pages/Blutwerte'), 'Blutwerte')
+const Health = lazyPage(() => import('./pages/Health'), 'Health')
+const TheLab = lazyPage(() => import('./pages/TheLab'), 'TheLab')
+const StudyDetail = lazyPage(() => import('./pages/StudyDetail'), 'StudyDetail')
+const AdminPanel = lazyPage(() => import('./pages/lab/AdminPanel'), 'AdminPanel')
+const InjektionsTracker = lazyPage(() => import('./pages/InjektionsTracker'), 'InjektionsTracker')
+const Progress = lazyPage(() => import('./pages/Progress'), 'Progress')
+const PdfProtokoll = lazyPage(() => import('./pages/PdfProtokoll'), 'PdfProtokoll')
+const Protokoll = lazyPage(() => import('./pages/Protokoll'), 'Protokoll')
+const BlutspiegelSimulation = lazyPage(() => import('./pages/BlutspiegelSimulation'), 'BlutspiegelSimulation')
 
 function RouteFallback() {
   return (
@@ -95,7 +95,7 @@ function PersonalApp() {
 }
 
 export default function App() {
-  return <BrowserRouter><AppBackNavigation><Routes>
+  return <BrowserRouter><ReloadOnUpdate /><AppBackNavigation><Routes>
       {publicPeptipediaRoutes()}
       <Route path="*" element={<PersonalApp />} />
     </Routes></AppBackNavigation></BrowserRouter>

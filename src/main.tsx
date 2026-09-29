@@ -5,7 +5,7 @@ import { applyDirection, i18nReady } from './i18n'
 import App from './App.tsx'
 import { installDenyFeedback } from './lib/denyFeedback'
 import { initMonitoring, reactRootErrorOptions } from './lib/monitoring'
-import { installStaleChunkReload } from './lib/staleChunkReload'
+import { installUpdateWatch } from './lib/staleChunkReload'
 const DEV_SW_RESET_KEY = 'tyd_dev_sw_reset'
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
@@ -37,8 +37,8 @@ applyDirection(savedLang)
 // Gesperrte Knoepfe (aria-disabled) antworten app-weit mit rotem Wackelrahmen.
 installDenyFeedback()
 
-// Nach einem Deployment fehlende Programmteile: einmal neu laden statt abstuerzen.
-installStaleChunkReload()
+// Neue Version uebernommen: beim naechsten Seitenwechsel neu laden (lib/staleChunkReload.ts).
+installUpdateWatch()
 
 // Fehler-Monitoring (Sentry) — nur mit VITE_SENTRY_DSN, siehe lib/monitoring.ts.
 void initMonitoring()
