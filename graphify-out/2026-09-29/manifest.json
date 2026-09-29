@@ -4242,9 +4242,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/LiquidGraphic.tsx": {
-    "mtime": 1790699676.970601,
-    "seen": 1790699907.0015352,
-    "ast_hash": "22d257fb5ba20d171dcd4f2dab8c6892",
+    "mtime": 1790710619.308054,
+    "seen": 1790710856.9483948,
+    "ast_hash": "eb54518c50d7a0950fb48bcde51daa2d",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790699764.6262612,
-    "seen": 1790699907.001877,
+    "mtime": 1790710693.8387346,
+    "seen": 1790710856.9489202,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5718,9 +5718,9 @@
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
-    "mtime": 1790683218.4478586,
-    "seen": 1790684209.4892113,
-    "ast_hash": "823b7af4cab87dd94e5b91d0a86a083e",
+    "mtime": 1790710590.3107285,
+    "seen": 1790710856.9474163,
+    "ast_hash": "f5f8c22c01ed6f7a0e12ea9c46d78141",
     "semantic_hash": ""
   },
   "e2e/support/fixtures.ts": {

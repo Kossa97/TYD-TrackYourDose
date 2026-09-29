@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790674131.8317788,
-    "seen": 1790674672.6068122,
-    "ast_hash": "eb4d6353552eca595170687e09aeeb7f",
+    "mtime": 1790714757.3066256,
+    "seen": 1790714796.4712963,
+    "ast_hash": "3b152f9d05accad783e804f379428cfd",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790710693.8387346,
-    "seen": 1790710856.9489202,
+    "mtime": 1790714609.8350883,
+    "seen": 1790714796.4720051,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5718,9 +5718,9 @@
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
-    "mtime": 1790710590.3107285,
-    "seen": 1790710856.9474163,
-    "ast_hash": "f5f8c22c01ed6f7a0e12ea9c46d78141",
+    "mtime": 1790714732.0670955,
+    "seen": 1790714796.4708605,
+    "ast_hash": "fc26896cd457083189032a19a141a990",
     "semantic_hash": ""
   },
   "e2e/support/fixtures.ts": {
