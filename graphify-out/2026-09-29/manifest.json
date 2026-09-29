@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1790013049.5399659,
-    "seen": 1790013226.2833867,
-    "ast_hash": "0553b61b2998e03594bafd44745352cb",
+    "mtime": 1790683810.7560868,
+    "seen": 1790684209.4894247,
+    "ast_hash": "2d14d2d2e4bee3395dd1fea72a786c3f",
     "semantic_hash": ""
   },
   "src/components/BlutspiegelCarousel.tsx": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/main.tsx": {
-    "mtime": 1790614137.863166,
-    "seen": 1790614393.332709,
-    "ast_hash": "37fbab22779222bc0e916df13ecf13ff",
+    "mtime": 1790683748.2594302,
+    "seen": 1790684209.490578,
+    "ast_hash": "6748c47124898f4cea0fd267ecdabd2d",
     "semantic_hash": ""
   },
   "src/pages/Auth.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790680523.9583638,
-    "seen": 1790680684.8821805,
+    "mtime": 1790684023.3973641,
+    "seen": 1790684209.4908054,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5706,21 +5706,21 @@
     "semantic_hash": ""
   },
   "src/lib/monitoring.test.ts": {
-    "mtime": 1790681241.7258296,
-    "seen": 1790681376.002893,
-    "ast_hash": "7c501e764f5051f728ddedf5f69e559f",
+    "mtime": 1790683880.7811592,
+    "seen": 1790684209.4904685,
+    "ast_hash": "19014fb18d07ae14c6e53ae54206f8c5",
     "semantic_hash": ""
   },
   "src/lib/monitoring.ts": {
-    "mtime": 1790681155.4944472,
-    "seen": 1790681376.0028944,
-    "ast_hash": "34762b4c7fa76ed5d6a7947886338fed",
+    "mtime": 1790683880.7807748,
+    "seen": 1790684209.4904714,
+    "ast_hash": "3fa26d15bdd4e5921c0c5a340b5c0fdc",
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
-    "mtime": 1790673673.0778959,
-    "seen": 1790673801.0899146,
-    "ast_hash": "b4fce9695af8fe9c38e86afe2fe1cc4c",
+    "mtime": 1790683218.4478586,
+    "seen": 1790684209.4892113,
+    "ast_hash": "823b7af4cab87dd94e5b91d0a86a083e",
     "semantic_hash": ""
   },
   "e2e/support/fixtures.ts": {
@@ -5769,6 +5769,18 @@
     "mtime": 1790681241.7322958,
     "seen": 1790681376.0028899,
     "ast_hash": "fbe246ea3caa8b11bfd5844046d02049",
+    "semantic_hash": ""
+  },
+  "src/lib/staleChunkReload.test.ts": {
+    "mtime": 1790683810.7573736,
+    "seen": 1790684209.4905455,
+    "ast_hash": "6c0355e5fd400442301be6e632375e9d",
+    "semantic_hash": ""
+  },
+  "src/lib/staleChunkReload.ts": {
+    "mtime": 1790683734.957377,
+    "seen": 1790684209.4905488,
+    "ast_hash": "8aa5dff5a822e31059e600bda25ac214",
     "semantic_hash": ""
   }
 }
