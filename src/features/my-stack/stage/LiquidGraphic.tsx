@@ -8,6 +8,15 @@ function clamp01(wert: number): number {
   return Number.isFinite(wert) ? Math.max(0, Math.min(1, wert)) : 0
 }
 
+/** Der naechste waagerecht scrollende Vorfahr — oder null fuer den Bildschirm. */
+function scrollContainer(element: Element): Element | null {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    const overflowX = getComputedStyle(node).overflowX
+    if (overflowX === 'auto' || overflowX === 'scroll') return node
+  }
+  return null
+}
+
 function easeOutCubic(value: number): number {
   return 1 - Math.pow(1 - value, 3)
 }
@@ -82,8 +91,15 @@ export function LiquidGraphic({
   // Blasen laufen — auch die seitlich ausgerollten. Die Blasen allein kosteten
   // im Ruhezustand mehr Stilberechnung als alles andere zusammen, und Chrome
   // rechnet SMIL auch pausiert weiter: sie werden ausserhalb nicht gerendert.
-  const visibleRef = useRef(true)
-  const [visible, setVisible] = useState(true)
+  // Ohne IntersectionObserver (Tests, alte Browser) gilt alles als sichtbar.
+  // Mit ihm startet ein Vial unsichtbar: sonst liefen beim Einhaengen erst
+  // alle Blasen an, um gleich darauf wieder abgebaut zu werden.
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
+  const visibleRef = useRef(visible)
+  // Der letzte Stand der Maschine: wer wieder sichtbar wird, zeichnet sich
+  // damit sofort — auch wenn die Maschine gerade steht (Vollbild-Flug,
+  // verborgener Tab) und ihr Zuruecksetzen verpasst wurde.
+  const lastStateRef = useRef<SloshState | null>(null)
   const bodyRef = useRef<SVGPathElement | null>(null)
   const surfaceRef = useRef<SVGPathElement | null>(null)
   const glowRef = useRef<SVGPathElement | null>(null)
@@ -99,6 +115,7 @@ export function LiquidGraphic({
 
   const draw = useCallback(
     (s: SloshState) => {
+      lastStateRef.current = s
       if (!visibleRef.current) return
       const stage = stageRef.current
       const stageFocus = stage.focus
@@ -140,18 +157,25 @@ export function LiquidGraphic({
     return subscribe(draw)
   }, [subscribe, draw])
 
+  const drawRef = useRef(draw)
+  useEffect(() => { drawRef.current = draw }, [draw])
   useEffect(() => {
     const target = svgRef.current
     if (!target || typeof IntersectionObserver === 'undefined') return
-    // Etwas Vorlauf, damit ein hereinrollendes Vial schon lebt, wenn es
-    // sichtbar wird. Das naechste Bild der Maschine zeichnet es dann.
+    // Rahmen ist der Karussell-Streifen, denn er schneidet ab — nicht der
+    // Bildschirm. Ohne Vorlauf: schon ein Rand von einer halben Breite hielt
+    // beide Nachbarn wach und kostete mehr als das Doppelte. Ein
+    // hereinrollendes Vial zeichnet sich beim Eintreten sofort mit dem
+    // letzten Stand der Maschine.
     const observer = new IntersectionObserver(
       entries => {
         const sichtbar = entries[entries.length - 1]?.isIntersecting ?? true
+        const war = visibleRef.current
         visibleRef.current = sichtbar
         setVisible(sichtbar)
+        if (sichtbar && !war && lastStateRef.current) drawRef.current(lastStateRef.current)
       },
-      { rootMargin: '0px 50% 0px 50%' },
+      { root: scrollContainer(target) },
     )
     observer.observe(target)
     return () => observer.disconnect()

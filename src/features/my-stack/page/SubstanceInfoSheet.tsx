@@ -1,9 +1,8 @@
 import type { NavigateFunction } from 'react-router-dom'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatLocalDay } from '../lib/localDays'
+import { formatLocalDay, shiftLocalDay } from '../lib/localDays'
 import { Activity, X, FileText, ExternalLink, Archive } from 'lucide-react'
-import { format, parseISO, addDays } from 'date-fns'
 import { expiryDaysLeft } from '../../../lib/peptideExpiry'
 import { methodLabel } from '../../../lib/intakeMethods'
 import { type Peptide, type InventoryItem } from './model'
@@ -37,9 +36,8 @@ export function SubstanceInfoSheet({
         let expiryDays: number | null = null
         let expiryDate: string | null = null
         if (p.reconstitution_date && p.expiry_days) {
-          const exp = addDays(parseISO(p.reconstitution_date), p.expiry_days)
           expiryDays = expiryDaysLeft(p)
-          expiryDate = formatLocalDay(format(exp, 'yyyy-MM-dd'), language)
+          expiryDate = formatLocalDay(shiftLocalDay(p.reconstitution_date.slice(0, 10), p.expiry_days), language)
         }
 
         return (
@@ -114,7 +112,7 @@ export function SubstanceInfoSheet({
                       {p.reconstitution_date && (
                         <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
-                          <p className="text-white font-semibold mt-0.5">{formatLocalDay(p.reconstitution_date.slice(0, 10), language)}</p>
+                          <p className="text-white font-semibold mt-0.5">{formatLocalDay(p.reconstitution_date, language)}</p>
                         </div>
                       )}
                       {expiryDate && expiryDays !== null && (

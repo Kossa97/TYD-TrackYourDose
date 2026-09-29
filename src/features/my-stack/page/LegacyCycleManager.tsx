@@ -104,9 +104,9 @@ export function LegacyCycleManager({
               )}
               <span>{freqLabel(c)}</span>
               <span>{methodLabel(t, c.method)}</span>
-              <span>{t('ab_datum', { date: formatLocalDay(c.start_date.slice(0, 10), language) })}</span>
+              <span>{t('ab_datum', { date: formatLocalDay(c.start_date, language) })}</span>
               {c.end_date ? (
-                <span>{t('bis_datum', { date: formatLocalDay(c.end_date.slice(0, 10), language) })}</span>
+                <span>{t('bis_datum', { date: formatLocalDay(c.end_date, language) })}</span>
               ) : (
                 <span>{t('ende_offen')}</span>
               )}
@@ -258,7 +258,7 @@ export function LegacyCycleManager({
                   </div>
                   <p className="mt-0.5 truncate text-xs text-slate-500">
                     {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent ? currentQuantityLabel(c) : ''}
-                    {c.end_date ? ` · ${t('bis_datum', { date: formatLocalDay(c.end_date.slice(0, 10), language) })}` : ''}
+                    {c.end_date ? ` · ${t('bis_datum', { date: formatLocalDay(c.end_date, language) })}` : ''}
                   </p>
                 </div>
                 {open ? <ChevronUp size={16} className="shrink-0 text-slate-500" /> : <ChevronDown size={16} className="shrink-0 text-slate-500" />}

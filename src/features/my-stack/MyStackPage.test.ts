@@ -562,7 +562,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain("t('archiviert_am'")
     expect(text).toContain('h-11 w-11')
     expect(text).toContain('const language = i18n.resolvedLanguage ?? i18n.language')
-    expect(text).toContain('Intl.DateTimeFormat(language)')
+    expect(text).toContain('formatInstantDay(p.archived_at, language)')
   })
   test('schreibt Daten in der Sprache der Oberflaeche, nie fest deutsch', () => {
     // „TT.MM.JJJJ" stand an vierzehn Stellen fest im Code — auch in der

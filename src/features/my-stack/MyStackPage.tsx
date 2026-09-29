@@ -51,7 +51,7 @@ import { getRandomStackItemColor } from './lib/colors'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { FEATURES } from '../../config/features'
 import { reportError } from '../../lib/monitoring'
-import { formatLocalDay } from './lib/localDays'
+import { formatInstantDay, formatLocalDay, shiftLocalDay } from './lib/localDays'
 import { daysLabel } from './lib/bestandLabels'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
@@ -1192,7 +1192,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Helper ────────────────────────────────────────────────────────────────
   const escLabel = (e: Escalation) => {
     if (e.start_type === 'date' && e.start_date)
-      return t('ab_datum', { date: formatLocalDay(e.start_date.slice(0, 10), language) })
+      return t('ab_datum', { date: formatLocalDay(e.start_date, language) })
     if (e.start_after_days) {
       const weeks = e.start_after_days % 7 === 0 ? e.start_after_days / 7 : null
       return weeks
@@ -1283,7 +1283,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               <span className="shrink-0 font-semibold">
                 {t('my_stack_plan_step_from', {
                   defaultValue: 'ab {{date}}',
-                  date: formatLocalDay(effectiveFrom.slice(0, 10), language),
+                  date: formatLocalDay(effectiveFrom, language),
                 })}
               </span>
               <span className="min-w-0 flex-1 truncate">{stufenText(segment)}</span>
@@ -1300,7 +1300,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onClick={() => stufeZuruecknehmen(c, effectiveFrom)}
                   aria-label={String(t('my_stack_plan_step_remove', {
                     defaultValue: 'Stufe ab {{date}} zurücknehmen',
-                    date: formatLocalDay(effectiveFrom.slice(0, 10), language),
+                    date: formatLocalDay(effectiveFrom, language),
                   }))}
                   className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-rose-400/10 hover:text-rose-300"
                 >
@@ -1321,7 +1321,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         {planned.map(segment => (
           <p key={segment.effectiveFrom}>
             <span className="font-bold uppercase tracking-wide">{segment.status}</span>
-            {' · '}{formatLocalDay(segment.effectiveFrom.slice(0, 10), language)}: {segment.dose} {segment.unit}
+            {' · '}{formatLocalDay(segment.effectiveFrom, language)}: {segment.dose} {segment.unit}
           </p>
         ))}
       </div>
@@ -1763,7 +1763,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           : a.packung != null
                             ? `${a.rest} / ${a.packung} ${a.einheit}`
                             : `${a.rest} ${a.einheit}`
-                      case 'datum': return formatLocalDay(a.iso.slice(0, 10), language)
+                      case 'datum': return formatLocalDay(a.iso, language)
                       case 'tage': return daysLabel(t, a.n)
                       case 'datei': return a.url.split('/').pop() || 'Öffnen'
                       case 'text':
@@ -2222,7 +2222,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <div className="divide-y divide-slate-800/80 border-y border-slate-800/80">
                   {archivedPeptides.map(p => {
                     const archivedDate = p.archived_at
-                      ? new Intl.DateTimeFormat(language).format(new Date(p.archived_at))
+                      ? formatInstantDay(p.archived_at, language)
                       : ''
 
                     return (
@@ -2291,12 +2291,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             const invItem = inventory.find(item => item.id === p.inventory_item_id)
             const syringeMl = p.syringe_type?.split(':')[0]
             const syringeUnits = p.syringe_type?.split(':')[1]
-            const dateFormatter = new Intl.DateTimeFormat(language)
-            const formatStoredDate = (value: string | null) => value ? dateFormatter.format(parseISO(value)) : '-'
+            const formatStoredDate = (value: string | null) => value ? formatLocalDay(value, language) : '-'
             const expiryDate = p.reconstitution_date && p.expiry_days
-              ? dateFormatter.format(addDays(parseISO(p.reconstitution_date), p.expiry_days))
+              ? formatLocalDay(shiftLocalDay(p.reconstitution_date.slice(0, 10), p.expiry_days), language)
               : '-'
-            const archivedDate = formatStoredDate(p.archived_at)
+            const archivedDate = p.archived_at ? formatInstantDay(p.archived_at, language) : '-'
             const applicationRows: InfoRow[] = [
               {
                 label: t('wirkstoff_pro_vial'),
