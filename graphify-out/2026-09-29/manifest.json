@@ -708,15 +708,15 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1790613146.5312586,
-    "seen": 1790613395.7576602,
-    "ast_hash": "4ab5c4e400e8c83af86f89ec543037ec",
+    "mtime": 1790648096.6309345,
+    "seen": 1790648184.4628909,
+    "ast_hash": "d6097a99e8a2e492dc87ded32f1160e4",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1790613146.5319445,
-    "seen": 1790613395.757661,
-    "ast_hash": "6605a16e33d8cc1e3171e30894d203bf",
+    "mtime": 1790648096.631948,
+    "seen": 1790648184.4628916,
+    "ast_hash": "12b06034929514f1049dd73324218fe2",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1788611941.3946776,
-    "seen": 1789927683.040459,
-    "ast_hash": "747368e0475fcd9fea7dfe2ebf51d530",
+    "mtime": 1790650531.852999,
+    "seen": 1790650598.8024743,
+    "ast_hash": "cd5a9ff372f136d1e892a5875ab97ae7",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3942,9 +3942,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1790613280.3554695,
-    "seen": 1790613395.7574518,
-    "ast_hash": "5c255ee1698e06bee3b93af8093d4440",
+    "mtime": 1790648162.4474475,
+    "seen": 1790648184.4626687,
+    "ast_hash": "b9d356be0dea032d0575f454e22c64e7",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -5478,9 +5478,9 @@
     "semantic_hash": ""
   },
   "src/features/rechner/components/DoseCalculator.tsx": {
-    "mtime": 1790613146.5299304,
-    "seen": 1790613395.7575912,
-    "ast_hash": "28b484ff73356a05399d9267fb1e8ca2",
+    "mtime": 1790650539.9875982,
+    "seen": 1790650598.8016374,
+    "ast_hash": "e906f56dd79a68e5ce2b3f8114368d3a",
     "semantic_hash": ""
   },
   "src/features/rechner/components/SyringeFields.tsx": {
@@ -5502,15 +5502,15 @@
     "semantic_hash": ""
   },
   "src/features/rechner/components/UnitConverter.test.tsx": {
-    "mtime": 1790613146.5300474,
-    "seen": 1790613395.7575972,
-    "ast_hash": "f7b090638cd14d7e0ccfd24622b61c9e",
+    "mtime": 1790648096.630233,
+    "seen": 1790648184.4628382,
+    "ast_hash": "e3ac82224235d8946bbc28459ef73dc9",
     "semantic_hash": ""
   },
   "src/features/rechner/components/UnitConverter.tsx": {
-    "mtime": 1790613146.5300474,
-    "seen": 1790613395.7575984,
-    "ast_hash": "10a0db681060e4efc5cdfea5d6cef322",
+    "mtime": 1790648096.630233,
+    "seen": 1790648184.4628394,
+    "ast_hash": "384c010e49738c97d5479a39f7e5a5d0",
     "semantic_hash": ""
   },
   "src/features/rechner/lib/stackSources.test.ts": {
@@ -5538,9 +5538,9 @@
     "semantic_hash": ""
   },
   "src/pages/Rechner.test.tsx": {
-    "mtime": 1790613146.5325837,
-    "seen": 1790613395.7577677,
-    "ast_hash": "1a8f364f7f4b1aa9ed3cbd4420e824df",
+    "mtime": 1790650539.994867,
+    "seen": 1790650598.8021054,
+    "ast_hash": "274aeac98080a506abe984214c7effa7",
     "semantic_hash": ""
   },
   "src/lib/denyFeedback.test.ts": {
@@ -5748,9 +5748,15 @@
     "semantic_hash": ""
   },
   "playwright.config.ts": {
-    "mtime": 1790616328.1059499,
-    "seen": 1790617005.184628,
-    "ast_hash": "7ab364bb60b60177265488d0b99a1ba4",
+    "mtime": 1790648612.1288784,
+    "seen": 1790650598.8002577,
+    "ast_hash": "7334ab7d14a8c64759788cd26b4f199c",
+    "semantic_hash": ""
+  },
+  ".github/workflows/e2e.yml": {
+    "mtime": 1790648612.1192183,
+    "seen": 1790650598.8024566,
+    "ast_hash": "bdae84d60f0cef5a2370c67548ea7e53",
     "semantic_hash": ""
   }
 }
