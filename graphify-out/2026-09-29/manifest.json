@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1790650531.852999,
-    "seen": 1790650598.8024743,
-    "ast_hash": "cd5a9ff372f136d1e892a5875ab97ae7",
+    "mtime": 1790697231.056769,
+    "seen": 1790699907.0019467,
+    "ast_hash": "f9c5fef2babc9a3380e5db6438fb699f",
     "semantic_hash": ""
   },
   "README.md": {
@@ -4242,9 +4242,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/LiquidGraphic.tsx": {
-    "mtime": 1790674499.560381,
-    "seen": 1790674672.6069942,
-    "ast_hash": "747b18a3f0aa32504dc173c7931aeaa2",
+    "mtime": 1790699676.970601,
+    "seen": 1790699907.0015352,
+    "ast_hash": "22d257fb5ba20d171dcd4f2dab8c6892",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790688370.935128,
-    "seen": 1790688508.8394272,
+    "mtime": 1790699764.6262612,
+    "seen": 1790699907.001877,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
