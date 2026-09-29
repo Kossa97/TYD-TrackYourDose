@@ -367,6 +367,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const confirmDoseUngueltig = confirmUnit != null
     && (confirmDoseWert == null || !Number.isFinite(confirmDoseWert) || confirmDoseWert <= 0)
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  const [unloggedExpanded, setUnloggedExpanded] = useState(false)
   /** Welche Einnahme aufgeklappt ist.
    *
    *  `voreingestellt` heisst: die erste offene. So steht beim Oeffnen der
@@ -897,8 +898,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     !FEATURES.planTimelineV2
     || Boolean(log.routine_slot_key && geplanteSchluesselHeute.has(log.routine_slot_key))
   )
-  const confirmedLogs = selLogs.filter(log => log.taken !== null)
-  const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
+  const decidedLogsSorted = selLogs.filter(log => log.taken !== null)
+    .sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
+  const loggedLogs = decidedLogsSorted.filter(log => log.taken === true)
+  const unloggedLogs = decidedLogsSorted.filter(log => log.taken === false)
 
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
   // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
@@ -981,6 +984,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const genommeneSlots = FEATURES.planTimelineV2 && standHeute
     ? standHeute.genommen
     : completedDaySlots
+  const incompletePastDay = isPastSelected && totalDaySlots > 0 && genommeneSlots < totalDaySlots
   const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
   const dueRoutineGroups = groupRoutineIntakes(dueSlots.map(slot => {
     const trackingLevel = slot.cycle.stack_items?.tracking_level ?? 'complete'
@@ -2259,19 +2263,24 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         )}
 
-        {/* Alles bestätigt: eine Quittung, kein leeres Feld. */}
+        {/* Keine offenen Slots: den Tag nach bestätigten Einnahmen bewerten. */}
         {dueSlots.length === 0 && totalDaySlots > 0 && (!FEATURES.planTimelineV2 || timelineReady) && (
           <div
             data-due-receipt
             className="mb-3 flex flex-col items-center gap-2.5 rounded-2xl border p-6 text-center"
-            style={{ borderColor: 'rgba(16,185,129,0.24)', background: 'linear-gradient(160deg, rgba(16,185,129,0.10), var(--surface) 62%)' }}
+            style={incompletePastDay
+              ? { borderColor: 'rgba(239,68,68,0.35)', background: 'linear-gradient(160deg, rgba(239,68,68,0.12), var(--surface) 62%)' }
+              : { borderColor: 'rgba(16,185,129,0.24)', background: 'linear-gradient(160deg, rgba(16,185,129,0.10), var(--surface) 62%)' }}
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15">
-              <Check size={24} className="text-emerald-300" aria-hidden="true" />
+            <span className={`flex h-12 w-12 items-center justify-center rounded-full ${incompletePastDay ? 'bg-red-500/15' : 'bg-emerald-500/15'}`}>
+              {incompletePastDay
+                ? <X size={24} className="text-red-300" aria-hidden="true" />
+                : <Check size={24} className="text-emerald-300" aria-hidden="true" />}
             </span>
             <h3 className="text-xl font-black tracking-[-0.035em] text-white">
-              {/* „Alle bestaetigt" stimmt nur, wenn auch alle genommen wurden. */}
-              {genommeneSlots === totalDaySlots
+              {incompletePastDay
+                ? t('calendar_day_incomplete', { defaultValue: 'Dieser Tag ist nicht vollständig protokolliert.' })
+                : genommeneSlots === totalDaySlots
                 ? t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })
                 : t('all_intakes_logged', { defaultValue: 'Für diesen Tag ist alles protokolliert.' })}
             </h3>
@@ -2315,12 +2324,13 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         ))}
 
-        {/* Bereits protokolliert — ausklappbar */}
-        {confirmedLogsSorted.length > 0 ? (
+        {/* Bestätigte und nicht bestätigte Einnahmen getrennt ausklappen. */}
+        {loggedLogs.length > 0 && (
           <div className="space-y-2">
             <button
               type="button"
               onClick={() => setCompletedExpanded(expanded => !expanded)}
+              aria-expanded={completedExpanded}
               className="flex w-full items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 text-left transition-colors hover:bg-emerald-500/10"
             >
               <div className="min-w-0">
@@ -2328,12 +2338,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                   {t('completed_intakes_title', { defaultValue: 'Bereits protokolliert' })}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {t('completed_intakes_hint', { defaultValue: 'Bestätigte und übersprungene Einnahmen.' })}
+                  {t('completed_intakes_hint', { defaultValue: 'Bestätigte Einnahmen.' })}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-300">
-                  {confirmedLogsSorted.length}
+                  {loggedLogs.length}
                 </span>
                 <ChevronDown
                   size={16}
@@ -2343,11 +2353,45 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             </button>
             {completedExpanded && (
               <div className="space-y-2">
-                {confirmedLogsSorted.map(log => renderConfirmedLog(log))}
+                {loggedLogs.map(log => renderConfirmedLog(log))}
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause
+        )}
+        {unloggedLogs.length > 0 && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setUnloggedExpanded(expanded => !expanded)}
+              aria-expanded={unloggedExpanded}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-left transition-colors hover:bg-red-500/10"
+            >
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-red-300/80">
+                  {t('unlogged_intakes_title', { defaultValue: 'Nicht protokolliert' })}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t('unlogged_intakes_hint', { defaultValue: 'Übersprungene und verpasste Einnahmen.' })}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2 py-1 text-xs font-bold text-red-300">
+                  {unloggedLogs.length}
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`text-red-300/80 transition-transform duration-200 ${unloggedExpanded ? 'rotate-180' : ''}`}
+                />
+              </div>
+            </button>
+            {unloggedExpanded && (
+              <div className="space-y-2">
+                {unloggedLogs.map(log => renderConfirmedLog(log))}
+              </div>
+            )}
+          </div>
+        )}
+        {loggedLogs.length === 0 && unloggedLogs.length === 0 && dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause
           && timezoneReviewStackItemIds.length === 0 && (!FEATURES.planTimelineV2 || timelineReady) ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
