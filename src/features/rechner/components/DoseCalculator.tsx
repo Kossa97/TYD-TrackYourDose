@@ -247,7 +247,7 @@ export function DoseCalculator() {
           {values.mode === 'amount' ? <>
             {input('volume', 'mL')}
             <div className="rechner-volume-presets" role="group" aria-label={t('rechner_volume_presets')}>
-              {[1, 2, 3, 5].map(ml => <button type="button" key={ml} aria-pressed={parseDecimalInput(values.volume) === ml}
+              {[1, 2, 5, 10].map(ml => <button type="button" key={ml} aria-pressed={parseDecimalInput(values.volume) === ml}
                 disabled={sourceLocked}
                 onClick={() => edit('volume', String(ml))}>{ml} mL</button>)}
             </div>

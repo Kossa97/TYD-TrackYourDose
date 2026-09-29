@@ -35,6 +35,14 @@ it('places reset inside the solution card without the automatic-update hint', ()
   expect(screen.queryByText('Aktualisiert sich automatisch.')).toBeNull()
 })
 
+it('offers 1, 2, 5 and 10 mL as quick volume choices', () => {
+  setup()
+  const presets = within(screen.getByRole('group', { name: 'Gesamtvolumen auswählen' })).getAllByRole('button')
+  expect(presets.map(button => button.textContent)).toEqual(['1 mL', '2 mL', '5 mL', '10 mL'])
+  fireEvent.click(presets[3])
+  expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('10')
+})
+
 it('uses the actual syringe capacity for both volume and scale across presets', async () => {
   setup()
   validValues()
@@ -339,7 +347,7 @@ it('locks imported composition until explicitly released while withdrawal and sy
   fireEvent.click(volumeField.querySelector('.rechner-field-lock')!)
   expect(volumeField.hasAttribute('data-deny')).toBe(true)
   expect((screen.getByRole('button', { name: 'Konzentration bekannt' }) as HTMLButtonElement).disabled).toBe(true)
-  expect((screen.getByRole('button', { name: '3 mL' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: '10 mL' }) as HTMLButtonElement).disabled).toBe(true)
   // Guard all mutation paths, including a dispatched change on a read-only field.
   enter('Wirkstoffmenge im Behälter', '20')
   enter('Gesamtvolumen der Lösung (mL)', '3')

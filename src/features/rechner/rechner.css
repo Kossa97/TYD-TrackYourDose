@@ -115,7 +115,8 @@
   .rechner-step-content { gap: 14px; }
   .rechner-syringe .rechner-fields { grid-template-columns: minmax(0, 1fr); }
   .rechner-source-modes { flex-direction: column; }
-  .rechner-volume-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .rechner-volume-presets { gap: 4px; }
+  .rechner-volume-presets button { padding-inline: 2px; font-size: 11px; white-space: nowrap; }
   .rechner-syringe-presets { gap: 5px; }
   .rechner-syringe-preset { padding-inline: 2px; }
   .rechner-syringe-preset strong { font-size: 20px; }
