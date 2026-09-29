@@ -367,6 +367,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const confirmDoseUngueltig = confirmUnit != null
     && (confirmDoseWert == null || !Number.isFinite(confirmDoseWert) || confirmDoseWert <= 0)
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  const [unloggedExpanded, setUnloggedExpanded] = useState(false)
   /** Welche Einnahme aufgeklappt ist.
    *
    *  `voreingestellt` heisst: die erste offene. So steht beim Oeffnen der
@@ -897,8 +898,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     !FEATURES.planTimelineV2
     || Boolean(log.routine_slot_key && geplanteSchluesselHeute.has(log.routine_slot_key))
   )
-  const confirmedLogs = selLogs.filter(log => log.taken !== null)
-  const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
+  const decidedLogsSorted = selLogs.filter(log => log.taken !== null)
+    .sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
+  const loggedLogs = decidedLogsSorted.filter(log => log.taken === true)
+  const unloggedLogs = decidedLogsSorted.filter(log => log.taken === false)
 
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
   // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
@@ -2321,43 +2324,74 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         ))}
 
-        {/* Bereits protokolliert — ausklappbar */}
-        {confirmedLogsSorted.length > 0 ? (
+        {/* Bestätigte und nicht bestätigte Einnahmen getrennt ausklappen. */}
+        {loggedLogs.length > 0 && (
           <div className="space-y-2">
             <button
               type="button"
               onClick={() => setCompletedExpanded(expanded => !expanded)}
-              className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${incompletePastDay && genommeneSlots === 0
-                ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'
-                : 'border-emerald-500/15 bg-emerald-500/5 hover:bg-emerald-500/10'}`}
+              aria-expanded={completedExpanded}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 text-left transition-colors hover:bg-emerald-500/10"
             >
               <div className="min-w-0">
-                <p className={`text-[10px] font-extrabold uppercase tracking-[0.14em] ${incompletePastDay && genommeneSlots === 0 ? 'text-red-300/80' : 'text-emerald-300/80'}`}>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-emerald-300/80">
                   {t('completed_intakes_title', { defaultValue: 'Bereits protokolliert' })}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {t('completed_intakes_hint', { defaultValue: 'Bestätigte und übersprungene Einnahmen.' })}
+                  {t('completed_intakes_hint', { defaultValue: 'Bestätigte Einnahmen.' })}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className={`rounded-full border px-2 py-1 text-xs font-bold ${incompletePastDay && genommeneSlots === 0
-                  ? 'border-red-500/20 bg-red-500/10 text-red-300'
-                  : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'}`}>
-                  {confirmedLogsSorted.length}
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-300">
+                  {loggedLogs.length}
                 </span>
                 <ChevronDown
                   size={16}
-                  className={`${incompletePastDay && genommeneSlots === 0 ? 'text-red-300/80' : 'text-emerald-300/80'} transition-transform duration-200 ${completedExpanded ? 'rotate-180' : ''}`}
+                  className={`text-emerald-300/80 transition-transform duration-200 ${completedExpanded ? 'rotate-180' : ''}`}
                 />
               </div>
             </button>
             {completedExpanded && (
               <div className="space-y-2">
-                {confirmedLogsSorted.map(log => renderConfirmedLog(log))}
+                {loggedLogs.map(log => renderConfirmedLog(log))}
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause
+        )}
+        {unloggedLogs.length > 0 && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setUnloggedExpanded(expanded => !expanded)}
+              aria-expanded={unloggedExpanded}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-left transition-colors hover:bg-red-500/10"
+            >
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-red-300/80">
+                  {t('unlogged_intakes_title', { defaultValue: 'Nicht protokolliert' })}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t('unlogged_intakes_hint', { defaultValue: 'Übersprungene und verpasste Einnahmen.' })}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2 py-1 text-xs font-bold text-red-300">
+                  {unloggedLogs.length}
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`text-red-300/80 transition-transform duration-200 ${unloggedExpanded ? 'rotate-180' : ''}`}
+                />
+              </div>
+            </button>
+            {unloggedExpanded && (
+              <div className="space-y-2">
+                {unloggedLogs.map(log => renderConfirmedLog(log))}
+              </div>
+            )}
+          </div>
+        )}
+        {loggedLogs.length === 0 && unloggedLogs.length === 0 && dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause
           && timezoneReviewStackItemIds.length === 0 && (!FEATURES.planTimelineV2 || timelineReady) ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}

@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "في انتظار التأكيد",
   "completed_intakes_title": "تم تسجيله بالفعل",
   "completed_intakes_hint": "الجرعات المؤكدة والمتخطاة.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "تم تأكيد جميع الجرعات المخططة.",
   "home_completion_unit": "جرعات مسجلة",
   "home_due_label": "مستحق الآن",

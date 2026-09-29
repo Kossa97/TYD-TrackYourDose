@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "पुष्टि बाकी",
   "completed_intakes_title": "पहले से दर्ज",
   "completed_intakes_hint": "पुष्टि की गई और छोड़ी गई खुराकें।",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "सभी योजनाबद्ध खुराकें पुष्ट हो गई हैं।",
   "home_completion_unit": "खुराकें लॉग की गईं",
   "home_due_label": "अभी देय",

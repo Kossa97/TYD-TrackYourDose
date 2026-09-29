@@ -678,6 +678,8 @@
   "dose_confirm_pending_badge": "Konfirmasi tertunda",
   "completed_intakes_title": "Sudah dicatat",
   "completed_intakes_hint": "Asupan yang dikonfirmasi dan dilewati.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "Semua asupan yang direncanakan telah dikonfirmasi.",
   "home_completion_unit": "asupan dicatat",
   "home_due_label": "Jatuh tempo sekarang",

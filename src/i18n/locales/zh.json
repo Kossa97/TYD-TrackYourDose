@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "待确认",
   "completed_intakes_title": "已记录",
   "completed_intakes_hint": "已确认和已跳过的用药。",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "所有计划用药均已确认。",
   "home_completion_unit": "已记录用药",
   "home_due_label": "即将到期",

@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "Onay bekliyor",
   "completed_intakes_title": "Zaten Kaydedilenler",
   "completed_intakes_hint": "Onaylanan ve atlanan alımlar.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "Planlanan tüm alımlar onaylandı.",
   "home_completion_unit": "alım kaydedildi",
   "home_due_label": "Şimdi vadesi var",

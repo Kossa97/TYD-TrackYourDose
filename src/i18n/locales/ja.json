@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "確認待ち",
   "completed_intakes_title": "記録済み",
   "completed_intakes_hint": "確認済みおよびスキップした投与。",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "予定された投与はすべて確認済みです。",
   "home_completion_unit": "投与を記録済み",
   "home_due_label": "今すぐ実施",

@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "Confirmação pendente",
   "completed_intakes_title": "Já registrado",
   "completed_intakes_hint": "Doses confirmadas e ignoradas.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "Todas as doses planejadas foram confirmadas.",
   "home_completion_unit": "doses registradas",
   "home_due_label": "Vence agora",

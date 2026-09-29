@@ -328,7 +328,7 @@ describe('Dashboard normalized timeline path', () => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{ ...pendingLog(), taken }]
     renderDashboard(createDashboardClient(fixtures))
-    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: taken ? /Bereits protokolliert/ : /Nicht protokolliert/ }))
     await screen.findByText('Vitamin D3')
     await waitFor(() => expect(screen.queryByText('Lädt…')).toBeNull())
 
@@ -365,7 +365,7 @@ describe('Dashboard normalized timeline path', () => {
     fixtures.dose_logs = [{ ...pendingLog(), taken: false, notes: 'auto-missed' }]
     const client = createDashboardClient(fixtures)
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Nicht protokolliert/ }))
     fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
 
     await waitFor(() => {
@@ -917,7 +917,33 @@ describe('Dashboard normalized timeline path', () => {
     expect(card.querySelector('.lucide-x')).toBeTruthy()
     expect(card.querySelector('.lucide-check')).toBeNull()
     expect(card.style.borderColor).toBe('rgba(239, 68, 68, 0.35)')
-    expect(screen.getByRole('button', { name: /Bereits protokolliert/ }).className).toContain('border-red-500')
+    expect(screen.queryByRole('button', { name: /Bereits protokolliert/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /Nicht protokolliert/ }).className).toContain('border-red-500')
+  })
+
+  it('trennt bestätigte und übersprungene Einnahmen in grüne und rote Bereiche', async () => {
+    const fixtures = zweiSlotsFixture()
+    fixtures.dose_logs = [
+      { ...pendingLog(), taken: true, routine_slot_key: 'timeline-cycle@2026-09-18T08:00' },
+      { ...pendingLog(), id: 'pending-abend', taken: false,
+        routine_slot_key: 'timeline-cycle@2026-09-18T20:00' },
+    ]
+    renderDashboard(createDashboardClient(fixtures, undefined, { filterLogs: true }))
+
+    const logged = await screen.findByRole('button', { name: /Bereits protokolliert/ })
+    const unlogged = screen.getByRole('button', { name: /Nicht protokolliert/ })
+    expect(logged.className).toContain('border-emerald-500')
+    expect(unlogged.className).toContain('border-red-500')
+    expect(logged.textContent).toContain('1')
+    expect(unlogged.textContent).toContain('1')
+
+    fireEvent.click(logged)
+    expect(within(logged.parentElement!).getByText('eingenommen')).toBeTruthy()
+    expect(within(logged.parentElement!).queryByText('uebersprungen')).toBeNull()
+
+    fireEvent.click(unlogged)
+    expect(within(unlogged.parentElement!).getByText('uebersprungen')).toBeTruthy()
+    expect(within(unlogged.parentElement!).queryByText('eingenommen')).toBeNull()
   })
 
   it('beantwortet einen geladenen Tag sofort und wartet nur auf einen ungeladenen', async () => {

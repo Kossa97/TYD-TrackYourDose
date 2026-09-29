@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "Conferma in attesa",
   "completed_intakes_title": "Già registrato",
   "completed_intakes_hint": "Assunzioni confermate e saltate.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "Tutte le assunzioni pianificate sono state confermate.",
   "home_completion_unit": "assunzioni registrate",
   "home_due_label": "In scadenza ora",

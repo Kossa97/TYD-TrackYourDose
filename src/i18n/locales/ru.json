@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "Ожидает подтверждения",
   "completed_intakes_title": "Уже записано",
   "completed_intakes_hint": "Подтверждённые и пропущенные приёмы.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "Все запланированные приёмы подтверждены.",
   "home_completion_unit": "доз записано",
   "home_due_label": "Сейчас назначено",

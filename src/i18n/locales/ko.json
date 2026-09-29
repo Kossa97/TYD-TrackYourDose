@@ -677,6 +677,8 @@
   "dose_confirm_pending_badge": "확인 대기 중",
   "completed_intakes_title": "이미 기록됨",
   "completed_intakes_hint": "확인된 복용 및 건너뛴 복용.",
+  "unlogged_intakes_title": "Not logged",
+  "unlogged_intakes_hint": "Skipped and missed intakes.",
   "all_intakes_done": "예정된 모든 복용이 확인되었습니다.",
   "home_completion_unit": "복용 기록됨",
   "home_due_label": "지금 예정",
