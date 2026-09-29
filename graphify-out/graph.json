@@ -4161,7 +4161,7 @@
       "file_type": "code",
       "norm_label": "liquidgraphichandle",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L40"
+      "source_location": "L45"
     },
     {
       "id": "src_features_my_stack_stage_liquidgraphic_liquidgraphicprops",
@@ -4174,7 +4174,7 @@
       "file_type": "code",
       "norm_label": "liquidgraphicprops",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L44"
+      "source_location": "L49"
     },
     {
       "id": "src_features_my_stack_lib_wizardstate_planedittarget",
@@ -21278,7 +21278,7 @@
       "file_type": "code",
       "norm_label": "liquidgraphic()",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L66"
+      "source_location": "L71"
     },
     {
       "id": "src_features_my_stack_stage_liquidgraphic_scrollcontainer",
@@ -51598,7 +51598,7 @@
       "file_type": "code",
       "norm_label": "liquid_bubbles",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L30"
+      "source_location": "L35"
     },
     {
       "id": "src_features_my_stack_stage_liquidgraphic_test",
@@ -90147,7 +90147,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L130",
+      "source_location": "L135",
       "weight": 1.0
     },
     {
@@ -90159,7 +90159,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L178",
+      "source_location": "L183",
       "weight": 1.0
     },
     {
@@ -90171,7 +90171,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L194",
+      "source_location": "L199",
       "weight": 1.0
     },
     {
@@ -90183,7 +90183,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L292",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -90195,7 +90195,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L82",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -90207,7 +90207,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L85",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -212139,7 +212139,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L30",
+      "source_location": "L35",
       "weight": 1.0
     },
     {
@@ -212150,7 +212150,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L40",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -212161,18 +212161,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L44",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_my_stack_stage_liquidgraphic",
-      "target": "src_features_my_stack_stage_liquidgraphic_liquidgraphic",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
-      "source_location": "L66",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
@@ -212184,6 +212173,17 @@
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
       "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_my_stack_stage_liquidgraphic",
+      "target": "src_features_my_stack_stage_liquidgraphic_liquidgraphic",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/my-stack/stage/LiquidGraphic.tsx",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -229882,5 +229882,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0dedde053d12dfeb637ef642818c257413922110"
+  "built_at_commit": "0e878552f0ee062edc9474d80fbbc7f222b1301c"
 }
