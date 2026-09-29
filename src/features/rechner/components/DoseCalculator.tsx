@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FlaskConical, LockKeyhole, RotateCcw, Syringe, X } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { supabase } from '../../../lib/supabase'
+import { flashDeny } from '../../../lib/denyFeedback'
 import { loadStackItems, type StackItemQueryClient } from '../../my-stack/services/stackItems'
 import { getCalculatorSources, type CalculatorSource } from '../lib/stackSources'
 import { calculateLiquid, convertLiquidValue, type LiquidValues, type LiquidUnit, type TargetUnit } from '../lib/liquidCalculation'
@@ -128,17 +129,24 @@ export function DoseCalculator() {
       : { amount: inputNumber(concentration !== null && container !== null ? concentration * container : null), volume: values.container }) })
     setSelected(''); setUnitNotice('')
   }
-  const input = (field: NumericField, suffix?: ReactNode) => <div className="rechner-field" data-source-locked={sourceLocked && field !== 'target'}>
-    <label htmlFor={`dose-${field}`} className="rechner-locked-label">{labels[field]}
-      {sourceLocked && field !== 'target' && <LockKeyhole size={13} aria-hidden="true" />}
-    </label>
-    <div className={`rechner-input-group${suffix && typeof suffix !== 'string' ? ' rechner-input-with-unit' : ''}`}>
+  const input = (field: NumericField, suffix?: ReactNode) => <div className="rechner-field">
+    <label htmlFor={`dose-${field}`}>{labels[field]}</label>
+    <div className={`rechner-input-group${suffix && typeof suffix !== 'string' ? ' rechner-input-with-unit' : ''}`}
+      data-source-locked={sourceLocked && field !== 'target'}
+      onClick={event => { if (sourceLocked && field !== 'target') flashDeny(event.currentTarget) }}
+      onKeyDown={event => {
+        if (sourceLocked && field !== 'target' && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          flashDeny(event.currentTarget)
+        }
+      }}>
       <input id={`dose-${field}`} type="text" inputMode="decimal" autoComplete="off" className="rechner-input"
         readOnly={sourceLocked && field !== 'target'}
         value={values[field]} aria-invalid={Boolean(result.fieldErrors[field])}
         aria-describedby={[result.fieldErrors[field] ? `dose-${field}-error` : '', sourceLocked && field !== 'target' ? 'dose-source-note' : ''].filter(Boolean).join(' ') || undefined}
         onChange={event => edit(field, event.target.value)} />
       {typeof suffix === 'string' ? <span className="rechner-input-suffix" aria-hidden="true">{suffix}</span> : suffix}
+      {sourceLocked && field !== 'target' && <LockKeyhole className="rechner-field-lock" size={15} aria-hidden="true" />}
     </div>
     {result.fieldErrors[field] && <span className="rechner-error" id={`dose-${field}-error`}>
       {t(result.fieldErrors[field] === 'numeric_range' ? 'rechner_numeric_range' : 'rechner_positive')}

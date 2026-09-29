@@ -320,6 +320,16 @@ it('locks imported composition until explicitly released while withdrawal and sy
     expect((screen.getByLabelText(label) as HTMLInputElement).readOnly).toBe(true)
   }
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).disabled).toBe(true)
+  const amountField = screen.getByLabelText('Wirkstoffmenge im Behälter').parentElement!
+  const volumeField = screen.getByLabelText('Gesamtvolumen der Lösung (mL)').parentElement!
+  expect(amountField.getAttribute('data-source-locked')).toBe('true')
+  expect(volumeField.getAttribute('data-source-locked')).toBe('true')
+  expect(amountField.querySelector('.rechner-field-lock')).toBeTruthy()
+  expect(volumeField.querySelector('.rechner-field-lock')).toBeTruthy()
+  fireEvent.click(screen.getByLabelText('Wirkstoffmenge im Behälter'))
+  expect(amountField.hasAttribute('data-deny')).toBe(true)
+  fireEvent.click(volumeField.querySelector('.rechner-field-lock')!)
+  expect(volumeField.hasAttribute('data-deny')).toBe(true)
   expect((screen.getByRole('button', { name: 'Konzentration bekannt' }) as HTMLButtonElement).disabled).toBe(true)
   expect((screen.getByRole('button', { name: '3 mL' }) as HTMLButtonElement).disabled).toBe(true)
   // Guard all mutation paths, including a dispatched change on a read-only field.
@@ -339,6 +349,7 @@ it('locks imported composition until explicitly released while withdrawal and sy
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('10')
   expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('500')
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).disabled).toBe(false)
+  expect(screen.getByLabelText('Wirkstoffmenge im Behälter').parentElement?.querySelector('.rechner-field-lock')).toBeNull()
   enter('Wirkstoffmenge im Behälter', '5')
   expect(screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' }).textContent).toContain('0,2 mL')
 })
