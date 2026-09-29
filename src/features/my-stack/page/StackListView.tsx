@@ -30,14 +30,13 @@ import { denyProps } from '../../../lib/denyFeedback'
 import { getStableStackItemColor } from '../lib/colors'
 import { dosePlanCapabilities } from '../lib/dosePlan'
 import { FEATURES } from '../../../config/features'
-import { type CycleTimeline, type PlanChangeKind } from '../../../lib/planTimeline'
+import { type CycleTimeline } from '../../../lib/planTimeline'
 import {
   type Peptide,
-  type Cycle,
-  type Escalation,
   getVialFillPct,
   INTAKE_TIME_CONFIG,
-  REMINDER_OPTIONS,
+  presentedTimelines,
+  type CycleView,
 } from './model'
 import { DosePlanActions } from './DosePlanActions'
 
@@ -45,10 +44,10 @@ import { DosePlanActions } from './DosePlanActions'
  * Listenansicht: je Substanz eine aufklappbare Karte mit Zyklen, Bestand und Aktionen — und die Substanzen ohne Buehnengrafik neben dem Karussell.
  */
 export function StackListView({
+  cycleView,
   loading,
   listPeptides,
   sloshEngine,
-  cyclesOf,
   timelinesOf,
   expandedId,
   inventory,
@@ -61,30 +60,13 @@ export function StackListView({
   openEditPeptide,
   handleRekonstitution,
   removePeptide,
-  openNewCycle,
-  dismissZyklusBtn,
   zyklusBtnNew,
   planManagementSections,
-  escalationsOf,
-  currentQuantityLabel,
-  freqLabel,
-  intakeLabel,
-  plannedQuantityRows,
-  toggleCycleActive,
-  openEditCycle,
-  removeCycle,
-  doseAdjustmentIcon,
-  escalationQuantityLabel,
-  escalationIsActive,
-  escLabel,
-  openEditEsc,
-  removeEsc,
-  openNewEsc,
 }: {
+  cycleView: CycleView
   loading: boolean
   listPeptides: Peptide[]
   sloshEngine: SloshEngine
-  cyclesOf: (pid: string) => Cycle[]
   timelinesOf: (stackItemId: string) => CycleTimeline[]
   expandedId: string | null
   inventory: InventoryItem[]
@@ -97,27 +79,31 @@ export function StackListView({
   openEditPeptide: (p: Peptide) => void
   handleRekonstitution: (p: Peptide) => void
   removePeptide: (id: string) => void
-  openNewCycle: (p: Peptide) => void
-  dismissZyklusBtn: () => void
   zyklusBtnNew: boolean
   planManagementSections: (p: Peptide, timelines: CycleTimeline[]) => ReactNode
-  escalationsOf: (cid: string) => Escalation[]
-  currentQuantityLabel: (c: Cycle, day?: Date) => string
-  freqLabel: (c: Cycle) => string
-  intakeLabel: (c: Cycle) => string | null
-  plannedQuantityRows: (c: Cycle) => ReactNode
-  toggleCycleActive: (c: Cycle) => Promise<void>
-  openEditCycle: (p: Peptide, cycleId: string, versionId?: string, changeKind?: Exclude<PlanChangeKind, "initial">) => void
-  removeCycle: (id: string) => Promise<void>
-  doseAdjustmentIcon: (c: Cycle, e: Escalation) => LucideIcon
-  escalationQuantityLabel: (c: Cycle, e: Escalation) => string
-  escalationIsActive: (c: Cycle, e: Escalation) => boolean
-  escLabel: (e: Escalation) => string
-  openEditEsc: (c: Cycle, e: Escalation) => void
-  removeEsc: (id: string) => Promise<void>
-  openNewEsc: (c: Cycle) => void
 }) {
   const { t } = useTranslation()
+  const {
+    cyclesOf,
+    escalationsOf,
+    openNewCycle,
+    dismissZyklusBtn,
+    openEditCycle,
+    removeCycle,
+    toggleCycleActive,
+    currentQuantityLabel,
+    freqLabel,
+    intakeLabel,
+    plannedQuantityRows,
+    doseAdjustmentIcon,
+    escalationQuantityLabel,
+    escalationIsActive,
+    escLabel,
+    openEditEsc,
+    removeEsc,
+    openNewEsc,
+    reminderLabel,
+  } = cycleView
   return (
     <>
       <div className={`space-y-3 ${!loading && listPeptides.length > 0 ? '' : 'hidden'}`}>
@@ -128,9 +114,7 @@ export function StackListView({
         {listPeptides.map(p => {
           const pCycles   = cyclesOf(p.id)
           const pTimelines = timelinesOf(p.id)
-          const presentedTimelines = p.configuration_status === 'needs_review'
-            ? pTimelines.filter(timeline => timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date())
-            : pTimelines
+          const shownTimelines = presentedTimelines(p, pTimelines)
           const planCount = FEATURES.planTimelineV2 ? pTimelines.length : pCycles.length
           const isOpen    = expandedId === p.id
           const hasActive = pCycles.some(c => c.active)
@@ -288,7 +272,7 @@ export function StackListView({
                       {t('noch_kein_zyklus')}
                     </p>
                   )}
-                  {FEATURES.planTimelineV2 && planManagementSections(p, presentedTimelines)}
+                  {FEATURES.planTimelineV2 && planManagementSections(p, shownTimelines)}
                   {!FEATURES.planTimelineV2 && pCycles.map(c => {
                     const pEscs = escalationsOf(c.id)
                     return (
@@ -306,13 +290,10 @@ export function StackListView({
                               <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
                               {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
                             </div>
-                            {c.reminder && c.reminder !== 'none' && (
+                            {reminderLabel(c) && (
                               <p className="text-xs mt-0.5 flex items-center gap-1 flex-wrap text-sky-400">
                                 <Bell size={10} className="shrink-0" />
-                                {c.reminder.split(',').filter(v => v && v !== 'none').map(v => {
-                                  const opt = REMINDER_OPTIONS.find(r => r.value === v)
-                                  return opt ? t(opt.labelKey) : v
-                                }).filter(Boolean).join(' · ')}
+                                {reminderLabel(c)}
                               </p>
                             )}
                             {dosePlanCapabilities(p.tracking_level).permanent && plannedQuantityRows(c)}

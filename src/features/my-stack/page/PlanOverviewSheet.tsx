@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { FEATURES } from '../../../config/features'
 import { type CycleTimeline } from '../../../lib/planTimeline'
-import { type Peptide } from './model'
+import { type Peptide, presentedTimelines } from './model'
 
 /**
  * Plan & Verlauf eines Eintrags (Plan-Zeitleiste): alle Zyklen mit ihren Stufen, Pausen und Aktionen.
@@ -48,8 +48,7 @@ export function PlanOverviewSheet({
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {planManagementSections(
                 currentCycleManagerPeptide,
-                timelinesOf(currentCycleManagerPeptide.id)
-                  .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date()),
+                presentedTimelines(currentCycleManagerPeptide, timelinesOf(currentCycleManagerPeptide.id)),
               )}
               {timelinesOf(currentCycleManagerPeptide.id).length === 0 && (
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">

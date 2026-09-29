@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarDays, Clock, Flag, Pause, Pencil, Play, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -113,8 +113,21 @@ export function PlanManagementSection({
 }: PlanManagementSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || 'de'
-  const resolved = resolveCycleAt(timeline, now, timeZone)
-  const segments = planVersionSegments(timeline, now, timeZone)
+  // Die Seite reicht bei jedem Rendern ein neues `now` herein — auch bei
+  // jedem Tastendruck in der Suche. Die Rechnung dahinter (die naechste
+  // Einnahme sucht bis zu einem Jahr voraus) laeuft nur neu, wenn sich Plan,
+  // Zeitzone oder die Minute aendern.
+  const minute = Math.floor(now.getTime() / 60_000)
+  const { resolved, segments, nextIntake } = useMemo(() => {
+    const resolvedNow = resolveCycleAt(timeline, now, timeZone)
+    return {
+      resolved: resolvedNow,
+      segments: planVersionSegments(timeline, now, timeZone),
+      nextIntake: nextIntakeFor(timeline, resolvedNow.status, now, timeZone),
+    }
+    // `now` zaehlt nur ueber `minute`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeline, minute, timeZone])
   const currentVersion = resolved.planVersion
   const futureSegments = segments.filter(segment => segment.status === 'future')
   const displayVersion = currentVersion ?? futureSegments[0]?.version ?? null
@@ -152,7 +165,6 @@ export function PlanManagementSection({
     : null
   // Vor dem Start beendet: der Zyklus lief nie, es gibt keinen Zeitraum.
   const neverRan = period.last !== null && period.last < period.first
-  const nextIntake = nextIntakeFor(timeline, resolved.status, now, timeZone)
   const [dialog, setDialog] = useState<DialogState | null>(null)
   const [pauseEnd, setPauseEnd] = useState('')
   const [pending, setPending] = useState(false)

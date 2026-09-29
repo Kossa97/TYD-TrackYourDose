@@ -1,7 +1,7 @@
 // Typen und Hilfen der My-Stack-Seite — aus MyStackPage.tsx ausgelagert,
 // damit die Seite selbst nur noch Zustand und Darstellung traegt.
 import { type ReactNode } from 'react'
-import { Sunrise, Sun, Moon, Clock } from 'lucide-react'
+import { Sunrise, Sun, Moon, Clock, type LucideIcon } from 'lucide-react'
 import { format, isValid, parseISO, addDays } from 'date-fns'
 import { scheduleForDay, type ScheduleSegment } from '../../../lib/intakeSchedule'
 import { expiryDaysLeft } from '../../../lib/peptideExpiry'
@@ -15,10 +15,12 @@ import type {
   SubstanceCatalogEntry,
 } from '../types'
 import { rhythmFromStorage } from '../lib/intakeRhythm'
+import { versionRhythm } from '../lib/planCard'
 import { type SortAbility } from '../lib/stackSort'
 import {
   localDateTimeKey,
   type CyclePlanVersion,
+  type PlanChangeKind,
   type CycleTimeline,
   type PlanScheduleSnapshot,
 } from '../../../lib/planTimeline'
@@ -248,10 +250,10 @@ export const FREQ_KEYS: Record<string,string> = {
   'Bei Bedarf':'freq_bei_bedarf',
 }
 export const INTAKE_TIME_CONFIG = {
-  morgens: { labelKey: 'morgens', icon: Sunrise, time: '08:00' },
-  mittags: { labelKey: 'mittags', icon: Sun,  time: '12:00' },
-  abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
-  custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
+  morgens: { labelKey: 'morgens', icon: Sunrise },
+  mittags: { labelKey: 'mittags', icon: Sun },
+  abends:  { labelKey: 'abends',  icon: Moon },
+  custom:  { labelKey: 'uhrzeit_label', icon: Clock },
 } as const
 const ROUTINE_GROUP_TO_INTAKE_TIME = {
   morning: 'morgens',
@@ -267,7 +269,49 @@ export const REMINDER_OPTIONS = [
   { value: 'on_time', labelKey: 'reminder_on_time' },
 ]
 
-// ─── Formular-Typen ───────────────────────────────────────────────────────────
+/**
+ * Was die Zyklus-Ansichten der Seite (Listenkarte, Zyklus-Verwaltung) zum
+ * Anzeigen und Bearbeiten eines Zyklus brauchen — einmal in der Seite gebaut
+ * und als ein Buendel gereicht statt als zwei Dutzend Einzel-Props.
+ */
+export interface CycleView {
+  cyclesOf: (pid: string) => Cycle[]
+  escalationsOf: (cid: string) => Escalation[]
+  openNewCycle: (p: Peptide) => void
+  dismissZyklusBtn: () => void
+  openEditCycle: (p: Peptide, cycleId: string, versionId?: string, changeKind?: Exclude<PlanChangeKind, 'initial'>) => void
+  removeCycle: (id: string) => Promise<void>
+  toggleCycleActive: (c: Cycle) => Promise<void>
+  endCycle: (c: Cycle) => Promise<void>
+  currentQuantityLabel: (c: Cycle, day?: Date) => string
+  scheduledQuantityLabel: (c: Cycle, day: Date) => string
+  freqLabel: (c: Cycle) => string
+  intakeLabel: (c: Cycle) => string | null
+  reminderLabel: (c: Cycle) => string | null
+  plannedQuantityRows: (c: Cycle) => ReactNode
+  planStufenListe: (c: Cycle) => ReactNode
+  doseAdjustmentIcon: (c: Cycle, e: Escalation) => LucideIcon
+  escalationQuantityLabel: (c: Cycle, e: Escalation) => string
+  escalationIsActive: (c: Cycle, e: Escalation) => boolean
+  escLabel: (e: Escalation) => string
+  openEditEsc: (c: Cycle, e: Escalation) => void
+  removeEsc: (id: string) => Promise<void>
+  openNewEsc: (c: Cycle) => void
+}
+
+/**
+ * Die Zeitleisten, die eine Substanz zeigt. Muss sie ueberprueft werden
+ * (`needs_review`), nur die, um die es dabei geht: laufende, kuenftige und
+ * solche mit offener Zeitzonen-Frage — nicht die laengst beendeten.
+ */
+export function presentedTimelines(p: Peptide, timelines: CycleTimeline[], now = new Date()): CycleTimeline[] {
+  if (p.configuration_status !== 'needs_review') return timelines
+  return timelines.filter(timeline => (
+    timeline.cycle.timezone_review_required
+    || timeline.cycle.ended_at === null
+    || new Date(timeline.cycle.ended_at) > now
+  ))
+}
 
 export function parseStoredDay(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
@@ -295,8 +339,6 @@ export function withEffectiveEscalationUnit(cycle: Cycle, form: EscalationForm):
   const start = escalationFormStartDate(cycle, form)
   return { ...form, unit: start ? scheduleForDay(cycle, start).unit ?? '' : '' }
 }
-
-// Schedule-relevante Felder eines Standes (für Vergleich + Segmentaufbau).
 
 export function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   const segment = scheduleForDay(cycle, day)
@@ -389,13 +431,6 @@ export function versionAsIntakePlanDraft(
       weekdays: (slotDays[index] ?? '').split('|').map(day => day.trim()).filter(Boolean),
     }
   })
-  const frequency = {
-    daily: 'Täglich',
-    weekdays: 'Wochentage wählen',
-    interval: 'Alle X Tage',
-    cycle: 'Im Wechsel',
-    on_demand: 'Bei Bedarf',
-  }[version.frequency] ?? version.frequency
   const startDate = version.effective_kind === 'local_date'
     ? version.effective_local_date ?? localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10)
     : localDateTimeKey(new Date(version.effective_at ?? timeline.cycle.started_at), timeZone).slice(0, 10)
@@ -405,14 +440,7 @@ export function versionAsIntakePlanDraft(
     name: 'Einnahmeplan',
     unit: version.unit,
     method: version.method,
-    rhythm: rhythmFromStorage({
-      frequency,
-      x_days_interval: version.x_days_interval,
-      interval_unit: version.interval_unit,
-      cycle_on_days: version.cycle_on_days,
-      cycle_off_days: version.cycle_off_days,
-      schedule_days: version.schedule_days,
-    }),
+    rhythm: versionRhythm(version),
     startDate,
     endDate: timeline.cycle.ended_at
       ? localDateTimeKey(new Date(timeline.cycle.ended_at), timeZone).slice(0, 10)

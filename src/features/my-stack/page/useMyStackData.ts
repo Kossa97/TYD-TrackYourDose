@@ -35,7 +35,6 @@ export function useMyStackData({ stackDataClient, userId }: {
   const [peptides, setPeptides]               = useState<Peptide[]>([])
   const [loading, setLoading]                 = useState(true)
   const [initialLoad, setInitialLoad]         = useState(true)
-  const [loaderFading, setLoaderFading]       = useState(false)
   const [cycles, setCycles]                   = useState<Cycle[]>([])
   const [cycleTimelines, setCycleTimelines]   = useState<CycleTimeline[]>([])
   const [timelineLoadError, setTimelineLoadError] = useState(false)
@@ -103,6 +102,28 @@ export function useMyStackData({ stackDataClient, userId }: {
       setTimelineLoading(false)
     }
   }
+  /**
+   * Zeitleisten und Stack zusammen neu laden — nach einer Aenderung, die
+   * beide betrifft (Konflikt geloest, Zeitzone bestaetigt). Fehler setzen
+   * `timelineLoadError` und werden weitergeworfen.
+   */
+  const reloadTimelinesAndPeptides = async () => {
+    setTimelineLoading(true)
+    setTimelineLoadError(false)
+    try {
+      const [nextTimelines, nextPeptides] = await Promise.all([
+        loadCycleTimelines(stackDataClient as never, requireUserId(), { includeUnavailable: true }),
+        loadPeptides(false),
+      ])
+      setCycleTimelines(nextTimelines)
+      publishPeptides(nextPeptides)
+    } catch (error) {
+      setTimelineLoadError(true)
+      throw error
+    } finally {
+      setTimelineLoading(false)
+    }
+  }
   const loadEscalations = async () => {
     const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', requireUserId()).order('start_after_days').order('start_date')
     if (data) setEscalations(data as Escalation[])
@@ -134,9 +155,9 @@ export function useMyStackData({ stackDataClient, userId }: {
     initialLoadPromiseRef.current
       .finally(() => {
         if (cancelled) return
+        // Blendet den Vollbild-Lader aus (`fadingOut = !loading`) und haengt
+        // ihn danach ab — wie in The Lab.
         setLoading(false)
-        // Fade out the full-screen loader, then unmount it (same as The Lab).
-        setLoaderFading(true)
         fadeTimer = window.setTimeout(() => setInitialLoad(false), 500)
       })
 
@@ -147,10 +168,11 @@ export function useMyStackData({ stackDataClient, userId }: {
   }, [])
 
   return {
-    inventory, peptides, setPeptides, loading, initialLoad, loaderFading,
-    cycles, cycleTimelines, setCycleTimelines, timelineLoadError, setTimelineLoadError,
-    timelineLoading, setTimelineLoading, catalogEntries, catalogUnavailable,
+    inventory, peptides, setPeptides, loading, initialLoad,
+    cycles, cycleTimelines, setCycleTimelines, timelineLoadError,
+    timelineLoading, catalogEntries, catalogUnavailable,
     archivedPeptides, escalations,
-    loadInventory, publishPeptides, loadPeptides, loadArchived, loadCycles, loadTimelines, loadEscalations,
+    loadInventory, loadPeptides, loadArchived, loadCycles, loadTimelines, loadEscalations,
+    reloadTimelinesAndPeptides,
   }
 }

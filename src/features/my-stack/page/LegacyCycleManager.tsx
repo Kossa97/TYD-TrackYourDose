@@ -1,5 +1,4 @@
-import type { LucideIcon } from 'lucide-react'
-import type { ReactNode, Dispatch, SetStateAction } from 'react'
+import { useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Plus,
@@ -17,73 +16,56 @@ import { format, parseISO } from 'date-fns'
 import { methodLabel } from '../../../lib/intakeMethods'
 import { dosePlanCapabilities } from '../lib/dosePlan'
 import { FEATURES } from '../../../config/features'
-import { type PlanChangeKind } from '../../../lib/planTimeline'
-import { type Peptide, type Cycle, type Escalation } from './model'
+import { type Peptide, type Cycle, type CycleView } from './model'
 import { DosePlanActions } from './DosePlanActions'
 
 /**
  * Zyklus-Verwaltung ohne Plan-Zeitleiste (planTimelineV2 aus): Zyklen, Dosisanpassungen, Pausen.
  */
 export function LegacyCycleManager({
+  cycleView,
   cycleManagerPeptide,
-  cyclesOf,
-  openEditCycle,
   setCycleManagerPeptide,
-  removeCycle,
-  currentQuantityLabel,
-  freqLabel,
-  intakeLabel,
-  reminderLabel,
-  plannedQuantityRows,
-  planStufenListe,
-  toggleCycleActive,
-  endCycle,
-  escalationsOf,
-  managerEscOpen,
-  toggleManagerEsc,
-  scheduledQuantityLabel,
-  doseAdjustmentIcon,
-  escalationQuantityLabel,
-  escalationIsActive,
-  escLabel,
-  openEditEsc,
-  removeEsc,
-  openNewEsc,
-  managerCardOpen,
-  toggleManagerCard,
-  openNewCycle,
-  dismissZyklusBtn,
 }: {
+  cycleView: CycleView
   cycleManagerPeptide: Peptide | null
-  cyclesOf: (pid: string) => Cycle[]
-  openEditCycle: (p: Peptide, cycleId: string, versionId?: string, changeKind?: Exclude<PlanChangeKind, "initial">) => void
   setCycleManagerPeptide: Dispatch<SetStateAction<Peptide | null>>
-  removeCycle: (id: string) => Promise<void>
-  currentQuantityLabel: (c: Cycle, day?: Date) => string
-  freqLabel: (c: Cycle) => string
-  intakeLabel: (c: Cycle) => string | null
-  reminderLabel: (c: Cycle) => string | null
-  plannedQuantityRows: (c: Cycle) => ReactNode
-  planStufenListe: (c: Cycle) => ReactNode
-  toggleCycleActive: (c: Cycle) => Promise<void>
-  endCycle: (c: Cycle) => Promise<void>
-  escalationsOf: (cid: string) => Escalation[]
-  managerEscOpen: Set<string>
-  toggleManagerEsc: (id: string) => void
-  scheduledQuantityLabel: (c: Cycle, day: Date) => string
-  doseAdjustmentIcon: (c: Cycle, e: Escalation) => LucideIcon
-  escalationQuantityLabel: (c: Cycle, e: Escalation) => string
-  escalationIsActive: (c: Cycle, e: Escalation) => boolean
-  escLabel: (e: Escalation) => string
-  openEditEsc: (c: Cycle, e: Escalation) => void
-  removeEsc: (id: string) => Promise<void>
-  openNewEsc: (c: Cycle) => void
-  managerCardOpen: Set<string>
-  toggleManagerCard: (id: string) => void
-  openNewCycle: (p: Peptide) => void
-  dismissZyklusBtn: () => void
 }) {
   const { t } = useTranslation()
+  const {
+    cyclesOf,
+    escalationsOf,
+    openNewCycle,
+    dismissZyklusBtn,
+    openEditCycle,
+    removeCycle,
+    toggleCycleActive,
+    currentQuantityLabel,
+    freqLabel,
+    intakeLabel,
+    plannedQuantityRows,
+    doseAdjustmentIcon,
+    escalationQuantityLabel,
+    escalationIsActive,
+    escLabel,
+    openEditEsc,
+    removeEsc,
+    openNewEsc,
+    reminderLabel,
+    planStufenListe,
+    endCycle,
+    scheduledQuantityLabel,
+  } = cycleView
+  // Welche Karten und Dosisanpassungs-Listen aufgeklappt sind — nur hier gebraucht.
+  const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
+  const [managerEscOpen, setManagerEscOpen] = useState<Set<string>>(() => new Set())
+  const umschalten = (id: string) => (prev: Set<string>) => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  }
+  const toggleManagerCard = (id: string) => setManagerCardOpen(umschalten(id))
+  const toggleManagerEsc = (id: string) => setManagerEscOpen(umschalten(id))
   return (
     <>
       {cycleManagerPeptide && !FEATURES.planTimelineV2 && (() => {

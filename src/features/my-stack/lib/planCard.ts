@@ -2,7 +2,7 @@ import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { resolveScheduleSlots, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import { localDateTimeKey, type CycleTimeline, type PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { shiftLocalDay } from './localDays'
-import { WEEKDAY_KEYS, rhythmFromStorage } from './intakeRhythm'
+import { RHYTHM_FREQUENCY, WEEKDAY_KEYS, rhythmFromStorage } from './intakeRhythm'
 import type { IntakeRhythm } from '../types'
 
 /**
@@ -77,13 +77,7 @@ export function planCardSlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
 
 // Plan-Versionen speichern die Frequenz als Schluessel ('daily'); die
 // Rhythmus- und Einnahmelogik kennt die alten deutschen Texte.
-const LEGACY_FREQUENCY: Readonly<Record<string, string>> = {
-  daily: 'Täglich',
-  weekdays: 'Wochentage wählen',
-  interval: 'Alle X Tage',
-  cycle: 'Im Wechsel',
-  on_demand: 'Bei Bedarf',
-}
+const LEGACY_FREQUENCY: Readonly<Record<string, string>> = RHYTHM_FREQUENCY
 
 export function legacyFrequency(frequency: string): string {
   return Object.prototype.hasOwnProperty.call(LEGACY_FREQUENCY, frequency) ? LEGACY_FREQUENCY[frequency] : frequency

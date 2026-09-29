@@ -6,11 +6,11 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Activity,
-  CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, 
-  TrendingUp, TrendingDown, 
+  CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  TrendingUp, TrendingDown,
   X, ExternalLink,
-  Archive, Info, 
-  RotateCcw, 
+  Archive, Info,
+  RotateCcw,
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
 import { format, parseISO, addDays } from 'date-fns'
@@ -58,7 +58,6 @@ import { CourseTimezoneReview } from './components/CourseTimezoneReview'
 import { resolveCycleCourseTimezone } from './services/planLifecycle'
 import {
   endCycle as endTimelineCycle,
-  loadCycleTimelines,
   pauseCycle,
   removeFuturePlanVersion,
   replaceFuturePlanVersion,
@@ -81,17 +80,13 @@ import {
   type EscalationForm,
   emptyEscalationForm,
   type InfoRow,
-  
+  type CycleView,
   type PeptideSortKey,
   MY_STACK_DETAIL_HISTORY_KEY,
   historyStateRecord,
   PEPTIDE_SORT_GROUPS,
-  
   NO_TIMELINES,
-  
   ADD_SLOT,
-  
-  
   sortPeptides,
   FREQ_KEYS,
   INTAKE_TIME_CONFIG,
@@ -134,7 +129,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
   const [rekonstitutionTarget, setRekonstitutionTarget] = useState<Peptide | null>(null)
   const [rekonstitutionDontAsk,setRekonstitutionDontAsk]= useState(false)
-  const [skipRekonstitution]   = useState(() => !!localStorage.getItem('_skip_rekonstitution'))
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
   const [infoBtnNew,     dismissInfoBtn]       = useNew('peptide_info')
@@ -145,11 +139,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // Stack, Zyklen, Zeitleisten, Bestand, Katalog und Dosisanpassungen — samt
   // erstem Laden beim Oeffnen. Siehe page/useMyStackData.ts.
   const {
-    inventory, peptides, setPeptides, loading, initialLoad, loaderFading,
-    cycles, cycleTimelines, setCycleTimelines, timelineLoadError, setTimelineLoadError,
-    timelineLoading, setTimelineLoading, catalogEntries, catalogUnavailable,
+    inventory, peptides, setPeptides, loading, initialLoad,
+    cycles, cycleTimelines, setCycleTimelines, timelineLoadError,
+    timelineLoading, catalogEntries, catalogUnavailable,
     archivedPeptides, escalations,
-    loadInventory, publishPeptides, loadPeptides, loadArchived, loadCycles, loadTimelines, loadEscalations,
+    loadInventory, loadPeptides, loadArchived, loadCycles, loadTimelines, loadEscalations,
+    reloadTimelinesAndPeptides,
   } = useMyStackData({ stackDataClient, userId: user?.id })
 
   // ── Peptide ───────────────────────────────────────────────────────────────
@@ -176,7 +171,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   // Ein gerade angelegter Eintrag, der auf die Buehne soll, sobald er im
-  // Karussell steht (siehe den Effekt bei `vialSnapClassName`).
+  // Karussell steht (siehe den Effekt an `neuZentrieren`).
   const [neuZentrieren, setNeuZentrieren] = useState<string | null>(null)
   // Das Rechteck des angetippten Objekts — der Startpunkt des Flugs.
   const [detailUrsprung, setDetailUrsprung] = useState<DOMRect | null>(null)
@@ -211,8 +206,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // Ein einzelnes Aenderungsfenster zum Bestand (kein eigenes Bestand-Fenster).
   const [bestandEdit, setBestandEdit] = useState<{ peptideId: string; editor: BestandEditorArt } | null>(null)
   // Zyklus-Manager: welche inaktiven Karten / Dosisanpassungs-Sektionen sind aufgeklappt
-  const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
-  const [managerEscOpen, setManagerEscOpen]   = useState<Set<string>>(() => new Set())
   // Substanz entfernen: Archivieren vs. endgültig löschen
   const [deletePromptPeptide, setDeletePromptPeptide] = useState<Peptide | null>(null)
   const [deletePromptFromArchive, setDeletePromptFromArchive] = useState(false)
@@ -459,7 +452,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // ── Rekonstitution wiederholen ────────────────────────────────────────────
   const handleRekonstitution = (p: Peptide) => {
-    if (skipRekonstitution) { doRekonstitution(p); return }
+    if (localStorage.getItem('_skip_rekonstitution')) { doRekonstitution(p); return }
     setRekonstitutionDontAsk(false); setRekonstitutionTarget(p)
   }
   const doRekonstitution = async (p: Peptide) => {
@@ -601,9 +594,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // cycles, dose_escalations, vials, reviews werden per CASCADE mit entfernt.
   const hardDeletePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
-    await supabase.from('dose_logs').delete().eq('stack_item_id', p.id)
-    await supabase.from('injection_logs').delete().eq('stack_item_id', p.id)
-    await supabase.from('effects').delete().eq('stack_item_id', p.id)
+    await Promise.all(['dose_logs', 'injection_logs', 'effects'].map(table => (
+      supabase.from(table).delete().eq('stack_item_id', p.id)
+    )))
     await deleteStackItem(supabase as never, p.id)
     toast.success(t('geloescht'))
     setDeletePromptFromArchive(false)
@@ -935,22 +928,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       })
       mutation.mutation.committed = true
     }
-    setTimelineLoading(true)
-    setTimelineLoadError(false)
-    try {
-      const [nextTimelines, nextPeptides] = await Promise.all([
-        loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }),
-        loadPeptides(false),
-      ])
-      setCycleTimelines(nextTimelines)
-      publishPeptides(nextPeptides)
-      lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
-    } catch (error) {
-      setTimelineLoadError(true)
-      throw error
-    } finally {
-      setTimelineLoading(false)
-    }
+    await reloadTimelinesAndPeptides()
+    lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
   }
 
   // Angemischtes Vial: die Plan-Ansichten zeigen je Einnahme die Einheiten
@@ -970,11 +949,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         })
         mutation.mutation.committed = true
       }
-      const [nextTimelines, nextPeptides] = await Promise.all([
-        loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }), loadPeptides(false),
-      ])
-      setCycleTimelines(nextTimelines)
-      publishPeptides(nextPeptides)
+      await reloadTimelinesAndPeptides()
       lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
     }} />
   ) : (
@@ -1024,16 +999,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     toast.success(t('zyklus_beendet'))
     loadCycles()
   }
-  const toggleManagerCard = (id: string) => setManagerCardOpen(prev => {
-    const next = new Set(prev)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    return next
-  })
-  const toggleManagerEsc = (id: string) => setManagerEscOpen(prev => {
-    const next = new Set(prev)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    return next
-  })
   const removeCycle = async (id: string) => {
     if (!confirm(t('zyklus_loeschen'))) return
     await supabase.from('cycles').delete().eq('id', id)
@@ -1375,6 +1340,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     return labels.length > 0 ? labels.join(' · ') : null
   }
 
+  const cycleView: CycleView = {
+    cyclesOf, escalationsOf, openNewCycle, dismissZyklusBtn, openEditCycle, removeCycle,
+    toggleCycleActive, endCycle, currentQuantityLabel, scheduledQuantityLabel, freqLabel,
+    intakeLabel, reminderLabel, plannedQuantityRows, planStufenListe, doseAdjustmentIcon,
+    escalationQuantityLabel, escalationIsActive, escLabel, openEditEsc, removeEsc, openNewEsc,
+  }
+
   const activeIndex = Math.max(0, stagePeptides.findIndex(p => p.id === activePeptideId))
   const activePeptide = stagePeptides[activeIndex] ?? null
   // Focus the search field right after it expands.
@@ -1425,18 +1397,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     zentriereSlot(index)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neuZentrieren, stageKey])
-  const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
-  /**
-   * `snap-always`: ein Wisch geht genau einen Eintrag weit.
-   *
-   * Ohne das setzt der Browser den Schwung fort, bis die Reibung ihn
-   * aufbraucht — ein kurzer Stups trug den Streifen ueber drei, vier Objekte,
-   * weil der Schwung nur das Tempo kennt und nicht die Absicht.
-   * `scroll-snap-stop: always` verbietet ihm, einen Standplatz zu
-   * ueberfliegen. Wer weiter will, zieht weiter: beim Ziehen gilt die Regel
-   * nicht, nur beim Ausrollen danach.
-   */
-  const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center snap-always'
   // Feed carousel interaction velocity into the shared liquid physics engine.
   const pushVialSlosh = (velocity: number) => sloshEngine.pushImpulse(velocity)
   const updateVialFocus = () => {
@@ -1980,11 +1940,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       )}
                     </div>}
 
-                    {/* Verwalten zuletzt. Oben standen diese vier Knoepfe als
-                        Erstes — mitsamt dem Loeschen, direkt unter dem Daumen,
-                        bevor man ueberhaupt gesehen hat, was man da vor sich
-                        hat. Was man liest, gehoert nach oben; was man am
-                        Eintrag AENDERT, nach unten. */}
                     </>
                   )
                 })()}
@@ -2030,7 +1985,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         data-my-stack-body
         className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
-          {initialLoad && <LabLoader fadingOut={loaderFading} />}
+          {initialLoad && <LabLoader fadingOut={!loading} />}
 
           {FEATURES.planTimelineV2 && timelineLoadError && (
             <div role="alert" className="mb-4 rounded-xl border border-rose-300/25 bg-rose-300/10 p-3 text-sm text-rose-100">
@@ -2080,9 +2035,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             handleVialCarouselPointerMove={handleVialCarouselPointerMove}
             handleVialCarouselPointerUp={handleVialCarouselPointerUp}
             handleVialCarouselWheel={handleVialCarouselWheel}
-            vialSnapClassName={vialSnapClassName}
             isVialCarouselDragging={isVialCarouselDragging}
-            vialItemSnapClassName={vialItemSnapClassName}
             vialSuppressClickRef={vialSuppressClickRef}
             handleNewPeptide={handleNewPeptide}
             selectAddTile={selectAddTile}
@@ -2098,7 +2051,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             loading={loading}
             listPeptides={listPeptides}
             sloshEngine={sloshEngine}
-            cyclesOf={cyclesOf}
             timelinesOf={timelinesOf}
             expandedId={expandedId}
             inventory={inventory}
@@ -2111,25 +2063,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             openEditPeptide={openEditPeptide}
             handleRekonstitution={handleRekonstitution}
             removePeptide={removePeptide}
-            openNewCycle={openNewCycle}
-            dismissZyklusBtn={dismissZyklusBtn}
             zyklusBtnNew={zyklusBtnNew}
             planManagementSections={planManagementSections}
-            escalationsOf={escalationsOf}
-            currentQuantityLabel={currentQuantityLabel}
-            freqLabel={freqLabel}
-            intakeLabel={intakeLabel}
-            plannedQuantityRows={plannedQuantityRows}
-            toggleCycleActive={toggleCycleActive}
-            openEditCycle={openEditCycle}
-            removeCycle={removeCycle}
-            doseAdjustmentIcon={doseAdjustmentIcon}
-            escalationQuantityLabel={escalationQuantityLabel}
-            escalationIsActive={escalationIsActive}
-            escLabel={escLabel}
-            openEditEsc={openEditEsc}
-            removeEsc={removeEsc}
-            openNewEsc={openNewEsc}
+            cycleView={cycleView}
           />
       </div>
 
@@ -2141,37 +2077,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         timelinesOf={timelinesOf}
       />
       <LegacyCycleManager
+        cycleView={cycleView}
         cycleManagerPeptide={cycleManagerPeptide}
-        cyclesOf={cyclesOf}
-        openEditCycle={openEditCycle}
         setCycleManagerPeptide={setCycleManagerPeptide}
-        removeCycle={removeCycle}
-        currentQuantityLabel={currentQuantityLabel}
-        freqLabel={freqLabel}
-        intakeLabel={intakeLabel}
-        reminderLabel={reminderLabel}
-        plannedQuantityRows={plannedQuantityRows}
-        planStufenListe={planStufenListe}
-        toggleCycleActive={toggleCycleActive}
-        endCycle={endCycle}
-        escalationsOf={escalationsOf}
-        managerEscOpen={managerEscOpen}
-        toggleManagerEsc={toggleManagerEsc}
-        scheduledQuantityLabel={scheduledQuantityLabel}
-        doseAdjustmentIcon={doseAdjustmentIcon}
-        escalationQuantityLabel={escalationQuantityLabel}
-        escalationIsActive={escalationIsActive}
-        escLabel={escLabel}
-        openEditEsc={openEditEsc}
-        removeEsc={removeEsc}
-        openNewEsc={openNewEsc}
-        managerCardOpen={managerCardOpen}
-        toggleManagerCard={toggleManagerCard}
-        openNewCycle={openNewCycle}
-        dismissZyklusBtn={dismissZyklusBtn}
       />
 
-      {/* PEPTID-FORMULAR */}
+      {/* EINTRAG-VOLLBILD */}
       {/* Das Vollbild hinter einem Objekt. Der Uebergang ist FLIP: das Objekt
           wird an seinem Platz im Karussell gemessen und fliegt von dort an
           seine Stelle hier oben, dabei verkleinert. Waehrend des Flugs ist die
@@ -2621,8 +2532,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         setRekonstitutionTarget={setRekonstitutionTarget}
         confirmRekonstitution={confirmRekonstitution}
       />
-
-      {/* ══ PLANÄNDERUNG: RÜCKWIRKEND ODER AB HEUTE ═══════════════════════════ */}
 
       {/* ══ INFO-SHEET ═══════════════════════════════════════════════════════ */}
       <SubstanceInfoSheet

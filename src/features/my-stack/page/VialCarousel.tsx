@@ -41,9 +41,7 @@ export function VialCarousel({
   handleVialCarouselPointerMove,
   handleVialCarouselPointerUp,
   handleVialCarouselWheel,
-  vialSnapClassName,
   isVialCarouselDragging,
-  vialItemSnapClassName,
   vialSuppressClickRef,
   handleNewPeptide,
   selectAddTile,
@@ -69,9 +67,7 @@ export function VialCarousel({
   handleVialCarouselPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void
   handleVialCarouselPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void
   handleVialCarouselWheel: (e: ReactWheelEvent<HTMLDivElement>) => void
-  vialSnapClassName: "snap-none" | "snap-x snap-mandatory"
   isVialCarouselDragging: boolean
-  vialItemSnapClassName: "" | "snap-center snap-always"
   vialSuppressClickRef: RefObject<boolean>
   handleNewPeptide: () => void
   selectAddTile: () => void
@@ -82,6 +78,18 @@ export function VialCarousel({
   selectPeptideIndex: (index: number) => void
 }) {
   const { t } = useTranslation()
+  const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
+  /**
+   * `snap-always`: ein Wisch geht genau einen Eintrag weit.
+   *
+   * Ohne das setzt der Browser den Schwung fort, bis die Reibung ihn
+   * aufbraucht — ein kurzer Stups trug den Streifen ueber drei, vier Objekte,
+   * weil der Schwung nur das Tempo kennt und nicht die Absicht.
+   * `scroll-snap-stop: always` verbietet ihm, einen Standplatz zu
+   * ueberfliegen. Wer weiter will, zieht weiter: beim Ziehen gilt die Regel
+   * nicht, nur beim Ausrollen danach.
+   */
+  const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center snap-always'
   return (
     <>
       {!loading && viewMode === 'vials' && activePeptide && (
@@ -107,9 +115,13 @@ export function VialCarousel({
                 const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                 const expiryLabel = days === null
                   ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                  : days > 0
-                    ? `Haltbar: ${days} ${days === 1 ? 'Tag' : 'Tage'}`
-                    : t('my_stack_expires_today')
+                  : days > 1
+                    ? t('haltbar_noch_n', { n: days })
+                    : days === 1
+                      ? t('haltbar_noch_1')
+                      : days === 0
+                        ? t('my_stack_expires_today')
+                        : t('abgelaufen_warn')
                 const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
 
                 return (
