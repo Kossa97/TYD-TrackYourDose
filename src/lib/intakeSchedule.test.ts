@@ -398,7 +398,7 @@ describe('versioned timeline collectors', () => {
     }])
   })
 
-  it('resolves a 90-day auto-miss lookback without a 50ms long task', () => {
+  it('resolves a 90-day auto-miss lookback with one cached formatter per time zone', () => {
     const longTimeline = (id: string): CycleTimeline => ({
       cycle: {
         id,
@@ -419,16 +419,30 @@ describe('versioned timeline collectors', () => {
     })
     const timelines = Array.from({ length: 15 }, (_, index) => longTimeline(`perf-${index}`))
     const now = new Date('2026-09-19T10:00:00.000Z')
-    const firstStarted = performance.now()
-    const missed = collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
-    const firstMs = performance.now() - firstStarted
-    const repeatStarted = performance.now()
-    collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
-    const repeatMs = performance.now() - repeatStarted
-    expect(missed.length).toBeGreaterThan(0)
-    // Uncached formatter construction cost 2370ms for this same 15×90 case.
-    expect(firstMs).toBeLessThan(150)
-    expect(repeatMs).toBeLessThan(16)
+    // Guards the formatter cache. Uncached, every day × slot built a new
+    // Intl.DateTimeFormat — 2370ms for this 15×90 case at the time. A time
+    // limit could not tell that apart from a slow machine (the cached run
+    // takes ≈200ms here, an uncached one now ≈370ms); counting constructions
+    // can.
+    const Original = Intl.DateTimeFormat
+    let constructed = 0
+    // Eine echte Unterklasse: die Instanzen bleiben echte Formatter.
+    class Counting extends Original {
+      constructor(...args: ConstructorParameters<typeof Intl.DateTimeFormat>) {
+        super(...args)
+        constructed += 1
+      }
+    }
+    Intl.DateTimeFormat = Counting as typeof Intl.DateTimeFormat
+    try {
+      const missed = collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
+      collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
+      expect(missed.length).toBeGreaterThan(0)
+      // Hoechstens einer je Zeitzone, fuer 2 × 15 Plaene × 90 Tage.
+      expect(constructed).toBeLessThanOrEqual(1)
+    } finally {
+      Intl.DateTimeFormat = Original
+    }
   })
 
   it('can slice a lookback window without walking older days', () => {
