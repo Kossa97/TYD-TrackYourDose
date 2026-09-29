@@ -27,12 +27,17 @@ function levelChangeDurationMs(from: number, to: number): number {
 
 // A few rising bubbles give the liquid life. Positions are in viewBox units and
 // the body clip-path makes them pop out of existence at the waterline.
+// `phase`: wie weit jede Blase beim Einhaengen schon aufgestiegen ist (Anteil
+// ihrer Dauer). Frueher starteten alle unten, einige erst nach bis zu 3 s —
+// nach dem Auffuellen stand die Fluessigkeit noch sekundenlang still, bis die
+// Blasen oben ankamen. Mit negativem `begin` laufen sie ab dem ersten Bild,
+// ueber die Hoehe verteilt.
 const LIQUID_BUBBLES = [
-  { cx: 24, r: 1.5, dur: 5.4, delay: 0 },
-  { cx: 46, r: 1.0, dur: 6.6, delay: 1.4 },
-  { cx: 63, r: 1.9, dur: 5.0, delay: 2.6 },
-  { cx: 82, r: 1.1, dur: 7.2, delay: 0.7 },
-  { cx: 98, r: 1.4, dur: 5.9, delay: 3.2 },
+  { cx: 24, r: 1.5, dur: 5.4, phase: 0.62 },
+  { cx: 46, r: 1.0, dur: 6.6, phase: 0.3 },
+  { cx: 63, r: 1.9, dur: 5.0, phase: 0.08 },
+  { cx: 82, r: 1.1, dur: 7.2, phase: 0.46 },
+  { cx: 98, r: 1.4, dur: 5.9, phase: 0.8 },
 ]
 
 // The liquid's own share of the stage light. The surrounding form calls this
@@ -298,8 +303,8 @@ export function LiquidGraphic({
     <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
     {bubbles && !reducedMotion && visible && LIQUID_BUBBLES.map((b, i) => (
     <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
-      <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
-      <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.18;0.72;1" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
+      <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${-(b.dur * b.phase).toFixed(2)}s`} repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.18;0.72;1" dur={`${b.dur}s`} begin={`${-(b.dur * b.phase).toFixed(2)}s`} repeatCount="indefinite" />
     </circle>
     ))}
     </g>
