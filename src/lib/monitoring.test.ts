@@ -24,9 +24,23 @@ describe('Monitoring — nur Bekanntes geht raus', () => {
     ]) {
       expect(scrubMessage(meldung), meldung).toBe(meldung)
     }
-    // Ein Laufzeitwert im gelesenen Namen bleibt draussen, sobald er mehr als
-    // ein Bezeichner ist.
-    expect(scrubMessage("Cannot read properties of undefined (reading 'BPC-157 250 mcg')")).toBe('[entfernt]')
+    // Nichts darf hinter einer erlaubten Form weiterlaufen.
+    expect(scrubMessage('e is not iterable: BPC-157 250 mcg, Blutwert 4.2')).toBe('[entfernt]')
+  })
+
+  it('ersetzt gelesene oder gesetzte Schlüssel, die nicht wie Quelltext aussehen', () => {
+    // Quelltext-Namen bleiben — damit findet man die Stelle.
+    expect(scrubMessage("Cannot read properties of undefined (reading 'length')")).toBe("Cannot read properties of undefined (reading 'length')")
+    // Laufzeitwerte (Substanz, Menge) werden zu „…".
+    for (const [meldung, erwartet] of [
+      ["Cannot read properties of undefined (reading 'Semaglutide')", "Cannot read properties of undefined (reading '…')"],
+      ["Cannot set properties of undefined (setting '250')", "Cannot set properties of undefined (setting '…')"],
+      ["Cannot read properties of null (reading 'BPC-157 250 mcg')", "Cannot read properties of null (reading '…')"],
+      ['can\'t access property "Testosteron", e is undefined', 'can\'t access property "…", e is undefined'],
+      ["Cannot destructure property '4.2' of 'n.werte' as it is undefined.", "Cannot destructure property '…' of 'n.werte' as it is undefined."],
+    ]) {
+      expect(scrubMessage(meldung), meldung).toBe(erwartet)
+    }
   })
 
   it('kürzt URLs auf den Pfad ohne Parameter, IDs und Storage-Objekte', () => {
@@ -65,6 +79,18 @@ describe('Monitoring — nur Bekanntes geht raus', () => {
     expect(event.request).toEqual({ url: 'https://app/my-stack' })
     expect(event.exception?.values?.[0]).toMatchObject({ type: 'Error', value: '[entfernt]' })
     expect(event.breadcrumbs).toHaveLength(1)
+  })
+
+  it('filtert auch die Rahmen des Stapels und jeden Fehler der Kette', () => {
+    const event = scrubEvent({
+      type: undefined,
+      exception: { values: [
+        { type: 'React ErrorBoundary TypeError', value: 'Wert: Testosteron 250 mg', stacktrace: { frames: [{ filename: 'https://app/my-stack/0b9f3c1e-8f2a-4c55-9d11-2b6f1b0e7a44?x=1#access_token=abc' }] } },
+        { type: 'TypeError', value: 'Wert: Testosteron 250 mg' },
+      ] },
+    } as ErrorEvent)
+    expect(event.exception?.values?.map(value => value.value)).toEqual(['[entfernt]', '[entfernt]'])
+    expect(event.exception?.values?.[0].stacktrace?.frames?.[0].filename).toBe('https://app/my-stack/:id')
   })
 
   it('lädt ohne DSN nichts und meldet nichts', async () => {

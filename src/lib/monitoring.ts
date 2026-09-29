@@ -45,27 +45,45 @@ const SAFE_MESSAGES: readonly RegExp[] = [
   // ausgewertete Ausdruck, bei uns verkleinert) — kein Laufzeitwert. Ohne
   // diese Formen kam der erste echte Fehler als „TypeError: [entfernt]" an
   // und liess sich keiner Stelle zuordnen.
-  // Chrome: der gelesene Name ist ein Laufzeitwert — daher nur Bezeichner.
-  /^Cannot read properties of (undefined|null) \(reading '[\w$]+'\)$/,
-  /^Cannot set properties of (undefined|null) \(setting '[\w$]+'\)$/,
-  /^Cannot destructure property '[\w$]+' of '[^'\n]{1,160}' as it is (undefined|null)\.?$/,
+  // (Meldungen mit einem gelesenen oder gesetzten Schluessel stehen unten
+  // in RUNTIME_KEY_MESSAGES: der Schluessel ist ein Laufzeitwert.)
   /^[\w$.]+ is not a function$/,
   /^[\w$.]+ is not a function\. \(In '[^'\n]{1,160}', '[^'\n]{1,120}' is (undefined|null|an instance of [\w$]+)\)$/,
   /^[\w$.]+ is not defined$/,
-  /^[\w$.]+ is not iterable/,
+  /^[\w$.]+ is not iterable( \(cannot read property Symbol\(Symbol\.iterator\)\))?$/,
   /^(undefined|null) is not an object \(evaluating '[^'\n]{1,160}'\)$/,
   /^(undefined|null) is not a function \(near '[^'\n]{1,160}'\)$/,
   /^Right side of assignment cannot be destructured$/,
   // Firefox
   /^[\w$.]+ is (undefined|null)$/,
-  /^can't access property "[\w$]+", [\w$.]+ is (undefined|null)$/,
   /^Minified React error #\d+/,
   /^Maximum update depth exceeded/,
   /^Hydration failed/,
   /^ResizeObserver loop/,
 ]
 
+/**
+ * Meldungen, die den gelesenen oder gesetzten SCHLUESSEL nennen — einen
+ * Laufzeitwert. Bei `byName[substanz]` waere das der Name einer Substanz,
+ * bei `dosen[menge]` eine Menge. Stehen bleibt er nur, wenn er wie ein Name
+ * aus dem Quelltext aussieht (klein beginnend: `length`, `map`, `id`);
+ * sonst wird er zu „…". Die Stelle findet man ueber den Stapel.
+ */
+const RUNTIME_KEY_MESSAGES: readonly RegExp[] = [
+  /^(Cannot (?:read|set) properties of (?:undefined|null) \((?:reading|setting) ')([^'\n]{1,80})('\))$/,
+  /^(Cannot destructure property ')([^'\n]{1,80})(' of '[^'\n]{1,160}' as it is (?:undefined|null)\.?)$/,
+  /^(can't access property ")([^"\n]{1,80})(", [\w$.]+ is (?:undefined|null))$/,
+]
+
+function codeKey(key: string): string {
+  return /^[a-z_$][\w$]{0,30}$/.test(key) ? key : '…'
+}
+
 export function scrubMessage(message: string): string {
+  for (const pattern of RUNTIME_KEY_MESSAGES) {
+    const treffer = message.match(pattern)
+    if (treffer) return `${treffer[1]}${codeKey(treffer[2])}${treffer[3]}`
+  }
   return SAFE_MESSAGES.some(pattern => pattern.test(message)) ? message : '[entfernt]'
 }
 
@@ -111,6 +129,18 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
       values: scrubbed.exception.values.map(value => ({
         ...value,
         value: value.value ? scrubMessage(value.value) : value.value,
+        // Ohne Stapel baut Sentry einen Rahmen aus der Seitenadresse — mit
+        // Parametern und Fragment. Die Rahmen gehen durch denselben Filter.
+        ...(value.stacktrace?.frames ? {
+          stacktrace: {
+            ...value.stacktrace,
+            frames: value.stacktrace.frames.map(frame => ({
+              ...frame,
+              ...(frame.filename ? { filename: scrubUrl(frame.filename) } : {}),
+              ...(frame.abs_path ? { abs_path: scrubUrl(frame.abs_path) } : {}),
+            })),
+          },
+        } : {}),
       })),
     }
   }
@@ -148,6 +178,10 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
       urlQueryParams: false,
       stackFrameVariables: false,
       frameContextLines: 0,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
     },
     // Nur Fehler: keine Sitzungen (die gingen am beforeSend vorbei).
     integrations: defaults => defaults.filter(integration => integration.name !== 'BrowserSession'),
@@ -164,11 +198,24 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
  */
 export function reportError(error: unknown, where: string, componentStack?: string | null): void {
   if (!sentry) return
+  const hint = {
+    captureContext: { tags: { where } },
+    // Was React nicht abfangen konnte, hat die App abgebaut — das ist ein
+    // Absturz, kein behandelter Fehler wie „Speichern fehlgeschlagen".
+    ...(where === 'react.uncaught' ? { mechanism: { handled: false, type: 'auto.function.react.error_handler' } } : {}),
+  }
   // Mit Komponentenkette haengt Sentry sie als eigenen „Fehler" an, dessen
   // Stapel ueber die Source-Maps aufgeloest wird — so stehen dort die echten
-  // Komponentennamen statt der verkleinerten („Br < Wo").
-  if (componentStack) sentry.captureReactException(error, { componentStack }, { tags: { where } })
-  else sentry.captureException(error, { tags: { where } })
+  // Komponentennamen statt der verkleinerten („Br < Wo"). Das geht nur an
+  // einem Error; und es setzt `cause` am Fehler, was an einem vorhandenen
+  // Text-`cause` scheitern kann — dann eben ohne Kette.
+  if (componentStack && error instanceof Error) {
+    try {
+      sentry.captureReactException(error, { componentStack }, hint)
+      return
+    } catch { /* weiter unten ohne Kette */ }
+  }
+  sentry.captureException(error, hint)
 }
 
 /**
