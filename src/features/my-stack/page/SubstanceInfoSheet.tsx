@@ -1,6 +1,7 @@
 import type { NavigateFunction } from 'react-router-dom'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatLocalDay } from '../lib/localDays'
 import { Activity, X, FileText, ExternalLink, Archive } from 'lucide-react'
 import { format, parseISO, addDays } from 'date-fns'
 import { expiryDaysLeft } from '../../../lib/peptideExpiry'
@@ -21,7 +22,8 @@ export function SubstanceInfoSheet({
   setInfoPeptide: Dispatch<SetStateAction<Peptide | null>>
   navigate: NavigateFunction
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   return (
     <>
       {infoPeptide && (() => {
@@ -37,7 +39,7 @@ export function SubstanceInfoSheet({
         if (p.reconstitution_date && p.expiry_days) {
           const exp = addDays(parseISO(p.reconstitution_date), p.expiry_days)
           expiryDays = expiryDaysLeft(p)
-          expiryDate = format(exp, 'dd.MM.yyyy')
+          expiryDate = formatLocalDay(format(exp, 'yyyy-MM-dd'), language)
         }
 
         return (
@@ -112,7 +114,7 @@ export function SubstanceInfoSheet({
                       {p.reconstitution_date && (
                         <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
-                          <p className="text-white font-semibold mt-0.5">{format(parseISO(p.reconstitution_date), 'dd.MM.yyyy')}</p>
+                          <p className="text-white font-semibold mt-0.5">{formatLocalDay(p.reconstitution_date.slice(0, 10), language)}</p>
                         </div>
                       )}
                       {expiryDate && expiryDays !== null && (

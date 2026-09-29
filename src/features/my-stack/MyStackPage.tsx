@@ -51,6 +51,8 @@ import { getRandomStackItemColor } from './lib/colors'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { FEATURES } from '../../config/features'
 import { reportError } from '../../lib/monitoring'
+import { formatLocalDay } from './lib/localDays'
+import { daysLabel } from './lib/bestandLabels'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
 import { orderTimelines } from './lib/planLabels'
@@ -124,6 +126,7 @@ interface MyStackPageProps {
 
 export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {}) {
   const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -1189,7 +1192,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Helper ────────────────────────────────────────────────────────────────
   const escLabel = (e: Escalation) => {
     if (e.start_type === 'date' && e.start_date)
-      return t('ab_datum', { date: format(parseISO(e.start_date), 'dd.MM.yyyy') })
+      return t('ab_datum', { date: formatLocalDay(e.start_date.slice(0, 10), language) })
     if (e.start_after_days) {
       const weeks = e.start_after_days % 7 === 0 ? e.start_after_days / 7 : null
       return weeks
@@ -1280,7 +1283,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               <span className="shrink-0 font-semibold">
                 {t('my_stack_plan_step_from', {
                   defaultValue: 'ab {{date}}',
-                  date: format(parseISO(effectiveFrom), 'dd.MM.yyyy'),
+                  date: formatLocalDay(effectiveFrom.slice(0, 10), language),
                 })}
               </span>
               <span className="min-w-0 flex-1 truncate">{stufenText(segment)}</span>
@@ -1297,7 +1300,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onClick={() => stufeZuruecknehmen(c, effectiveFrom)}
                   aria-label={String(t('my_stack_plan_step_remove', {
                     defaultValue: 'Stufe ab {{date}} zurücknehmen',
-                    date: format(parseISO(effectiveFrom), 'dd.MM.yyyy'),
+                    date: formatLocalDay(effectiveFrom.slice(0, 10), language),
                   }))}
                   className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-rose-400/10 hover:text-rose-300"
                 >
@@ -1318,7 +1321,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         {planned.map(segment => (
           <p key={segment.effectiveFrom}>
             <span className="font-bold uppercase tracking-wide">{segment.status}</span>
-            {' · '}{format(parseISO(segment.effectiveFrom), 'dd.MM.yyyy')}: {segment.dose} {segment.unit}
+            {' · '}{formatLocalDay(segment.effectiveFrom.slice(0, 10), language)}: {segment.dose} {segment.unit}
           </p>
         ))}
       </div>
@@ -1760,8 +1763,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           : a.packung != null
                             ? `${a.rest} / ${a.packung} ${a.einheit}`
                             : `${a.rest} ${a.einheit}`
-                      case 'datum': return format(parseISO(a.iso), 'dd.MM.yyyy')
-                      case 'tage': return `${a.n} Tage`
+                      case 'datum': return formatLocalDay(a.iso.slice(0, 10), language)
+                      case 'tage': return daysLabel(t, a.n)
                       case 'datei': return a.url.split('/').pop() || 'Öffnen'
                       case 'text':
                         if (feld === 'kategorie') return String(t(`stack_category_${a.text}`))
@@ -2219,7 +2222,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <div className="divide-y divide-slate-800/80 border-y border-slate-800/80">
                   {archivedPeptides.map(p => {
                     const archivedDate = p.archived_at
-                      ? new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language).format(new Date(p.archived_at))
+                      ? new Intl.DateTimeFormat(language).format(new Date(p.archived_at))
                       : ''
 
                     return (
@@ -2288,7 +2291,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             const invItem = inventory.find(item => item.id === p.inventory_item_id)
             const syringeMl = p.syringe_type?.split(':')[0]
             const syringeUnits = p.syringe_type?.split(':')[1]
-            const dateFormatter = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language)
+            const dateFormatter = new Intl.DateTimeFormat(language)
             const formatStoredDate = (value: string | null) => value ? dateFormatter.format(parseISO(value)) : '-'
             const expiryDate = p.reconstitution_date && p.expiry_days
               ? dateFormatter.format(addDays(parseISO(p.reconstitution_date), p.expiry_days))

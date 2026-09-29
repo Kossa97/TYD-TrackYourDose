@@ -561,7 +561,15 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('size="compact"')
     expect(text).toContain("t('archiviert_am'")
     expect(text).toContain('h-11 w-11')
-    expect(text).toContain("Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language)")
+    expect(text).toContain('const language = i18n.resolvedLanguage ?? i18n.language')
+    expect(text).toContain('Intl.DateTimeFormat(language)')
+  })
+  test('schreibt Daten in der Sprache der Oberflaeche, nie fest deutsch', () => {
+    // „TT.MM.JJJJ" stand an vierzehn Stellen fest im Code — auch in der
+    // englischen Oberflaeche. Tage laufen ueber formatLocalDay.
+    const text = source()
+    expect(text).not.toContain("'dd.MM.yyyy'")
+    expect(text).toContain('formatLocalDay(')
   })
   test('opens complete archived substance information in a nested full-screen view', () => {
     const text = source()

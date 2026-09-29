@@ -3,6 +3,7 @@ import type { SloshEngine } from '../../../components/sloshEngine'
 import type { InventoryItem } from './model'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatLocalDay } from '../lib/localDays'
 import {
   Plus,
   Minus,
@@ -19,7 +20,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { NewDot } from '../../../components/NewDot'
-import { format, parseISO } from 'date-fns'
 import { SloshProvider } from '../../../components/SloshContext'
 import { expiryDaysLeft } from '../../../lib/peptideExpiry'
 import { StackStage } from '../components/StackStage'
@@ -83,7 +83,8 @@ export function StackListView({
   zyklusBtnNew: boolean
   planManagementSections: (p: Peptide, timelines: CycleTimeline[]) => ReactNode
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const {
     cyclesOf,
     escalationsOf,
@@ -288,8 +289,8 @@ export function StackListView({
                               <span>{methodLabel(t, c.method)}</span>
                               <span>{freqLabel(c)}</span>
                               {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; const SlotIcon = (INTAKE_TIME_CONFIG as Record<string,{icon:LucideIcon}>)[firstKey]?.icon ?? Clock; return lbl ? <span className="text-amber-400 inline-flex items-center gap-1"><SlotIcon size={12} /> {lbl}</span> : null })()}
-                              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
-                              {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
+                              <span>{t('ab_datum', { date: formatLocalDay(c.start_date.slice(0, 10), language) })}</span>
+                              {c.end_date && <span>{t('bis_datum', { date: formatLocalDay(c.end_date.slice(0, 10), language) })}</span>}
                             </div>
                             {reminderLabel(c) && (
                               <p className="text-xs mt-0.5 flex items-center gap-1 flex-wrap text-sky-400">

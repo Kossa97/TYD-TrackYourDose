@@ -1,5 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatLocalDay } from '../lib/localDays'
 import {
   Plus,
   Trash2,
@@ -12,7 +13,7 @@ import {
   Pause,
   Play,
 } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
 import { methodLabel } from '../../../lib/intakeMethods'
 import { dosePlanCapabilities } from '../lib/dosePlan'
 import { FEATURES } from '../../../config/features'
@@ -31,7 +32,8 @@ export function LegacyCycleManager({
   cycleManagerPeptide: Peptide | null
   setCycleManagerPeptide: Dispatch<SetStateAction<Peptide | null>>
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const {
     cyclesOf,
     escalationsOf,
@@ -102,9 +104,9 @@ export function LegacyCycleManager({
               )}
               <span>{freqLabel(c)}</span>
               <span>{methodLabel(t, c.method)}</span>
-              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
+              <span>{t('ab_datum', { date: formatLocalDay(c.start_date.slice(0, 10), language) })}</span>
               {c.end_date ? (
-                <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
+                <span>{t('bis_datum', { date: formatLocalDay(c.end_date.slice(0, 10), language) })}</span>
               ) : (
                 <span>{t('ende_offen')}</span>
               )}
@@ -256,7 +258,7 @@ export function LegacyCycleManager({
                   </div>
                   <p className="mt-0.5 truncate text-xs text-slate-500">
                     {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent ? currentQuantityLabel(c) : ''}
-                    {c.end_date ? ` · ${t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}` : ''}
+                    {c.end_date ? ` · ${t('bis_datum', { date: formatLocalDay(c.end_date.slice(0, 10), language) })}` : ''}
                   </p>
                 </div>
                 {open ? <ChevronUp size={16} className="shrink-0 text-slate-500" /> : <ChevronDown size={16} className="shrink-0 text-slate-500" />}
