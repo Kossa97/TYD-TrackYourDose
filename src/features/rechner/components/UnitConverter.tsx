@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeftRight } from 'lucide-react'
+import { ArrowDownUp, Droplet, X } from 'lucide-react'
 import { GlassPanel, SectionHeader } from '../../../components/ui/DesignSystem'
 import { SyringeFields } from './SyringeFields'
 import { formatCalculatorNumber, parseDecimalInput } from '../lib/units'
@@ -18,6 +18,14 @@ export function UnitConverter() {
   const [to, setTo] = useState('mcg')
   const [capacityMl, setCapacityMl] = useState('1')
   const [capacityUnits, setCapacityUnits] = useState('100')
+  const amountRef = useRef<HTMLInputElement>(null)
+  const markerRef = useRef<HTMLSelectElement>(null)
+  const focusAfterMarkerChange = useRef<'amount' | 'marker' | null>(null)
+  useEffect(() => {
+    if (focusAfterMarkerChange.current === 'amount') amountRef.current?.focus()
+    if (focusAfterMarkerChange.current === 'marker') markerRef.current?.focus()
+    focusAfterMarkerChange.current = null
+  }, [marker])
   const sourceUnit = medicalUnit(from)
   const availableTargets = compatibleUnits(from, marker).filter(unit => unit.id !== from)
   const syringe = from === 'scale' || to === 'scale'
@@ -61,10 +69,11 @@ export function UnitConverter() {
     const nextFrom = next ? defaultMarkerUnit(next) : from
     const targets = compatibleUnits(nextFrom, next).filter(unit => unit.id !== nextFrom)
     const preferred = next ? MARKER_BRIDGES[next]?.to : to
+    focusAfterMarkerChange.current = next ? 'amount' : 'marker'
     setMarker(next)
     setFrom(nextFrom)
     setTo(targets.find(unit => unit.id === preferred)?.id ?? targets[0].id)
-    setAmount('')
+    if (next) setAmount('')
   }
   const bridge = MARKER_BRIDGES[marker]
   const sourceUrl = hba1c ? CONVERSION_SOURCES.ngsp : bridge ? CONVERSION_SOURCES[bridge.source] : null
@@ -74,44 +83,61 @@ export function UnitConverter() {
   return (
     <GlassPanel padding="lg">
       <SectionHeader title={t('rechner_converter_title')} subtitle={t('rechner_converter_subtitle')} />
-      <div className="rechner-form">
-        <div className="rechner-fields">
-          <label className="rechner-field" htmlFor="converter-from">
-            <span>{t('rechner_converter_from')}</span>
-            <select id="converter-from" className="rechner-select" value={from} onChange={event => chooseFrom(event.target.value)}>
-              {options(unitsForMarker(marker))}
-            </select>
-          </label>
-          <label className="rechner-field" htmlFor="converter-to">
-            <span>{t('rechner_converter_to')}</span>
-            <select id="converter-to" className="rechner-select" value={to} onChange={event => setTo(event.target.value)}>
-              {options(availableTargets)}
-            </select>
-          </label>
-        </div>
-        <button type="button" className="rechner-button" onClick={() => { setFrom(to); setTo(from) }}>
-          <ArrowLeftRight size={16} aria-hidden="true" /> {t('rechner_converter_swap')}
-        </button>
-        <label className="rechner-field" htmlFor="converter-marker">
+      <div className="rechner-form rechner-converter">
+        {marker ? <div className="rechner-converter-scope">
+          <div>
+            <span className="rechner-converter-scope-label">{t('rechner_converter_marker_selected')}</span>
+            <span id="converter-marker-name" className="rechner-converter-marker"><Droplet size={15} aria-hidden="true" />{marker === 'Vitamin D' ? 'Vitamin D (25-OH)' : marker}</span>
+          </div>
+          <button type="button" className="rechner-converter-remove" onClick={() => chooseMarker('')}
+            aria-label={t('rechner_converter_remove_marker')} aria-describedby="converter-marker-name">
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div> : <label className="rechner-field" htmlFor="converter-marker">
           <span>{t('rechner_converter_marker')}</span>
-          <select id="converter-marker" className="rechner-select" value={marker}
-            onChange={event => chooseMarker(event.target.value)} aria-describedby="converter-marker-hint">
+          <select ref={markerRef} id="converter-marker" className="rechner-select" value={marker}
+            onChange={event => chooseMarker(event.target.value)}>
             <option value="">{t('rechner_converter_general')}</option>
             {BLOOD_MARKERS.map(item => <option key={item.name} value={item.name}>
               {item.name === 'Vitamin D' ? 'Vitamin D (25-OH)' : item.name}
             </option>)}
           </select>
-        </label>
-        <p id="converter-marker-hint" className="rechner-muted">
-          {t(hba1c ? 'rechner_converter_hba1c_hint' : bridge ? 'rechner_converter_marker_active'
-            : marker ? 'rechner_converter_same_dimension' : 'rechner_converter_marker_hint')}
-        </p>
-        <label className="rechner-field" htmlFor="converter-amount">
-          <span>{t('rechner_converter_amount')}</span>
-          <input id="converter-amount" className="rechner-input" type="text" inputMode="decimal" autoComplete="off"
-            value={amount} onChange={event => setAmount(event.target.value)} aria-invalid={invalid || resultInvalid}
-            aria-describedby={invalid || resultInvalid ? 'converter-input-error' : undefined} />
-        </label>
+        </label>}
+        <div className="rechner-converter-fields" data-marker-active={!!marker}>
+          <div className="rechner-field">
+            <label htmlFor="converter-amount">{t('rechner_converter_from')}</label>
+            <div className="rechner-converter-input" data-invalid={invalid || resultInvalid}>
+              <input ref={amountRef} id="converter-amount" className="rechner-input" type="text" inputMode="decimal" autoComplete="off"
+                placeholder="0" value={amount} onChange={event => setAmount(event.target.value)} aria-invalid={invalid || resultInvalid}
+                aria-describedby={invalid || resultInvalid ? 'converter-input-error' : undefined} />
+              <select id="converter-from" className="rechner-select" value={from} onChange={event => chooseFrom(event.target.value)}
+                aria-label={t('rechner_converter_from_unit')} aria-describedby={marker ? 'converter-marker-hint' : undefined}>
+                {options(unitsForMarker(marker))}
+              </select>
+            </div>
+          </div>
+          <div className="rechner-field">
+            <label htmlFor="converter-result">{t('rechner_converter_to')}</label>
+            <div className="rechner-converter-input rechner-converter-output">
+              <input id="converter-result" className="rechner-input" type="text" readOnly placeholder="—"
+                value={result !== null && !resultInvalid ? formatCalculatorNumber(result, i18n.language) : ''}
+                aria-describedby="converter-result-hint" />
+              <select id="converter-to" className="rechner-select" value={to} onChange={event => setTo(event.target.value)}
+                aria-label={t('rechner_converter_to_unit')} aria-describedby={marker ? 'converter-marker-hint' : undefined}>
+                {options(availableTargets)}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="rechner-converter-actions">
+          <span id="converter-result-hint" className="rechner-muted">{t('rechner_converter_live_result')}</span>
+          <button type="button" className="rechner-button" onClick={() => { setFrom(to); setTo(from) }}>
+            <ArrowDownUp size={15} aria-hidden="true" /> {t('rechner_converter_swap')}
+          </button>
+        </div>
+        {marker && <p id="converter-marker-hint" className="rechner-muted">
+          {t('rechner_converter_units_for')} <strong>{marker}</strong>
+        </p>}
         {syringe && <SyringeFields idPrefix="converter-syringe" capacityMl={capacityMl}
           capacityUnits={capacityUnits} onChange={(nextMl, nextUnits) => { setCapacityMl(nextMl); setCapacityUnits(nextUnits) }} />}
         <div className="rechner-result" role="status" aria-live="polite" aria-atomic="true">
@@ -121,8 +147,7 @@ export function UnitConverter() {
             </p>
               : invalidSyringe ? <p className="rechner-error">{t('rechner_converter_invalid_syringe')}</p>
                 : result !== null && <>
-                  <p className="rechner-muted">{t('rechner_converter_result')}{marker ? ` · ${marker}` : ''}</p>
-                  <p className="rechner-result-value">{formatCalculatorNumber(result, i18n.language)} <span className="rechner-result-unit">{unitLabel(medicalUnit(to))}</span></p>
+                  <span className="sr-only">{t('rechner_converter_result')}{marker ? ` · ${marker}` : ''}: {formatCalculatorNumber(result, i18n.language)} {unitLabel(medicalUnit(to))}</span>
                   {overCapacity && <p className="rechner-error">{t('rechner_converter_over_capacity')}</p>}
                 </>}
         </div>
