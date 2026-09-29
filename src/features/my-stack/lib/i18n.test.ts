@@ -547,8 +547,8 @@ const EXPECTED_MY_STACK_KEYS = [
 // Aktualisiert fuer die neuen Rechner- und Einheitenumrechner-Texte (`rechner_*`),
 // zuletzt fuer den allgemeinen Fluessigkeitsrechner mit vertikaler Spritze.
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '0a7257f0f00354ca7f6f3f067978f97e2922f898c76c6520e41311d418c53073',
-  en: '86bc7eaef8b03a0ba680a16928bfce598357cd4528a2475f7e94ebe820bafdf0',
+  de: 'b8f938cd8a5cb034c896b24418e1988eb94884642a6715bf633c5a046960151a',
+  en: 'b83ba49567436c62de2f0c8b80990941e08f201ded4de29d4b092039cc4b29a5',
 } as const
 // Die zwoelf weiteren Sprachen zuletzt fuer den englischen Platzhalter
 // des Fluessigkeitsrechners (Regel in CLAUDE.md: neue Schluessel, englischer Text).
