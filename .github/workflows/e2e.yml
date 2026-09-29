@@ -1,0 +1,39 @@
+name: Gerätetests
+
+# My Stack im Browser (iPhone 13, iPhone SE, Pixel 7) gegen ein nachgebildetes
+# Supabase — siehe playwright.config.ts und e2e/. Kein Netz zur echten
+# Datenbank, keine Geheimnisse noetig.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Chromium für Playwright
+        run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Bericht bei Fehlschlag
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

@@ -18,7 +18,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  // In CI: Anmerkungen am Commit plus HTML-Bericht (Trace, Screenshot) als Artefakt.
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   timeout: 45_000,
   expect: { timeout: 8_000 },
   use: {
