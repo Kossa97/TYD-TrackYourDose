@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790651266.4179113,
-    "seen": 1790651644.596408,
-    "ast_hash": "9e2c19c4802719c58ad575865de4df14",
+    "mtime": 1790652036.0697753,
+    "seen": 1790652179.5547478,
+    "ast_hash": "a52ac25bee6c91c5c00965ae8b9be274",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3360,9 +3360,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanManagementSection.tsx": {
-    "mtime": 1790651329.8717182,
-    "seen": 1790651644.5964274,
-    "ast_hash": "f3d831833958100498505c7458aec136",
+    "mtime": 1790651948.2602515,
+    "seen": 1790652179.554772,
+    "ast_hash": "2f58d5983b15a1ecee107dd74b342d2f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790651501.9556553,
-    "seen": 1790651644.5968356,
+    "mtime": 1790652101.9716911,
+    "seen": 1790652179.5553205,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5316,9 +5316,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.ts": {
-    "mtime": 1790651419.781747,
-    "seen": 1790651644.5965328,
-    "ast_hash": "916c4ecc3eb95248c7168bcb48d321f5",
+    "mtime": 1790652020.9402375,
+    "seen": 1790652179.5549014,
+    "ast_hash": "a952093a3b1702e5d6f42214c80513b2",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/localDays.ts": {
@@ -5346,9 +5346,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanSummaryCard.tsx": {
-    "mtime": 1790374115.2307713,
-    "seen": 1790374154.157245,
-    "ast_hash": "cdafb9aa7034b5976652d65efb449519",
+    "mtime": 1790652005.6912053,
+    "seen": 1790652179.5547743,
+    "ast_hash": "06ccd86af28378810d84cdff6f8c9266",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/planCardParts.tsx": {
@@ -5640,9 +5640,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackListView.tsx": {
-    "mtime": 1790651139.9613109,
-    "seen": 1790651644.5965612,
-    "ast_hash": "19eff2e030568cd3bbc898bb35d3340f",
+    "mtime": 1790652036.0701983,
+    "seen": 1790652179.554937,
+    "ast_hash": "44c63d7bdc9975bd2f702eea0e54cf7b",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackTabBar.tsx": {
@@ -5664,9 +5664,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialCarousel.tsx": {
-    "mtime": 1790651225.1466522,
-    "seen": 1790651644.5965643,
-    "ast_hash": "7137d1b2181ecb1adf04ebd770a8e204",
+    "mtime": 1790652040.6266272,
+    "seen": 1790652179.554941,
+    "ast_hash": "c9083499ed6ee7cda9d28b27c00096d2",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialPositionRow.tsx": {
@@ -5676,9 +5676,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/model.ts": {
-    "mtime": 1790651419.7836957,
-    "seen": 1790651644.5965657,
-    "ast_hash": "50f834c3bf8087a05903a26c2584c336",
+    "mtime": 1790652036.0691278,
+    "seen": 1790652179.554943,
+    "ast_hash": "f087ca5d2067f796977590a9390e2183",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/stackTiles.tsx": {
@@ -5688,9 +5688,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/useMyStackData.ts": {
-    "mtime": 1790651225.1463308,
-    "seen": 1790651644.5965676,
-    "ast_hash": "cd29d5d4bad7cced00212697e7bb97d1",
+    "mtime": 1790652020.937354,
+    "seen": 1790652179.5549448,
+    "ast_hash": "f67b73814e3f679bea5fda335c338115",
     "semantic_hash": ""
   },
   "src/features/rechner/lib/medicalUnits.test.ts": {
@@ -5757,6 +5757,12 @@
     "mtime": 1790648612.1192183,
     "seen": 1790650598.8024566,
     "ast_hash": "bdae84d60f0cef5a2370c67548ea7e53",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/useMinuteClock.ts": {
+    "mtime": 1790651935.4436812,
+    "seen": 1790652179.5549226,
+    "ast_hash": "eff3ff18675c7d906e725fef8ab087a1",
     "semantic_hash": ""
   }
 }
