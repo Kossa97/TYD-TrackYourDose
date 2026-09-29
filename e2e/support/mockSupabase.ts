@@ -58,6 +58,9 @@ const RELATIONS: Record<string, Record<string, Relation>> = {
   stack_item_ingredients: {
     substance_catalog: { table: 'substance_catalog', kind: 'one', local: 'catalog_substance_id', foreign: 'id' },
   },
+  substance_catalog: {
+    pk_profiles: { table: 'pk_profiles', kind: 'one', local: 'pk_profile_id', foreign: 'id' },
+  },
   cycles: {
     stack_items: { table: 'stack_items', kind: 'one', local: 'stack_item_id', foreign: 'id' },
     cycle_plan_versions: { table: 'cycle_plan_versions', kind: 'many', local: 'id', foreign: 'cycle_id' },

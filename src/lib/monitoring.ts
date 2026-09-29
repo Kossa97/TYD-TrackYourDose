@@ -41,10 +41,24 @@ const SAFE_MESSAGES: readonly RegExp[] = [
   /^Failed to fetch dynamically imported module/,
   /^Importing a module script failed\.?$/,
   /^Loading (CSS )?chunk \d+ failed/,
+  // Typfehler der Browser. Was in Klammern steht, ist QUELLTEXT (der
+  // ausgewertete Ausdruck, bei uns verkleinert) — kein Laufzeitwert. Ohne
+  // diese Formen kam der erste echte Fehler als „TypeError: [entfernt]" an
+  // und liess sich keiner Stelle zuordnen.
+  // Chrome: der gelesene Name ist ein Laufzeitwert — daher nur Bezeichner.
   /^Cannot read properties of (undefined|null) \(reading '[\w$]+'\)$/,
+  /^Cannot set properties of (undefined|null) \(setting '[\w$]+'\)$/,
+  /^Cannot destructure property '[\w$]+' of '[^'\n]{1,160}' as it is (undefined|null)\.?$/,
   /^[\w$.]+ is not a function$/,
+  /^[\w$.]+ is not a function\. \(In '[^'\n]{1,160}', '[^'\n]{1,120}' is (undefined|null|an instance of [\w$]+)\)$/,
   /^[\w$.]+ is not defined$/,
-  /^(undefined|null) is not an object \(evaluating '[\w$.]+'\)$/,
+  /^[\w$.]+ is not iterable/,
+  /^(undefined|null) is not an object \(evaluating '[^'\n]{1,160}'\)$/,
+  /^(undefined|null) is not a function \(near '[^'\n]{1,160}'\)$/,
+  /^Right side of assignment cannot be destructured$/,
+  // Firefox
+  /^[\w$.]+ is (undefined|null)$/,
+  /^can't access property "[\w$]+", [\w$.]+ is (undefined|null)$/,
   /^Minified React error #\d+/,
   /^Maximum update depth exceeded/,
   /^Hydration failed/,
@@ -122,6 +136,19 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
     dsn,
     environment: (import.meta.env.VITE_DEPLOY_ENV as string | undefined) || import.meta.env.MODE,
     release: (import.meta.env.VITE_RELEASE as string | undefined) || undefined,
+    // Nichts ueber Nutzer erheben. Ab SDK 11 ist `userInfo` sonst AN — und
+    // Sentry leitete aus der Verbindung den Ort ab („Gelsenkirchen"), auch
+    // mit ausgeschalteter IP-Speicherung. Mit `userInfo: false` sagt das SDK
+    // dem Server `infer_ip: never`.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    },
     // Nur Fehler: keine Sitzungen (die gingen am beforeSend vorbei).
     integrations: defaults => defaults.filter(integration => integration.name !== 'BrowserSession'),
     beforeSend: event => scrubEvent(event),
@@ -135,8 +162,13 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
  * Einen Fehler melden — dort, wo die App ihn selbst behandelt (etwa
  * „Speichern fehlgeschlagen"). `where` sagt, an welcher Stelle.
  */
-export function reportError(error: unknown, where: string): void {
-  sentry?.captureException(error, { tags: { where } })
+export function reportError(error: unknown, where: string, componentStack?: string | null): void {
+  if (!sentry) return
+  // Mit Komponentenkette haengt Sentry sie als eigenen „Fehler" an, dessen
+  // Stapel ueber die Source-Maps aufgeloest wird — so stehen dort die echten
+  // Komponentennamen statt der verkleinerten („Br < Wo").
+  if (componentStack) sentry.captureReactException(error, { componentStack }, { tags: { where } })
+  else sentry.captureException(error, { tags: { where } })
 }
 
 /**
@@ -144,12 +176,12 @@ export function reportError(error: unknown, where: string): void {
  * und weiter in der Konsole zeigen wie ohne Handler.
  */
 export const reactRootErrorOptions = {
-  onUncaughtError: (error: unknown) => {
+  onUncaughtError: (error: unknown, errorInfo?: { componentStack?: string | null }) => {
     console.error(error)
-    reportError(error, 'react.uncaught')
+    reportError(error, 'react.uncaught', errorInfo?.componentStack)
   },
-  onRecoverableError: (error: unknown) => {
+  onRecoverableError: (error: unknown, errorInfo?: { componentStack?: string | null }) => {
     console.error(error)
-    reportError(error, 'react.recoverable')
+    reportError(error, 'react.recoverable', errorInfo?.componentStack)
   },
 }

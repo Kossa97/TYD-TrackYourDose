@@ -12,6 +12,23 @@ describe('Monitoring — nur Bekanntes geht raus', () => {
     expect(scrubMessage('Non-Error promise rejection captured with value: BPC-157 250 mcg')).toBe('[entfernt]')
   })
 
+  it('lässt Typfehler der Browser durch — der Ausdruck darin ist Quelltext, kein Wert', () => {
+    for (const meldung of [
+      "undefined is not an object (evaluating 'e.find(t=>t.id===n).name')",
+      "null is not an object (evaluating 'a.slots.length')",
+      "e.map is not a function. (In 'e.map(r=>r.x)', 'e.map' is undefined)",
+      "Cannot destructure property 'dose' of 'n.slots[0]' as it is undefined.",
+      'e is undefined',
+      'can\'t access property "length", e is null',
+      'e is not iterable',
+    ]) {
+      expect(scrubMessage(meldung), meldung).toBe(meldung)
+    }
+    // Ein Laufzeitwert im gelesenen Namen bleibt draussen, sobald er mehr als
+    // ein Bezeichner ist.
+    expect(scrubMessage("Cannot read properties of undefined (reading 'BPC-157 250 mcg')")).toBe('[entfernt]')
+  })
+
   it('kürzt URLs auf den Pfad ohne Parameter, IDs und Storage-Objekte', () => {
     expect(scrubUrl('https://x.supabase.co/rest/v1/dose_logs?select=dose&user_id=eq.123')).toBe('https://x.supabase.co/rest/v1/dose_logs')
     expect(scrubUrl('https://app/my-stack/0b5a2c1e-1111-4a2b-9c3d-123456789abc#x')).toBe('https://app/my-stack/:id')
