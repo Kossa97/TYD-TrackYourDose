@@ -27,6 +27,14 @@ function validValues() {
   enter('Gewünschte Menge', '250')
 }
 
+it('places reset inside the solution card without the automatic-update hint', () => {
+  setup()
+  const solutionCard = screen.getByRole('heading', { name: /Deine Lösung/ }).closest('section')
+  expect(solutionCard).not.toBeNull()
+  expect(solutionCard?.contains(screen.getByRole('button', { name: 'Zurücksetzen' }))).toBe(true)
+  expect(screen.queryByText('Aktualisiert sich automatisch.')).toBeNull()
+})
+
 it('uses the actual syringe capacity for both volume and scale across presets', async () => {
   setup()
   validValues()
