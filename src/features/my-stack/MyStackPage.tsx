@@ -1970,9 +1970,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
 
   return (
+    // `-mx-3 px-3`: die Seite reicht bis an den Bildschirmrand, ihr Inhalt
+    // bleibt eingerueckt wie bisher. Sie schneidet ab (`overflow-hidden`) —
+    // so schmal wie der Inhaltsbereich kappte sie Karussell und Reiter, die
+    // mit `-mx-3` bis an den Rand reichen sollen, 12 px davor.
     <div
       data-my-stack-page
-      className={`flex h-full min-h-0 flex-col overflow-hidden ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
     >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
       <MyStackHeader
@@ -1998,7 +2002,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
         data-my-stack-body
-        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
+        className={`-mx-3 min-h-0 flex-1 px-3 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
           {initialLoad && <LabLoader fadingOut={!loading} />}
 

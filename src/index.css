@@ -1803,11 +1803,18 @@ main.flex-1 {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0.9;
+  /* Der Auslauf ist weich, nicht gerade: ein linearer Abfall auf null endete
+     mitten in der Leiste (zwischen Kalender und Profil, wenn My Stack aktiv
+     ist), und der Knick zwischen Verlauf und flacher Flaeche las sich als
+     Kante. Die Zwischenstufen legen die Steigung allmaehlich auf null. */
   background: radial-gradient(
     120% 160% at var(--tyd-glint, 50%) -40%,
     rgba(255, 255, 255, 0.13) 0%,
     rgba(255, 255, 255, 0.04) 42%,
-    transparent 72%
+    rgba(255, 255, 255, 0.022) 52%,
+    rgba(255, 255, 255, 0.01) 61%,
+    rgba(255, 255, 255, 0.003) 68%,
+    transparent 74%
   );
   transition: background 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }

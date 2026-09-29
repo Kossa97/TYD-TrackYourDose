@@ -246,3 +246,23 @@ test('Öffnen: die Oberfläche bewegt sich sofort, auch wenn der Sichtbarkeitsw�
   })
   expect(wechsel).toBeGreaterThanOrEqual(6)
 })
+
+test('Bühne und Reiter reichen bis an den Bildschirmrand', async ({ page, mock }) => {
+  seedBpc157(mock, { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  await expect(stageObject(page, 'BPC-157')).toBeVisible()
+  // Jeder abschneidende Vorfahr von Karussell und Reiterleiste muss die volle
+  // Breite haben — sonst endet das Bild 12 px vor dem Rand.
+  const engsterRahmen = await page.evaluate(() => {
+    const breiten: number[] = []
+    for (const start of ['[data-vial-index="0"]', '[data-stack-tabs]']) {
+      for (let n = document.querySelector(start)?.parentElement ?? null; n && n !== document.body; n = n.parentElement) {
+        if (getComputedStyle(n).overflowX === 'visible') continue
+        const r = n.getBoundingClientRect()
+        breiten.push(Math.min(r.right, window.innerWidth) - Math.max(r.left, 0))
+      }
+    }
+    return { engster: Math.min(...breiten), bildschirm: window.innerWidth }
+  })
+  expect(engsterRahmen.engster).toBe(engsterRahmen.bildschirm)
+})
