@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1790647294.3238323,
-    "seen": 1790647444.6649191,
-    "ast_hash": "ec019b7216ac2e93ee23c154bcfabb14",
+    "mtime": 1790679954.3903892,
+    "seen": 1790680684.8801453,
+    "ast_hash": "0d412a723339bc06cfc508b4f8177f4b",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790674644.9981046,
-    "seen": 1790674672.6072402,
+    "mtime": 1790680523.9583638,
+    "seen": 1790680684.8821805,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5706,15 +5706,15 @@
     "semantic_hash": ""
   },
   "src/lib/monitoring.test.ts": {
-    "mtime": 1790614203.61838,
-    "seen": 1790614393.3326764,
-    "ast_hash": "3ffb6ce155f0e7af377255d573fb336d",
+    "mtime": 1790680375.6463704,
+    "seen": 1790680684.8818824,
+    "ast_hash": "95221080546a8d030bf4fbcf1d2c01aa",
     "semantic_hash": ""
   },
   "src/lib/monitoring.ts": {
-    "mtime": 1790614114.7293358,
-    "seen": 1790614393.3326776,
-    "ast_hash": "05798691f1880c6bb64e8cea837093d5",
+    "mtime": 1790680246.583092,
+    "seen": 1790680684.8818853,
+    "ast_hash": "a78de65340d28d5b7779137f87c34759",
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
@@ -5730,9 +5730,9 @@
     "semantic_hash": ""
   },
   "e2e/support/mockSupabase.ts": {
-    "mtime": 1790616328.105619,
-    "seen": 1790617005.184595,
-    "ast_hash": "304d23d7867c689d6eeb9607c0384523",
+    "mtime": 1790679885.7830665,
+    "seen": 1790680684.880115,
+    "ast_hash": "486495d8d30eabab4b1df36b9c797ec7",
     "semantic_hash": ""
   },
   "e2e/support/myStack.ts": {
