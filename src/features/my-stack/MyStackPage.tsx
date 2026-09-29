@@ -81,6 +81,8 @@ import {
   emptyEscalationForm,
   type InfoRow,
   type CycleView,
+  readLocalFlag,
+  writeLocalFlag,
   type PeptideSortKey,
   MY_STACK_DETAIL_HISTORY_KEY,
   historyStateRecord,
@@ -452,7 +454,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // ── Rekonstitution wiederholen ────────────────────────────────────────────
   const handleRekonstitution = (p: Peptide) => {
-    if (localStorage.getItem('_skip_rekonstitution')) { doRekonstitution(p); return }
+    if (readLocalFlag('_skip_rekonstitution')) { doRekonstitution(p); return }
     setRekonstitutionDontAsk(false); setRekonstitutionTarget(p)
   }
   const doRekonstitution = async (p: Peptide) => {
@@ -475,7 +477,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const confirmRekonstitution = () => {
     if (!rekonstitutionTarget) return
-    if (rekonstitutionDontAsk) localStorage.setItem('_skip_rekonstitution', '1')
+    if (rekonstitutionDontAsk) writeLocalFlag('_skip_rekonstitution')
     doRekonstitution(rekonstitutionTarget)
   }
 
@@ -594,10 +596,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // cycles, dose_escalations, vials, reviews werden per CASCADE mit entfernt.
   const hardDeletePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
-    await Promise.all(['dose_logs', 'injection_logs', 'effects'].map(table => (
-      supabase.from(table).delete().eq('stack_item_id', p.id)
-    )))
-    await deleteStackItem(supabase as never, p.id)
+    try {
+      // Scheitert eines davon, bleibt der Eintrag stehen: sonst blieben die
+      // Protokolle ohne Zuordnung zurueck und waeren nicht mehr zu loeschen.
+      const ergebnisse = await Promise.all(['dose_logs', 'injection_logs', 'effects'].map(table => (
+        supabase.from(table).delete().eq('stack_item_id', p.id)
+      )))
+      const fehler = ergebnisse.find(ergebnis => ergebnis.error)?.error
+      if (fehler) throw fehler
+      await deleteStackItem(supabase as never, p.id)
+    } catch (error) {
+      reportError(error, 'my-stack.hard-delete')
+      toast.error(t('error'))
+      setDeletingPeptide(false)
+      return
+    }
     toast.success(t('geloescht'))
     setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
@@ -949,7 +962,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         })
         mutation.mutation.committed = true
       }
-      await reloadTimelinesAndPeptides()
+      await reloadTimelinesAndPeptides({ quiet: true })
       lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
     }} />
   ) : (
@@ -957,7 +970,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       key={timeline.cycle.id}
       timeline={timeline}
       syringe={syringeOf(p)}
-      now={new Date()}
       timeZone={timeZone}
       onAdjustPlan={() => openEditCycle(p, timeline.cycle.id)}
       onAddStep={(version, dates) => openAddPlanStep(p, timeline, version, dates)}

@@ -17,7 +17,7 @@ import { StageFit } from '../components/StageFit'
 import { StackStage } from '../components/StackStage'
 import { getDosageForm } from '../lib/dosageForms'
 import { getStableStackItemColor } from '../lib/colors'
-import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct } from './model'
+import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct, expiryText } from './model'
 import { AddStageTile } from './stackTiles'
 import { VialPositionRow } from './VialPositionRow'
 
@@ -112,16 +112,10 @@ export function VialCarousel({
                 </span>
               ) : (() => {
                 const days = expiryDaysLeft(activePeptide)
-                const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days >= 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
                 const expiryLabel = days === null
                   ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                  : days > 1
-                    ? t('haltbar_noch_n', { n: days })
-                    : days === 1
-                      ? t('haltbar_noch_1')
-                      : days === 0
-                        ? t('my_stack_expires_today')
-                        : t('abgelaufen_warn')
+                  : expiryText(t, days)
                 const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
 
                 return (

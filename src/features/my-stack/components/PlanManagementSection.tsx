@@ -25,10 +25,12 @@ import {
   versionSlots,
 } from '../lib/planLabels'
 import { denyProps } from '../../../lib/denyFeedback'
+import { useMinuteClock } from '../lib/useMinuteClock'
 
 export interface PlanManagementSectionProps {
   timeline: CycleTimeline
-  now: Date
+  /** Fester Zeitpunkt (Tests); sonst eine Uhr, die jede Minute weiterspringt. */
+  now?: Date
   timeZone: string
   onAdjustPlan(version: CyclePlanVersion): void
   /**
@@ -96,7 +98,7 @@ function wallClockToIso(value: string, timeZone: string): string {
 
 export function PlanManagementSection({
   timeline,
-  now,
+  now: fixedNow,
   timeZone,
   onAdjustPlan,
   onAddStep,
@@ -113,20 +115,20 @@ export function PlanManagementSection({
 }: PlanManagementSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || 'de'
-  // Die Seite reicht bei jedem Rendern ein neues `now` herein — auch bei
-  // jedem Tastendruck in der Suche. Die Rechnung dahinter (die naechste
-  // Einnahme sucht bis zu einem Jahr voraus) laeuft nur neu, wenn sich Plan,
-  // Zeitzone oder die Minute aendern.
-  const minute = Math.floor(now.getTime() / 60_000)
+  // Wie PlanSummaryCard: eine Uhr je Minute, und die Rechnung dahinter —
+  // die naechste Einnahme sucht bis zu einem Jahr voraus — laeuft nur neu,
+  // wenn sich Plan, Zeitzone oder die Minute aendern, nicht bei jedem Rendern
+  // der Seite (etwa jedem Tastendruck in der Suche).
+  const now = useMinuteClock(fixedNow)
+  const minute = now.getTime()
   const { resolved, segments, nextIntake } = useMemo(() => {
-    const resolvedNow = resolveCycleAt(timeline, now, timeZone)
+    const at = new Date(minute)
+    const resolvedNow = resolveCycleAt(timeline, at, timeZone)
     return {
       resolved: resolvedNow,
-      segments: planVersionSegments(timeline, now, timeZone),
-      nextIntake: nextIntakeFor(timeline, resolvedNow.status, now, timeZone),
+      segments: planVersionSegments(timeline, at, timeZone),
+      nextIntake: nextIntakeFor(timeline, resolvedNow.status, at, timeZone),
     }
-    // `now` zaehlt nur ueber `minute`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeline, minute, timeZone])
   const currentVersion = resolved.planVersion
   const futureSegments = segments.filter(segment => segment.status === 'future')

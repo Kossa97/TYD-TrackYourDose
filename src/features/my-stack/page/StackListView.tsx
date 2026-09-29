@@ -36,6 +36,7 @@ import {
   getVialFillPct,
   INTAKE_TIME_CONFIG,
   presentedTimelines,
+  expiryText,
   type CycleView,
 } from './model'
 import { DosePlanActions } from './DosePlanActions'
@@ -185,7 +186,7 @@ export function StackListView({
                       const cls  = days > 7 ? 'text-emerald-400' : days >= 0 ? 'text-amber-400' : 'text-red-400'
                       return (
                         <p className={`text-xs mt-0.5 ${cls}`}>
-                          {days > 0 ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days })) : days === 0 ? t('my_stack_expires_today') : t('abgelaufen_warn')}
+                          {expiryText(t, days)}
                         </p>
                       )
                     })()}

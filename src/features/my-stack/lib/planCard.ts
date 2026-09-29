@@ -77,10 +77,9 @@ export function planCardSlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
 
 // Plan-Versionen speichern die Frequenz als Schluessel ('daily'); die
 // Rhythmus- und Einnahmelogik kennt die alten deutschen Texte.
-const LEGACY_FREQUENCY: Readonly<Record<string, string>> = RHYTHM_FREQUENCY
-
 export function legacyFrequency(frequency: string): string {
-  return Object.prototype.hasOwnProperty.call(LEGACY_FREQUENCY, frequency) ? LEGACY_FREQUENCY[frequency] : frequency
+  const alt: Readonly<Record<string, string>> = RHYTHM_FREQUENCY
+  return Object.prototype.hasOwnProperty.call(alt, frequency) ? alt[frequency] : frequency
 }
 
 export function versionRhythm(version: PlanScheduleSnapshot): IntakeRhythm {

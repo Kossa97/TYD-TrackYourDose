@@ -300,6 +300,26 @@ export interface CycleView {
 }
 
 /**
+ * Ein Merker im Browser-Speicher („nicht mehr fragen"). Ist der Speicher
+ * gesperrt (privater Modus, blockierte Website-Daten), wirft schon das Lesen —
+ * dann gilt der Merker als nicht gesetzt, und es wird eben wieder gefragt.
+ */
+export function readLocalFlag(key: string): boolean {
+  try { return Boolean(localStorage.getItem(key)) } catch { return false }
+}
+export function writeLocalFlag(key: string): void {
+  try { localStorage.setItem(key, '1') } catch { /* ohne Speicher: beim naechsten Mal wieder fragen */ }
+}
+
+/** Die Haltbarkeit als Text: noch n Tage, noch 1 Tag, heute, abgelaufen. */
+export function expiryText(t: (key: string, options?: Record<string, unknown>) => string, days: number): string {
+  if (days > 1) return t('haltbar_noch_n', { n: days })
+  if (days === 1) return t('haltbar_noch_1')
+  if (days === 0) return t('my_stack_expires_today')
+  return t('abgelaufen_warn')
+}
+
+/**
  * Die Zeitleisten, die eine Substanz zeigt. Muss sie ueberprueft werden
  * (`needs_review`), nur die, um die es dabei geht: laufende, kuenftige und
  * solche mit offener Zeitzonen-Frage — nicht die laengst beendeten.

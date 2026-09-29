@@ -104,12 +104,16 @@ export function useMyStackData({ stackDataClient, userId }: {
   }
   /**
    * Zeitleisten und Stack zusammen neu laden — nach einer Aenderung, die
-   * beide betrifft (Konflikt geloest, Zeitzone bestaetigt). Fehler setzen
-   * `timelineLoadError` und werden weitergeworfen.
+   * beide betrifft (Konflikt geloest, Zeitzone bestaetigt). Fehler werden
+   * weitergeworfen. Ohne `quiet` zeigt die Seite dabei Laden und Fehler an;
+   * mit `quiet` meldet nur der Aufrufer selbst (die Zeitzonen-Pruefung hat
+   * ihre eigene Fehlerzeile).
    */
-  const reloadTimelinesAndPeptides = async () => {
-    setTimelineLoading(true)
-    setTimelineLoadError(false)
+  const reloadTimelinesAndPeptides = async ({ quiet = false }: { quiet?: boolean } = {}) => {
+    if (!quiet) {
+      setTimelineLoading(true)
+      setTimelineLoadError(false)
+    }
     try {
       const [nextTimelines, nextPeptides] = await Promise.all([
         loadCycleTimelines(stackDataClient as never, requireUserId(), { includeUnavailable: true }),
@@ -118,10 +122,10 @@ export function useMyStackData({ stackDataClient, userId }: {
       setCycleTimelines(nextTimelines)
       publishPeptides(nextPeptides)
     } catch (error) {
-      setTimelineLoadError(true)
+      if (!quiet) setTimelineLoadError(true)
       throw error
     } finally {
-      setTimelineLoading(false)
+      if (!quiet) setTimelineLoading(false)
     }
   }
   const loadEscalations = async () => {

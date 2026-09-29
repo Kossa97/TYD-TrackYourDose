@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
+import { useMinuteClock } from '../lib/useMinuteClock'
 import { ChevronRight, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { localDateTimeKey, type CycleTimeline } from '../../../lib/planTimeline'
@@ -35,7 +36,6 @@ export interface PlanSummaryCardProps {
   onStartNew(): void
 }
 
-const MINUTE = 60_000
 const OPEN_BUTTON = 'flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-300/15'
 const QUIET_BUTTON = 'flex min-h-11 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 px-3 text-sm font-semibold text-slate-300 transition-colors hover:text-white'
 const TONE = {
@@ -44,17 +44,6 @@ const TONE = {
   empty: 'border-dashed border-slate-500/30 bg-slate-900/40',
   warning: 'border-amber-300/25 bg-amber-300/5',
 } as const
-
-/** Die Uhr der Karte: jede Minute neu, damit „Tag N" und die naechste Einnahme nicht stehen bleiben. */
-function useMinuteClock(fixed: Date | undefined): Date {
-  const [tick, setTick] = useState(() => Date.now())
-  useEffect(() => {
-    if (fixed) return
-    const timer = window.setInterval(() => setTick(Date.now()), MINUTE)
-    return () => window.clearInterval(timer)
-  }, [fixed])
-  return fixed ?? new Date(Math.floor(tick / MINUTE) * MINUTE)
-}
 
 /**
  * Der Plan in Kurzform, oben im Vollbild: was gerade gilt, wann die naechste
