@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790616847.6918497,
-    "seen": 1790617005.1851485,
-    "ast_hash": "7b602cdea7097fc61d390327336cf667",
+    "mtime": 1790651266.4179113,
+    "seen": 1790651644.596408,
+    "ast_hash": "9e2c19c4802719c58ad575865de4df14",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3360,9 +3360,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanManagementSection.tsx": {
-    "mtime": 1790548337.1351857,
-    "seen": 1790548598.2987905,
-    "ast_hash": "d18ed8ad7508fe962e6b8d9b130c44e9",
+    "mtime": 1790651329.8717182,
+    "seen": 1790651644.5964274,
+    "ast_hash": "f3d831833958100498505c7458aec136",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790616916.7975025,
-    "seen": 1790617005.1863356,
+    "mtime": 1790651501.9556553,
+    "seen": 1790651644.5968356,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5316,9 +5316,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.ts": {
-    "mtime": 1790561801.0625088,
-    "seen": 1790562031.7382462,
-    "ast_hash": "13264a617875db11464c2ede392bc77c",
+    "mtime": 1790651419.781747,
+    "seen": 1790651644.5965328,
+    "ast_hash": "916c4ecc3eb95248c7168bcb48d321f5",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/localDays.ts": {
@@ -5616,9 +5616,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/LegacyCycleManager.tsx": {
-    "mtime": 1790611460.4594636,
-    "seen": 1790612388.5239475,
-    "ast_hash": "9cd44c0c1969e8d1e348c4405b8bef72",
+    "mtime": 1790651088.009421,
+    "seen": 1790651644.5965576,
+    "ast_hash": "f5b0fdfd8d05aa555fee819ed715cd7a",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/MyStackHeader.tsx": {
@@ -5628,9 +5628,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/PlanOverviewSheet.tsx": {
-    "mtime": 1790611849.7257214,
-    "seen": 1790612388.5239494,
-    "ast_hash": "0ec4dfa219dd5b441694d32a2a745e5d",
+    "mtime": 1790651144.25904,
+    "seen": 1790651644.5965593,
+    "ast_hash": "fc3eb5f3175354bcde8b800706f72a6c",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/RekonstitutionDialog.tsx": {
@@ -5640,9 +5640,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackListView.tsx": {
-    "mtime": 1790611781.7402155,
-    "seen": 1790612388.5239513,
-    "ast_hash": "fcd3d3a2eac6d410b7f701d9b0af262f",
+    "mtime": 1790651139.9613109,
+    "seen": 1790651644.5965612,
+    "ast_hash": "19eff2e030568cd3bbc898bb35d3340f",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackTabBar.tsx": {
@@ -5664,9 +5664,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialCarousel.tsx": {
-    "mtime": 1790612899.4711864,
-    "seen": 1790613115.1072135,
-    "ast_hash": "0c11cc8bb65d5bf5ab6a29ec09e54b44",
+    "mtime": 1790651225.1466522,
+    "seen": 1790651644.5965643,
+    "ast_hash": "7137d1b2181ecb1adf04ebd770a8e204",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialPositionRow.tsx": {
@@ -5676,9 +5676,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/model.ts": {
-    "mtime": 1790612899.4818342,
-    "seen": 1790613115.1072168,
-    "ast_hash": "e244116768390f056b5bd66b635f47ef",
+    "mtime": 1790651419.7836957,
+    "seen": 1790651644.5965657,
+    "ast_hash": "50f834c3bf8087a05903a26c2584c336",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/stackTiles.tsx": {
@@ -5688,9 +5688,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/useMyStackData.ts": {
-    "mtime": 1790612899.470969,
-    "seen": 1790613115.1072192,
-    "ast_hash": "a857f069794167187d9e90329c4508f2",
+    "mtime": 1790651225.1463308,
+    "seen": 1790651644.5965676,
+    "ast_hash": "cd29d5d4bad7cced00212697e7bb97d1",
     "semantic_hash": ""
   },
   "src/features/rechner/lib/medicalUnits.test.ts": {
