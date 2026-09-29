@@ -1237,6 +1237,7 @@
   "due_open_count": "待确认 {{n}} 次",
   "due_confirm_with_injection": "以注射记录",
   "all_intakes_logged": "这一天的记录已完整。",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "重新打开",
   "dose_reopen_success": "已重新打开该次服用",
   "due_dose_override": "仅此次调整剂量",

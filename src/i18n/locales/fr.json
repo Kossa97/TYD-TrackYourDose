@@ -1238,6 +1238,7 @@
   "due_open_count": "{{n}} en attente",
   "due_confirm_with_injection": "Suivre avec injection",
   "all_intakes_logged": "Tout est consigné pour cette journée.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Rouvrir",
   "dose_reopen_success": "Prise rouverte",
   "due_dose_override": "Modification ponctuelle de la dose",

@@ -1238,6 +1238,7 @@
   "due_open_count": "{{n}} belum",
   "due_confirm_with_injection": "Lacak dengan suntikan",
   "all_intakes_logged": "Semua sudah tercatat untuk hari ini.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Buka lagi",
   "dose_reopen_success": "Asupan dibuka lagi",
   "due_dose_override": "Perubahan dosis sekali",

@@ -1238,6 +1238,7 @@
   "due_open_count": "{{n}} in sospeso",
   "due_confirm_with_injection": "Traccia con iniezione",
   "all_intakes_logged": "Tutto è registrato per questo giorno.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Riapri",
   "dose_reopen_success": "Assunzione riaperta",
   "due_dose_override": "Modifica una tantum della dose",

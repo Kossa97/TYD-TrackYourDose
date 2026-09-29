@@ -981,6 +981,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const genommeneSlots = FEATURES.planTimelineV2 && standHeute
     ? standHeute.genommen
     : completedDaySlots
+  const incompletePastDay = isPastSelected && totalDaySlots > 0 && genommeneSlots < totalDaySlots
   const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
   const dueRoutineGroups = groupRoutineIntakes(dueSlots.map(slot => {
     const trackingLevel = slot.cycle.stack_items?.tracking_level ?? 'complete'
@@ -2259,19 +2260,24 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         )}
 
-        {/* Alles bestätigt: eine Quittung, kein leeres Feld. */}
+        {/* Keine offenen Slots: den Tag nach bestätigten Einnahmen bewerten. */}
         {dueSlots.length === 0 && totalDaySlots > 0 && (!FEATURES.planTimelineV2 || timelineReady) && (
           <div
             data-due-receipt
             className="mb-3 flex flex-col items-center gap-2.5 rounded-2xl border p-6 text-center"
-            style={{ borderColor: 'rgba(16,185,129,0.24)', background: 'linear-gradient(160deg, rgba(16,185,129,0.10), var(--surface) 62%)' }}
+            style={incompletePastDay
+              ? { borderColor: 'rgba(239,68,68,0.35)', background: 'linear-gradient(160deg, rgba(239,68,68,0.12), var(--surface) 62%)' }
+              : { borderColor: 'rgba(16,185,129,0.24)', background: 'linear-gradient(160deg, rgba(16,185,129,0.10), var(--surface) 62%)' }}
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15">
-              <Check size={24} className="text-emerald-300" aria-hidden="true" />
+            <span className={`flex h-12 w-12 items-center justify-center rounded-full ${incompletePastDay ? 'bg-red-500/15' : 'bg-emerald-500/15'}`}>
+              {incompletePastDay
+                ? <X size={24} className="text-red-300" aria-hidden="true" />
+                : <Check size={24} className="text-emerald-300" aria-hidden="true" />}
             </span>
             <h3 className="text-xl font-black tracking-[-0.035em] text-white">
-              {/* „Alle bestaetigt" stimmt nur, wenn auch alle genommen wurden. */}
-              {genommeneSlots === totalDaySlots
+              {incompletePastDay
+                ? t('calendar_day_incomplete', { defaultValue: 'Dieser Tag ist nicht vollständig protokolliert.' })
+                : genommeneSlots === totalDaySlots
                 ? t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })
                 : t('all_intakes_logged', { defaultValue: 'Für diesen Tag ist alles protokolliert.' })}
             </h3>
@@ -2321,10 +2327,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             <button
               type="button"
               onClick={() => setCompletedExpanded(expanded => !expanded)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 text-left transition-colors hover:bg-emerald-500/10"
+              className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${incompletePastDay && genommeneSlots === 0
+                ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'
+                : 'border-emerald-500/15 bg-emerald-500/5 hover:bg-emerald-500/10'}`}
             >
               <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-emerald-300/80">
+                <p className={`text-[10px] font-extrabold uppercase tracking-[0.14em] ${incompletePastDay && genommeneSlots === 0 ? 'text-red-300/80' : 'text-emerald-300/80'}`}>
                   {t('completed_intakes_title', { defaultValue: 'Bereits protokolliert' })}
                 </p>
                 <p className="text-xs text-slate-500">
@@ -2332,12 +2340,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-300">
+                <span className={`rounded-full border px-2 py-1 text-xs font-bold ${incompletePastDay && genommeneSlots === 0
+                  ? 'border-red-500/20 bg-red-500/10 text-red-300'
+                  : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'}`}>
                   {confirmedLogsSorted.length}
                 </span>
                 <ChevronDown
                   size={16}
-                  className={`text-emerald-300/80 transition-transform duration-200 ${completedExpanded ? 'rotate-180' : ''}`}
+                  className={`${incompletePastDay && genommeneSlots === 0 ? 'text-red-300/80' : 'text-emerald-300/80'} transition-transform duration-200 ${completedExpanded ? 'rotate-180' : ''}`}
                 />
               </div>
             </button>

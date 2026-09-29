@@ -1472,6 +1472,7 @@
   "due_open_count": "{{n}} open",
   "due_confirm_with_injection": "Track with injection",
   "all_intakes_logged": "Everything is logged for this day.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Reopen",
   "dose_reopen_success": "Intake reopened",
   "due_dose_override": "One-time dose change",

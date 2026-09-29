@@ -51,7 +51,9 @@ const pageMocks = vi.hoisted(() => {
 vi.mock('../lib/supabase', () => ({ supabase: pageMocks.supabase }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: pageMocks.user }) }))
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key }),
+  useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string; [name: string]: string | number | undefined }) => (
+    (options?.defaultValue ?? key).replace(/{{(\w+)}}/g, (_, name: string) => String(options?.[name] ?? ''))
+  ) }),
 }))
 vi.mock('react-hot-toast', () => ({ default: pageMocks.toast }))
 
@@ -882,16 +884,40 @@ describe('Dashboard normalized timeline path', () => {
         cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
         routine_slot_key: 'zyklus-zwei@2026-09-18T08:00' },
     ]
+    vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
+    fireEvent.click(document.querySelector('[data-calendar-date="2026-09-18"]') as HTMLElement)
     await waitFor(() => expect(screen.getAllByRole('status')
       .some(element => element.textContent?.includes('Lädt'))).toBe(false))
 
     // Beide entschieden, aber nur eine genommen: die Zelle zeigt halb …
     await waitFor(() => expect(tagesBalken('2026-09-18')).toBe('50%'))
-    // … und die Quittung behauptet nicht, alles sei bestätigt worden.
+    // … und die Tagesmeldung behauptet nicht, alles sei bestätigt worden.
     expect(screen.queryByText('Alle geplanten Einnahmen sind bestätigt.')).toBeNull()
-    expect(screen.getByText('Für diesen Tag ist alles protokolliert.')).toBeTruthy()
+    expect(screen.getByText('Dieser Tag ist nicht vollständig protokolliert.')).toBeTruthy()
+    expect(screen.getByText('1 von 2 bestätigt')).toBeTruthy()
+  })
+
+  it('zeigt einen vergangenen Tag ohne bestätigte Einnahme rot mit X statt grünem Haken', async () => {
+    const fixtures = zweiSlotsFixture()
+    fixtures.dose_logs = [
+      { ...pendingLog(), taken: false, routine_slot_key: 'timeline-cycle@2026-09-18T08:00' },
+      { ...pendingLog(), id: 'pending-abend', taken: false,
+        routine_slot_key: 'timeline-cycle@2026-09-18T20:00' },
+    ]
+    vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    renderDashboard(createDashboardClient(fixtures, undefined, { filterLogs: true }))
+    fireEvent.click(document.querySelector('[data-calendar-date="2026-09-18"]') as HTMLElement)
+
+    const receipt = await screen.findByText('Dieser Tag ist nicht vollständig protokolliert.')
+    const card = receipt.closest('[data-due-receipt]') as HTMLElement
+    expect(card).toBeTruthy()
+    expect(card.textContent).toContain('0 von 2 bestätigt')
+    expect(card.querySelector('.lucide-x')).toBeTruthy()
+    expect(card.querySelector('.lucide-check')).toBeNull()
+    expect(card.style.borderColor).toBe('rgba(239, 68, 68, 0.35)')
+    expect(screen.getByRole('button', { name: /Bereits protokolliert/ }).className).toContain('border-red-500')
   })
 
   it('beantwortet einen geladenen Tag sofort und wartet nur auf einen ungeladenen', async () => {

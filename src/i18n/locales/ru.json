@@ -1240,6 +1240,7 @@
   "due_open_count": "{{n}} не отмечено",
   "due_confirm_with_injection": "Отметить с инъекцией",
   "all_intakes_logged": "За этот день всё записано.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Открыть снова",
   "dose_reopen_success": "Приём снова открыт",
   "due_dose_override": "Разовое изменение дозы",

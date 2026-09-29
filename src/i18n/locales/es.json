@@ -1238,6 +1238,7 @@
   "due_open_count": "{{n}} pendientes",
   "due_confirm_with_injection": "Registrar con inyección",
   "all_intakes_logged": "Todo está registrado para este día.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Volver a abrir",
   "dose_reopen_success": "Toma reabierta",
   "due_dose_override": "Cambio de dosis puntual",

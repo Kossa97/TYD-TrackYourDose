@@ -1238,6 +1238,7 @@
   "due_open_count": "未記録 {{n}} 件",
   "due_confirm_with_injection": "注射として記録",
   "all_intakes_logged": "この日はすべて記録済みです。",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "記録を取り消す",
   "dose_reopen_success": "記録を取り消しました",
   "due_dose_override": "今回だけ用量を変更",

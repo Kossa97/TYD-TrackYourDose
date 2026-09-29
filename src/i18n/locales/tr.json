@@ -1238,6 +1238,7 @@
   "due_open_count": "{{n}} bekliyor",
   "due_confirm_with_injection": "Enjeksiyonla takip et",
   "all_intakes_logged": "Bu gün için her şey kayıtlı.",
+  "calendar_day_incomplete": "This day is not fully logged.",
   "dose_reopen": "Yeniden aç",
   "dose_reopen_success": "Doz yeniden açıldı",
   "due_dose_override": "Tek seferlik doz değişikliği",
