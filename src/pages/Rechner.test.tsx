@@ -75,8 +75,10 @@ it('imports concentration references without inventing container contents and cl
   fireEvent.change(picker, { target: { value: option.value } })
   expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('2.5')
   expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).value).toBe('')
-  const missing = within(picker).getByRole('option', { name: /Ohne Flüssigkeit/ }) as HTMLOptionElement
-  fireEvent.change(picker, { target: { value: missing.value } })
+  fireEvent.click(screen.getByRole('button', { name: 'Substanz lösen' }))
+  const nextPicker = screen.getByLabelText('Aus deinen Substanzen')
+  const missing = within(nextPicker).getByRole('option', { name: /Ohne Flüssigkeit/ }) as HTMLOptionElement
+  fireEvent.change(nextPicker, { target: { value: missing.value } })
   expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('')
 })
 
@@ -93,8 +95,10 @@ it('offers saved ampoules and IU vials from My Stack as calculator sources', asy
   expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('250')
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('mg')
 
-  const iuVial = within(picker).getByRole('option', { name: 'HCG' }) as HTMLOptionElement
-  fireEvent.change(picker, { target: { value: iuVial.value } })
+  fireEvent.click(screen.getByRole('button', { name: 'Substanz lösen' }))
+  const nextPicker = screen.getByLabelText('Aus deinen Substanzen')
+  const iuVial = within(nextPicker).getByRole('option', { name: 'HCG' }) as HTMLOptionElement
+  fireEvent.change(nextPicker, { target: { value: iuVial.value } })
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('5000')
   expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('iu')
 })
@@ -300,4 +304,66 @@ it('retains equivalent solution data across source modes and resets the whole fo
   expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('')
   expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('')
   expect(screen.queryByRole('meter')).toBeNull()
+})
+
+it('locks imported composition until explicitly released while withdrawal and syringe remain editable', async () => {
+  mocks.load.mockResolvedValue([{ id: 'saved', display_name: 'Gespeicherte Lösung', dosage_form: 'vial', archived: false,
+    ingredients: [], vial_amount_mg: 10, reconstitution_ml: 2 }])
+  setup()
+  const picker = await screen.findByLabelText('Aus deinen Substanzen')
+  picker.focus()
+  fireEvent.change(picker, { target: { value: 'saved' } })
+  expect(screen.queryByLabelText('Aus deinen Substanzen')).toBeNull()
+  expect(screen.getByText('Gespeicherte Lösung')).toBeTruthy()
+  expect(document.activeElement).toBe(screen.getByRole('group', { name: 'Gespeicherte Lösung' }))
+  for (const label of ['Wirkstoffmenge im Behälter', 'Gesamtvolumen der Lösung (mL)']) {
+    expect((screen.getByLabelText(label) as HTMLInputElement).readOnly).toBe(true)
+  }
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: 'Konzentration bekannt' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: '3 mL' }) as HTMLButtonElement).disabled).toBe(true)
+  // Guard all mutation paths, including a dispatched change on a read-only field.
+  enter('Wirkstoffmenge im Behälter', '20')
+  enter('Gesamtvolumen der Lösung (mL)', '3')
+  enter('Einheit der Wirkstoffmenge', 'g')
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('10')
+  expect((screen.getByLabelText('Gesamtvolumen der Lösung (mL)') as HTMLInputElement).value).toBe('2')
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).value).toBe('mg')
+  enter('Gewünschte Menge', '500')
+  enter('Spritzengröße', '1:40')
+  expect(screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' }).textContent).toContain('0,1 mL')
+  screen.getByRole('button', { name: 'Substanz lösen' }).focus()
+  fireEvent.click(screen.getByRole('button', { name: 'Substanz lösen' }))
+  expect(document.activeElement).toBe(screen.getByLabelText('Aus deinen Substanzen'))
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).readOnly).toBe(false)
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('10')
+  expect((screen.getByLabelText('Gewünschte Menge') as HTMLInputElement).value).toBe('500')
+  expect((screen.getByLabelText('Einheit der Wirkstoffmenge') as HTMLSelectElement).disabled).toBe(false)
+  enter('Wirkstoffmenge im Behälter', '5')
+  expect(screen.getByRole('status', { name: 'Berechnetes Aufziehvolumen' }).textContent).toContain('0,2 mL')
+})
+
+it('locks reference concentration and empty container until released without inventing missing values', async () => {
+  mocks.load.mockResolvedValue([{ id: 'reference', display_name: 'Referenz', dosage_form: 'ampoule', archived: false,
+    ingredients: [{ id: 'i', amount_value: 250, amount_unit: 'mg', basis_value: 1, basis_unit: 'ml' }] }])
+  setup()
+  fireEvent.change(await screen.findByLabelText('Aus deinen Substanzen'), { target: { value: 'reference' } })
+  expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).readOnly).toBe(true)
+  expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).readOnly).toBe(true)
+  expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).value).toBe('')
+  fireEvent.click(screen.getByRole('button', { name: 'Substanz lösen' }))
+  expect((screen.getByLabelText('Konzentration laut Etikett') as HTMLInputElement).value).toBe('250')
+  enter('Inhalt des Behälters (mL, optional)', '2')
+  expect((screen.getByLabelText('Inhalt des Behälters (mL, optional)') as HTMLInputElement).value).toBe('2')
+})
+
+it('reset releases a selected substance and clears the imported values', async () => {
+  mocks.load.mockResolvedValue([{ id: 'saved', display_name: 'Lösung', dosage_form: 'vial', archived: false,
+    ingredients: [], vial_amount_mg: 10, reconstitution_ml: 2 }])
+  setup()
+  fireEvent.change(await screen.findByLabelText('Aus deinen Substanzen'), { target: { value: 'saved' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Zurücksetzen' }))
+  expect(screen.queryByRole('button', { name: 'Substanz lösen' })).toBeNull()
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).readOnly).toBe(false)
+  expect((screen.getByLabelText('Wirkstoffmenge im Behälter') as HTMLInputElement).value).toBe('')
 })
