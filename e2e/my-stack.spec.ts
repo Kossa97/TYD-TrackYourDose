@@ -150,6 +150,22 @@ test('Reiter wechseln: der aktive Eintrag bleibt, wo er dabei ist — und steht 
   await expect(stageObject(page, 'HCG')).toBeInViewport({ ratio: 0.9 })
 })
 
+test('Karussell: nur sichtbare Vials lassen Blasen aufsteigen', async ({ page, mock }) => {
+  // Die Blasen sind SMIL-Animationen und kosteten, fuer alle Vials zugleich,
+  // im Ruhezustand mehr Stilberechnung als alles andere auf der Seite.
+  for (const name of ['BPC-157', 'CJC-1295', 'GHK-Cu', 'Ipamorelin', 'KPV', 'TB-500']) {
+    seedPeptide(mock, name, { startDate: '2026-09-01' })
+  }
+  await page.goto('/my-stack')
+  const blasen = (index: number) => page.locator(`[data-vial-index="${index}"] animateTransform`).count()
+  await expect.poll(() => blasen(0)).toBeGreaterThan(0)
+  await expect.poll(() => blasen(5)).toBe(0)
+
+  await page.locator('[data-vial-index="5"]').evaluate(el => el.scrollIntoView({ inline: 'center', block: 'nearest' }))
+  await expect.poll(() => blasen(5)).toBeGreaterThan(0)
+  await expect.poll(() => blasen(0)).toBe(0)
+})
+
 test('Speichern scheitert: Meldung mit Grund, Assistent bleibt offen, nichts angelegt', async ({ page, mock }) => {
   mock.onRpc('save_stack_item_with_plan', () => {
     throw new RpcError('Another open cycle exists')

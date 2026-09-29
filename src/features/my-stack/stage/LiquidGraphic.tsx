@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
 import { useSloshSubscribe } from '../../../components/SloshContext'
@@ -75,6 +75,15 @@ export function LiquidGraphic({
   const highlightShift = seedLightOffset * 10
   const geom = buildLiquid({ fill, tilt, chamberAspect })
 
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  // Nur was auf dem Bildschirm steht, bewegt sich. Im Karussell stehen zehn
+  // Vials nebeneinander; jedes zeichnete seine Oberflaeche in jedem Bild neu
+  // (ein Dutzend SVG-Aenderungen) und liess zehn SMIL-Animationen fuer die
+  // Blasen laufen — auch die seitlich ausgerollten. Die Blasen allein kosteten
+  // im Ruhezustand mehr Stilberechnung als alles andere zusammen, und Chrome
+  // rechnet SMIL auch pausiert weiter: sie werden ausserhalb nicht gerendert.
+  const visibleRef = useRef(true)
+  const [visible, setVisible] = useState(true)
   const bodyRef = useRef<SVGPathElement | null>(null)
   const surfaceRef = useRef<SVGPathElement | null>(null)
   const glowRef = useRef<SVGPathElement | null>(null)
@@ -90,6 +99,7 @@ export function LiquidGraphic({
 
   const draw = useCallback(
     (s: SloshState) => {
+      if (!visibleRef.current) return
       const stage = stageRef.current
       const stageFocus = stage.focus
       const stageShift = stage.lightOffset * 10
@@ -131,6 +141,23 @@ export function LiquidGraphic({
   }, [subscribe, draw])
 
   useEffect(() => {
+    const target = svgRef.current
+    if (!target || typeof IntersectionObserver === 'undefined') return
+    // Etwas Vorlauf, damit ein hereinrollendes Vial schon lebt, wenn es
+    // sichtbar wird. Das naechste Bild der Maschine zeichnet es dann.
+    const observer = new IntersectionObserver(
+      entries => {
+        const sichtbar = entries[entries.length - 1]?.isIntersecting ?? true
+        visibleRef.current = sichtbar
+        setVisible(sichtbar)
+      },
+      { rootMargin: '0px 50% 0px 50%' },
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
     const previousFill = previousFillRef.current
     if (Math.abs(previousFill - fill) < 0.001) return
 
@@ -162,6 +189,7 @@ export function LiquidGraphic({
 
   return (
     <svg
+      ref={svgRef}
       data-vial-detail="liquid-graphic"
       x={x}
       y={y}
@@ -244,7 +272,7 @@ export function LiquidGraphic({
     <rect ref={refractLeftRef} x={5 + seedLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + seedFocus * 0.22} />
     <rect ref={refractRightRef} x={99 + seedLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + seedFocus * 0.16} />
     <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
-    {bubbles && !reducedMotion && LIQUID_BUBBLES.map((b, i) => (
+    {bubbles && !reducedMotion && visible && LIQUID_BUBBLES.map((b, i) => (
     <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
       <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
       <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.18;0.72;1" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
