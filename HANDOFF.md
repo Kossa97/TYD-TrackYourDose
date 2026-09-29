@@ -9,7 +9,7 @@
 
 ## Betrieb (Stand 29.09.2026)
 
-- **Fehler-Monitoring: Sentry**, Organisation `devin-koslowski`, Projekt `javascript-react`, Region EU (`de.sentry.io`). `VITE_SENTRY_DSN` und `SENTRY_AUTH_TOKEN` stehen in Vercel. Filter vor dem Senden: `src/lib/monitoring.ts` (nur bekannte Fehlertexte, keine Nutzerdaten). IP-Speicherung in Sentry ausgeschaltet. Source-Maps lädt der Build hoch (`vite.config.ts`) und löscht sie danach. Der Sentry-Connector ist mit Claude verbunden: „schau in Sentry" genügt.
+- **Fehler-Monitoring: Sentry**, Organisation `devin-koslowski`, Projekt `javascript-react`, Region EU (`de.sentry.io`). `VITE_SENTRY_DSN` und `SENTRY_AUTH_TOKEN` stehen in Vercel. Filter vor dem Senden: `src/lib/monitoring.ts` (nur bekannte Fehlertexte, keine Nutzerdaten; bei Updates des Sentry-Pakets prüfen, ob neue Standardwerte Daten sammeln). IP-Speicherung in Sentry ausgeschaltet. Source-Maps lädt der Build hoch (`vite.config.ts`) und löscht sie danach. Der Sentry-Connector ist mit Claude verbunden: „schau in Sentry" genügt.
 - **Gerätetests:** `npm run test:e2e` (Playwright, iPhone 13/SE, Pixel 7, nachgebildetes Supabase in `e2e/support/`). Laufen bei jedem Push als GitHub Action (`.github/workflows/e2e.yml`).
 
 ## 0. Projektstatus
@@ -20,7 +20,15 @@
 
 **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
 
-Neu in dieser Session (2. Juli 2026) — **PDF-Generator komplett neu**:
+Neu in dieser Session (September 2026) — **My Stack stabil, Monitoring, Gerätetests**:
+- **My Stack aufgeteilt:** `MyStackPage` in kleinere Teile zerlegt, Zyklus-Aktionen gebündelt, Doppeltes entfernt.
+- **Sentry** (Paket `@sentry/react` v11): Filter in `src/lib/monitoring.ts` lässt nur bekannte Fehlertexte durch; unbekannte Schlüssel werden zu „…". v11 sammelt standardmäßig Nutzerdaten — deshalb steht `dataCollection` dort ausdrücklich auf aus. Kein Ort, keine IP. Berichte tragen Browser und Betriebssystem als Tags, React-Abstürze gelten als „nicht behandelt".
+- **Gerätetests:** Playwright gegen ein nachgebildetes Supabase (`e2e/support/mockSupabase.ts`, feste Uhrzeit). Abgedeckt: Anlegen, Bearbeiten, Planwechsel, Archivieren, Tabs, Speicherfehler, veraltete Version. Neue Tabellen oder RPCs, die My Stack liest, müssen dort nachgetragen werden, sonst scheitern die Tests.
+- **Veraltete Version nach Deployment** (Sentry JAVASCRIPT-REACT-2, Kalender-Absturz): Der Service Worker (`src/sw.ts`) übernimmt neue Versionen sofort und löscht den alten Cache — die alte Seite fand ihre Programmteile nicht mehr. Lösung in `src/lib/staleChunkReload.ts`: nach einer Übernahme lädt die App beim nächsten Seitenwechsel neu (`ReloadOnUpdate`); scheitert trotzdem ein Nachladen, einmal neu laden (`lazyPage`). ⚠️ Neue Seiten in `App.tsx` immer über `lazyPage(() => import(...), 'Name')`, nie mit bloßem `lazy()`.
+- **Karussell:** nur sichtbare Vials animieren (IntersectionObserver, Wurzel ist der Streifen) — spart Akku.
+- **Datumsanzeige:** My Stack zeigt Daten in der Sprache der Oberfläche statt fest TT.MM.JJJJ. Die Formatierer werden je Zeitzone zwischengespeichert (`src/lib/planTimeline.ts`); ein Test zählt, dass es dabei bleibt (`intakeSchedule.test.ts`).
+
+Neu in Session davor (2. Juli 2026) — **PDF-Generator komplett neu**:
 - **Weg vom Screenshot, hin zu nativem Text-PDF.** Alt: html2canvas-Screenshot des dunklen Dashboards (Rasterbild, nicht markierbar, mehrere MB). Neu: `src/lib/protocolPdf/` — helles, druckfertiges A4-Dokument mit markierbarem Text (jsPDF + `jspdf-autotable` + vektorgezeichnete Charts). Beispiel-Report: 4 Seiten, ~76 KB.
 - **Freie Section-Auswahl:** Neues Modal `src/components/ProtocolPdfModal.tsx` — Nutzer hakt ab, was ins PDF kommt (leere Sektionen ausgegraut). Sektionen: Persönliche Angaben · Zusammenfassung · Protokoll/Zyklen · Einnahmetreue · Blutwerte · Gewichtsverlauf · Wohlbefinden · Wirkungen & Nebenwirkungen · Bewertungen · Notizen/Fragen (+ Disclaimer immer).
 - **Anonymisierung ohne Extra-Feature:** „Persönliche Angaben" abwählen ⇒ Deckblatt + Kopfzeile zeigen „Anonym" (Forum-Use-Case). Verifiziert.
@@ -593,6 +601,7 @@ peptide_library-Felder:
 | Karte überdeckt Eingabefeld | Immer `snap='top'` bei modalen Schritten | Jetzt dynamisch: `fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'` |
 | Karte bleibt bei Resize | `targetRect=null` → kein State-Change → kein Recompute | `viewportKey` State, inkrementiert bei `resize` |
 | Vercel schwarzer Screen / MIME-Fehler | `rewrites: [{ source: "/(.*)", destination: "/index.html" }]` fängt JS-Assets ab → Browser bekommt HTML statt JS | `routes` mit `{ "handle": "filesystem" }` zuerst, dann SPA-Fallback. Außerdem alten Service Worker in DevTools deregistrieren (cached bad response) |
+| Weißer Bildschirm / „Failed to fetch dynamically imported module“ nach Deployment | Alte Seite lädt Programmteil, den der neue Service Worker gelöscht hat | `lazyPage` + `ReloadOnUpdate` (`src/lib/staleChunkReload.ts`) — neue Seiten nur über `lazyPage` einbinden |
 | Push rejected | Remote hat neuere Commits | `git pull --rebase origin main` |
 | App startet nicht (Windows) | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
 
@@ -624,4 +633,4 @@ location.reload()
 
 ---
 
-*Zuletzt aktualisiert: 23. Mai 2026 — Protokoll-Redesign (Biohacking-Dashboard, 2 Charts, KPI-Strip, Preset-Chips), Health-Seite (BMI, Körperfett, Idealgewicht), Profil-Bereinigung (Gesundheitsdaten ausgelagert), Test-Account vollständig geseedet (6 Monate), Vercel-MIME-Fix (vercel.json routes), bloodwork + weight_logs Tabellen. Offene Tickets: Peptipedia nicht i18n-fertig; Protokoll-Redesign dem User nicht gefallen → ggf. überarbeiten.*
+*Zuletzt aktualisiert: 29. September 2026 — My Stack aufgeteilt, Sentry v11 mit Datenfilter, Gerätetests bei jedem Push, Absturz nach Deployment behoben (lazyPage/ReloadOnUpdate), Karussell spart Akku, Datumsanzeige je Sprache.*
