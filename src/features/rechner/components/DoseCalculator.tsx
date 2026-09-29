@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlaskConical, RotateCcw, Syringe } from 'lucide-react'
+import { FlaskConical, LockKeyhole, RotateCcw, Syringe, X } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { supabase } from '../../../lib/supabase'
+import { flashDeny } from '../../../lib/denyFeedback'
 import { loadStackItems, type StackItemQueryClient } from '../../my-stack/services/stackItems'
 import { getCalculatorSources, type CalculatorSource } from '../lib/stackSources'
 import { calculateLiquid, convertLiquidValue, type LiquidValues, type LiquidUnit, type TargetUnit } from '../lib/liquidCalculation'
@@ -28,8 +29,18 @@ export function DoseCalculator() {
   const [resetVersion, setResetVersion] = useState(0)
   const [unitNotice, setUnitNotice] = useState('')
   const [selected, setSelected] = useState('')
+  const sourcePickerRef = useRef<HTMLSelectElement>(null)
+  const sourceSelectionRef = useRef<HTMLDivElement>(null)
+  const focusAfterSelection = useRef<'selection' | 'source' | null>(null)
+  const sourceLocked = selected !== ''
   const [reload, setReload] = useState(0)
   const [stack, setStack] = useState<{ owner: string; attempt: number; sources: CalculatorSource[]; error: boolean } | null>(null)
+
+  useEffect(() => {
+    if (focusAfterSelection.current === 'selection') sourceSelectionRef.current?.focus()
+    if (focusAfterSelection.current === 'source') sourcePickerRef.current?.focus()
+    focusAfterSelection.current = null
+  }, [selected])
 
   useEffect(() => {
     if (!user) return
@@ -83,10 +94,12 @@ export function DoseCalculator() {
     setValues(initialValues); setGraduation('1'); setSelected(''); setUnitNotice(''); setResetVersion(v => v + 1)
   }
   const edit = (field: NumericField, value: string) => {
+    if (sourceLocked && field !== 'target') return
     setValues(current => ({ ...current, [field]: value }))
     if (field !== 'target') setSelected('')
   }
   const changeSourceUnit = (next: LiquidUnit) => {
+    if (sourceLocked) return
     const familyChanged = (values.sourceUnit === 'iu') !== (next === 'iu')
     const convert = (value: string) => {
       const parsed = parseDecimalInput(value)
@@ -107,7 +120,7 @@ export function DoseCalculator() {
     setUnitNotice(parsed !== null && converted === null ? 'rechner_conversion_missing' : '')
   }
   const changeMode = (mode: LiquidValues['mode']) => {
-    if (mode === values.mode) return
+    if (sourceLocked || mode === values.mode) return
     const concentration = result.concentration === null ? null
       : convertLiquidValue(result.concentration, baseUnit, values.sourceUnit, null)
     const container = parseDecimalInput(values.container)
@@ -118,18 +131,29 @@ export function DoseCalculator() {
   }
   const input = (field: NumericField, suffix?: ReactNode) => <div className="rechner-field">
     <label htmlFor={`dose-${field}`}>{labels[field]}</label>
-    <div className={`rechner-input-group${suffix && typeof suffix !== 'string' ? ' rechner-input-with-unit' : ''}`}>
+    <div className={`rechner-input-group${suffix && typeof suffix !== 'string' ? ' rechner-input-with-unit' : ''}`}
+      data-source-locked={sourceLocked && field !== 'target'}
+      onClick={event => { if (sourceLocked && field !== 'target') flashDeny(event.currentTarget) }}
+      onKeyDown={event => {
+        if (sourceLocked && field !== 'target' && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          flashDeny(event.currentTarget)
+        }
+      }}>
       <input id={`dose-${field}`} type="text" inputMode="decimal" autoComplete="off" className="rechner-input"
+        readOnly={sourceLocked && field !== 'target'}
         value={values[field]} aria-invalid={Boolean(result.fieldErrors[field])}
-        aria-describedby={result.fieldErrors[field] ? `dose-${field}-error` : undefined}
+        aria-describedby={[result.fieldErrors[field] ? `dose-${field}-error` : '', sourceLocked && field !== 'target' ? 'dose-source-note' : ''].filter(Boolean).join(' ') || undefined}
         onChange={event => edit(field, event.target.value)} />
       {typeof suffix === 'string' ? <span className="rechner-input-suffix" aria-hidden="true">{suffix}</span> : suffix}
+      {sourceLocked && field !== 'target' && <LockKeyhole className="rechner-field-lock" size={15} aria-hidden="true" />}
     </div>
     {result.fieldErrors[field] && <span className="rechner-error" id={`dose-${field}-error`}>
       {t(result.fieldErrors[field] === 'numeric_range' ? 'rechner_numeric_range' : 'rechner_positive')}
     </span>}
   </div>
   const sourceUnitSelect = <select id="dose-source-unit" className="rechner-select" value={values.sourceUnit}
+    disabled={sourceLocked} aria-describedby={sourceLocked ? 'dose-source-note' : undefined}
     aria-label={t('rechner_source_unit')} onChange={event => changeSourceUnit(event.target.value as LiquidUnit)}>
     {sourceUnits.map(unit => <option key={unit} value={unit}>{unitLabel(unit)}{values.mode === 'concentration' ? '/mL' : ''}</option>)}
   </select>
@@ -171,6 +195,7 @@ export function DoseCalculator() {
         <div className="rechner-step-content">
           <div className="rechner-source-modes" role="group" aria-label={t('rechner_solution_mode')}>
             {(['amount', 'concentration'] as const).map(mode => <button key={mode} type="button"
+              disabled={sourceLocked}
               aria-pressed={mode === values.mode} onClick={() => changeMode(mode)}>{t(`rechner_mode_${mode}`)}</button>)}
           </div>
           {user && <div className="rechner-stack">
@@ -180,11 +205,23 @@ export function DoseCalculator() {
                 <button className="rechner-button" type="button" onClick={() => setReload(v => v + 1)}>{t('inj_retry')}</button>
               </div>
               : currentStack.sources.length ? <>
-                <label className="rechner-field" htmlFor="dose-source">
+                {sourceLocked ? <div ref={sourceSelectionRef} className="rechner-converter-scope rechner-stack-selection"
+                  role="group" tabIndex={-1} aria-labelledby="dose-selected-source" aria-describedby="dose-source-note">
+                  <div>
+                    <span className="rechner-converter-scope-label">{t('rechner_selected_substance')}</span>
+                    <span id="dose-selected-source" className="rechner-converter-marker"><LockKeyhole size={14} aria-hidden="true" />{source?.label}</span>
+                  </div>
+                  <button type="button" className="rechner-converter-remove" aria-label={t('rechner_release_substance')}
+                    aria-describedby="dose-selected-source" onClick={() => {
+                      focusAfterSelection.current = 'source'
+                      setSelected('')
+                    }}><X size={18} aria-hidden="true" /></button>
+                </div> : <label className="rechner-field" htmlFor="dose-source">
                   <span>{t('rechner_stack_source')}</span>
-                  <select id="dose-source" className="rechner-select" value={selected} onChange={event => {
+                  <select ref={sourcePickerRef} id="dose-source" className="rechner-select" value={selected} onChange={event => {
                     const next = currentStack.sources.find(item => item.id === event.target.value)
                     const nextSourceUnit = next?.unit ?? 'mg'
+                    focusAfterSelection.current = next ? 'selection' : null
                     setSelected(event.target.value)
                     setValues(current => {
                       const familyChanged = (current.sourceUnit === 'iu') !== (nextSourceUnit === 'iu')
@@ -203,8 +240,8 @@ export function DoseCalculator() {
                     <option value="">{t('rechner_manual')}</option>
                     {currentStack.sources.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                   </select>
-                </label>
-                <p className="rechner-muted">{t(selected ? 'rechner_source_note' : 'rechner_stack_hint')}</p>
+                </label>}
+                <p id="dose-source-note" className="rechner-muted">{t(selected ? 'rechner_source_note' : 'rechner_stack_hint')}</p>
               </> : <p className="rechner-muted">{t('rechner_stack_empty')}</p>}
           </div>}
           {input(values.mode === 'amount' ? 'amount' : 'concentration', sourceUnitSelect)}
@@ -212,6 +249,7 @@ export function DoseCalculator() {
             {input('volume', 'mL')}
             <div className="rechner-volume-presets" role="group" aria-label={t('rechner_volume_presets')}>
               {[1, 2, 3, 5].map(ml => <button type="button" key={ml} aria-pressed={parseDecimalInput(values.volume) === ml}
+                disabled={sourceLocked}
                 onClick={() => edit('volume', String(ml))}>{ml} mL</button>)}
             </div>
             <p className="rechner-muted">{t('rechner_final_volume_hint')}</p>
