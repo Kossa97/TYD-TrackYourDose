@@ -166,6 +166,25 @@ test('Karussell: nur sichtbare Vials lassen Blasen aufsteigen', async ({ page, m
   await expect.poll(() => blasen(0)).toBe(0)
 })
 
+test('Neue Version ausgeliefert: fehlender Programmteil lädt neu statt abzustürzen', async ({ page, mock }) => {
+  // So sah JAVASCRIPT-REACT-2 aus: die installierte App lief mit dem alten
+  // Stand, der Kalender-Teil war nach einem Deployment nicht mehr da.
+  seedBpc157(mock, { startDate: '2026-09-01' })
+  await page.goto('/')
+  let verweigert = 0
+  await page.route(/\/assets\/Dashboard-[\w-]+\.js$/, async route => {
+    if (verweigert++ === 0) return route.fulfill({ status: 404, body: 'gone' })
+    return route.continue()
+  })
+  const neuGeladen = page.waitForEvent('load')
+  await page.getByRole('link', { name: 'Kalender' }).click()
+  await neuGeladen
+  // Nach dem Neuladen holt die App den Kalender-Teil erneut — jetzt da.
+  await expect.poll(() => verweigert).toBe(2)
+  await expect(page).toHaveURL(/\/kalender$/)
+  await expect(page.getByRole('navigation', { name: 'Navigation' })).toBeVisible()
+})
+
 test('Speichern scheitert: Meldung mit Grund, Assistent bleibt offen, nichts angelegt', async ({ page, mock }) => {
   mock.onRpc('save_stack_item_with_plan', () => {
     throw new RpcError('Another open cycle exists')

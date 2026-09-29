@@ -98,3 +98,15 @@ describe('Monitoring — nur Bekanntes geht raus', () => {
     expect(() => reportError(new Error('x'), 'test')).not.toThrow()
   })
 })
+
+describe('Monitoring — Geräteangabe', () => {
+  it('nennt nur Browser und System mit Hauptversion', async () => {
+    const { platformTags } = await import('./monitoring')
+    expect(platformTags('Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'))
+      .toEqual({ browser: 'Safari 18', os: 'iOS 18' })
+    expect(platformTags('Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.100 Mobile Safari/537.36'))
+      .toEqual({ browser: 'Chrome 129', os: 'Android 14' })
+    expect(platformTags('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0'))
+      .toEqual({ browser: 'Firefox 131', os: 'Windows' })
+  })
+})

@@ -152,6 +152,25 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
   return scrubbed
 }
 
+/**
+ * Browser und System, grob: Name und Hauptversion („Safari 18", „iOS 18").
+ * Ohne das war nicht zu sagen, auf welchem Geraet ein Fehler auftrat — die
+ * vollstaendige Kennung (User-Agent) geht bewusst nicht mit.
+ */
+export function platformTags(userAgent: string): { browser: string; os: string } {
+  const version = (pattern: RegExp) => userAgent.match(pattern)?.[1] ?? '?'
+  const os = /iPhone|iPad|iPod/.test(userAgent) ? `iOS ${version(/OS (\d+)_/)}`
+    : /Android/.test(userAgent) ? `Android ${version(/Android (\d+)/)}`
+      : /Windows/.test(userAgent) ? 'Windows'
+        : /Mac OS X/.test(userAgent) ? 'macOS'
+          : /Linux/.test(userAgent) ? 'Linux' : 'andere'
+  const browser = /Edg\//.test(userAgent) ? `Edge ${version(/Edg\/(\d+)/)}`
+    : /(CriOS|Chrome)\//.test(userAgent) ? `Chrome ${version(/(?:CriOS|Chrome)\/(\d+)/)}`
+      : /(FxiOS|Firefox)\//.test(userAgent) ? `Firefox ${version(/(?:FxiOS|Firefox)\/(\d+)/)}`
+        : /Safari\//.test(userAgent) ? `Safari ${version(/Version\/(\d+)/)}` : 'andere'
+  return { browser, os }
+}
+
 type SentryModule = typeof import('@sentry/react')
 let sentry: SentryModule | null = null
 
@@ -185,7 +204,11 @@ export async function initMonitoring(dsn = import.meta.env.VITE_SENTRY_DSN as st
     },
     // Nur Fehler: keine Sitzungen (die gingen am beforeSend vorbei).
     integrations: defaults => defaults.filter(integration => integration.name !== 'BrowserSession'),
-    beforeSend: event => scrubEvent(event),
+    beforeSend: event => {
+      const scrubbed = scrubEvent(event)
+      scrubbed.tags = { ...scrubbed.tags, ...platformTags(navigator.userAgent) }
+      return scrubbed
+    },
     beforeBreadcrumb: breadcrumb => scrubBreadcrumb(breadcrumb),
   })
   sentry = Sentry
