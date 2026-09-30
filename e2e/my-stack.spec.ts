@@ -266,3 +266,16 @@ test('Bühne und Reiter reichen bis an den Bildschirmrand', async ({ page, mock 
   })
   expect(engsterRahmen.engster).toBe(engsterRahmen.bildschirm)
 })
+
+test('Vollbild der Substanz: der Schließen-Knopf liegt unter der Statuszeile', async ({ page, mock }) => {
+  seedBpc157(mock, { startDate: '2026-09-01' })
+  // Wie ein iPhone mit Notch: 47 px oben gehoeren der Uhr und dem Akku.
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 47, bottom: 34 } })
+  await page.goto('/my-stack')
+  await stageObject(page, 'BPC-157').click()
+  const schliessen = page.locator('[data-stage-detail]').getByRole('button', { name: 'Schließen' })
+  await expect(schliessen).toBeVisible()
+  const box = await schliessen.boundingBox()
+  expect(box?.y).toBeGreaterThanOrEqual(47)
+})

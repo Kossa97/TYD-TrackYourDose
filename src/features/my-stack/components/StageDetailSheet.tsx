@@ -107,7 +107,10 @@ export function StageDetailSheet({
       aria-label={title}
       className="fixed inset-0 z-50 flex touch-pan-y flex-col overflow-x-hidden overflow-y-auto overscroll-x-none bg-slate-950"
     >
-      <div className="flex items-center justify-end p-3">
+      {/* Das Vollbild liegt auch unter der Statuszeile des iPhones (Uhr,
+          Akku). Ohne den Abstand der Schutzzone sass der Schliessen-Knopf
+          mitten in der Akkuanzeige — die anderen Vollbilder halten ihn schon. */}
+      <div className="flex items-center justify-end pb-3 pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))] pt-[calc(0.75rem+env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={onClose}
@@ -137,7 +140,7 @@ export function StageDetailSheet({
           man dem Blick folgt statt alles auf einmal hinzuwerfen. */}
       <div
         data-stage-detail-body
-        className={`mt-4 flex-1 px-3 pb-8 transition-all duration-300 ${
+        className={`mt-4 flex-1 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] transition-all duration-300 ${
           gelandet ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
         }`}
       >
