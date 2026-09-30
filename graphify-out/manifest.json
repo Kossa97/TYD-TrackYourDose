@@ -3420,9 +3420,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageDetailSheet.tsx": {
-    "mtime": 1790474911.6167843,
-    "seen": 1790475360.926504,
-    "ast_hash": "b43ac03089ae83c4335ed3cb3c84e015",
+    "mtime": 1790755914.252613,
+    "seen": 1790756141.7440443,
+    "ast_hash": "74935e41fa0ef69b4d07d8825962fb66",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790714609.8350883,
-    "seen": 1790714796.4720051,
+    "mtime": 1790755985.43672,
+    "seen": 1790756141.7445626,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5718,9 +5718,9 @@
     "semantic_hash": ""
   },
   "e2e/my-stack.spec.ts": {
-    "mtime": 1790714732.0670955,
-    "seen": 1790714796.4708605,
-    "ast_hash": "fc26896cd457083189032a19a141a990",
+    "mtime": 1790755876.8767133,
+    "seen": 1790756141.7436218,
+    "ast_hash": "c48725a9fe278a10869058cadf8352e9",
     "semantic_hash": ""
   },
   "e2e/support/fixtures.ts": {
