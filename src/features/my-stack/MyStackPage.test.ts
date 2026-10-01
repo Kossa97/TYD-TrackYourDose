@@ -701,7 +701,8 @@ describe('My Stack page vial view', () => {
     // Karussell und Raster oeffnen das Vollbild auf demselben Weg.
     const oeffnen = text.slice(text.indexOf('const openStageDetail ='), text.indexOf('\n  }', text.indexOf('const openStageDetail =')))
     expect(oeffnen).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
-    expect(text).toContain('onOpen={openStageDetail}')
+    expect(text).toContain('onOpen={openFromRaster}')
+    expect(text).toContain('openStageDetail(peptide, kachel)')
   })
 
   test('legt die Flüssigkeitsphysik für den Flug still', () => {

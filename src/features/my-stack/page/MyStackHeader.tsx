@@ -22,6 +22,7 @@ export function MyStackHeader({
   filterOpen,
   setViewMode,
   viewMode,
+  onOpenRaster,
   wirksameSortierung,
   setSortBy,
   moeglicheSortierungen,
@@ -40,6 +41,8 @@ export function MyStackHeader({
   filterOpen: boolean
   setViewMode: (mode: StackViewMode) => void
   viewMode: StackViewMode
+  /** Das Raster im Vollbild oeffnen — eine Zoomstufe, keine gespeicherte Ansicht. */
+  onOpenRaster: () => void
   wirksameSortierung: PeptideSortKey
   setSortBy: Dispatch<SetStateAction<PeptideSortKey>>
   moeglicheSortierungen: Set<SortAbility>
@@ -147,8 +150,15 @@ export function MyStackHeader({
                             <button
                               key={mode}
                               type="button"
-                              aria-pressed={viewMode === mode}
-                              onClick={() => setViewMode(mode)}
+                              aria-pressed={mode === 'grid' ? undefined : viewMode === mode}
+                              onClick={() => {
+                                if (mode !== 'grid') {
+                                  setViewMode(mode)
+                                  return
+                                }
+                                setFilterOpen(false)
+                                onOpenRaster()
+                              }}
                               className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1.5 text-[11px] font-semibold transition-colors ${
                                 viewMode === mode ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
                               }`}

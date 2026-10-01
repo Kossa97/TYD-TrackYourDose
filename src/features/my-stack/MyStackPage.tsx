@@ -110,7 +110,7 @@ import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
-import { StackGridView } from './page/StackGridView'
+import { StackZoomGrid } from './page/StackZoomGrid'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
@@ -1663,6 +1663,31 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (!objekt || !peptide) return
     openStageDetail(peptide, objekt)
   }
+  /**
+   * Das Raster: alle Substanzen, unabhaengig vom Reiter, in der Reihenfolge
+   * von „Alle". Es liegt im Vollbild ueber dem Karussell.
+   */
+  const [rasterOffen, setRasterOffen] = useState(false)
+  const rasterPeptides = useMemo(
+    () => sortPeptides(peptides, wirksameSortierung, activePeptideIds).filter(p => isStageRenderable(p.dosage_form)),
+    [peptides, wirksameSortierung, activePeptideIds],
+  )
+  /** Der Eintrag im Karussell, aus dem die aktive Substanz ins Raster fliegt — und wohin sie zurueckkehrt. */
+  const rasterQuelle = () => {
+    if (viewMode !== 'vials' || addTileActive || !activePeptide) return null
+    const slot = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${activeIndex}"]`) ?? null
+    // Sofort in die Mitte, nicht weich: gleich danach wird gemessen.
+    slot?.scrollIntoView({ block: 'nearest', inline: 'center' })
+    return slot
+  }
+  /** Antippen im Raster: das Vollbild dieser Substanz. Steht sie nicht im offenen Reiter, gilt „Alle". */
+  const openFromRaster = (peptide: Peptide, kachel: HTMLElement) => {
+    if (!stagePeptides.some(p => p.id === peptide.id)) {
+      setActiveTab('all')
+      setSearch('')
+    }
+    openStageDetail(peptide, kachel)
+  }
   /** Das Vollbild oeffnen; das Objekt fliegt aus `objekt` heraus dorthin. */
   const openStageDetail = (peptide: Peptide, objekt: HTMLElement) => {
     setActivePeptideId(peptide.id)
@@ -1983,7 +2008,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // mit `-mx-3` bis an den Rand reichen sollen, 12 px davor.
     <div
       data-my-stack-page
-      className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : viewMode === 'grid' && activePeptide ? 'overscroll-none' : ''}`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
     >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
       <MyStackHeader
@@ -2000,6 +2025,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         loadArchived={loadArchived}
         filterOpen={filterOpen}
         setViewMode={setViewMode}
+        onOpenRaster={() => setRasterOffen(true)}
         viewMode={viewMode}
         wirksameSortierung={wirksameSortierung}
         setSortBy={setSortBy}
@@ -2072,13 +2098,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             selectPeptideIndex={selectPeptideIndex}
           />
 
-          {!loading && viewMode === 'grid' && activePeptide && (
-            <StackGridView
-              peptides={stagePeptides}
-              reiterLeiste={reiterLeiste}
+          {rasterOffen && (
+            <StackZoomGrid
+              peptides={rasterPeptides}
+              aktiveId={viewMode === 'vials' ? activePeptide?.id ?? null : null}
+              quelle={rasterQuelle}
               sloshEngine={sloshEngine}
-              animationEpoch={animationEpoch}
-              onOpen={openStageDetail}
+              onOpen={openFromRaster}
+              onGeschlossen={() => setRasterOffen(false)}
             />
           )}
 
