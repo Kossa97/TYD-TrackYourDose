@@ -232,31 +232,37 @@ describe('stack item service', () => {
   })
 
   it('replaces only the selected future version with a local-date boundary', async () => {
-    const mockClient = planRpcClient()
-    const target: PlanEditTarget = {
-      cycleId: 'cycle-1',
-      versionId: 'future-version-2',
-      mode: 'replace_future',
-    }
-    const effective: PlanEffectiveDraft = { kind: 'date', localDate: '2026-10-01' }
+    // Feste Uhr: ohne sie lag der „zukuenftige" 01.10.2026 ab diesem Tag in
+    // der Gegenwart, und der Test schlug am Kalender fehl statt am Code.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-19T10:15:00.000Z'))
+    try {
+      const mockClient = planRpcClient()
+      const target: PlanEditTarget = {
+        cycleId: 'cycle-1',
+        versionId: 'future-version-2',
+        mode: 'replace_future',
+      }
+      const effective: PlanEffectiveDraft = { kind: 'date', localDate: '2026-10-01' }
 
-    await savePlanChange(mockClient.client, target, planSnapshot, effective, {
-      changeKind: 'schedule',
-      idempotencyKey: 'plan-change-2',
-      timeZone: 'Europe/Berlin',
-    })
+      await savePlanChange(mockClient.client, target, planSnapshot, effective, {
+        changeKind: 'schedule',
+        idempotencyKey: 'plan-change-2',
+        timeZone: 'Europe/Berlin',
+      })
 
-    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
-    expect(mockClient.rpc).toHaveBeenCalledWith('replace_future_plan_version', {
-      p_version_id: 'future-version-2',
-      p_effective_kind: 'local_date',
-      p_effective_at: null,
-      p_effective_local_date: '2026-10-01',
-      p_change_kind: 'schedule',
-      p_schedule: planSnapshot,
-      p_timezone: 'Europe/Berlin',
-      p_idempotency_key: 'plan-change-2',
-    })
+      expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+      expect(mockClient.rpc).toHaveBeenCalledWith('replace_future_plan_version', {
+        p_version_id: 'future-version-2',
+        p_effective_kind: 'local_date',
+        p_effective_at: null,
+        p_effective_local_date: '2026-10-01',
+        p_change_kind: 'schedule',
+        p_schedule: planSnapshot,
+        p_timezone: 'Europe/Berlin',
+        p_idempotency_key: 'plan-change-2',
+      })
+    } finally { vi.useRealTimers() }
   })
 
   it('rejects now, today, and past boundaries before replacing a future version', async () => {
