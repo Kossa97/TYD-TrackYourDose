@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790875552.3662548,
-    "seen": 1790877368.222274,
-    "ast_hash": "6f795b46de1388b7e7de1f6241bccb1a",
+    "mtime": 1790878389.632534,
+    "seen": 1790879557.1667244,
+    "ast_hash": "aa158dae27f9de9e6a2aadea67b2549f",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4254,9 +4254,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1789927455.619387,
-    "seen": 1789927683.0402656,
-    "ast_hash": "124f3142a6f01bf31b69f6f897ab7eaa",
+    "mtime": 1790878700.0720263,
+    "seen": 1790879557.1671076,
+    "ast_hash": "36c830d02e58b043531f1b2440b63ba8",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/etikettEinzug.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790877131.7662754,
-    "seen": 1790877368.2233126,
+    "mtime": 1790879109.4080317,
+    "seen": 1790879557.1679645,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5784,9 +5784,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidBubbles.ts": {
-    "mtime": 1790832499.169816,
-    "seen": 1790833515.4389439,
-    "ast_hash": "7694cf2e449de73f17e02f4da7fb479c",
+    "mtime": 1790878691.1920261,
+    "seen": 1790879557.1671114,
+    "ast_hash": "f1bb558624d42254a2a35994322f60c4",
     "semantic_hash": ""
   },
   "e2e/my-stack-raster.spec.ts": {
@@ -5808,9 +5808,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackZoomGrid.tsx": {
-    "mtime": 1790876946.415272,
-    "seen": 1790877368.2226171,
-    "ast_hash": "87d8eb8abd05b0b4ab5574dc218bf6c2",
+    "mtime": 1790879397.6880355,
+    "seen": 1790879557.1670687,
+    "ast_hash": "c7bffae68051d002982bb5a77ca59ba6",
     "semantic_hash": ""
   }
 }

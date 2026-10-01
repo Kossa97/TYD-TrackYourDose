@@ -3240,15 +3240,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790868208.4927604,
-    "seen": 1790869832.3920114,
-    "ast_hash": "88ed8eec61182a517481cd8824e75fec",
+    "mtime": 1790876200.3365483,
+    "seen": 1790877368.2222722,
+    "ast_hash": "ef90c03da92983cab861465e046cd8c3",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790873698.4233704,
-    "seen": 1790874085.2362788,
-    "ast_hash": "51d11c2930469c42e68e8d596bfe87da",
+    "mtime": 1790875552.3662548,
+    "seen": 1790877368.222274,
+    "ast_hash": "6f795b46de1388b7e7de1f6241bccb1a",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790873847.4182322,
-    "seen": 1790874085.23724,
+    "mtime": 1790877131.7662754,
+    "seen": 1790877368.2233126,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5790,27 +5790,27 @@
     "semantic_hash": ""
   },
   "e2e/my-stack-raster.spec.ts": {
-    "mtime": 1790873585.9905996,
-    "seen": 1790874085.2357717,
-    "ast_hash": "5498765a87320b6e1fbb971bda099397",
+    "mtime": 1790876905.9462726,
+    "seen": 1790877368.221735,
+    "ast_hash": "bc7ae79c5701f0f913ae3fae6beab925",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/rasterZoom.test.ts": {
-    "mtime": 1790872140.6719298,
-    "seen": 1790874085.2365923,
-    "ast_hash": "4eedb48edf91c8228fb3c721b0810790",
+    "mtime": 1790876200.33566,
+    "seen": 1790877368.2225628,
+    "ast_hash": "36a06a5cb68f21a8956189b8daf16c4c",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/rasterZoom.ts": {
-    "mtime": 1790872117.3381953,
-    "seen": 1790874085.2365954,
-    "ast_hash": "e6d4f12c6dcaaba44cb575863eb6dea9",
+    "mtime": 1790875582.0382552,
+    "seen": 1790877368.2225654,
+    "ast_hash": "9dd7674811e5ce18094fecd6c1e734e3",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StackZoomGrid.tsx": {
-    "mtime": 1790872542.7358167,
-    "seen": 1790874085.2366538,
-    "ast_hash": "b0c1b7e18d93bfa2c73184f014de0e34",
+    "mtime": 1790876946.415272,
+    "seen": 1790877368.2226171,
+    "ast_hash": "87d8eb8abd05b0b4ab5574dc218bf6c2",
     "semantic_hash": ""
   }
 }
