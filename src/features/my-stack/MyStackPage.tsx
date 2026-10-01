@@ -110,7 +110,8 @@ import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
-import { StackZoomGrid } from './page/StackZoomGrid'
+import { StackZoomGrid, type ZoomRasterHandle } from './page/StackZoomGrid'
+import { fingerSkala, fortschrittHinein, zielBeimLoslassen } from './lib/rasterZoom'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
@@ -1668,6 +1669,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * von „Alle". Es liegt im Vollbild ueber dem Karussell.
    */
   const [rasterOffen, setRasterOffen] = useState(false)
+  // Vom Menue: laeuft von selbst. Von der Geste: die Finger fuehren.
+  const [rasterAutoStart, setRasterAutoStart] = useState(true)
+  const zoomRef = useRef<ZoomRasterHandle | null>(null)
+  const seitenWurzelRef = useRef<HTMLDivElement | null>(null)
   const rasterPeptides = useMemo(
     () => sortPeptides(peptides, wirksameSortierung, activePeptideIds).filter(p => isStageRenderable(p.dosage_form)),
     [peptides, wirksameSortierung, activePeptideIds],
@@ -1679,6 +1684,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // Sofort in die Mitte, nicht weich: gleich danach wird gemessen.
     slot?.scrollIntoView({ block: 'nearest', inline: 'center' })
     return slot
+  }
+  /** Die Geste im Raster fuehrt zurueck ins Karussell — zu dieser Substanz. */
+  const zurueckZuAusRaster = (peptide: Peptide) => {
+    if (!stagePeptides.some(p => p.id === peptide.id)) {
+      setActiveTab('all')
+      setSearch('')
+    }
+    setActivePeptideId(peptide.id)
+    setAddTileActive(false)
   }
   /** Antippen im Raster: das Vollbild dieser Substanz. Steht sie nicht im offenen Reiter, gilt „Alle". */
   const openFromRaster = (peptide: Peptide, kachel: HTMLElement) => {
@@ -1997,6 +2011,90 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // zeigen (Suche ohne Treffer, nur Formen ohne Buehnengrafik), steht sie
   // allein — sonst verschwaende sie mit dem Karussell, und man kaeme aus dem
   // Reiter nicht mehr heraus.
+  /**
+   * Zwei Finger im Karussell: zusammenziehen oeffnet das Raster, und der
+   * Uebergang folgt den Fingern. Beim Loslassen laeuft er mit der Feder
+   * fertig — oder zurueck, wenn nicht weit genug gezogen wurde.
+   *
+   * Ohne das zoomte Safari die ganze Seite: es kennt eigene
+   * Gesten-Ereignisse, die hier abgefangen werden. Auf der Seite selbst und
+   * nur in My Stack — anderswo bleibt der Seitenzoom erhalten.
+   */
+  const kannZoomen = viewMode === 'vials' && Boolean(activePeptide) && !rasterOffen
+  const kannZoomenRef = useRef(kannZoomen)
+  useEffect(() => { kannZoomenRef.current = kannZoomen }, [kannZoomen])
+  useEffect(() => {
+    const wurzel = seitenWurzelRef.current
+    if (!wurzel) return
+    let geste: { start: number; offen: boolean; verlauf: Array<{ zeit: number; p: number }> } | null = null
+    const abstand = (touches: TouchList) =>
+      Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
+    // Nur auf der Buehne selbst — nicht im Vollbild einer Substanz, im
+    // Assistenten oder im Archiv, die ebenfalls hier drin liegen. Dort bleibt
+    // der Seitenzoom, wie er war.
+    const aufDerBuehne = (ziel: EventTarget | null) =>
+      kannZoomenRef.current
+      && ziel instanceof Element
+      && ziel.closest('[data-my-stack-carousel]') !== null
+      && ziel.closest('[role="dialog"], [data-app-modal]') === null
+
+    const beiStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || !aufDerBuehne(e.target)) return
+      e.preventDefault()
+      geste = { start: abstand(e.touches), offen: false, verlauf: [] }
+    }
+    const beiBewegung = (e: TouchEvent) => {
+      if (!geste || e.touches.length !== 2) return
+      e.preventDefault()
+      const p = fortschrittHinein(fingerSkala(geste.start, abstand(e.touches)))
+      if (!geste.offen) {
+        if (p < 0.03) return
+        geste.offen = true
+        setRasterAutoStart(false)
+        setRasterOffen(true)
+      }
+      geste.verlauf.push({ zeit: performance.now(), p })
+      if (geste.verlauf.length > 5) geste.verlauf.shift()
+      zoomRef.current?.setzeFortschritt(p)
+    }
+    const beiEnde = (e: TouchEvent) => {
+      if (!geste || e.touches.length >= 2) return
+      const ende = geste
+      geste = null
+      if (!ende.offen) return
+      const erster = ende.verlauf[0]
+      const letzter = ende.verlauf[ende.verlauf.length - 1]
+      const tempo = erster && letzter && letzter.zeit > erster.zeit
+        // Lagen die Finger zuletzt still, gibt es keinen Schwung mehr.
+        && performance.now() - letzter.zeit < 100
+        ? ((letzter.p - erster.p) / (letzter.zeit - erster.zeit)) * 1000
+        : 0
+      const ziel = zielBeimLoslassen(letzter?.p ?? 0, tempo)
+      if (zoomRef.current) {
+        zoomRef.current.laufeZu(ziel, tempo)
+        return
+      }
+      // Das Raster war noch nicht da: es laeuft selbst los, oder gar nicht.
+      if (ziel === 1) setRasterAutoStart(true)
+      else setRasterOffen(false)
+    }
+    const keinSeitenZoom = (e: Event) => { if (aufDerBuehne(e.target)) e.preventDefault() }
+    wurzel.addEventListener('touchstart', beiStart, { passive: false })
+    wurzel.addEventListener('touchmove', beiBewegung, { passive: false })
+    wurzel.addEventListener('touchend', beiEnde)
+    wurzel.addEventListener('touchcancel', beiEnde)
+    wurzel.addEventListener('gesturestart', keinSeitenZoom)
+    wurzel.addEventListener('gesturechange', keinSeitenZoom)
+    return () => {
+      wurzel.removeEventListener('touchstart', beiStart)
+      wurzel.removeEventListener('touchmove', beiBewegung)
+      wurzel.removeEventListener('touchend', beiEnde)
+      wurzel.removeEventListener('touchcancel', beiEnde)
+      wurzel.removeEventListener('gesturestart', keinSeitenZoom)
+      wurzel.removeEventListener('gesturechange', keinSeitenZoom)
+    }
+  }, [])
+
   const reiterLeiste = (
     <StackTabBar counts={reiterZaehler} openTab={offenerReiter} onSelect={reiterWechseln} />
   )
@@ -2007,6 +2105,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // so schmal wie der Inhaltsbereich kappte sie Karussell und Reiter, die
     // mit `-mx-3` bis an den Rand reichen sollen, 12 px davor.
     <div
+      ref={seitenWurzelRef}
       data-my-stack-page
       className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
     >
@@ -2025,7 +2124,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         loadArchived={loadArchived}
         filterOpen={filterOpen}
         setViewMode={setViewMode}
-        onOpenRaster={() => setRasterOffen(true)}
+        onOpenRaster={() => {
+          setRasterAutoStart(true)
+          setRasterOffen(true)
+        }}
         viewMode={viewMode}
         wirksameSortierung={wirksameSortierung}
         setSortBy={setSortBy}
@@ -2100,6 +2202,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
           {rasterOffen && (
             <StackZoomGrid
+              handleRef={zoomRef}
+              autoStart={rasterAutoStart}
+              onZurueckZu={zurueckZuAusRaster}
               peptides={rasterPeptides}
               aktiveId={viewMode === 'vials' ? activePeptide?.id ?? null : null}
               quelle={rasterQuelle}

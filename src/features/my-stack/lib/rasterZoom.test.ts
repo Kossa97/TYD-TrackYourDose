@@ -8,7 +8,10 @@ import {
   federSchritt,
   flug,
   kachelFortschritt,
-  kachelMass,
+  seitenAufteilung,
+  fortschrittHinein,
+  fortschrittHinaus,
+  zielBeimLoslassen,
   type Feder,
 } from './rasterZoom'
 
@@ -22,17 +25,50 @@ function zufallsfolge(seed = 7) {
 }
 
 describe('rasterZoom', () => {
-  it('4×4 auf dem iPhone: vier Spalten, vier Reihen auf einem Bildschirm', () => {
-    const stufe = ZOOM_STUFEN[0]
-    const mass = kachelMass(stufe, { breite: 366, hoehe: 680 })
-    expect(stufe.spalten * mass.breite + (stufe.spalten - 1) * stufe.abstand).toBeLessThanOrEqual(366)
-    expect(stufe.zeilen * mass.hoehe + (stufe.zeilen - 1) * stufe.abstand).toBeLessThanOrEqual(680)
-    expect(mass.breite).toBeGreaterThan(80)
+  // Die Flaeche zwischen X oben und Reitern unten auf einem iPhone 13.
+  const IPHONE = { breite: 366, hoehe: 620 }
+
+  it.each([
+    [1, 1, 1],
+    [2, 1, 2],
+    [4, 2, 2],
+    [6, 2, 3],
+    [9, 3, 3],
+    [12, 3, 4],
+    [16, 4, 4],
+  ])('%i Substanzen teilen sich den Bildschirm als %i × %i', (anzahl, spalten, zeilen) => {
+    const a = seitenAufteilung(anzahl, ZOOM_STUFEN[0], IPHONE)
+    expect(a).toMatchObject({ spalten, zeilen, seiten: 1 })
+    // Die Kacheln fuellen die Flaeche, statt oben zu kleben.
+    expect(a.zeilen * a.kachelHoehe + (a.zeilen - 1) * ZOOM_STUFEN[0].abstand).toBeGreaterThan(IPHONE.hoehe - 8)
   })
 
-  it('die zweite Stufe ist dichter als die erste', () => {
-    const [nah, fern] = ZOOM_STUFEN
-    expect(fern.spalten * fern.zeilen).toBeGreaterThan(nah.spalten * nah.zeilen)
+  it('mehr als auf eine Seite passt, geht auf weitere Seiten', () => {
+    expect(seitenAufteilung(17, ZOOM_STUFEN[0], IPHONE)).toMatchObject({ spalten: 4, zeilen: 4, proSeite: 16, seiten: 2 })
+    expect(seitenAufteilung(40, ZOOM_STUFEN[0], IPHONE).seiten).toBe(3)
+  })
+
+  it('die zweite Stufe fasst mehr auf eine Seite', () => {
+    const nah = seitenAufteilung(40, ZOOM_STUFEN[0], IPHONE)
+    const fern = seitenAufteilung(40, ZOOM_STUFEN[1], IPHONE)
+    expect(fern.proSeite).toBeGreaterThan(nah.proSeite)
+    expect(fern.seiten).toBe(1)
+  })
+
+  it('ohne Substanzen: keine Seite, kein Fehler', () => {
+    expect(seitenAufteilung(0, ZOOM_STUFEN[0], IPHONE).seiten).toBe(0)
+  })
+
+  it('die Geste: zusammen öffnet, auseinander schließt, Schwung entscheidet', () => {
+    expect(fortschrittHinein(1)).toBe(0)
+    expect(fortschrittHinein(0.5)).toBe(1)
+    expect(fortschrittHinein(0.75)).toBeCloseTo(0.5)
+    expect(fortschrittHinaus(1)).toBe(1)
+    expect(fortschrittHinaus(1.8)).toBe(0)
+    expect(zielBeimLoslassen(0.2, 0)).toBe(0)
+    expect(zielBeimLoslassen(0.5, 0)).toBe(1)
+    expect(zielBeimLoslassen(0.1, 3)).toBe(1)
+    expect(zielBeimLoslassen(0.9, -3)).toBe(0)
   })
 
   it('jede Kachel bekommt eine Schwelle im Erscheinfenster, gleichmaessig verteilt', () => {

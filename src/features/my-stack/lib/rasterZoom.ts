@@ -7,21 +7,67 @@
  * Deshalb steht hier nichts, was React oder das DOM kennt.
  */
 
-/** Die Zoomstufen, von nah nach fern. Zeilen: wie viele auf einen Bildschirm passen. */
+/**
+ * Die Zoomstufen, von nah nach fern. Eine Stufe begrenzt, wie viele
+ * Substanzen hoechstens auf EINE Seite kommen; wie sie sich darauf verteilen,
+ * entscheidet `seitenAufteilung` nach Anzahl und Bildschirm. Was nicht passt,
+ * kommt auf weitere Seiten.
+ */
 export const ZOOM_STUFEN = [
-  { spalten: 4, zeilen: 4, abstand: 8 },
-  { spalten: 6, zeilen: 8, abstand: 6 },
+  { maxSpalten: 4, maxZeilen: 4, abstand: 8 },
+  { maxSpalten: 6, maxZeilen: 8, abstand: 6 },
 ] as const
 
 export type ZoomStufe = (typeof ZOOM_STUFEN)[number]
 
-export function kachelMass(
+/** Hoehe zu Breite, bei der ein Objekt seine Kachel gut fuellt — die meisten Formen sind hochkant. */
+export const OBJEKT_HOCHKANT = 1.4
+
+export interface SeitenAufteilung {
+  spalten: number
+  zeilen: number
+  proSeite: number
+  seiten: number
+  kachelBreite: number
+  kachelHoehe: number
+}
+
+/**
+ * Wie sich `anzahl` Substanzen auf den Bildschirm verteilen.
+ *
+ * Probiert jede Spaltenzahl bis zur Grenze der Stufe; es gewinnt die, bei
+ * der ein Objekt am groessten wird (hochkant gemessen), bei Gleichstand die
+ * mit weniger leeren Plaetzen. Die Kacheln teilen sich die ganze Flaeche —
+ * vier Substanzen werden 2×2 und gross, sechzehn 4×4.
+ */
+export function seitenAufteilung(
+  anzahl: number,
   stufe: ZoomStufe,
   flaeche: { breite: number; hoehe: number },
-): { breite: number; hoehe: number } {
-  const breite = Math.max(0, (flaeche.breite - (stufe.spalten - 1) * stufe.abstand) / stufe.spalten)
-  const hoehe = Math.max(0, (flaeche.hoehe - (stufe.zeilen - 1) * stufe.abstand) / stufe.zeilen)
-  return { breite: Math.floor(breite), hoehe: Math.floor(hoehe) }
+): SeitenAufteilung {
+  const n = Math.max(0, Math.floor(anzahl))
+  const proSeite = Math.max(1, Math.min(n, stufe.maxSpalten * stufe.maxZeilen))
+  const breite = (spalten: number) => (flaeche.breite - (spalten - 1) * stufe.abstand) / spalten
+  const hoehe = (zeilen: number) => (flaeche.hoehe - (zeilen - 1) * stufe.abstand) / zeilen
+
+  let beste = { spalten: 1, zeilen: proSeite, groesse: -Infinity, leer: Infinity }
+  for (let spalten = 1; spalten <= Math.min(stufe.maxSpalten, proSeite); spalten++) {
+    const zeilen = Math.ceil(proSeite / spalten)
+    if (zeilen > stufe.maxZeilen) continue
+    const groesse = Math.min(breite(spalten) * OBJEKT_HOCHKANT, hoehe(zeilen))
+    const leer = spalten * zeilen - proSeite
+    if (groesse > beste.groesse + 0.5 || (Math.abs(groesse - beste.groesse) <= 0.5 && leer < beste.leer)) {
+      beste = { spalten, zeilen, groesse, leer }
+    }
+  }
+  return {
+    spalten: beste.spalten,
+    zeilen: beste.zeilen,
+    proSeite,
+    seiten: n === 0 ? 0 : Math.ceil(n / proSeite),
+    kachelBreite: Math.max(0, Math.floor(breite(beste.spalten))),
+    kachelHoehe: Math.max(0, Math.floor(hoehe(beste.zeilen))),
+  }
 }
 
 export const clamp01 = (wert: number) => (Number.isFinite(wert) ? Math.min(1, Math.max(0, wert)) : 0)
@@ -100,4 +146,37 @@ export function flug(von: Kasten, nach: Kasten, p: number): { dx: number; dy: nu
     dy: mische(von.y - nach.y, 0, t),
     skala: mische(startSkala, 1, t),
   }
+}
+
+// ── Die Zoom-Geste ──────────────────────────────────────────────────────────
+
+/** Wie weit zwei Finger zusammen (< 1) oder auseinander (> 1) sind, bezogen auf den Anfang. */
+export function fingerSkala(start: number, jetzt: number): number {
+  return start > 0 ? jetzt / start : 1
+}
+
+/** Zusammenziehen im Karussell: bei halbem Fingerabstand ist das Raster ganz da. */
+export const ZUSAMMEN_VOLL = 0.5
+export function fortschrittHinein(skala: number): number {
+  return clamp01((1 - skala) / (1 - ZUSAMMEN_VOLL))
+}
+
+/** Auseinanderziehen im Raster: beim 1,8-fachen Abstand ist das Karussell ganz zurueck. */
+export const AUSEINANDER_VOLL = 1.8
+export function fortschrittHinaus(skala: number): number {
+  return 1 - clamp01((skala - 1) / (AUSEINANDER_VOLL - 1))
+}
+
+/** Ab welcher Fingerskala im Raster die Zoomstufe wechselt. */
+export const STUFE_DICHTER_AB = 0.78
+export const STUFE_WEITER_AB = 1.28
+
+/**
+ * Beim Loslassen: wohin? Ein schneller Schwung entscheidet, sonst der Weg —
+ * wer mehr als ein Drittel gezogen hat, will dorthin.
+ */
+export function zielBeimLoslassen(p: number, tempo: number): 0 | 1 {
+  if (tempo > 1.2) return 1
+  if (tempo < -1.2) return 0
+  return p >= 0.35 ? 1 : 0
 }
