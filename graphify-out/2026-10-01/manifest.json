@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1790679954.3903892,
-    "seen": 1790680684.8801453,
-    "ast_hash": "0d412a723339bc06cfc508b4f8177f4b",
+    "mtime": 1790865403.6237798,
+    "seen": 1790869832.3915877,
+    "ast_hash": "a6882717a000692abef1c0353406dfce",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1790697231.056769,
-    "seen": 1790699907.0019467,
-    "ast_hash": "f9c5fef2babc9a3380e5db6438fb699f",
+    "mtime": 1790865410.4590545,
+    "seen": 1790869832.393109,
+    "ast_hash": "fe8352de2a85ba44c7ce7c3b8a8e7d0d",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3240,15 +3240,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1790833300.849858,
-    "seen": 1790833515.4380848,
-    "ast_hash": "95982522847860b80d739296532f0b42",
+    "mtime": 1790868208.4927604,
+    "seen": 1790869832.3920114,
+    "ast_hash": "88ed8eec61182a517481cd8824e75fec",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790832608.8879778,
-    "seen": 1790833515.4380884,
-    "ast_hash": "5741c50d6b217b6b633c9e5ba10fb1f2",
+    "mtime": 1790867923.8381488,
+    "seen": 1790869832.3920138,
+    "ast_hash": "56c47b27953cc27d67cb9acee39bd604",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790833308.341864,
-    "seen": 1790833515.4400566,
+    "mtime": 1790869641.6118414,
+    "seen": 1790869832.3929672,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4854,9 +4854,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/peptipedia-content-audit.yml": {
-    "mtime": 1789927455.4987028,
-    "seen": 1789927683.0404544,
-    "ast_hash": "41ec74829bf5a8fc6cdcf8e30e89d2bb",
+    "mtime": 1790865403.6286638,
+    "seen": 1790869832.393091,
+    "ast_hash": "582325f8a1653307beba93bef2259a0f",
     "semantic_hash": ""
   },
   "docs/research/2026-09-14-peptipedia-catalogue-audit.md": {
@@ -5622,9 +5622,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/MyStackHeader.tsx": {
-    "mtime": 1790832608.873552,
-    "seen": 1790833515.4388835,
-    "ast_hash": "dc1fbc612073d0d276ce4e59c760d263",
+    "mtime": 1790867689.924342,
+    "seen": 1790869832.3924205,
+    "ast_hash": "4565d95de3c43689e910bbe1df717ed8",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/PlanOverviewSheet.tsx": {
@@ -5676,9 +5676,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/model.ts": {
-    "mtime": 1790832545.927689,
-    "seen": 1790833515.438908,
-    "ast_hash": "f8efc87dac3f9fa907571c3d6571f899",
+    "mtime": 1790867689.9236264,
+    "seen": 1790869832.3924384,
+    "ast_hash": "a543a63e60f2afa3ab06b5b7fbee5eea",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/stackTiles.tsx": {
@@ -5754,9 +5754,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/e2e.yml": {
-    "mtime": 1790648612.1192183,
-    "seen": 1790650598.8024566,
-    "ast_hash": "bdae84d60f0cef5a2370c67548ea7e53",
+    "mtime": 1790865403.627839,
+    "seen": 1790869832.3930562,
+    "ast_hash": "3b7f42abddd56cf8df33c35cfde60524",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/useMinuteClock.ts": {
@@ -5783,34 +5783,34 @@
     "ast_hash": "8aa5dff5a822e31059e600bda25ac214",
     "semantic_hash": ""
   },
-  "e2e/my-stack-grid.spec.ts": {
-    "mtime": 1790832994.3181844,
-    "seen": 1790833515.4374046,
-    "ast_hash": "8a3448ebcf3bf345da2ab993261332dc",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/rasterAufteilung.test.ts": {
-    "mtime": 1790832491.3498156,
-    "seen": 1790833515.4388137,
-    "ast_hash": "3b061ce30ce9facbb8bf73f9edc8b52d",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/rasterAufteilung.ts": {
-    "mtime": 1790832482.985815,
-    "seen": 1790833515.4388165,
-    "ast_hash": "7ea703b2bfbbfd9ba4a5e7f002552248",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/page/StackGridView.tsx": {
-    "mtime": 1790832750.1486475,
-    "seen": 1790833515.4388897,
-    "ast_hash": "63ee837e4bf23e9b7e6d3a5d36ada675",
-    "semantic_hash": ""
-  },
   "src/features/my-stack/stage/liquidBubbles.ts": {
     "mtime": 1790832499.169816,
     "seen": 1790833515.4389439,
     "ast_hash": "7694cf2e449de73f17e02f4da7fb479c",
+    "semantic_hash": ""
+  },
+  "e2e/my-stack-raster.spec.ts": {
+    "mtime": 1790869381.6411605,
+    "seen": 1790869832.3915508,
+    "ast_hash": "4bea1cfd6f299d132f4d6d1f1088e205",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/rasterZoom.test.ts": {
+    "mtime": 1790867571.2798142,
+    "seen": 1790869832.3923717,
+    "ast_hash": "7d384be81c0587cf02ad6e095c7fa91c",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/rasterZoom.ts": {
+    "mtime": 1790867557.8918142,
+    "seen": 1790869832.3923745,
+    "ast_hash": "884987065fc72f3a9e5cb9d951afa329",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/page/StackZoomGrid.tsx": {
+    "mtime": 1790869409.6970356,
+    "seen": 1790869832.3924289,
+    "ast_hash": "23b09e69acf885048d73c394bdb43bfb",
     "semantic_hash": ""
   }
 }
