@@ -21,6 +21,8 @@ import {
   type Kasten,
 } from '../lib/rasterZoom'
 import { LiquidBubblesContext } from '../stage/liquidBubbles'
+import { filterByTab, tabCounts, type StackTabKey } from '../lib/stackTabs'
+import { StackTabBar } from './StackTabBar'
 import { type Peptide, getVialFillPct } from './model'
 
 /** Von aussen steuerbar — fuer die Zoom-Geste, die `p` mit den Fingern fuehrt. */
@@ -80,9 +82,14 @@ export function StackZoomGrid({
   const flaecheRef = useRef<HTMLDivElement>(null)
   const hintergrundRef = useRef<HTMLDivElement>(null)
   const kopfRef = useRef<HTMLDivElement>(null)
+  const fussRef = useRef<HTMLDivElement>(null)
   const kachelnRef = useRef(new Map<string, HTMLButtonElement>())
   const [mass, setMass] = useState<{ breite: number; hoehe: number } | null>(null)
   const [stufe] = useState(0)
+  // Die Reiter unten filtern das Raster; es oeffnet immer mit „Alle".
+  const [reiter, setReiter] = useState<StackTabKey>('all')
+  const reiterZaehler = tabCounts(peptides)
+  const sichtbar = reiter === 'all' ? peptides : filterByTab(peptides, reiter)
   // Je Oeffnen neu gewuerfelt: jedes Mal eine andere Reihenfolge.
   const [schwellen] = useState(() => erscheinSchwellen(peptides.length))
 
@@ -98,7 +105,9 @@ export function StackZoomGrid({
     const q = clamp01(p)
     // Der Rest loest sich zuerst auf (bis p = 0,45), die Substanzen folgen.
     if (hintergrundRef.current) hintergrundRef.current.style.opacity = String(clamp01(q / 0.45))
-    if (kopfRef.current) kopfRef.current.style.opacity = String(clamp01((q - 0.45) / 0.4))
+    const bedienung = String(clamp01((q - 0.45) / 0.4))
+    if (kopfRef.current) kopfRef.current.style.opacity = bedienung
+    if (fussRef.current) fussRef.current.style.opacity = bedienung
     peptides.forEach((peptide, index) => {
       const kachel = kachelnRef.current.get(peptide.id)
       if (!kachel) return
@@ -231,15 +240,21 @@ export function StackZoomGrid({
   // Jedes neue Rendern (die Seite darunter aktualisiert sich, die Flaeche
   // aendert ihre Groesse) zeichnet den AKTUELLEN Stand neu — anfangs 0:
   // alles unsichtbar, das Karussell steht noch unveraendert da.
-  useLayoutEffect(() => { zeichne(fortschritt.current) }, [zeichne, mass])
+  // Ein anderer Reiter bringt neue Kacheln mit — auch sie gleich im
+  // aktuellen Stand, nicht unsichtbar.
+  useLayoutEffect(() => { zeichne(fortschritt.current) }, [zeichne, mass, reiter])
 
   // Oeffnen, sobald die Kacheln eingepasst sind (StageFit misst in seinem
   // eigenen Layout-Effekt — also ein Bild abwarten).
   const gestartet = useRef(false)
   useEffect(() => {
     if (!mass || gestartet.current) return
-    gestartet.current = true
+    // Erst im Bild selbst als gestartet merken: rendert die Seite darunter
+    // vorher neu (andere Rueckruffunktionen), wird dieses Bild abgebrochen
+    // und das naechste geplant. Vorher gemerkt, fiel der Start dann ganz
+    // aus — das Raster blieb unsichtbar.
     const id = requestAnimationFrame(() => {
+      gestartet.current = true
       vermessen()
       zeichne(0)
       if (autoStart) laufeZu(1)
@@ -304,8 +319,8 @@ export function StackZoomGrid({
       <div
         ref={flaecheRef}
         data-zoom-raster-flaeche
-        className="absolute inset-x-0 bottom-0 touch-pan-y overflow-y-auto overscroll-contain px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-1"
-        style={{ top: 'calc(4.25rem + env(safe-area-inset-top))' }}
+        className="absolute inset-x-0 touch-pan-y overflow-y-auto overscroll-contain px-3 pb-2 pt-1"
+        style={{ top: 'calc(4.25rem + env(safe-area-inset-top))', bottom: 'calc(3.5rem + env(safe-area-inset-bottom))' }}
       >
         {kachel && (
           <SloshProvider engine={sloshEngine}>
@@ -319,7 +334,7 @@ export function StackZoomGrid({
                     gap: zoom.abstand,
                   }}
                 >
-                  {peptides.map((p, index) => (
+                  {sichtbar.map(p => (
                     <button
                       key={p.id}
                       ref={element => {
@@ -327,7 +342,7 @@ export function StackZoomGrid({
                         else kachelnRef.current.delete(p.id)
                       }}
                       type="button"
-                      data-zoom-index={index}
+                      data-zoom-index={peptides.indexOf(p)}
                       data-zoom-id={p.id}
                       aria-label={p.name}
                       onClick={event => onOpen(p, event.currentTarget)}
@@ -353,6 +368,16 @@ export function StackZoomGrid({
             </LiquidBubblesContext.Provider>
           </SloshProvider>
         )}
+      </div>
+
+      {/* Die Reiter unten — dort, wo im Raster ohnehin Platz ist und der
+          Daumen hinkommt. Sie erscheinen mit dem X. */}
+      <div
+        ref={fussRef}
+        className="absolute inset-x-0 bottom-0 px-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+        style={{ opacity: 0 }}
+      >
+        <StackTabBar counts={reiterZaehler} openTab={reiter} onSelect={setReiter} />
       </div>
     </div>,
     document.body,

@@ -42,6 +42,17 @@ test('Raster: zeigt alle Substanzen, auch aus anderen Reitern, ohne Kopf und Tab
   await expect(raster.locator('[data-zoom-index]')).toHaveCount(9)
   for (const name of namen) await expect(raster.getByRole('button', { name, exact: true })).toBeVisible()
 
+  // Die Reiter unten im Raster filtern; es oeffnet mit „Alle".
+  const reiter = raster.getByRole('tablist')
+  await expect(reiter.getByRole('tab', { name: /^Alle/ })).toHaveAttribute('aria-selected', 'true')
+  const reiterUnten = await reiter.boundingBox()
+  expect(reiterUnten!.y).toBeGreaterThan(page.viewportSize()!.height * 0.75)
+  await reiter.getByRole('tab', { name: /^Medikamente/ }).click()
+  await expect(raster.locator('[data-zoom-index]')).toHaveCount(3)
+  await expect(raster.getByRole('button', { name: namen[2], exact: true })).toHaveCSS('opacity', '1')
+  await reiter.getByRole('tab', { name: /^Alle/ }).click()
+  await expect(raster.locator('[data-zoom-index]')).toHaveCount(9)
+
   // Vier Spalten.
   const spalten = await raster.locator('[data-zoom-index]').evaluateAll(kacheln =>
     new Set(kacheln.map(k => Math.round(k.getBoundingClientRect().left))).size)
