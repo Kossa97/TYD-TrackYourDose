@@ -1003,7 +1003,7 @@ describe('My Stack modular integration', () => {
   test('uses persisted item colors before the stable palette fallback', () => {
     const text = source()
     // Karussell, Liste und Raster.
-    expect(text.match(/p\.color_hex \?\? getStableStackItemColor\(p\.id\)/g)).toHaveLength(3)
+    expect(text.match(/(?:p|peptide)\.color_hex \?\? getStableStackItemColor\((?:p|peptide)\.id\)/g)).toHaveLength(3)
   })
 
   test('migrates active and archived local colors once, then reloads persisted active rows', () => {

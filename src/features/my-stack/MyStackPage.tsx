@@ -1671,6 +1671,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [rasterOffen, setRasterOffen] = useState(false)
   // Vom Menue: laeuft von selbst. Von der Geste: die Finger fuehren.
   const [rasterAutoStart, setRasterAutoStart] = useState(true)
+  // Vorbereitet heisst: fertig aufgebaut und unsichtbar. Das Aufbauen von
+  // zwanzig Zeichnungen kostete beim Oeffnen eine halbe Sekunde Stillstand;
+  // jetzt passiert es, wenn die Seite ohnehin ruht.
+  const [rasterBereit, setRasterBereit] = useState(false)
+  useEffect(() => {
+    if (rasterBereit || loading || peptides.length === 0) return
+    const fenster = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+    if (fenster.requestIdleCallback) {
+      const id = fenster.requestIdleCallback(() => setRasterBereit(true), { timeout: 2000 })
+      return () => fenster.cancelIdleCallback?.(id)
+    }
+    const id = window.setTimeout(() => setRasterBereit(true), 900)
+    return () => window.clearTimeout(id)
+  }, [loading, peptides.length, rasterBereit])
   const zoomRef = useRef<ZoomRasterHandle | null>(null)
   const seitenWurzelRef = useRef<HTMLDivElement | null>(null)
   const rasterPeptides = useMemo(
@@ -2042,6 +2059,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (e.touches.length !== 2 || !aufDerBuehne(e.target)) return
       e.preventDefault()
       geste = { start: abstand(e.touches), offen: false, verlauf: [] }
+      // Noch nicht vorbereitet (gerade erst geladen): jetzt, solange die
+      // Finger noch nicht weit gezogen haben.
+      setRasterBereit(true)
     }
     const beiBewegung = (e: TouchEvent) => {
       if (!geste || e.touches.length !== 2) return
@@ -2200,8 +2220,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             selectPeptideIndex={selectPeptideIndex}
           />
 
-          {rasterOffen && (
+          {(rasterBereit || rasterOffen) && (
             <StackZoomGrid
+              offen={rasterOffen}
               handleRef={zoomRef}
               autoStart={rasterAutoStart}
               onZurueckZu={zurueckZuAusRaster}

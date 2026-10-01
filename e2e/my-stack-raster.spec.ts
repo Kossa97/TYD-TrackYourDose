@@ -221,3 +221,19 @@ test('Zoom-Geste im Vollbild einer Substanz öffnet kein Raster', async ({ page,
   await expect(page.getByRole('dialog', { name: 'Raster' })).toHaveCount(0)
   await expect(vollbild).toBeVisible()
 })
+
+test('Zoom-Geste: die Substanz fliegt in ihrer echten Größe los, auch eine Tablette', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01', dosageForm: 'tablet' })
+  await page.goto('/my-stack')
+  const objekt = stageObject(page, 'BPC-157')
+  await expect(objekt).toBeVisible()
+  const imKarussell = (await objekt.locator('[data-stage-fit-box]').boundingBox())!
+
+  // Ein wenig zusammen, Finger bleiben liegen: der Flieger hat uebernommen.
+  await zweiFinger(page, await bildschirmMitte(page), 260, 245, { loslassen: false })
+  const flieger = page.locator('[data-zoom-flieger]')
+  await expect(flieger).toHaveCSS('visibility', 'visible')
+  const kasten = (await flieger.locator('[data-stage-fit-box]').boundingBox())!
+  // Kaum geschrumpft, also fast gleich gross — nicht halb so gross.
+  expect(kasten.width / imKarussell.width).toBeGreaterThan(0.85)
+})

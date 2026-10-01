@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
+import { memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
@@ -38,6 +38,21 @@ export interface ZoomRasterHandle {
   laufeZu: (ziel: 0 | 1, startTempo?: number) => void
 }
 
+/**
+ * Eine Fluessigkeit, die stillsteht: fuer das vorbereitete, unsichtbare
+ * Raster. Es haengt schon fertig gezeichnet im Hintergrund, kostet aber
+ * kein einziges Bild, bis es aufgeht.
+ */
+const RUHENDE_ENGINE: SloshEngine = {
+  pushImpulse: () => {},
+  subscribe: callback => {
+    callback({ tilt: 0, energy: 0, time: 0 })
+    return () => {}
+  },
+  setEnabled: () => {},
+  destroy: () => {},
+}
+
 function bewegungAus(): boolean {
   return typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
 }
@@ -56,6 +71,36 @@ function fingerMitte(touches: TouchList): { x: number; y: number } {
   const [a, b] = [touches[0], touches[1]]
   return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }
 }
+
+/**
+ * Das Objekt in einer Kachel. Gemerkt (`memo`): die Seite darueber rendert
+ * beim Oeffnen neu, und jede Zeichnung neu aufzubauen kostete genau in dem
+ * Moment, in dem die Animation beginnt, ein spuerbares Stocken.
+ */
+const KachelInhalt = memo(function KachelInhalt({ peptide, eingepasst = false }: {
+  peptide: Peptide
+  /**
+   * Der Kasten hat schon die Masse des Objekts (der Flieger, gemessen am
+   * eingepassten Objekt im Karussell): dann fuellt es ihn ganz. Sonst
+   * schrumpfte es ein zweites Mal um den Groessenanteil seiner Form — eine
+   * Tablette flog halb so gross und sprang am Ziel.
+   */
+  eingepasst?: boolean
+}) {
+  return (
+    <StageFit
+      className="h-full w-full"
+      targetHeightRatio={eingepasst ? 1 : getDosageForm(peptide.dosage_form).stageHeightRatio ?? 1}
+    >
+      <StackStage
+        item={{ ...peptide, color_hex: peptide.color_hex ?? getStableStackItemColor(peptide.id) }}
+        fillPct={Math.round(getVialFillPct(peptide) ?? 100)}
+        isActive={true}
+        size="large"
+      />
+    </StageFit>
+  )
+})
 
 /** In Seiten zu je `proSeite` aufteilen. */
 function seitenVon<T>(liste: T[], proSeite: number): T[][] {
@@ -83,6 +128,7 @@ function seitenVon<T>(liste: T[], proSeite: number): T[][] {
  * Karussell, zu der Substanz unter den Fingern.
  */
 export function StackZoomGrid({
+  offen,
   peptides,
   aktiveId,
   quelle,
@@ -93,6 +139,12 @@ export function StackZoomGrid({
   autoStart = true,
   handleRef,
 }: {
+  /**
+   * Das Raster haengt vorbereitet und unsichtbar bereit, damit beim Oeffnen
+   * nur noch die Animation laeuft — nicht erst der Aufbau von zwanzig
+   * Zeichnungen, der das erste Bild um eine halbe Sekunde verzoegerte.
+   */
+  offen: boolean
   peptides: Peptide[]
   /** Die Substanz, die gerade im Karussell steht — sie fliegt. */
   aktiveId: string | null
@@ -121,7 +173,7 @@ export function StackZoomGrid({
   const reiterZaehler = useMemo(() => tabCounts(peptides), [peptides])
   const sichtbar = useMemo(() => (reiter === 'all' ? peptides : filterByTab(peptides, reiter)), [peptides, reiter])
   // Je Oeffnen neu gewuerfelt: jedes Mal eine andere Reihenfolge.
-  const [schwellen] = useState(() => erscheinSchwellen(peptides.length))
+  const [schwellen, setSchwellen] = useState(() => erscheinSchwellen(peptides.length))
 
   const zoom = ZOOM_STUFEN[stufe]
   const aufteilung = useMemo(
@@ -129,39 +181,62 @@ export function StackZoomGrid({
     [mass, sichtbar.length, stufe],
   )
   const seiten = useMemo(() => (aufteilung ? seitenVon(sichtbar, aufteilung.proSeite) : []), [aufteilung, sichtbar])
+  const fliegend = useMemo(() => peptides.find(p => p.id === aktiveId) ?? null, [aktiveId, peptides])
 
   const fortschritt = useRef(0)
   const feder = useRef<Feder>({ wert: 0, tempo: 0 })
   const bild = useRef<number | null>(null)
-  const flugBahn = useRef<{ id: string; von: Kasten; nach: Kasten; ursprung: { x: number; y: number } } | null>(null)
+  /**
+   * Der Flug: von wo nach wo, und ob der Flieger schon in seiner grossen
+   * Groesse eingepasst ist (`bereit`) — bis dahin bleibt die Substanz an
+   * ihrem Platz im Karussell sichtbar.
+   */
+  const flugBahn = useRef<{ id: string; von: Kasten; nach: Kasten; bereit: boolean } | null>(null)
+  const fliegerRef = useRef<HTMLDivElement>(null)
   const quelleElement = useRef<HTMLElement | null>(null)
+  /** Haben die Kacheln gerade eigene Grafikebenen (siehe `ebenen`)? */
+  const ebenenAn = useRef(false)
 
   // ── Ein Bild aus `p` ──────────────────────────────────────────────────────
   const zeichne = useCallback((p: number) => {
     fortschritt.current = p
     const q = clamp01(p)
     // Der Rest loest sich zuerst auf (bis p = 0,45), die Substanzen folgen.
-    if (hintergrundRef.current) hintergrundRef.current.style.opacity = String(clamp01(q / 0.45))
+    if (hintergrundRef.current) {
+      const h = clamp01(q / 0.45)
+      // Weich an beiden Enden: kein hartes Einsetzen, kein Anschlag.
+      hintergrundRef.current.style.opacity = String(h * h * (3 - 2 * h))
+    }
     const bedienung = String(clamp01((q - 0.45) / 0.4))
     if (kopfRef.current) kopfRef.current.style.opacity = bedienung
     if (fussRef.current) fussRef.current.style.opacity = bedienung
+    // Der Flieger: unterwegs sichtbar, am Ziel uebernimmt die Kachel.
+    const bahn = flugBahn.current
+    const unterwegs = bahn !== null && q < 0.9995
+    const flieger = fliegerRef.current
+    if (flieger) {
+      if (bahn?.bereit && unterwegs) {
+        const { dx, dy, skala } = flug(bahn.von, bahn.nach, q)
+        flieger.style.visibility = 'visible'
+        flieger.style.transform = `translate(${bahn.von.x + dx}px, ${bahn.von.y + dy}px) scale(${skala})`
+      } else {
+        flieger.style.visibility = 'hidden'
+      }
+    }
     peptides.forEach((peptide, index) => {
       const kachel = kachelnRef.current.get(peptide.id)
       if (!kachel) return
-      const bahn = flugBahn.current?.id === peptide.id ? flugBahn.current : null
-      if (bahn) {
-        // Die fliegende Substanz darf ueber 1 hinausschwingen: die Feder
-        // laesst sie einen Hauch kleiner werden und zuruecksetzen.
-        const { dx, dy, skala } = flug(bahn.von, bahn.nach, p)
-        kachel.style.opacity = '1'
-        kachel.style.transformOrigin = `${bahn.ursprung.x}px ${bahn.ursprung.y}px`
-        kachel.style.transform = Math.abs(p - 1) < 0.0005 ? '' : `translate(${dx}px, ${dy}px) scale(${skala})`
+      if (bahn?.id === peptide.id) {
+        kachel.style.opacity = unterwegs ? '0' : '1'
+        kachel.style.transform = ''
         return
       }
       const k = kachelFortschritt(q, schwellen[index] ?? 0.3)
+      if (k > 0 && ebenenAn.current && kachel.style.willChange !== 'transform, opacity') {
+        kachel.style.willChange = 'transform, opacity'
+      }
       kachel.style.opacity = String(k)
-      kachel.style.transformOrigin = ''
-      kachel.style.transform = k >= 1 ? '' : `translateY(${(1 - k) * 10}px) scale(${0.86 + 0.14 * k})`
+      kachel.style.transform = k >= 1 ? '' : `translateY(${(1 - k) * 14}px) scale(${0.9 + 0.1 * k})`
     })
   }, [peptides, schwellen])
 
@@ -174,7 +249,13 @@ export function StackZoomGrid({
   }, [])
 
   // ── Wo die Substanz herkommt und hinfliegt ────────────────────────────────
-  const vermessen = useCallback(() => {
+  /**
+   * Misst Start und Ziel und bringt den Flieger in seine grosse Ausgangsgroesse.
+   * `danach` laeuft, sobald er dort eingepasst ist (StageFit braucht dafuer
+   * ein, zwei Bilder) — erst dann verschwindet die Substanz im Karussell und
+   * der Flieger uebernimmt, ohne Luecke und ohne Sprung.
+   */
+  const vermessen = useCallback((danach?: () => void) => {
     flugBahn.current = null
     if (quelleElement.current) quelleElement.current.style.visibility = ''
     quelleElement.current = null
@@ -182,24 +263,47 @@ export function StackZoomGrid({
     const herkunft = quelle()
     const vonKasten = herkunft?.querySelector('[data-stage-fit-box]')
     const nachKasten = kachel?.querySelector('[data-stage-fit-box]')
-    if (!kachel || !herkunft || !vonKasten || !nachKasten) return
-    // Ohne den eigenen Versatz messen, sonst misst sich die Rechnung an
-    // ihrem eigenen Ergebnis. Und auf ihrer Seite: sie fliegt dorthin, wo
-    // man hinschaut.
+    const flieger = fliegerRef.current
+    if (!kachel || !herkunft || !vonKasten || !nachKasten || !flieger) {
+      danach?.()
+      return
+    }
+    // Ohne Versatz messen, und auf ihrer Seite: sie fliegt dorthin, wo man
+    // hinschaut.
     kachel.style.transform = ''
     const seiteDerKachel = Number(kachel.closest<HTMLElement>('[data-zoom-seite]')?.dataset.zoomSeite ?? 0)
     if (seiteDerKachel !== seite) zeigeSeite(seiteDerKachel)
-    const nach = kastenVon(nachKasten)
-    const kachelJetzt = kachel.getBoundingClientRect()
-    flugBahn.current = {
-      id: kachel.dataset.zoomId ?? '',
-      von: kastenVon(vonKasten),
-      nach,
-      ursprung: { x: nach.x - kachelJetzt.left, y: nach.y - kachelJetzt.top },
-    }
-    herkunft.style.visibility = 'hidden'
-    quelleElement.current = herkunft
-  }, [aktiveId, quelle, seite, zeigeSeite])
+    const von = kastenVon(vonKasten)
+    const bahn = { id: kachel.dataset.zoomId ?? '', von, nach: kastenVon(nachKasten), bereit: false }
+    flugBahn.current = bahn
+    flieger.style.width = `${von.breite}px`
+    flieger.style.height = `${von.hoehe}px`
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (flugBahn.current !== bahn) return
+      bahn.bereit = true
+      herkunft.style.visibility = 'hidden'
+      quelleElement.current = herkunft
+      zeichne(fortschritt.current)
+      danach?.()
+    }))
+  }, [aktiveId, quelle, seite, zeichne, zeigeSeite])
+
+  /**
+   * Jede Kachel auf eine eigene Grafikebene, solange das Raster offen ist —
+   * dann bewegt die Grafikkarte sie, und nichts muss neu gemalt werden.
+   * Nicht pro Kachel an- und abschalten: jedes Abschalten malt die Kachel
+   * neu, und am Ende der Animation fielen so alle auf einmal an (gemessen:
+   * ein Stillstand von gut 400 ms bei gedrosselter Leistung).
+   *
+   * Angelegt wird jede Ebene erst, wenn ihre Kachel zu erscheinen beginnt
+   * (in `zeichne`): alle auf einmal kosteten am Start gut 300 ms, so
+   * verteilt es sich ueber die zufaellige Reihenfolge.
+   */
+  const ebenen = useCallback((an: boolean) => {
+    if (ebenenAn.current === an) return
+    ebenenAn.current = an
+    if (!an) kachelnRef.current.forEach(kachel => { kachel.style.willChange = 'auto' })
+  }, [])
 
   // ── Die Feder ─────────────────────────────────────────────────────────────
   const halteAn = () => {
@@ -208,16 +312,28 @@ export function StackZoomGrid({
   }
 
   const fertig = useCallback((ziel: 0 | 1) => {
-    sloshEngine.setEnabled(!bewegungAus() && !document.hidden)
+    // Offen bleibt die Fluessigkeit still: im Raster steht sie (siehe
+    // RUHENDE_ENGINE), und das Karussell darunter ist zugedeckt — jedes
+    // Bild dafuer waere verschwendet. Erst zurueck im Karussell bewegt sie
+    // sich wieder.
+    sloshEngine.setEnabled(ziel === 0 && !bewegungAus() && !document.hidden)
     if (ziel === 0) {
       if (quelleElement.current) quelleElement.current.style.visibility = ''
       quelleElement.current = null
+      flugBahn.current = null
+      if (fliegerRef.current) fliegerRef.current.style.visibility = 'hidden'
+      ebenen(false)
+      // Beim naechsten Oeffnen: wieder „Alle", erste Stufe, eine neue Reihenfolge.
+      setReiter('all')
+      setStufe(0)
+      setSchwellen(erscheinSchwellen(peptides.length))
       onGeschlossen()
     }
-  }, [onGeschlossen, sloshEngine])
+  }, [ebenen, onGeschlossen, peptides.length, sloshEngine])
 
   const laufeZu = useCallback((ziel: 0 | 1, startTempo = 0) => {
     halteAn()
+    ebenen(true)
     sloshEngine.setEnabled(false)
     if (bewegungAus()) {
       zeichne(ziel)
@@ -240,13 +356,14 @@ export function StackZoomGrid({
       bild.current = requestAnimationFrame(schritt)
     }
     bild.current = requestAnimationFrame(schritt)
-  }, [fertig, sloshEngine, zeichne])
+  }, [ebenen, fertig, sloshEngine, zeichne])
 
   const setzeFortschritt = useCallback((p: number) => {
     halteAn()
+    ebenen(true)
     sloshEngine.setEnabled(false)
     zeichne(p)
-  }, [sloshEngine, zeichne])
+  }, [ebenen, sloshEngine, zeichne])
 
   useImperativeHandle(handleRef, () => ({ setzeFortschritt, laufeZu }), [laufeZu, setzeFortschritt])
 
@@ -256,9 +373,8 @@ export function StackZoomGrid({
     // inzwischen bewegt haben (Antippen einer anderen Substanz).
     requestAnimationFrame(() => {
       const p = fortschritt.current
-      vermessen()
+      vermessen(() => laufeZu(0))
       zeichne(p)
-      laufeZu(0)
     })
   }, [laufeZu, vermessen, zeichne])
 
@@ -302,9 +418,9 @@ export function StackZoomGrid({
   // ── Zwei Finger im Raster ─────────────────────────────────────────────────
   // Die Griffe als Refs, damit die Lauscher nicht bei jedem Rendern neu
   // angehaengt werden muessen — und mitten in der Geste nicht verloren gehen.
-  const aktuell = useRef({ stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides })
+  const aktuell = useRef({ offen, autoStart, stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides })
   useLayoutEffect(() => {
-    aktuell.current = { stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides }
+    aktuell.current = { offen, autoStart, stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides }
   })
 
   useEffect(() => {
@@ -317,7 +433,7 @@ export function StackZoomGrid({
     } | null = null
 
     const beiStart = (e: TouchEvent) => {
-      if (e.touches.length !== 2) return
+      if (e.touches.length !== 2 || !aktuell.current.offen) return
       e.preventDefault()
       geste = { start: fingerAbstand(e.touches), modus: 'stufe', verlauf: [] }
     }
@@ -415,30 +531,37 @@ export function StackZoomGrid({
   // Ein anderer Reiter beginnt auf der ersten Seite.
   useLayoutEffect(() => { zeigeSeite(0) }, [reiter, zeigeSeite])
 
-  // Oeffnen, sobald die Kacheln eingepasst sind (StageFit misst in seinem
-  // eigenen Layout-Effekt — also ein Bild abwarten).
+  // Oeffnen: ein Bild abwarten (StageFit misst in seinem eigenen
+  // Layout-Effekt), dann vermessen und — vom Menue — die Feder starten. Die
+  // Geste fuehrt `p` dagegen selbst.
+  //
+  // Erst im Bild selbst als gestartet merken: rendert die Seite darunter
+  // vorher neu, wird dieses Bild abgebrochen und das naechste geplant.
+  // Vorher gemerkt, fiel der Start dann ganz aus — das Raster blieb
+  // unsichtbar.
   const gestartet = useRef(false)
   useEffect(() => {
+    if (!offen) {
+      gestartet.current = false
+      return
+    }
     if (!mass || gestartet.current) return
-    // Erst im Bild selbst als gestartet merken: rendert die Seite darunter
-    // vorher neu (andere Rueckruffunktionen), wird dieses Bild abgebrochen
-    // und das naechste geplant. Vorher gemerkt, fiel der Start dann ganz
-    // aus — das Raster blieb unsichtbar.
     const id = requestAnimationFrame(() => {
       gestartet.current = true
-      vermessen()
-      zeichne(fortschritt.current)
-      if (autoStart) laufeZu(1)
+      const a = aktuell.current
+      const autoStart = a.autoStart
+      a.vermessen(() => { if (autoStart) aktuell.current.laufeZu(1) })
+      a.zeichne(fortschritt.current)
     })
     return () => cancelAnimationFrame(id)
-  }, [autoStart, laufeZu, mass, vermessen, zeichne])
+  }, [mass, offen])
 
   // Escape schliesst, wie bei jedem anderen Vollbild — aber nur, wenn
   // nichts darueber liegt. Sonst schloesse dieselbe Taste das Vollbild einer
   // Substanz UND das Raster darunter, und man landete im Karussell.
   useEffect(() => {
     const beiTaste = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
+      if (e.key !== 'Escape' || !aktuell.current.offen) return
       const wurzel = wurzelRef.current
       const darueber = [...document.querySelectorAll('[data-app-modal], [role="dialog"][aria-modal="true"]')]
         .some(element => element !== wurzel && !wurzel?.contains(element))
@@ -458,13 +581,17 @@ export function StackZoomGrid({
   return createPortal(
     <div
       ref={wurzelRef}
-      data-zoom-raster
+      data-zoom-raster={offen ? '' : undefined}
+      data-zoom-raster-bereit
       data-zoom-stufe={stufe}
-      data-app-modal
-      role="dialog"
-      aria-modal="true"
-      aria-label={String(t('my_stack_view_grid'))}
+      data-app-modal={offen ? '' : undefined}
+      role={offen ? 'dialog' : undefined}
+      aria-modal={offen ? 'true' : undefined}
+      aria-label={offen ? String(t('my_stack_view_grid')) : undefined}
+      aria-hidden={offen ? undefined : true}
       className="fixed inset-0 z-[44]"
+      // Vorbereitet: fertig aufgebaut, aber weder sichtbar noch antippbar.
+      style={offen ? undefined : { visibility: 'hidden', pointerEvents: 'none' }}
     >
       {/* Deckt alles andere zu: Kopf, Reiter, Tableiste loesen sich darin auf. */}
       <div ref={hintergrundRef} className="absolute inset-0" style={{ opacity: 0, background: 'var(--c-bg)' }} />
@@ -498,7 +625,7 @@ export function StackZoomGrid({
         style={{ top: 'calc(4.25rem + env(safe-area-inset-top))', bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
       >
         {aufteilung && (
-          <SloshProvider engine={sloshEngine}>
+          <SloshProvider engine={RUHENDE_ENGINE}>
             <LiquidBubblesContext.Provider value={false}>
               {seiten.map((inhalt, seitenIndex) => (
                 <div
@@ -528,24 +655,33 @@ export function StackZoomGrid({
                         onClick={event => onOpen(p, event.currentTarget)}
                         className="min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                         // Unsichtbar bis zum ersten Bild — kein Aufblitzen.
-                        style={{ opacity: 0, willChange: 'transform, opacity' }}
+                        style={{ opacity: 0 }}
                       >
-                        <StageFit
-                          className="h-full w-full"
-                          targetHeightRatio={getDosageForm(p.dosage_form).stageHeightRatio ?? 1}
-                        >
-                          <StackStage
-                            item={{ ...p, color_hex: p.color_hex ?? getStableStackItemColor(p.id) }}
-                            fillPct={Math.round(getVialFillPct(p) ?? 100)}
-                            isActive={true}
-                            size="large"
-                          />
-                        </StageFit>
+                        <KachelInhalt peptide={p} />
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
+            </LiquidBubblesContext.Provider>
+          </SloshProvider>
+        )}
+      </div>
+
+      {/* Der Flieger: die Substanz aus dem Karussell, in ihrer grossen
+          Groesse gemalt, die nur noch schrumpft (siehe `flug`). Eine eigene
+          Ebene — die Grafikkarte verkleinert sie, gemalt wird nichts. */}
+      <div
+        ref={fliegerRef}
+        data-zoom-flieger
+        aria-hidden="true"
+        className="pointer-events-none fixed left-0 top-0 z-20"
+        style={{ visibility: 'hidden', transformOrigin: '0 0', willChange: 'transform' }}
+      >
+        {fliegend && (
+          <SloshProvider engine={RUHENDE_ENGINE}>
+            <LiquidBubblesContext.Provider value={false}>
+              <KachelInhalt peptide={fliegend} eingepasst />
             </LiquidBubblesContext.Provider>
           </SloshProvider>
         )}

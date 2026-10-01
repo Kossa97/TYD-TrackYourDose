@@ -94,7 +94,7 @@ describe('rasterZoom', () => {
 
   it('eine Kachel ist vor ihrer Schwelle unsichtbar und am Ende ganz da', () => {
     expect(kachelFortschritt(0.2, 0.3)).toBe(0)
-    expect(kachelFortschritt(1, 0.62)).toBe(1)
+    expect(kachelFortschritt(1, ERSCHEINEN_BIS)).toBe(1)
     const mitte = kachelFortschritt(0.5, 0.3)
     expect(mitte).toBeGreaterThan(0)
     expect(mitte).toBeLessThan(1)
@@ -122,7 +122,12 @@ describe('rasterZoom', () => {
   it('der Flug startet genau auf dem Karussell-Kasten und endet im Raster', () => {
     const von = { x: 100, y: 200, breite: 240, hoehe: 340 }
     const nach = { x: 20, y: 60, breite: 80, hoehe: 113 }
-    expect(flug(von, nach, 0)).toEqual({ dx: 80, dy: 140, skala: 3 })
-    expect(flug(von, nach, 1)).toEqual({ dx: 0, dy: 0, skala: 1 })
+    expect(flug(von, nach, 0)).toEqual({ dx: 0, dy: 0, skala: 1 })
+    const ende = flug(von, nach, 1)
+    expect(ende.dx).toBe(-80)
+    expect(ende.dy).toBe(-140)
+    expect(ende.skala).toBeCloseTo(1 / 3)
+    // Der Flieger wird nur kleiner, nie groesser als gemalt — so bleibt er scharf.
+    expect(flug(von, nach, 0.5).skala).toBeLessThan(1)
   })
 })

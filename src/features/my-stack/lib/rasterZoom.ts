@@ -82,7 +82,7 @@ export const mische = (von: number, nach: number, t: number) => von + (nach - vo
  * lange nichts.
  */
 export const ERSCHEINEN_AB = 0.12
-export const ERSCHEINEN_BIS = 0.62
+export const ERSCHEINEN_BIS = 0.5
 
 export function erscheinSchwellen(anzahl: number, zufall: () => number = Math.random): number[] {
   const n = Math.max(0, Math.floor(anzahl))
@@ -99,19 +99,19 @@ export function erscheinSchwellen(anzahl: number, zufall: () => number = Math.ra
 }
 
 /** Wie weit eine einzelne Kachel ist (0…1), mit weichem Auslauf. */
-export const ERSCHEIN_FENSTER = 0.38
+export const ERSCHEIN_FENSTER = 0.5
 export function kachelFortschritt(p: number, schwelle: number, fenster = ERSCHEIN_FENSTER): number {
   const t = clamp01((p - schwelle) / fenster)
-  return 1 - Math.pow(1 - t, 3)
+  return 1 - Math.pow(1 - t, 4)
 }
 
 /**
- * Eine Feder fuer `p`. Leicht unterkritisch gedaempft: sie kommt zuegig an
- * und schwingt kaum merklich nach — das ist der Unterschied zwischen
- * „animiert" und „bewegt sich wie etwas Echtes".
+ * Eine Feder fuer `p`. Knapp unter der kritischen Daempfung: sie gleitet
+ * ruhig hinein, ohne sichtbares Nachschwingen, und braucht knapp eine
+ * Sekunde — mit einer halben war sie zu hastig.
  */
 export interface Feder { wert: number; tempo: number }
-export const FEDER = { steifigkeit: 190, daempfung: 25 }
+export const FEDER = { steifigkeit: 110, daempfung: 20 }
 
 export function federSchritt(zustand: Feder, ziel: number, dt: number, feder = FEDER): Feder {
   // Lange Bilder (Tab im Hintergrund, Ruckler) in Teilschritte zerlegen,
@@ -134,17 +134,23 @@ export function federRuht(zustand: Feder, ziel: number): boolean {
 
 /**
  * Der Flug der aktiven Substanz: von ihrem Kasten im Karussell (`von`) zu
- * ihrem Kasten im Raster (`nach`). Geliefert wird, was auf den Kasten im
- * Raster anzuwenden ist — Verschiebung und Faktor, Ursprung oben links.
+ * ihrem Kasten im Raster (`nach`).
+ *
+ * Geflogen wird ein eigenes Objekt in der GROSSEN Ausgangsgroesse, das nur
+ * schrumpft: Verkleinern bleibt scharf und kostet nichts, weil das Bild
+ * einmal gemalt und dann nur noch skaliert wird. Die Kachel selbst
+ * hochzuziehen war entweder unscharf (als fertiges Bild) oder teuer (in
+ * jedem Bild neu gemalt). Geliefert wird, was auf das Objekt an seinem
+ * Startplatz anzuwenden ist — Verschiebung und Faktor, Ursprung oben links.
  */
 export interface Kasten { x: number; y: number; breite: number; hoehe: number }
 export function flug(von: Kasten, nach: Kasten, p: number): { dx: number; dy: number; skala: number } {
   const t = clamp01(p)
-  const startSkala = nach.breite > 0 ? von.breite / nach.breite : 1
+  const zielSkala = von.breite > 0 ? nach.breite / von.breite : 1
   return {
-    dx: mische(von.x - nach.x, 0, t),
-    dy: mische(von.y - nach.y, 0, t),
-    skala: mische(startSkala, 1, t),
+    dx: mische(0, nach.x - von.x, t),
+    dy: mische(0, nach.y - von.y, t),
+    skala: mische(1, zielSkala, t),
   }
 }
 
