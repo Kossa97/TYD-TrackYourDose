@@ -32,6 +32,13 @@ export interface InventoryItem {
   vials_count: number; vials_initial: number | null; mg_per_vial: number; created_at: string
   pk_profile_id: string | null
 }
+/** Wie My Stack seine Substanzen zeigt: eine im Karussell, alle im Raster, oder als Liste. */
+export type StackViewMode = 'vials' | 'grid' | 'list'
+const STACK_VIEW_MODES: readonly StackViewMode[] = ['vials', 'grid', 'list']
+export function readStackViewMode(gespeichert: string | null): StackViewMode {
+  return STACK_VIEW_MODES.find(mode => mode === gespeichert) ?? 'vials'
+}
+
 // ─── Peptid-Typen ─────────────────────────────────────────────────────────────
 export interface Peptide extends StackItem {
   name: string; default_method: string

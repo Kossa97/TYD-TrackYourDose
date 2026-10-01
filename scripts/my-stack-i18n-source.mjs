@@ -525,6 +525,10 @@ export const MY_STACK_EN = {
   my_stack_go_to_item: 'Go to {{name}}',
   my_stack_go_to_add_tile: 'Go to the “New substance” tile',
   my_stack_save_item_incomplete: 'Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.',
+  my_stack_view_label: 'View',
+  my_stack_view_carousel: 'Carousel',
+  my_stack_view_grid: 'Grid',
+  my_stack_view_list: 'List',
 }
 
 export const MY_STACK_DE = {
@@ -1053,6 +1057,10 @@ export const MY_STACK_DE = {
   my_stack_go_to_item: 'Zu {{name}}',
   my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
   my_stack_save_item_incomplete: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
+  my_stack_view_label: 'Ansicht',
+  my_stack_view_carousel: 'Karussell',
+  my_stack_view_grid: 'Raster',
+  my_stack_view_list: 'Liste',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

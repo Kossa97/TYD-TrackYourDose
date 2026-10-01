@@ -102,12 +102,15 @@ import {
   planChangeSubmissionIdentity,
   versionAsIntakePlanDraft,
   versionSnapshot,
+  type StackViewMode,
+  readStackViewMode,
 } from './page/model'
 import { AddVialTile } from './page/stackTiles'
 import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
+import { StackGridView } from './page/StackGridView'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
@@ -171,8 +174,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
   const [activeTab, setActiveTab]             = useState<StackTabKey>('all')
-  const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
-    localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
+  const [viewMode, setViewModeState]          = useState<StackViewMode>(() =>
+    readStackViewMode(localStorage.getItem('tyd_peptide_view'))
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   // Ein gerade angelegter Eintrag, der auf die Buehne soll, sobald er im
@@ -384,7 +387,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     ? displayPeptides
     : displayPeptides.filter(p => !isStageRenderable(p.dosage_form))
 
-  const setViewMode = (mode: 'vials' | 'list') => {
+  const setViewMode = (mode: StackViewMode) => {
     setViewModeState(mode)
     localStorage.setItem('tyd_peptide_view', mode)
   }
@@ -1658,7 +1661,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const objekt = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
     const peptide = stagePeptides[index]
     if (!objekt || !peptide) return
-
+    openStageDetail(peptide, objekt)
+  }
+  /** Das Vollbild oeffnen; das Objekt fliegt aus `objekt` heraus dorthin. */
+  const openStageDetail = (peptide: Peptide, objekt: HTMLElement) => {
+    setActivePeptideId(peptide.id)
     setDetailUrsprung(objekt.getBoundingClientRect())
     navigate(
       { pathname: location.pathname, search: location.search, hash: location.hash },
@@ -1976,7 +1983,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // mit `-mx-3` bis an den Rand reichen sollen, 12 px davor.
     <div
       data-my-stack-page
-      className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : viewMode === 'grid' && activePeptide ? 'overscroll-none' : ''}`}
     >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
       <MyStackHeader
@@ -2002,7 +2009,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
         data-my-stack-body
-        className={`-mx-3 min-h-0 flex-1 px-3 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
+        className={`-mx-3 min-h-0 flex-1 px-3 ${viewMode !== 'list' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
           {initialLoad && <LabLoader fadingOut={!loading} />}
 
@@ -2033,7 +2040,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </div>
           )}
 
-          {!loading && viewMode === 'vials' && !activePeptide && peptides.length > 0 && (
+          {!loading && viewMode !== 'list' && !activePeptide && peptides.length > 0 && (
             <div className="shrink-0 pt-1">{reiterLeiste}</div>
           )}
 
@@ -2064,6 +2071,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             vialStageLightHandlesRef={vialStageLightHandlesRef}
             selectPeptideIndex={selectPeptideIndex}
           />
+
+          {!loading && viewMode === 'grid' && activePeptide && (
+            <StackGridView
+              peptides={stagePeptides}
+              reiterLeiste={reiterLeiste}
+              sloshEngine={sloshEngine}
+              animationEpoch={animationEpoch}
+              onOpen={openStageDetail}
+            />
+          )}
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
           <StackListView

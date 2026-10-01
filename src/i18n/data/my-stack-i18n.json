@@ -524,7 +524,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1051,7 +1055,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1578,7 +1586,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2105,7 +2117,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2632,7 +2648,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3159,7 +3179,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3686,7 +3710,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4213,7 +4241,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4740,7 +4772,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5267,7 +5303,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5794,7 +5834,11 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6321,6 +6365,10 @@
     "my_stack_add_tile_hint": "Peptide, medication, hormone, supplement …",
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+    "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+    "my_stack_view_label": "View",
+    "my_stack_view_carousel": "Carousel",
+    "my_stack_view_grid": "Grid",
+    "my_stack_view_list": "List"
   }
 }

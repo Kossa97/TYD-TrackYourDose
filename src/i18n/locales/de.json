@@ -1687,5 +1687,9 @@
   "rechner_scale_exact": "Exakte Zielmarke",
   "rechner_scale_capacity_unknown": "Spritze auswählen",
   "my_stack_go_to_add_tile": "Zur Kachel „Neue Substanz“",
-  "my_stack_save_item_incomplete": "Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut."
+  "my_stack_save_item_incomplete": "Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.",
+  "my_stack_view_label": "Ansicht",
+  "my_stack_view_carousel": "Karussell",
+  "my_stack_view_grid": "Raster",
+  "my_stack_view_list": "Liste"
 }

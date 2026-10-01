@@ -1,8 +1,8 @@
 import type { SortAbility } from '../lib/stackSort'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, FlaskConical, List, Search, SlidersHorizontal, X, Archive } from 'lucide-react'
-import { type Peptide, type PeptideSortKey, PEPTIDE_SORT_GROUPS, SORT_OPTION_LABEL_KEYS } from './model'
+import { Plus, FlaskConical, LayoutGrid, List, Search, SlidersHorizontal, X, Archive } from 'lucide-react'
+import { type Peptide, type PeptideSortKey, type StackViewMode, PEPTIDE_SORT_GROUPS, SORT_OPTION_LABEL_KEYS } from './model'
 
 /**
  * Kopfzeile: Titel mit Anzahl, Plus (Neue Substanz), Suche, Archiv und Ansicht/Sortierung.
@@ -38,8 +38,8 @@ export function MyStackHeader({
   setArchiveViewOpen: Dispatch<SetStateAction<boolean>>
   loadArchived: () => Promise<void>
   filterOpen: boolean
-  setViewMode: (mode: "vials" | "list") => void
-  viewMode: "vials" | "list"
+  setViewMode: (mode: StackViewMode) => void
+  viewMode: StackViewMode
   wirksameSortierung: PeptideSortKey
   setSortBy: Dispatch<SetStateAction<PeptideSortKey>>
   moeglicheSortierungen: Set<SortAbility>
@@ -137,26 +137,25 @@ export function MyStackHeader({
                     <div className="fixed inset-0 z-20" onClick={() => setFilterOpen(false)} />
                     <div className="absolute right-0 top-full z-30 mt-2 w-56 space-y-3 rounded-xl border border-slate-800 bg-[var(--surface-raised)] p-3 shadow-2xl">
                       <div>
-                        <p className="mb-1.5 text-xs font-semibold text-slate-400">Ansicht</p>
-                        <div className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('vials')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'vials' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <FlaskConical size={14} /> Vials
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('list')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'list' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <List size={14} /> Liste
-                          </button>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('my_stack_view_label')}</p>
+                        <div role="group" aria-label={String(t('my_stack_view_label'))} className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
+                          {([
+                            ['vials', FlaskConical, 'my_stack_view_carousel'],
+                            ['grid', LayoutGrid, 'my_stack_view_grid'],
+                            ['list', List, 'my_stack_view_list'],
+                          ] as const).map(([mode, Icon, labelKey]) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              aria-pressed={viewMode === mode}
+                              onClick={() => setViewMode(mode)}
+                              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                                viewMode === mode ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              <Icon size={14} aria-hidden="true" /> {t(labelKey)}
+                            </button>
+                          ))}
                         </div>
                       </div>
                       <div>

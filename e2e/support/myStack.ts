@@ -30,11 +30,11 @@ export function stageObject(page: Page, name: string): Locator {
 export function seedPeptide(
   mock: MockSupabase,
   name: string,
-  options: { startDate: string; category?: string },
+  options: { startDate: string; category?: string; dosageForm?: string },
 ): void {
   mock.callRpc('save_stack_item_with_plan', {
     p_item: {
-      id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: 'vial',
+      id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: options.dosageForm ?? 'vial',
       brand: null, color_hex: '#10b981', notes: null, pk_profile_method: null,
       inventory: { enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null, batch_number: null, expires_at: null },
     },
