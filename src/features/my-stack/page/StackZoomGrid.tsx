@@ -25,18 +25,30 @@ import {
   type Feder,
   type Kasten,
 } from '../lib/rasterZoom'
-import { LiquidBubblesContext } from '../stage/liquidBubbles'
+import { LaufschriftContext, LiquidBubblesContext } from '../stage/liquidBubbles'
 import { filterByTab, tabCounts, type StackTabKey } from '../lib/stackTabs'
 import { StackTabBar } from './StackTabBar'
 import { type Peptide, getVialFillPct } from './model'
 
 /** Von aussen steuerbar — fuer die Zoom-Geste im Karussell, die `p` mit den Fingern fuehrt. */
 export interface ZoomRasterHandle {
+  /**
+   * Oeffnen — `auto`: die Feder laeuft von selbst (Menue), sonst fuehren die
+   * Finger. Ob es offen ist, haelt das Raster SELBST: haengte es an einem
+   * Zustand der Seite, rechnete beim Oeffnen und Schliessen jedes Mal die
+   * ganze My-Stack-Seite neu — gemessen ein Stillstand von gut 130 ms genau
+   * im ersten Bild der Animation.
+   */
+  oeffne: (auto: boolean) => void
+  istOffen: () => boolean
   /** `p` direkt setzen, ohne Feder (die Finger bewegen). */
   setzeFortschritt: (p: number) => void
   /** Mit der Feder nach 0 (zurueck ins Karussell) oder 1 (Raster) laufen. */
   laufeZu: (ziel: 0 | 1, startTempo?: number) => void
 }
+
+/** Ein Oeffnen, das angefragt wurde, bevor das Raster vorbereitet war. */
+export type ZoomStartAnfrage = { auto: boolean } | null
 
 /**
  * Eine Fluessigkeit, die stillsteht: fuer das vorbereitete, unsichtbare
@@ -128,23 +140,23 @@ function seitenVon<T>(liste: T[], proSeite: number): T[][] {
  * Karussell, zu der Substanz unter den Fingern.
  */
 export function StackZoomGrid({
-  offen,
+  startOffen = null,
   peptides,
   aktiveId,
   quelle,
   sloshEngine,
   onOpen,
-  onGeschlossen,
   onZurueckZu,
-  autoStart = true,
   handleRef,
 }: {
   /**
    * Das Raster haengt vorbereitet und unsichtbar bereit, damit beim Oeffnen
    * nur noch die Animation laeuft — nicht erst der Aufbau von zwanzig
    * Zeichnungen, der das erste Bild um eine halbe Sekunde verzoegerte.
+   * Kam ein Oeffnen, bevor es bereit war, steht es hier — gelesen nur beim
+   * Einhaengen; danach oeffnet `handleRef.oeffne`.
    */
-  offen: boolean
+  startOffen?: ZoomStartAnfrage
   peptides: Peptide[]
   /** Die Substanz, die gerade im Karussell steht — sie fliegt. */
   aktiveId: string | null
@@ -152,13 +164,17 @@ export function StackZoomGrid({
   quelle: () => HTMLElement | null
   sloshEngine: SloshEngine
   onOpen: (peptide: Peptide, kachel: HTMLElement) => void
-  onGeschlossen: () => void
   /** Die Geste fuehrt zurueck ins Karussell — zu dieser Substanz. */
   onZurueckZu?: (peptide: Peptide) => void
-  autoStart?: boolean
   handleRef?: Ref<ZoomRasterHandle>
 }) {
   const { t } = useTranslation()
+  // Kam ein Oeffnen, bevor das Raster bereit war, startet es gleich offen.
+  const [offen, setOffen] = useState(() => startOffen !== null)
+  // Synchron lesbar (die Geste fragt mitten im Ereignis), der Zustand oben
+  // folgt fuer die Darstellung.
+  const offenRef = useRef(startOffen !== null)
+  const autoStartRef = useRef(startOffen?.auto ?? true)
   const wurzelRef = useRef<HTMLDivElement>(null)
   const flaecheRef = useRef<HTMLDivElement>(null)
   const hintergrundRef = useRef<HTMLDivElement>(null)
@@ -327,9 +343,10 @@ export function StackZoomGrid({
       setReiter('all')
       setStufe(0)
       setSchwellen(erscheinSchwellen(peptides.length))
-      onGeschlossen()
+      offenRef.current = false
+      setOffen(false)
     }
-  }, [ebenen, onGeschlossen, peptides.length, sloshEngine])
+  }, [ebenen, peptides.length, sloshEngine])
 
   const laufeZu = useCallback((ziel: 0 | 1, startTempo = 0) => {
     halteAn()
@@ -365,7 +382,21 @@ export function StackZoomGrid({
     zeichne(p)
   }, [ebenen, sloshEngine, zeichne])
 
-  useImperativeHandle(handleRef, () => ({ setzeFortschritt, laufeZu }), [laufeZu, setzeFortschritt])
+  const oeffne = useCallback((auto: boolean) => {
+    autoStartRef.current = auto
+    if (offenRef.current) {
+      if (auto) laufeZu(1)
+      return
+    }
+    offenRef.current = true
+    setOffen(true)
+  }, [laufeZu])
+
+  useImperativeHandle(
+    handleRef,
+    () => ({ oeffne, istOffen: () => offenRef.current, setzeFortschritt, laufeZu }),
+    [laufeZu, oeffne, setzeFortschritt],
+  )
 
   const schliessen = useCallback(() => {
     halteAn()
@@ -418,9 +449,9 @@ export function StackZoomGrid({
   // ── Zwei Finger im Raster ─────────────────────────────────────────────────
   // Die Griffe als Refs, damit die Lauscher nicht bei jedem Rendern neu
   // angehaengt werden muessen — und mitten in der Geste nicht verloren gehen.
-  const aktuell = useRef({ offen, autoStart, stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides })
+  const aktuell = useRef({ stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides })
   useLayoutEffect(() => {
-    aktuell.current = { offen, autoStart, stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides }
+    aktuell.current = { stufe, wechsleStufe, setzeFortschritt, laufeZu, vermessen, zeichne, onZurueckZu, peptides }
   })
 
   useEffect(() => {
@@ -433,7 +464,7 @@ export function StackZoomGrid({
     } | null = null
 
     const beiStart = (e: TouchEvent) => {
-      if (e.touches.length !== 2 || !aktuell.current.offen) return
+      if (e.touches.length !== 2 || !offenRef.current) return
       e.preventDefault()
       geste = { start: fingerAbstand(e.touches), modus: 'stufe', verlauf: [] }
     }
@@ -549,8 +580,7 @@ export function StackZoomGrid({
     const id = requestAnimationFrame(() => {
       gestartet.current = true
       const a = aktuell.current
-      const autoStart = a.autoStart
-      a.vermessen(() => { if (autoStart) aktuell.current.laufeZu(1) })
+      a.vermessen(() => { if (autoStartRef.current) aktuell.current.laufeZu(1) })
       a.zeichne(fortschritt.current)
     })
     return () => cancelAnimationFrame(id)
@@ -561,7 +591,7 @@ export function StackZoomGrid({
   // Substanz UND das Raster darunter, und man landete im Karussell.
   useEffect(() => {
     const beiTaste = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || !aktuell.current.offen) return
+      if (e.key !== 'Escape' || !offenRef.current) return
       const wurzel = wurzelRef.current
       const darueber = [...document.querySelectorAll('[data-app-modal], [role="dialog"][aria-modal="true"]')]
         .some(element => element !== wurzel && !wurzel?.contains(element))
@@ -589,20 +619,27 @@ export function StackZoomGrid({
       aria-modal={offen ? 'true' : undefined}
       aria-label={offen ? String(t('my_stack_view_grid')) : undefined}
       aria-hidden={offen ? undefined : true}
-      className="fixed inset-0 z-[44]"
-      // Vorbereitet: fertig aufgebaut, aber weder sichtbar noch antippbar.
-      style={offen ? undefined : { visibility: 'hidden', pointerEvents: 'none' }}
+      // Vorbereitet: fertig aufgebaut, aber ausserhalb des Bildschirms
+      // geparkt. NICHT mit `visibility` oder `pointer-events` versteckt: beide
+      // vererben sich, und sie umzuschalten liess den Browser die Stile aller
+      // rund 1400 Elemente darunter neu rechnen — gemessen 134 ms vor dem
+      // ersten Bild. Eine Verschiebung vererbt nichts. Antippbar sind nur die
+      // Teile darin (`pointer-events-auto`), die Huelle selbst nie.
+      className="pointer-events-none fixed inset-0 z-[44]"
+      style={offen ? undefined : { transform: 'translate3d(-300vw, 0, 0)' }}
     >
       {/* Deckt alles andere zu: Kopf, Reiter, Tableiste loesen sich darin auf. */}
-      <div ref={hintergrundRef} className="absolute inset-0" style={{ opacity: 0, background: 'var(--c-bg)' }} />
+      <div ref={hintergrundRef} className="pointer-events-auto absolute inset-0" style={{ opacity: 0, background: 'var(--c-bg)' }} />
 
       <div
         ref={kopfRef}
-        className="absolute inset-x-0 top-0 z-10 flex justify-end pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))] pt-[calc(0.75rem+env(safe-area-inset-top))]"
+        className="pointer-events-auto absolute inset-x-0 top-0 z-10 flex justify-end pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))] pt-[calc(0.75rem+env(safe-area-inset-top))]"
         style={{ opacity: 0 }}
       >
         <button
           type="button"
+          // Geparkt nicht mit der Tastatur erreichbar.
+          tabIndex={offen ? undefined : -1}
           onClick={schliessen}
           data-app-back-close
           aria-label={String(t('close'))}
@@ -616,17 +653,21 @@ export function StackZoomGrid({
       <div
         ref={flaecheRef}
         data-zoom-raster-flaeche
+        // Eine Rollflaeche ohne erreichbare Kinder wird in Chrome selbst ein
+        // Tab-Halt — geparkt waere das ein unsichtbarer Fokus.
+        tabIndex={offen ? undefined : -1}
         onScroll={event => {
           const flaeche = event.currentTarget
           const index = Math.round(flaeche.scrollLeft / Math.max(1, flaeche.clientWidth))
           if (index !== seite) setSeite(index)
         }}
-        className="no-scrollbar absolute inset-x-0 flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-contain"
+        className="no-scrollbar pointer-events-auto absolute inset-x-0 flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-contain"
         style={{ top: 'calc(4.25rem + env(safe-area-inset-top))', bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
       >
         {aufteilung && (
           <SloshProvider engine={RUHENDE_ENGINE}>
             <LiquidBubblesContext.Provider value={false}>
+            <LaufschriftContext.Provider value={false}>
               {seiten.map((inhalt, seitenIndex) => (
                 <div
                   key={seitenIndex}
@@ -649,6 +690,7 @@ export function StackZoomGrid({
                           else kachelnRef.current.delete(p.id)
                         }}
                         type="button"
+                        tabIndex={offen ? undefined : -1}
                         data-zoom-index={peptides.indexOf(p)}
                         data-zoom-id={p.id}
                         aria-label={p.name}
@@ -663,6 +705,7 @@ export function StackZoomGrid({
                   </div>
                 </div>
               ))}
+            </LaufschriftContext.Provider>
             </LiquidBubblesContext.Provider>
           </SloshProvider>
         )}
@@ -681,7 +724,9 @@ export function StackZoomGrid({
         {fliegend && (
           <SloshProvider engine={RUHENDE_ENGINE}>
             <LiquidBubblesContext.Provider value={false}>
+            <LaufschriftContext.Provider value={false}>
               <KachelInhalt peptide={fliegend} eingepasst />
+            </LaufschriftContext.Provider>
             </LiquidBubblesContext.Provider>
           </SloshProvider>
         )}
@@ -691,7 +736,7 @@ export function StackZoomGrid({
           kommt hin. Sie erscheinen mit dem X. */}
       <div
         ref={fussRef}
-        className="absolute inset-x-0 bottom-0 px-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+        className="pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
         style={{ opacity: 0 }}
       >
         <div data-zoom-seiten className="mb-2 flex h-3 items-center justify-center gap-1.5" aria-hidden={seiten.length < 2}>
@@ -703,7 +748,8 @@ export function StackZoomGrid({
             />
           ))}
         </div>
-        <StackTabBar counts={reiterZaehler} openTab={reiter} onSelect={setReiter} />
+        {/* Erst offen eingehaengt: geparkt waeren die Reiter mit der Tastatur erreichbar. */}
+        {offen && <StackTabBar counts={reiterZaehler} openTab={reiter} onSelect={setReiter} />}
       </div>
     </div>,
     document.body,

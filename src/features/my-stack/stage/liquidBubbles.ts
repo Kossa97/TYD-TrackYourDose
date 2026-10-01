@@ -9,3 +9,11 @@ import { createContext } from 'react'
  * nur die Oberflaeche.
  */
 export const LiquidBubblesContext = createContext(true)
+
+/**
+ * Darf ein zu langer Name auf dem Etikett laufen? Im Raster nicht: dort
+ * stehen viele kleine Etiketten auf einmal, jede Laufschrift ist eine eigene
+ * Grafikebene, und die Namen sind ohnehin zu klein zum Mitlesen. Sie ruhen
+ * am Wortanfang.
+ */
+export const LaufschriftContext = createContext(true)

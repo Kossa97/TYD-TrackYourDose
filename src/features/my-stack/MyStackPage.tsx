@@ -110,7 +110,7 @@ import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
-import { StackZoomGrid, type ZoomRasterHandle } from './page/StackZoomGrid'
+import { StackZoomGrid, type ZoomRasterHandle, type ZoomStartAnfrage } from './page/StackZoomGrid'
 import { fingerSkala, fortschrittHinein, zielBeimLoslassen } from './lib/rasterZoom'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
@@ -1668,9 +1668,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * Das Raster: alle Substanzen, unabhaengig vom Reiter, in der Reihenfolge
    * von „Alle". Es liegt im Vollbild ueber dem Karussell.
    */
-  const [rasterOffen, setRasterOffen] = useState(false)
-  // Vom Menue: laeuft von selbst. Von der Geste: die Finger fuehren.
-  const [rasterAutoStart, setRasterAutoStart] = useState(true)
+  // Ob es offen ist, haelt das Raster selbst (siehe `ZoomRasterHandle`):
+  // als Zustand dieser Seite rechnete jedes Oeffnen und Schliessen die ganze
+  // Seite neu, mitten im ersten Bild der Animation.
+  //
+  // Kam ein Oeffnen, bevor es vorbereitet war: das Raster haengt sich dann
+  // gleich offen ein. Nur in diesem seltenen Fall (direkt nach dem Laden)
+  // ist es ein Zustand dieser Seite.
+  const [rasterStart, setRasterStart] = useState<ZoomStartAnfrage>(null)
   // Vorbereitet heisst: fertig aufgebaut und unsichtbar. Das Aufbauen von
   // zwanzig Zeichnungen kostete beim Oeffnen eine halbe Sekunde Stillstand;
   // jetzt passiert es, wenn die Seite ohnehin ruht.
@@ -1690,6 +1695,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }, [loading, peptides.length, rasterBereit])
   const zoomRef = useRef<ZoomRasterHandle | null>(null)
   const seitenWurzelRef = useRef<HTMLDivElement | null>(null)
+  /** Oeffnen — von selbst (`auto`, Menue) oder von den Fingern gefuehrt. */
+  const oeffneRaster = (auto: boolean) => {
+    if (zoomRef.current) {
+      zoomRef.current.oeffne(auto)
+      return
+    }
+    setRasterStart({ auto })
+    setRasterBereit(true)
+  }
   const rasterPeptides = useMemo(
     () => sortPeptides(peptides, wirksameSortierung, activePeptideIds).filter(p => isStageRenderable(p.dosage_form)),
     [peptides, wirksameSortierung, activePeptideIds],
@@ -2037,9 +2051,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * Gesten-Ereignisse, die hier abgefangen werden. Auf der Seite selbst und
    * nur in My Stack — anderswo bleibt der Seitenzoom erhalten.
    */
-  const kannZoomen = viewMode === 'vials' && Boolean(activePeptide) && !rasterOffen
+  const kannZoomen = viewMode === 'vials' && Boolean(activePeptide)
   const kannZoomenRef = useRef(kannZoomen)
   useEffect(() => { kannZoomenRef.current = kannZoomen }, [kannZoomen])
+  const oeffneRasterRef = useRef(oeffneRaster)
+  useEffect(() => { oeffneRasterRef.current = oeffneRaster })
   useEffect(() => {
     const wurzel = seitenWurzelRef.current
     if (!wurzel) return
@@ -2051,6 +2067,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // der Seitenzoom, wie er war.
     const aufDerBuehne = (ziel: EventTarget | null) =>
       kannZoomenRef.current
+      && !zoomRef.current?.istOffen()
       && ziel instanceof Element
       && ziel.closest('[data-my-stack-carousel]') !== null
       && ziel.closest('[role="dialog"], [data-app-modal]') === null
@@ -2060,8 +2077,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       e.preventDefault()
       geste = { start: abstand(e.touches), offen: false, verlauf: [] }
       // Noch nicht vorbereitet (gerade erst geladen): jetzt, solange die
-      // Finger noch nicht weit gezogen haben.
-      setRasterBereit(true)
+      // Finger noch nicht weit gezogen haben. Sonst nichts — jeder Zustand
+      // hier rechnete die Seite neu.
+      if (!zoomRef.current) setRasterBereit(true)
     }
     const beiBewegung = (e: TouchEvent) => {
       if (!geste || e.touches.length !== 2) return
@@ -2070,8 +2088,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (!geste.offen) {
         if (p < 0.03) return
         geste.offen = true
-        setRasterAutoStart(false)
-        setRasterOffen(true)
+        oeffneRasterRef.current(false)
       }
       geste.verlauf.push({ zeit: performance.now(), p })
       if (geste.verlauf.length > 5) geste.verlauf.shift()
@@ -2095,8 +2112,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         return
       }
       // Das Raster war noch nicht da: es laeuft selbst los, oder gar nicht.
-      if (ziel === 1) setRasterAutoStart(true)
-      else setRasterOffen(false)
+      setRasterStart(ziel === 1 ? { auto: true } : null)
     }
     const keinSeitenZoom = (e: Event) => { if (aufDerBuehne(e.target)) e.preventDefault() }
     wurzel.addEventListener('touchstart', beiStart, { passive: false })
@@ -2144,10 +2160,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         loadArchived={loadArchived}
         filterOpen={filterOpen}
         setViewMode={setViewMode}
-        onOpenRaster={() => {
-          setRasterAutoStart(true)
-          setRasterOffen(true)
-        }}
+        onOpenRaster={() => oeffneRaster(true)}
         viewMode={viewMode}
         wirksameSortierung={wirksameSortierung}
         setSortBy={setSortBy}
@@ -2220,18 +2233,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             selectPeptideIndex={selectPeptideIndex}
           />
 
-          {(rasterBereit || rasterOffen) && (
+          {rasterBereit && (
             <StackZoomGrid
-              offen={rasterOffen}
               handleRef={zoomRef}
-              autoStart={rasterAutoStart}
+              startOffen={rasterStart}
               onZurueckZu={zurueckZuAusRaster}
               peptides={rasterPeptides}
               aktiveId={viewMode === 'vials' ? activePeptide?.id ?? null : null}
               quelle={rasterQuelle}
               sloshEngine={sloshEngine}
               onOpen={openFromRaster}
-              onGeschlossen={() => setRasterOffen(false)}
             />
           )}
 
