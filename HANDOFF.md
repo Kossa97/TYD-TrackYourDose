@@ -570,7 +570,7 @@ peptide_library-Felder:
 - Action `update`: bestehendes Profil verbessern + tags aktualisieren
 - Name + Slug editierbar vor dem Speichern
 - `package.json` hat `"type": "module"` → API-Funktionen müssen `export default` nutzen (KEIN `module.exports`)
-- `"engines": { "node": "20.x" }` in package.json → globales `fetch` in Vercel verfügbar
+- `"engines": { "node": "24.x" }` in package.json → globales `fetch` in Vercel verfügbar. Vercel hat Node 20 im Oktober 2026 abgeschaltet: Builds brachen nach Sekunden ab („Node.js Version 20.x is discontinued“).
 
 ### Studies (/lab) — PubMed-Integration
 - `src/pages/lab/pubmed.ts` — eutils API (esearch, esummary, efetch), 429-Retry-Logik
