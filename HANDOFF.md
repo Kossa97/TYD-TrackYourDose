@@ -12,6 +12,15 @@
 - **Fehler-Monitoring: Sentry**, Organisation `devin-koslowski`, Projekt `javascript-react`, Region EU (`de.sentry.io`). `VITE_SENTRY_DSN` und `SENTRY_AUTH_TOKEN` stehen in Vercel. Filter vor dem Senden: `src/lib/monitoring.ts` (nur bekannte Fehlertexte, keine Nutzerdaten; bei Updates des Sentry-Pakets prüfen, ob neue Standardwerte Daten sammeln). IP-Speicherung in Sentry ausgeschaltet. Source-Maps lädt der Build hoch (`vite.config.ts`) und löscht sie danach. Der Sentry-Connector ist mit Claude verbunden: „schau in Sentry" genügt.
 - **Gerätetests:** `npm run test:e2e` (Playwright, iPhone 13/SE, Pixel 7, nachgebildetes Supabase in `e2e/support/`). Laufen bei jedem Push als GitHub Action (`.github/workflows/e2e.yml`).
 
+## Archiviert — für spätere Updates
+
+- **Raster-Zoom in My Stack** (Stand 01.10.2026, aus der App genommen am 02.10.2026, weil es auf dem iPhone noch nicht rund lief). Zwei Finger im Karussell zusammenziehen → alle Substanzen im Vollbild-Raster: Flieger-Animation, Aufteilung nach Anzahl (`seitenAufteilung`), Seiten, zwei Zoomstufen, Reiter unten, zurück per X oder Auseinanderziehen. Vollständig im Commit **`294e522`** auf `main`. Zurückholen:
+  ```bash
+  git checkout 294e522 -- src/features/my-stack/page/StackZoomGrid.tsx src/features/my-stack/lib/rasterZoom.ts src/features/my-stack/lib/rasterZoom.test.ts src/features/my-stack/stage/liquidBubbles.ts e2e/my-stack-raster.spec.ts
+  git diff 294e522^ 294e522 -- src/features/my-stack/MyStackPage.tsx   # Einbindung + Geste ansehen
+  ```
+  Die Einbindung (Geste, Menüeintrag „Raster“, Texte `my_stack_view_*`) steckt in `MyStackPage.tsx`, `MyStackHeader.tsx`, `model.ts` und den Sprachdateien — dort per `git diff ead570b 294e522 -- <Datei>` nachsehen. Offene Punkte beim Archivieren: auf dem iPhone noch nicht flüssig genug; gemessen (Chrome, 4× gedrosselt) war der Hauptthread zuletzt sauber, die Restkosten lagen im Zusammensetzen der Grafikebenen.
+
 ## 0. Projektstatus
 
 **Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil, Injektionsstellen-Rotation — international in 14 Sprachen.

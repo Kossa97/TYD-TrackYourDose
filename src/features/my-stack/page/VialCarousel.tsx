@@ -17,7 +17,7 @@ import { StageFit } from '../components/StageFit'
 import { StackStage } from '../components/StackStage'
 import { getDosageForm } from '../lib/dosageForms'
 import { getStableStackItemColor } from '../lib/colors'
-import { type Peptide, type Cycle, type StackViewMode, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct, expiryText } from './model'
+import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct, expiryText } from './model'
 import { AddStageTile } from './stackTiles'
 import { VialPositionRow } from './VialPositionRow'
 
@@ -52,7 +52,7 @@ export function VialCarousel({
   selectPeptideIndex,
 }: {
   loading: boolean
-  viewMode: StackViewMode
+  viewMode: "vials" | "list"
   activePeptide: Peptide | null
   reiterLeiste: ReactNode
   selectPeptideOffset: (offset: number) => void

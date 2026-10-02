@@ -102,16 +102,12 @@ import {
   planChangeSubmissionIdentity,
   versionAsIntakePlanDraft,
   versionSnapshot,
-  type StackViewMode,
-  readStackViewMode,
 } from './page/model'
 import { AddVialTile } from './page/stackTiles'
 import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
-import { StackZoomGrid, type ZoomRasterHandle, type ZoomStartAnfrage } from './page/StackZoomGrid'
-import { fingerSkala, fortschrittHinein, zielBeimLoslassen } from './lib/rasterZoom'
 import { StageDetailView } from './page/StageDetailView'
 import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
@@ -175,8 +171,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
   const [activeTab, setActiveTab]             = useState<StackTabKey>('all')
-  const [viewMode, setViewModeState]          = useState<StackViewMode>(() =>
-    readStackViewMode(localStorage.getItem('tyd_peptide_view'))
+  const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
+    localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   // Ein gerade angelegter Eintrag, der auf die Buehne soll, sobald er im
@@ -388,7 +384,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     ? displayPeptides
     : displayPeptides.filter(p => !isStageRenderable(p.dosage_form))
 
-  const setViewMode = (mode: StackViewMode) => {
+  const setViewMode = (mode: 'vials' | 'list') => {
     setViewModeState(mode)
     localStorage.setItem('tyd_peptide_view', mode)
   }
@@ -1662,80 +1658,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const objekt = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
     const peptide = stagePeptides[index]
     if (!objekt || !peptide) return
-    openStageDetail(peptide, objekt)
-  }
-  /**
-   * Das Raster: alle Substanzen, unabhaengig vom Reiter, in der Reihenfolge
-   * von „Alle". Es liegt im Vollbild ueber dem Karussell.
-   */
-  // Ob es offen ist, haelt das Raster selbst (siehe `ZoomRasterHandle`):
-  // als Zustand dieser Seite rechnete jedes Oeffnen und Schliessen die ganze
-  // Seite neu, mitten im ersten Bild der Animation.
-  //
-  // Kam ein Oeffnen, bevor es vorbereitet war: das Raster haengt sich dann
-  // gleich offen ein. Nur in diesem seltenen Fall (direkt nach dem Laden)
-  // ist es ein Zustand dieser Seite.
-  const [rasterStart, setRasterStart] = useState<ZoomStartAnfrage>(null)
-  // Vorbereitet heisst: fertig aufgebaut und unsichtbar. Das Aufbauen von
-  // zwanzig Zeichnungen kostete beim Oeffnen eine halbe Sekunde Stillstand;
-  // jetzt passiert es, wenn die Seite ohnehin ruht.
-  const [rasterBereit, setRasterBereit] = useState(false)
-  useEffect(() => {
-    if (rasterBereit || loading || peptides.length === 0) return
-    const fenster = window as Window & {
-      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number
-      cancelIdleCallback?: (id: number) => void
-    }
-    if (fenster.requestIdleCallback) {
-      const id = fenster.requestIdleCallback(() => setRasterBereit(true), { timeout: 2000 })
-      return () => fenster.cancelIdleCallback?.(id)
-    }
-    const id = window.setTimeout(() => setRasterBereit(true), 900)
-    return () => window.clearTimeout(id)
-  }, [loading, peptides.length, rasterBereit])
-  const zoomRef = useRef<ZoomRasterHandle | null>(null)
-  const seitenWurzelRef = useRef<HTMLDivElement | null>(null)
-  /** Oeffnen — von selbst (`auto`, Menue) oder von den Fingern gefuehrt. */
-  const oeffneRaster = (auto: boolean) => {
-    if (zoomRef.current) {
-      zoomRef.current.oeffne(auto)
-      return
-    }
-    setRasterStart({ auto })
-    setRasterBereit(true)
-  }
-  const rasterPeptides = useMemo(
-    () => sortPeptides(peptides, wirksameSortierung, activePeptideIds).filter(p => isStageRenderable(p.dosage_form)),
-    [peptides, wirksameSortierung, activePeptideIds],
-  )
-  /** Der Eintrag im Karussell, aus dem die aktive Substanz ins Raster fliegt — und wohin sie zurueckkehrt. */
-  const rasterQuelle = () => {
-    if (viewMode !== 'vials' || addTileActive || !activePeptide) return null
-    const slot = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${activeIndex}"]`) ?? null
-    // Sofort in die Mitte, nicht weich: gleich danach wird gemessen.
-    slot?.scrollIntoView({ block: 'nearest', inline: 'center' })
-    return slot
-  }
-  /** Die Geste im Raster fuehrt zurueck ins Karussell — zu dieser Substanz. */
-  const zurueckZuAusRaster = (peptide: Peptide) => {
-    if (!stagePeptides.some(p => p.id === peptide.id)) {
-      setActiveTab('all')
-      setSearch('')
-    }
-    setActivePeptideId(peptide.id)
-    setAddTileActive(false)
-  }
-  /** Antippen im Raster: das Vollbild dieser Substanz. Steht sie nicht im offenen Reiter, gilt „Alle". */
-  const openFromRaster = (peptide: Peptide, kachel: HTMLElement) => {
-    if (!stagePeptides.some(p => p.id === peptide.id)) {
-      setActiveTab('all')
-      setSearch('')
-    }
-    openStageDetail(peptide, kachel)
-  }
-  /** Das Vollbild oeffnen; das Objekt fliegt aus `objekt` heraus dorthin. */
-  const openStageDetail = (peptide: Peptide, objekt: HTMLElement) => {
-    setActivePeptideId(peptide.id)
+
     setDetailUrsprung(objekt.getBoundingClientRect())
     navigate(
       { pathname: location.pathname, search: location.search, hash: location.hash },
@@ -2042,95 +1965,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // zeigen (Suche ohne Treffer, nur Formen ohne Buehnengrafik), steht sie
   // allein — sonst verschwaende sie mit dem Karussell, und man kaeme aus dem
   // Reiter nicht mehr heraus.
-  /**
-   * Zwei Finger im Karussell: zusammenziehen oeffnet das Raster, und der
-   * Uebergang folgt den Fingern. Beim Loslassen laeuft er mit der Feder
-   * fertig — oder zurueck, wenn nicht weit genug gezogen wurde.
-   *
-   * Ohne das zoomte Safari die ganze Seite: es kennt eigene
-   * Gesten-Ereignisse, die hier abgefangen werden. Auf der Seite selbst und
-   * nur in My Stack — anderswo bleibt der Seitenzoom erhalten.
-   */
-  const kannZoomen = viewMode === 'vials' && Boolean(activePeptide)
-  const kannZoomenRef = useRef(kannZoomen)
-  useEffect(() => { kannZoomenRef.current = kannZoomen }, [kannZoomen])
-  const oeffneRasterRef = useRef(oeffneRaster)
-  useEffect(() => { oeffneRasterRef.current = oeffneRaster })
-  useEffect(() => {
-    const wurzel = seitenWurzelRef.current
-    if (!wurzel) return
-    let geste: { start: number; offen: boolean; verlauf: Array<{ zeit: number; p: number }> } | null = null
-    const abstand = (touches: TouchList) =>
-      Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
-    // Nur auf der Buehne selbst — nicht im Vollbild einer Substanz, im
-    // Assistenten oder im Archiv, die ebenfalls hier drin liegen. Dort bleibt
-    // der Seitenzoom, wie er war.
-    const aufDerBuehne = (ziel: EventTarget | null) =>
-      kannZoomenRef.current
-      && !zoomRef.current?.istOffen()
-      && ziel instanceof Element
-      && ziel.closest('[data-my-stack-carousel]') !== null
-      && ziel.closest('[role="dialog"], [data-app-modal]') === null
-
-    const beiStart = (e: TouchEvent) => {
-      if (e.touches.length !== 2 || !aufDerBuehne(e.target)) return
-      e.preventDefault()
-      geste = { start: abstand(e.touches), offen: false, verlauf: [] }
-      // Noch nicht vorbereitet (gerade erst geladen): jetzt, solange die
-      // Finger noch nicht weit gezogen haben. Sonst nichts — jeder Zustand
-      // hier rechnete die Seite neu.
-      if (!zoomRef.current) setRasterBereit(true)
-    }
-    const beiBewegung = (e: TouchEvent) => {
-      if (!geste || e.touches.length !== 2) return
-      e.preventDefault()
-      const p = fortschrittHinein(fingerSkala(geste.start, abstand(e.touches)))
-      if (!geste.offen) {
-        if (p < 0.03) return
-        geste.offen = true
-        oeffneRasterRef.current(false)
-      }
-      geste.verlauf.push({ zeit: performance.now(), p })
-      if (geste.verlauf.length > 5) geste.verlauf.shift()
-      zoomRef.current?.setzeFortschritt(p)
-    }
-    const beiEnde = (e: TouchEvent) => {
-      if (!geste || e.touches.length >= 2) return
-      const ende = geste
-      geste = null
-      if (!ende.offen) return
-      const erster = ende.verlauf[0]
-      const letzter = ende.verlauf[ende.verlauf.length - 1]
-      const tempo = erster && letzter && letzter.zeit > erster.zeit
-        // Lagen die Finger zuletzt still, gibt es keinen Schwung mehr.
-        && performance.now() - letzter.zeit < 100
-        ? ((letzter.p - erster.p) / (letzter.zeit - erster.zeit)) * 1000
-        : 0
-      const ziel = zielBeimLoslassen(letzter?.p ?? 0, tempo)
-      if (zoomRef.current) {
-        zoomRef.current.laufeZu(ziel, tempo)
-        return
-      }
-      // Das Raster war noch nicht da: es laeuft selbst los, oder gar nicht.
-      setRasterStart(ziel === 1 ? { auto: true } : null)
-    }
-    const keinSeitenZoom = (e: Event) => { if (aufDerBuehne(e.target)) e.preventDefault() }
-    wurzel.addEventListener('touchstart', beiStart, { passive: false })
-    wurzel.addEventListener('touchmove', beiBewegung, { passive: false })
-    wurzel.addEventListener('touchend', beiEnde)
-    wurzel.addEventListener('touchcancel', beiEnde)
-    wurzel.addEventListener('gesturestart', keinSeitenZoom)
-    wurzel.addEventListener('gesturechange', keinSeitenZoom)
-    return () => {
-      wurzel.removeEventListener('touchstart', beiStart)
-      wurzel.removeEventListener('touchmove', beiBewegung)
-      wurzel.removeEventListener('touchend', beiEnde)
-      wurzel.removeEventListener('touchcancel', beiEnde)
-      wurzel.removeEventListener('gesturestart', keinSeitenZoom)
-      wurzel.removeEventListener('gesturechange', keinSeitenZoom)
-    }
-  }, [])
-
   const reiterLeiste = (
     <StackTabBar counts={reiterZaehler} openTab={offenerReiter} onSelect={reiterWechseln} />
   )
@@ -2141,7 +1975,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // so schmal wie der Inhaltsbereich kappte sie Karussell und Reiter, die
     // mit `-mx-3` bis an den Rand reichen sollen, 12 px davor.
     <div
-      ref={seitenWurzelRef}
       data-my-stack-page
       className={`flex h-full min-h-0 flex-col overflow-hidden -mx-3 px-3 ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
     >
@@ -2160,7 +1993,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         loadArchived={loadArchived}
         filterOpen={filterOpen}
         setViewMode={setViewMode}
-        onOpenRaster={() => oeffneRaster(true)}
         viewMode={viewMode}
         wirksameSortierung={wirksameSortierung}
         setSortBy={setSortBy}
@@ -2170,7 +2002,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
         data-my-stack-body
-        className={`-mx-3 min-h-0 flex-1 px-3 ${viewMode !== 'list' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
+        className={`-mx-3 min-h-0 flex-1 px-3 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
           {initialLoad && <LabLoader fadingOut={!loading} />}
 
@@ -2201,7 +2033,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </div>
           )}
 
-          {!loading && viewMode !== 'list' && !activePeptide && peptides.length > 0 && (
+          {!loading && viewMode === 'vials' && !activePeptide && peptides.length > 0 && (
             <div className="shrink-0 pt-1">{reiterLeiste}</div>
           )}
 
@@ -2232,19 +2064,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             vialStageLightHandlesRef={vialStageLightHandlesRef}
             selectPeptideIndex={selectPeptideIndex}
           />
-
-          {rasterBereit && (
-            <StackZoomGrid
-              handleRef={zoomRef}
-              startOffen={rasterStart}
-              onZurueckZu={zurueckZuAusRaster}
-              peptides={rasterPeptides}
-              aktiveId={viewMode === 'vials' ? activePeptide?.id ?? null : null}
-              quelle={rasterQuelle}
-              sloshEngine={sloshEngine}
-              onOpen={openFromRaster}
-            />
-          )}
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
           <StackListView

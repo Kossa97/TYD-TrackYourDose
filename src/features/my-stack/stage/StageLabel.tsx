@@ -1,5 +1,4 @@
-import { useContext, useEffect, useRef } from 'react'
-import { LaufschriftContext } from './liquidBubbles'
+import { useEffect, useRef } from 'react'
 import type { CSSProperties, HTMLAttributes, ReactNode, RefObject } from 'react'
 import { buildMarqueeMotion, marqueeRestOffset, MARQUEE_MIN_OVERFLOW } from './marquee'
 
@@ -15,7 +14,6 @@ export function StageMarquee({
 }) {
   const wrapRef = useRef<HTMLSpanElement | null>(null)
   const innerRef = useRef<HTMLSpanElement | null>(null)
-  const laufen = useContext(LaufschriftContext)
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -35,7 +33,7 @@ export function StageMarquee({
       const ruht = overflow > MARQUEE_MIN_OVERFLOW ? marqueeRestOffset() : 0
       inner.style.transform = `translateX(-${ruht}px)`
 
-      if (!laufen || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
       if (overflow <= MARQUEE_MIN_OVERFLOW) return
 
       const motion = buildMarqueeMotion(overflow)
@@ -56,15 +54,14 @@ export function StageMarquee({
       anim?.cancel()
       ro.disconnect()
     }
-  }, [children, laufen])
+  }, [children])
 
   return (
     <span ref={wrapRef} className={`block overflow-hidden whitespace-nowrap ${className}`}>
       {/* Kein `will-change-transform`: es machte JEDES Etikett zu einer
           eigenen Grafikebene, auch die, deren Name gar nicht laeuft — und
-          zwang damit die Ebenen darueber auseinander (gezaehlt 137 Ebenen mit
-          offenem Raster). Eine laufende Animation holt sich ihre Ebene
-          selbst. */}
+          zwang damit die Ebenen darum herum auseinander. Eine laufende
+          Animation holt sich ihre Ebene selbst. */}
       <span ref={innerRef} className="vial-label-marquee inline-block">
         {children}
       </span>

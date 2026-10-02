@@ -697,12 +697,7 @@ describe('My Stack page vial view', () => {
     // Mitte, ist auch die erste Substanz nur ein Nachbar.
     expect(handler).toContain('if (index !== currentSlot)')
     expect(handler).toContain('selectPeptideIndex(index)')
-    expect(handler).toContain('openStageDetail(peptide, objekt)')
-    // Karussell und Raster oeffnen das Vollbild auf demselben Weg.
-    const oeffnen = text.slice(text.indexOf('const openStageDetail ='), text.indexOf('\n  }', text.indexOf('const openStageDetail =')))
-    expect(oeffnen).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
-    expect(text).toContain('onOpen={openFromRaster}')
-    expect(text).toContain('openStageDetail(peptide, kachel)')
+    expect(handler).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
   })
 
   test('legt die Flüssigkeitsphysik für den Flug still', () => {
@@ -1002,8 +997,7 @@ describe('My Stack modular integration', () => {
 
   test('uses persisted item colors before the stable palette fallback', () => {
     const text = source()
-    // Karussell, Liste und Raster.
-    expect(text.match(/(?:p|peptide)\.color_hex \?\? getStableStackItemColor\((?:p|peptide)\.id\)/g)).toHaveLength(3)
+    expect(text.match(/p\.color_hex \?\? getStableStackItemColor\(p\.id\)/g)).toHaveLength(2)
   })
 
   test('migrates active and archived local colors once, then reloads persisted active rows', () => {

@@ -1,8 +1,7 @@
-import { useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
 import { useSloshSubscribe } from '../../../components/SloshContext'
-import { LiquidBubblesContext } from './liquidBubbles'
 import type { SloshState } from '../../../components/sloshEngine'
 
 function clamp01(wert: number): number {
@@ -99,7 +98,6 @@ export function LiquidGraphic({
   handleRef,
 }: LiquidGraphicProps) {
   const subscribe = useSloshSubscribe()
-  const blasenErlaubt = useContext(LiquidBubblesContext)
   const stageRef = useRef({ focus: seedFocus, lightOffset: seedLightOffset })
   const highlightShift = seedLightOffset * 10
   const geom = buildLiquid({ fill, tilt, chamberAspect })
@@ -332,7 +330,7 @@ export function LiquidGraphic({
     <rect ref={refractLeftRef} x={5 + seedLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + seedFocus * 0.22} />
     <rect ref={refractRightRef} x={99 + seedLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + seedFocus * 0.16} />
     <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
-    {bubbles && blasenErlaubt && !reducedMotion && visible && LIQUID_BUBBLES.map((b, i) => (
+    {bubbles && !reducedMotion && visible && LIQUID_BUBBLES.map((b, i) => (
     <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
       <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${-(b.dur * b.phase).toFixed(2)}s`} repeatCount="indefinite" />
       <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.18;0.72;1" dur={`${b.dur}s`} begin={`${-(b.dur * b.phase).toFixed(2)}s`} repeatCount="indefinite" />
