@@ -407,10 +407,43 @@ vi.mock('react-hot-toast', () => ({
   }),
 }))
 
+/** Die Listenzeile einer Substanz — null, solange sie nicht sichtbar ist. */
 function visibleCardFor(name: string): HTMLElement | null {
-  const nameNode = screen.getAllByText(name).find(node => node.closest('.card'))
-  const card = nameNode?.closest<HTMLElement>('.card') ?? null
-  return card?.closest('.hidden') ? null : card
+  const row = screen.queryAllByText(name)
+    .map(node => node.closest<HTMLElement>('[data-list-row]'))
+    .find((node): node is HTMLElement => node !== null) ?? null
+  return row?.closest('.hidden') ? null : row
+}
+
+/** Tippt die Listenzeile an: das Vollbild der Substanz oeffnet sich. */
+function openDetailFor(name: string): HTMLElement {
+  const row = visibleCardFor(name)
+  if (!row) throw new Error(`Expected visible list row for ${name}`)
+  fireEvent.click(within(row).getByRole('button', { name: 'my_stack_list_open' }))
+  return screen.getByRole('dialog', { name })
+}
+
+/** Bearbeiten und Loeschen liegen im Vollbild, nicht mehr auf der Zeile. */
+function detailButtonFor(name: string, label: 'bearbeiten' | 'loeschen'): HTMLElement {
+  return within(openDetailFor(name)).getByRole('button', { name: label })
+}
+
+/**
+ * Vom Vollbild in die Plan-Uebersicht — dorthin, wo frueher die
+ * aufgeklappte Listenkarte die Zyklen zeigte.
+ */
+async function openPlanFor(name: string): Promise<void> {
+  const dialog = openDetailFor(name)
+  if (FEATURES.planTimelineV2) {
+    // Mit laufendem Plan „Plan & Verlauf oeffnen", nur mit beendeten „Verlauf ansehen".
+    fireEvent.click(await within(dialog).findByRole('button', {
+      name: /^(my_stack_plan_open_overview|my_stack_plan_view_history)$/,
+    }))
+    return
+  }
+  const zyklus = dialog.querySelector<HTMLElement>('[data-stack-detail="zyklus"] button')
+  if (!zyklus) throw new Error('Expected the cycle entry in the detail view')
+  fireEvent.click(zyklus)
 }
 
 async function renderPage(): Promise<void> {
@@ -422,13 +455,13 @@ async function renderPage(): Promise<void> {
   await waitFor(() => expect(screen.getAllByText('Existing Premium Vial').length).toBeGreaterThan(0))
 }
 
-function openLegacyCycleEditor(cycleId: string): void {
-  const card = visibleCardFor(qaName)
-  if (!card) throw new Error('Expected visible stack card')
-  fireEvent.click(within(card).getAllByRole('button')[0])
-  const cycleRow = card.querySelector<HTMLElement>(`[data-cycle-id="${cycleId}"]`)
-  if (!cycleRow) throw new Error(`Expected cycle row ${cycleId}`)
-  fireEvent.click(within(cycleRow).getByRole('button', { name: 'bearbeiten' }))
+async function openLegacyCycleEditor(cycleId: string): Promise<void> {
+  await openPlanFor(qaName)
+  const cycleCard = document.querySelector<HTMLElement>(`[data-cycle-id="${cycleId}"]`)
+  if (!cycleCard) throw new Error(`Expected cycle card ${cycleId}`)
+  const zugeklappt = cycleCard.querySelector<HTMLElement>('button[aria-expanded="false"]')
+  if (zugeklappt) fireEvent.click(zugeklappt)
+  fireEvent.click(within(cycleCard).getByRole('button', { name: 'bearbeiten' }))
 }
 
 function LocationProbe() {
@@ -611,9 +644,12 @@ describe('MyStackPage non-vial visibility', () => {
     expect(card).not.toBeNull()
     expect(screen.getByTestId('stack-stage-vial-1')).not.toBeNull()
     expect(screen.queryByTestId('stack-stage-other-1')).toBeNull()
-    const actions = within(card!)
-    expect(actions.getByRole('button', { name: 'bearbeiten' })).not.toBeNull()
-    expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
+    // Die Zeile selbst traegt keine Aktionen mehr — sie oeffnet das Vollbild,
+    // und dort stehen Bearbeiten und Loeschen.
+    expect(within(card!).queryByRole('button', { name: 'loeschen' })).toBeNull()
+    const detail = openDetailFor(qaName)
+    expect(within(detail).getByRole('button', { name: 'bearbeiten' })).not.toBeNull()
+    expect(within(detail).getByRole('button', { name: 'loeschen' })).not.toBeNull()
   })
 
   it('shows mixing in the composition, the batch in the substance and the stock as its own line', async () => {
@@ -788,8 +824,8 @@ describe('MyStackPage non-vial visibility', () => {
     const card = visibleCardFor(qaName)
     expect(card).not.toBeNull()
     expect(card?.textContent).toContain('dosage_form_other')
-    expect(card?.textContent).toContain('Magnesium: 100 mg / 1 application')
-    expect(card?.textContent).toContain('Vitamin D3: 5000 IU / 1 application')
+    // Eine Mischung nennt in der Zeile ihre Wirkstoffe; die Mengen stehen im Vollbild.
+    expect(card?.textContent).toContain('Magnesium + Vitamin D3')
     expect(card?.textContent).not.toContain('method_subkutan')
   })
   it('shows an exact-name non-vial search result instead of a blank vial view', async () => {
@@ -847,7 +883,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    openLegacyCycleEditor(cycle.id)
+    await openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-id').textContent).toBe(cycle.id)
     expect(screen.getByTestId('wizard-plan-method').textContent).toBe(cycle.method)
@@ -901,7 +937,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    openLegacyCycleEditor(cycle.id)
+    await openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('5')
     expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
@@ -958,7 +994,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    openLegacyCycleEditor(cycle.id)
+    await openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
     // Die Harness zeigt die Form des Rhythmus, nicht mehr den Frequenztext.
@@ -1007,7 +1043,7 @@ describe('MyStackPage non-vial visibility', () => {
     render(<MemoryRouter initialEntries={[`/my-stack?edit=other-1${suffix}`]}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
     if (!suffix) {
       await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-      fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+      fireEvent.click(detailButtonFor(qaName, 'bearbeiten'))
     }
     fireEvent.click(await screen.findByRole('button', { name: 'save hydrated plan' }))
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('save_stack_item', expect.objectContaining({
@@ -1027,7 +1063,7 @@ describe('MyStackPage non-vial visibility', () => {
     const { client } = v2Client({ timelineResults: [{ data: [row], error: null }, { data: [row], error: null }], rpc })
     render(<MemoryRouter initialEntries={['/my-stack']}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    fireEvent.click(detailButtonFor(qaName, 'bearbeiten'))
     for (let step = 0; step < 10 && !screen.queryByRole('button', { name: 'save' }); step++) {
       expect(screen.queryByLabelText('my_stack_plan_start_date')).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: 'continue' }))
@@ -1041,7 +1077,7 @@ describe('MyStackPage non-vial visibility', () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     visibilityMocks.archiveError = error
     await renderPage()
-    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'loeschen' }))
+    fireEvent.click(detailButtonFor(qaName, 'loeschen'))
     const dialog = await screen.findByRole('dialog', { name: 'substanz_entfernen_title' })
     fireEvent.click(within(dialog).getByRole('button', { name: 'archivieren_behalten' }))
     if (error) {
@@ -1100,8 +1136,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
 
     const section = await screen.findByTestId(`plan-management-${activeCycle.id}`)
     fireEvent.click(within(section).getByRole('button', {
@@ -1153,7 +1188,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
 
     const choices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
     expect(choices).toHaveLength(2)
@@ -1189,7 +1224,7 @@ describe('MyStackPage non-vial visibility', () => {
     const { client } = v2Client({ timelineResults: [{ data: [unknown], error: null }, { data: [resolved], error: null }], rpc })
     render(<MemoryRouter initialEntries={['/my-stack']}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const input = await screen.findByLabelText('my_stack_course_timezone')
     expect(rpc).not.toHaveBeenCalled()
     expect(screen.queryByText('my_stack_plan_next_intake')).toBeNull()
@@ -1293,7 +1328,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-refresh-timeline-kept')).getByRole('button', {
       name: 'my_stack_plan_conflict_keep',
     }))
@@ -1336,7 +1371,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-refresh-item-kept')).getByRole('button', {
       name: 'my_stack_plan_conflict_keep',
     }))
@@ -1421,8 +1456,7 @@ describe('MyStackPage non-vial visibility', () => {
     await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(2))
     expect(screen.queryByRole('alert')).toBeNull()
 
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     expect(await screen.findByTestId('plan-management-cycle-recovered')).toBeTruthy()
   })
 
@@ -1493,8 +1527,9 @@ describe('MyStackPage non-vial visibility', () => {
     fireEvent.click(document.querySelector<HTMLElement>('[data-my-stack-add]')!)
     fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
 
+    await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(2))
+    await openPlanFor(qaName)
     expect(await screen.findByTestId('plan-management-cycle-created')).toBeTruthy()
-    expect(timelineQuery).toHaveBeenCalledTimes(2)
   })
 
   it('inserts a restarted cycle as a separately identified visible timeline', async () => {
@@ -1518,8 +1553,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const endedSection = await screen.findByTestId('plan-management-cycle-ended')
     fireEvent.click(within(endedSection).getByRole('button', { name: 'my_stack_plan_restart' }))
 
@@ -1558,8 +1592,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const section = await screen.findByTestId('plan-management-cycle-plan-change')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
@@ -1607,8 +1640,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const section = await screen.findByTestId('plan-management-cycle-real-wizard')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
@@ -1657,7 +1689,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const section = await screen.findByTestId('plan-management-cycle-add-step')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_add_step' }))
 
@@ -1714,7 +1746,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const section = await screen.findByTestId('plan-management-cycle-adopt')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
@@ -1773,8 +1805,7 @@ describe('MyStackPage non-vial visibility', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
-    const card = visibleCardFor(qaName)!
-    fireEvent.click(within(card).getAllByRole('button')[0])
+    await openPlanFor(qaName)
     const section = await screen.findByTestId('plan-management-cycle-remove')
     fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_remove_future' }))
     fireEvent.click(screen.getByRole('button', { name: 'my_stack_plan_remove_future_confirm' }))

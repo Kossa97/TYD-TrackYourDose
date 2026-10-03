@@ -1642,6 +1642,14 @@ main.flex-1 {
 [data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
 [data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
 
+/* My-Stack-Liste: die Farbtoene der Zeile sind fuer dunklen Grund gemischt
+   (helle Schrift auf getoentem Glas). Auf hellem Grund dieselben Toene,
+   nur dunkler gesetzt. */
+[data-theme="light"] [data-list-chip="rot"] { color: #b91c1c; background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+[data-theme="light"] [data-list-chip="gelb"] { color: #92400e; background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
+[data-theme="light"] [data-list-plan-add] { color: #6d28d9; background-color: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.35); }
+[data-theme="light"] [data-list-row] [data-list-uhr] { color: #0e7490; }
+
 /* Vial label: restore transparency in light mode.
    The global bg-slate-950/* override replaces rgba(2,6,23,0.82) with a
    solid #f8fafc, stripping the opacity and making the label opaque white.

@@ -525,6 +525,18 @@ export const MY_STACK_EN = {
   my_stack_go_to_item: 'Go to {{name}}',
   my_stack_go_to_add_tile: 'Go to the “New substance” tile',
   my_stack_save_item_incomplete: 'Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.',
+  my_stack_list_today: 'Today, {{time}}',
+  my_stack_list_tomorrow: 'Tomorrow, {{time}}',
+  my_stack_list_expired: 'Expired',
+  my_stack_list_expires_in_single: 'Expires tomorrow',
+  my_stack_list_expires_in_multiple: 'Expires in {{n}} days',
+  my_stack_list_low: 'Running low',
+  my_stack_list_review: 'Check plan',
+  my_stack_list_review_locked: 'Intakes locked until checked',
+  my_stack_list_add_plan: 'Add plan',
+  my_stack_list_open: 'Open {{name}}',
+  my_stack_list_range_long: '{{n}}+ days',
+  my_stack_list_range_title: 'Supply lasts {{range}}',
 }
 
 export const MY_STACK_DE = {
@@ -1053,6 +1065,18 @@ export const MY_STACK_DE = {
   my_stack_go_to_item: 'Zu {{name}}',
   my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
   my_stack_save_item_incomplete: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
+  my_stack_list_today: 'Heute, {{time}}',
+  my_stack_list_tomorrow: 'Morgen, {{time}}',
+  my_stack_list_expired: 'Abgelaufen',
+  my_stack_list_expires_in_single: 'Läuft morgen ab',
+  my_stack_list_expires_in_multiple: 'Läuft in {{n}} Tagen ab',
+  my_stack_list_low: 'Bald leer',
+  my_stack_list_review: 'Plan prüfen',
+  my_stack_list_review_locked: 'Einnahmen gesperrt, bis geprüft',
+  my_stack_list_add_plan: 'Plan anlegen',
+  my_stack_list_open: '{{name}} öffnen',
+  my_stack_list_range_long: '{{n}}+ Tage',
+  my_stack_list_range_title: 'Vorrat reicht {{range}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

@@ -353,12 +353,12 @@ describe('My Stack page vial view', () => {
     expect(knopf).not.toContain('activeQuantity')
     expect(knopf).not.toContain('activeFrequency')
     expect(knopf).not.toContain('toggleCycleActive(activeCycle)')
-    expect(knopf).toContain('setCycleManagerPeptide(activePeptide)')
+    expect(knopf).toContain('setCycleManagerPeptide(eintrag)')
 
     // Zwei Leerzustände, je nachdem ob es überhaupt Zyklen gibt.
     expect(knopf).toContain("t('kein_aktiver_zyklus')")
     expect(knopf).toContain("t('noch_kein_zyklus_desc')")
-    expect(knopf).toContain('openNewCycle(activePeptide)')
+    expect(knopf).toContain('openNewCycle(eintrag)')
 
     // Und das ausgebreitete Cockpit ist weg, nicht bloss versteckt.
     expect(text).not.toContain("t('aktiver_zyklus')")
@@ -671,7 +671,7 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('cycleManagerPeptide')
-    expect(text).toContain('setCycleManagerPeptide(activePeptide)')
+    expect(text).toContain('setCycleManagerPeptide(eintrag)')
     expect(text).not.toContain("t('neu')")
     expect(text).toContain("t('zyklen_verwalten')")
     expect(text).toContain('toggleManagerCard(c.id)')
@@ -697,7 +697,8 @@ describe('My Stack page vial view', () => {
     // Mitte, ist auch die erste Substanz nur ein Nachbar.
     expect(handler).toContain('if (index !== currentSlot)')
     expect(handler).toContain('selectPeptideIndex(index)')
-    expect(handler).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
+    expect(handler).toContain('oeffneVollbild(peptide, objekt)')
+    expect(text).toContain('setDetailUrsprung(ursprung.getBoundingClientRect())')
   })
 
   test('legt die Flüssigkeitsphysik für den Flug still', () => {
@@ -713,11 +714,11 @@ describe('My Stack page vial view', () => {
     // hatte. Jetzt liegen sie im Vollbild, das der Tipp öffnet.
     const text = source()
 
-    expect(text).toContain('const eintragDetails = () => (')
+    expect(text).toContain('const eintragDetails = (eintrag: Peptide) => (')
     // Aufgerufen wird die Funktion genau einmal: im Vollbild.
-    expect(text.split('eintragDetails()').length - 1).toBe(1)
+    expect(text.split('eintragDetails(activePeptide)').length - 1).toBe(1)
     const sheet = text.slice(text.indexOf('<StageDetailSheet'), text.indexOf('</StageDetailSheet>'))
-    expect(sheet).toContain('{eintragDetails()}')
+    expect(sheet).toContain('{eintragDetails(activePeptide)}')
   })
 
   test('passt das Objekt in die Fläche ein, statt es fest zu bemessen', () => {
@@ -1014,6 +1015,6 @@ describe('My Stack modular integration', () => {
     const text = source()
     const handler = text.slice(text.indexOf('const openExistingStackItem'), text.indexOf('const removePeptide'))
     expect(handler).toContain("setViewMode('list')")
-    expect(handler).toContain('setExpandedId(item.id)')
+    expect(handler).toContain('setHervorgehobenId(item.id)')
   })
 })

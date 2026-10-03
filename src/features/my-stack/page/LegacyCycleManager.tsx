@@ -220,7 +220,7 @@ export function LegacyCycleManager({
         const renderActiveCard = (c: Cycle) => {
           const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
           return (
-            <div key={c.id} className="rounded-xl border border-emerald-500/35 bg-emerald-500/5 p-3">
+            <div key={c.id} data-cycle-id={c.id} className="rounded-xl border border-emerald-500/35 bg-emerald-500/5 p-3">
               <div className="flex items-start gap-2.5">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
                 <div className="min-w-0 flex-1">
@@ -243,7 +243,7 @@ export function LegacyCycleManager({
           const open = managerCardOpen.has(c.id)
           const statusLabel = isEnded ? t('beendet') : t('inaktiv_badge')
           return (
-            <div key={c.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35">
+            <div key={c.id} data-cycle-id={c.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35">
               <button
                 type="button"
                 onClick={() => toggleManagerCard(c.id)}

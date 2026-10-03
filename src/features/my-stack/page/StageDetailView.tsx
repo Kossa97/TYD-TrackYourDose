@@ -13,33 +13,35 @@ import { getStableStackItemColor } from '../lib/colors'
 import { type Peptide, getVialFillPct } from './model'
 
 /**
- * Das Vollbild hinter einem Objekt: Plan, Bestand, Angaben — geoeffnet per FLIP aus dem Karussell.
+ * Das Vollbild hinter einem Objekt: Plan, Bestand, Angaben — geoeffnet per FLIP aus dem Karussell oder der Liste.
  */
 export function StageDetailView({
   detailUrsprung,
-  activePeptide,
-  detailHistoryPeptideId,
+  peptide: activePeptide,
   closeStageDetail,
   sloshEngine,
   openEditPeptide,
   removePeptide,
   setBestandEdit,
   eintragDetails,
+  rekonstitutionWiederholen,
 }: {
   detailUrsprung: DOMRect | null
-  activePeptide: Peptide | null
-  detailHistoryPeptideId: string | null
+  /** Die Substanz in der Historie — aus dem Karussell oder der Liste. */
+  peptide: Peptide | null
   closeStageDetail: () => void
   sloshEngine: SloshEngine
   openEditPeptide: (p: Peptide) => void
   removePeptide: (id: string) => void
   setBestandEdit: Dispatch<SetStateAction<{ peptideId: string; editor: BestandEditorArt; } | null>>
-  eintragDetails: () => ReactNode
+  eintragDetails: (eintrag: Peptide) => ReactNode
+  /** Aeltere Eintraege ohne gefuehrten Bestand: das Anmischdatum neu setzen. */
+  rekonstitutionWiederholen: (p: Peptide) => void
 }) {
   const { t } = useTranslation()
   return (
     <>
-      {detailUrsprung && activePeptide && detailHistoryPeptideId === activePeptide.id && (
+      {detailUrsprung && activePeptide && (
         <StageDetailSheet
           originRect={detailUrsprung}
           onClose={closeStageDetail}
@@ -74,6 +76,21 @@ export function StageDetailView({
             // anbrechen: setzt Datum und Fluessigkeit neu und verwirft auf
             // Wunsch den Rest im alten. Nur mit Bestand und vollem Behaelter.
             const art = anbruchArt(activePeptide.dosage_form)
+            // Aeltere Vials haengen noch am alten Inventar statt an einem
+            // gefuehrten Bestand. Fuer sie bleibt der fruehere Knopf — er
+            // stand bisher auf der Listenkarte, die es so nicht mehr gibt.
+            if (art === 'vial' && !activePeptide.inventory?.enabled && activePeptide.inventory_item_id) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => rekonstitutionWiederholen(activePeptide)}
+                  className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                >
+                  <RefreshCw size={15} aria-hidden="true" />
+                  {String(t('rekonstitution_wdh'))}
+                </button>
+              )
+            }
             if (!art || !activePeptide.inventory?.enabled) return null
             const nichtsZuOeffnen = vorratTeile(activePeptide.inventory).voll < 1
             return (
@@ -105,7 +122,7 @@ export function StageDetailView({
             </SloshProvider>
           )}
         >
-          {eintragDetails()}
+          {eintragDetails(activePeptide)}
         </StageDetailSheet>
       )}
     </>

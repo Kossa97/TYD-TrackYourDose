@@ -1452,5 +1452,17 @@
   "rechner_scale_exact": "Exact target mark",
   "rechner_scale_capacity_unknown": "Select a syringe",
   "my_stack_go_to_add_tile": "Go to the “New substance” tile",
-  "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again."
+  "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
+  "my_stack_list_today": "Today, {{time}}",
+  "my_stack_list_tomorrow": "Tomorrow, {{time}}",
+  "my_stack_list_expired": "Expired",
+  "my_stack_list_expires_in_single": "Expires tomorrow",
+  "my_stack_list_expires_in_multiple": "Expires in {{n}} days",
+  "my_stack_list_low": "Running low",
+  "my_stack_list_review": "Check plan",
+  "my_stack_list_review_locked": "Intakes locked until checked",
+  "my_stack_list_add_plan": "Add plan",
+  "my_stack_list_open": "Open {{name}}",
+  "my_stack_list_range_long": "{{n}}+ days",
+  "my_stack_list_range_title": "Supply lasts {{range}}"
 }

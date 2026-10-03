@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -113,7 +113,6 @@ import { PlanOverviewSheet } from './page/PlanOverviewSheet'
 import { StackListView } from './page/StackListView'
 import { MyStackHeader } from './page/MyStackHeader'
 import { LegacyCycleManager } from './page/LegacyCycleManager'
-import { SubstanceInfoSheet } from './page/SubstanceInfoSheet'
 import { RekonstitutionDialog } from './page/RekonstitutionDialog'
 import { EscalationFormSheet } from './page/EscalationFormSheet'
 
@@ -136,7 +135,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [rekonstitutionDontAsk,setRekonstitutionDontAsk]= useState(false)
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
-  const [infoBtnNew,     dismissInfoBtn]       = useNew('peptide_info')
   const [zyklusBtnNew,   dismissZyklusBtn]     = useNew('zyklus_btn')
 
   // ── Inventar ─────────────────────────────────────────────────────────────
@@ -153,7 +151,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   } = useMyStackData({ stackDataClient, userId: user?.id })
 
   // ── Peptide ───────────────────────────────────────────────────────────────
-  const [expandedId, setExpandedId]           = useState<string | null>(null)
+  // Eine eben gespeicherte Substanz: ihre Zeile in der Liste rueckt ins Bild und leuchtet kurz.
+  const [hervorgehobenId, setHervorgehobenId] = useState<string | null>(null)
+  const hervorhebungGesehen = useCallback(() => setHervorgehobenId(null), [])
   const [showPeptideForm, setShowPeptideForm] = useState(false)
   const [editingPeptideId, setEditingPeptideId] = useState<string | null>(null)
   const [wizardInitialColor, setWizardInitialColor] = useState('')
@@ -164,7 +164,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const lifecycleIdempotencyKeysRef = useRef(new Map<string, RecoverableMutation>())
   // Ein zweiter Plan statt einer Aenderung am bestehenden.
   const [wizardNeuerZyklus, setWizardNeuerZyklus] = useState(false)
-  const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
   const [searchOpen, setSearchOpen]           = useState(false)
   const [filterOpen, setFilterOpen]           = useState(false)
@@ -448,13 +447,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const bestandPeptide = bestandEdit ? peptides.find(peptide => peptide.id === bestandEdit.peptideId) ?? null : null
 
-  // ── Inventar Bestand anpassen ─────────────────────────────────────────────
-  const adjustInventoryCount = async (id: string, delta: number, current: number) => {
-    const newCount = Math.max(0, current + delta)
-    await supabase.from('inventory_items').update({ vials_count: newCount }).eq('id', id)
-    loadInventory()
-  }
-
   // ── Rekonstitution wiederholen ────────────────────────────────────────────
   const handleRekonstitution = (p: Peptide) => {
     if (readLocalFlag('_skip_rekonstitution')) { doRekonstitution(p); return }
@@ -553,7 +545,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       toast.error(t('error'))
       nichtGeladen.forEach(ergebnis => reportError(ergebnis.reason, 'my-stack.reload-after-save'))
     }
-    setExpandedId(savedRow.id)
+    setHervorgehobenId(savedRow.id)
     if (!draft.id) setNeuZentrieren(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }
@@ -561,7 +553,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const openExistingStackItem = (item: StackItem) => {
     setActivePeptideId(item.id)
     setViewMode('list')
-    setExpandedId(item.id)
+    setHervorgehobenId(item.id)
   }
 
   const removePeptide = (id: string) => {
@@ -1364,6 +1356,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   const activeIndex = Math.max(0, stagePeptides.findIndex(p => p.id === activePeptideId))
   const activePeptide = stagePeptides[activeIndex] ?? null
+  // Das Vollbild gehoert der Substanz in der Historie — im Karussell ist das
+  // die aktive, in der Liste die angetippte Zeile.
+  const detailPeptide = detailHistoryPeptideId
+    ? peptides.find(p => p.id === detailHistoryPeptideId) ?? null
+    : null
   // Focus the search field right after it expands.
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus()
@@ -1658,8 +1655,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const objekt = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
     const peptide = stagePeptides[index]
     if (!objekt || !peptide) return
-
-    setDetailUrsprung(objekt.getBoundingClientRect())
+    oeffneVollbild(peptide, objekt)
+  }
+  /**
+   * Das Vollbild einer Substanz, aufgeflogen aus `ursprung` — dem Objekt im
+   * Karussell oder in der Listenzeile. Ein Eintrag in der Browser-Historie,
+   * damit „Zurueck" es schliesst.
+   */
+  const oeffneVollbild = (peptide: Peptide, ursprung: HTMLElement) => {
+    setDetailUrsprung(ursprung.getBoundingClientRect())
     navigate(
       { pathname: location.pathname, search: location.search, hash: location.hash },
       {
@@ -1704,11 +1708,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * der Block auf zwei Dutzend Zustaende und Handler zugreift, die alle
    * hier leben; herauszuloesen hiesse, sie alle durchzureichen.
    */
-  const eintragDetails = () => (
+  const eintragDetails = (eintrag: Peptide) => (
     <>
                 {(() => {
-                  const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
-                  const pCycles = cyclesOf(activePeptide.id)
+                  const invItem = eintrag.inventory_item_id ? inventory.find(i => i.id === eintrag.inventory_item_id) : null
+                  const pCycles = cyclesOf(eintrag.id)
                   const activeCycle = pCycles.find(c => c.active) ?? null
                   const notSet = 'Nicht gesetzt'
                   /**
@@ -1719,7 +1723,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                    * kein Anmischen, also steht dort auch keine Zeile dazu. Was
                    * hier steht, ist nur noch der TEXT dazu.
                    */
-                  const form = getDosageForm(activePeptide.dosage_form)
+                  const form = getDosageForm(eintrag.dosage_form)
                   const wirkstoffLabel = {
                     pro_vial: 'Wirkstoff pro Vial',
                     pro_volumen: 'Wirkstoff pro ml',
@@ -1731,7 +1735,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                    * Die Angaben kommen aus der Leseschicht, nicht direkt aus
                    * den Altspalten.
                    *
-                   * Vorher stand hier `activePeptide.vial_amount_mg` und so
+                   * Vorher stand hier `eintrag.vial_amount_mg` und so
                    * fort — also genau die Spalten, die NUR die
                    * Tracking-Details schreiben. Ein Eintrag aus dem
                    * Assistenten zeigte deshalb ueberall „Nicht gesetzt",
@@ -1739,7 +1743,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                    * `stack_item_inventory` standen. Siehe `produktAngaben.ts`.
                    */
                   const angaben = produktAngaben({
-                    item: activePeptide,
+                    item: eintrag,
                     vorratsposten: invItem,
                     zyklusMethode: activeCycle?.method ?? null,
                   })
@@ -1775,7 +1779,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   // „Haltbar danach" zaehlt ab dem Anmischen, „Haltbar bis"
                   // steht auf der Packung. Welche der beiden es ist, sagt die
                   // Angabe selbst — nicht die Form.
-                  const art = anbruchArt(activePeptide.dosage_form)
+                  const art = anbruchArt(eintrag.dosage_form)
                   const haltbarkeitLabel = String(t(art === 'vial' ? 'my_stack_stock_use_within_vial' : 'my_stack_stock_use_within'))
                   const FELD_LABEL: Record<DetailFeld, string> = {
                     wirkstoff: wirkstoffLabel,
@@ -1831,18 +1835,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         oeffnet die volle Uebersicht. */}
                     {FEATURES.planTimelineV2 && (
                       <PlanSummaryCard
-                        syringe={syringeOf(activePeptide)}
-                        timelines={timelinesOf(activePeptide.id)}
+                        syringe={syringeOf(eintrag)}
+                        timelines={timelinesOf(eintrag.id)}
                         timeZone={timeZone}
                         loadState={timelineLoadError ? 'error' : timelineLoading ? 'loading' : 'ready'}
-                        needsReview={activePeptide.configuration_status === 'needs_review'}
+                        needsReview={eintrag.configuration_status === 'needs_review'}
                         onOpen={() => {
                           closeStageDetail()
-                          setCycleManagerPeptide(activePeptide)
+                          setCycleManagerPeptide(eintrag)
                         }}
                         onStartNew={() => {
                           closeStageDetail()
-                          openNewCycle(activePeptide)
+                          openNewCycle(eintrag)
                         }}
                       />
                     )}
@@ -1850,17 +1854,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         nur die Mengen. Anmischen, Haltbarkeit und Charge
                         stehen darunter bei Zusammensetzung und Substanz. */}
                     <BestandCard
-                      dosageForm={activePeptide.dosage_form}
-                      inventory={activePeptide.inventory ?? null}
-                      ingredients={activePeptide.ingredients}
-                      timelines={timelinesOf(activePeptide.id)}
+                      dosageForm={eintrag.dosage_form}
+                      inventory={eintrag.inventory ?? null}
+                      ingredients={eintrag.ingredients}
+                      timelines={timelinesOf(eintrag.id)}
                       timeZone={timeZone}
                       // Vials bucht die Datenbank ueber den Bestand ab, wenn die
                       // Umrechnung eindeutig ist, alle anderen nur mit Staerke.
                       deductsIntakes={art === 'vial'
-                        ? vialBuchtUeberBestand(activePeptide.inventory, activePeptide.ingredients)
-                        : activePeptide.tracking_level === 'complete'}
-                      onEdit={editor => setBestandEdit({ peptideId: activePeptide.id, editor })}
+                        ? vialBuchtUeberBestand(eintrag.inventory, eintrag.ingredients)
+                        : eintrag.tracking_level === 'complete'}
+                      onEdit={editor => setBestandEdit({ peptideId: eintrag.id, editor })}
                     />
                     {detailAbschnitte(form).map(abschnitt => (
                       <section key={abschnitt.id} data-stack-detail={abschnitt.id} className="mx-1 mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50">
@@ -1906,7 +1910,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           aria-label={`${String(t('aktiv_badge'))} ${activeCycle.name} ${String(t('zyklus'))}`}
                           onClick={() => {
                             closeStageDetail()
-                            setCycleManagerPeptide(activePeptide)
+                            setCycleManagerPeptide(eintrag)
                           }}
                           className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
                         >
@@ -1929,11 +1933,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           onClick={() => {
                             if (pCycles.length > 0) {
                               closeStageDetail()
-                              setCycleManagerPeptide(activePeptide)
+                              setCycleManagerPeptide(eintrag)
                               return
                             }
                             closeStageDetail()
-                            openNewCycle(activePeptide)
+                            openNewCycle(eintrag)
                           }}
                           className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/35"
                         >
@@ -2071,20 +2075,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             listPeptides={listPeptides}
             sloshEngine={sloshEngine}
             timelinesOf={timelinesOf}
-            expandedId={expandedId}
-            inventory={inventory}
+            timelineState={timelineLoadError ? 'error' : timelineLoading ? 'loading' : 'ready'}
+            timeZone={timeZone}
             animationEpoch={animationEpoch}
-            setExpandedId={setExpandedId}
-            adjustInventoryCount={adjustInventoryCount}
-            setInfoPeptide={setInfoPeptide}
-            dismissInfoBtn={dismissInfoBtn}
-            infoBtnNew={infoBtnNew}
-            openEditPeptide={openEditPeptide}
-            handleRekonstitution={handleRekonstitution}
-            removePeptide={removePeptide}
+            openDetail={oeffneVollbild}
+            openNewCycle={openNewCycle}
             zyklusBtnNew={zyklusBtnNew}
-            planManagementSections={planManagementSections}
-            cycleView={cycleView}
+            dismissZyklusBtn={dismissZyklusBtn}
+            hervorgehobenId={hervorgehobenId}
+            hervorhebungGesehen={hervorhebungGesehen}
           />
       </div>
 
@@ -2108,8 +2107,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           Fluessigkeitsphysik still. */}
       <StageDetailView
         detailUrsprung={detailUrsprung}
-        activePeptide={activePeptide}
-        detailHistoryPeptideId={detailHistoryPeptideId}
+        peptide={detailPeptide}
+        rekonstitutionWiederholen={handleRekonstitution}
         closeStageDetail={closeStageDetail}
         sloshEngine={sloshEngine}
         openEditPeptide={openEditPeptide}
@@ -2551,13 +2550,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         confirmRekonstitution={confirmRekonstitution}
       />
 
-      {/* ══ INFO-SHEET ═══════════════════════════════════════════════════════ */}
-      <SubstanceInfoSheet
-        infoPeptide={infoPeptide}
-        inventory={inventory}
-        setInfoPeptide={setInfoPeptide}
-        navigate={navigate}
-      />
     </div>
   )
 }

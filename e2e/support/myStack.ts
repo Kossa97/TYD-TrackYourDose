@@ -30,18 +30,33 @@ export function stageObject(page: Page, name: string): Locator {
 export function seedPeptide(
   mock: MockSupabase,
   name: string,
-  options: { startDate: string; category?: string },
+  options: {
+    startDate: string
+    category?: string
+    /** Ein gefuehrter Bestand; ohne Angabe wird keiner gefuehrt. */
+    inventory?: { package_quantity: number; package_unit: string; remaining_quantity: number; reconstitution_ml?: number }
+    /** false: nur der Eintrag, ohne Plan. */
+    plan?: boolean
+  },
 ): void {
+  const item = {
+    id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: 'vial',
+    brand: null, color_hex: '#10b981', notes: null, pk_profile_method: null,
+    inventory: options.inventory
+      ? { enabled: true, batch_number: null, expires_at: null, reconstitution_ml: null, ...options.inventory }
+      : { enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null, batch_number: null, expires_at: null },
+  }
+  const ingredients = [{
+    catalog_substance_id: mock.catalogId(name), custom_name: name,
+    amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml', position: 0,
+  }]
+  if (options.plan === false) {
+    mock.callRpc('save_stack_item', { p_item: item, p_ingredients: ingredients, p_idempotency_key: `seed-${name}` })
+    return
+  }
   mock.callRpc('save_stack_item_with_plan', {
-    p_item: {
-      id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: 'vial',
-      brand: null, color_hex: '#10b981', notes: null, pk_profile_method: null,
-      inventory: { enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null, batch_number: null, expires_at: null },
-    },
-    p_ingredients: [{
-      catalog_substance_id: mock.catalogId(name), custom_name: name,
-      amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml', position: 0,
-    }],
+    p_item: item,
+    p_ingredients: ingredients,
     p_plan: {
       id: null, name, dose: 250, unit: 'mcg', method: 'Subkutan', frequency: 'Täglich',
       x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null, schedule_days: [],
