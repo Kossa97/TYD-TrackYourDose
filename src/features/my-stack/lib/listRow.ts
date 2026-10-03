@@ -1,109 +1,58 @@
-import type { CycleTimeline } from '../../../lib/planTimeline'
-import { expiryDaysLeft } from '../../../lib/peptideExpiry'
-import { nextIntakeFor, orderTimelines, versionSlots } from './planLabels'
-import { reichweite, type Reichweite } from './bestand'
-import type { StackItemIngredient, StackItemInventory } from '../types'
+import { differenceInCalendarDays, parseISO } from 'date-fns'
+import { localDateTimeKey, resolveCycleAt, type CycleTimeline } from '../../../lib/planTimeline'
+import { shiftLocalDay } from './localDays'
+import { haltbarBis } from './bestand'
+import type { StackItemInventory } from '../types'
 
 /**
- * Was eine Zeile der Listenansicht ueber eine Substanz sagt: wann die
- * naechste Einnahme ist, wie lange der Vorrat reicht und — hoechstens ein —
- * Hinweis, der Handeln verlangt.
+ * Was eine Zeile der Listenansicht ueber eine Substanz sagt — fuer jede
+ * Darreichungsform gleich: ob sie gerade laeuft und bis wann sie haelt.
+ * Name und Zusammensetzung liest die Zeile direkt vom Eintrag.
  *
- * Reine Rechnung, damit Liste und Tests dieselbe Antwort sehen. Die Texte
- * dazu baut die Zeile selbst.
+ * Reine Rechnung, damit Liste und Tests dieselbe Antwort sehen.
  */
 
-/** Ab so wenigen Tagen Reichweite heisst es „Bald leer". */
-export const KNAPP_BIS_TAGE = 7
-/** Ab so wenigen Tagen Haltbarkeit heisst es „Läuft ab". */
+/** Ab so wenigen Tagen heisst es „Läuft in n Tagen ab" statt „Haltbar bis". */
 export const ABLAUF_BALD_TAGE = 7
 
-export type ZeilenPlan =
-  | { art: 'naechste'; localDate: string; time: string; dose: number | null; unit: string | null }
-  /** Laeuft, aber ohne feste Einnahmezeit — etwa „bei Bedarf". */
-  | { art: 'ohne_termin' }
-  | { art: 'pausiert' }
-  /** Plan im Konflikt oder mit offener Zeitzone: Einnahmen sind gesperrt. */
-  | { art: 'pruefen' }
-  /** Nie einen Plan gehabt — oder alle beendet. */
-  | { art: 'kein_plan'; hatteZyklen: boolean }
-
-export type ZeilenHinweis =
-  | { art: 'abgelaufen' }
-  | { art: 'leer' }
-  | { art: 'pruefen' }
-  | { art: 'knapp'; tage: number }
-  | { art: 'laeuft_ab'; tage: number }
-
-export interface ZeilenStand {
-  plan: ZeilenPlan
-  /** Der dringendste Hinweis, oder null. Nie mehr als einer. */
-  hinweis: ZeilenHinweis | null
-  /** null, wenn kein Bestand gefuehrt wird. */
-  reichweite: Reichweite | null
+export interface Haltbarkeit {
+  /** Der frueheste Tag, an dem etwas ablaeuft (`YYYY-MM-DD`). */
+  bis: string
+  /** Kalendertage bis dahin: 0 heute, negativ abgelaufen. */
+  tage: number
 }
 
-export interface ZeilenEintrag {
-  configuration_status?: string | null
+export interface HaltbarkeitsEintrag {
   reconstitution_date?: string | null
   expiry_days?: number | null
   inventory?: StackItemInventory | null
-  ingredients: readonly StackItemIngredient[]
 }
 
-function zeilenPlan(timelines: readonly CycleTimeline[], now: Date, timeZone: string): ZeilenPlan {
-  const best = orderTimelines([...timelines], now, timeZone)[0] ?? null
-  if (!best || best.resolved.status === 'ended') return { art: 'kein_plan', hatteZyklen: timelines.length > 0 }
-  if (best.resolved.status === 'paused') return { art: 'pausiert' }
-  // Wie die Plan-Karte im Vollbild: ein Rhythmus ohne Einnahmezeiten hat
-  // keine naechste Einnahme, auch wenn noch eine Uhrzeit gespeichert ist.
-  const version = best.resolved.planVersion
-  if (version && versionSlots(version).length === 0) return { art: 'ohne_termin' }
-  const next = nextIntakeFor(best.timeline, best.resolved.status, now, timeZone)
-  if (!next) return { art: 'ohne_termin' }
-  return { art: 'naechste', localDate: next.localDate, time: next.time, dose: next.dose, unit: next.unit }
+/**
+ * Bis wann die Substanz haelt. Es gibt zwei Fristen, und beide koennen
+ * zugleich gelten: die nach dem Anmischen oder Oeffnen (Tage ab dem Datum)
+ * und das Datum auf der Packung. Es zaehlt die fruehere — was zuerst
+ * ablaeuft, ist die Grenze.
+ *
+ * Aeltere Eintraege tragen die erste Frist noch an sich selbst
+ * (`reconstitution_date` + `expiry_days`), neuere im Bestand.
+ */
+export function haltbarkeitFuer(item: HaltbarkeitsEintrag, now: Date, timeZone: string): Haltbarkeit | null {
+  const fristen: string[] = []
+  const nachOeffnen = item.inventory ? haltbarBis(item.inventory) : null
+  if (nachOeffnen) fristen.push(nachOeffnen)
+  else if (item.reconstitution_date && item.expiry_days) {
+    fristen.push(shiftLocalDay(item.reconstitution_date.slice(0, 10), Number(item.expiry_days)))
+  }
+  if (item.inventory?.expires_at) fristen.push(item.inventory.expires_at.slice(0, 10))
+  if (fristen.length === 0) return null
+
+  const bis = fristen.sort()[0]
+  const heute = localDateTimeKey(now, timeZone).slice(0, 10)
+  return { bis, tage: differenceInCalendarDays(parseISO(bis), parseISO(heute)) }
 }
 
-function mussGeprueftWerden(item: Pick<ZeilenEintrag, 'configuration_status'>, timelines: readonly CycleTimeline[]): boolean {
-  return item.configuration_status === 'needs_review'
-    || timelines.some(timeline => timeline.cycle.timezone_review_required)
-}
-
-/** Nur der Plan-Teil — ohne die Reichweite, die bis zu einem halben Jahr vorausrechnet. */
-export function zeilenPlanFuer(input: {
-  item: Pick<ZeilenEintrag, 'configuration_status'>
-  timelines: readonly CycleTimeline[]
-  now: Date
-  timeZone: string
-}): ZeilenPlan {
-  const { item, timelines, now, timeZone } = input
-  return mussGeprueftWerden(item, timelines) ? { art: 'pruefen' } : zeilenPlan(timelines, now, timeZone)
-}
-
-export function zeilenStand(input: {
-  item: ZeilenEintrag
-  timelines: readonly CycleTimeline[]
-  now: Date
-  timeZone: string
-}): ZeilenStand {
-  const { item, timelines, now, timeZone } = input
-  const pruefen = mussGeprueftWerden(item, timelines)
-  const plan = zeilenPlanFuer({ item, timelines, now, timeZone })
-
-  const bestand = item.inventory?.enabled ? item.inventory : null
-  const range = bestand
-    ? reichweite({ inventory: bestand, ingredients: item.ingredients, timelines, now, timeZone })
-    : null
-
-  const tageHaltbar = expiryDaysLeft(item, now)
-
-  // In dieser Reihenfolge: was schon eingetreten ist, vor dem, was droht.
-  let hinweis: ZeilenHinweis | null = null
-  if (tageHaltbar !== null && tageHaltbar < 0) hinweis = { art: 'abgelaufen' }
-  else if (range?.art === 'leer') hinweis = { art: 'leer' }
-  else if (pruefen) hinweis = { art: 'pruefen' }
-  else if (range?.art === 'tage' && range.tage <= KNAPP_BIS_TAGE) hinweis = { art: 'knapp', tage: range.tage }
-  else if (tageHaltbar !== null && tageHaltbar <= ABLAUF_BALD_TAGE) hinweis = { art: 'laeuft_ab', tage: tageHaltbar }
-
-  return { plan, hinweis, reichweite: range }
+/** Aktiv heisst: ein Zyklus laeuft jetzt — nicht pausiert, nicht erst geplant, nicht beendet. */
+export function istAktiv(timelines: readonly CycleTimeline[], now: Date, timeZone: string): boolean {
+  return timelines.some(timeline => resolveCycleAt(timeline, now, timeZone).status === 'active')
 }

@@ -34,22 +34,37 @@ export function seedPeptide(
     startDate: string
     category?: string
     /** Ein gefuehrter Bestand; ohne Angabe wird keiner gefuehrt. */
-    inventory?: { package_quantity: number; package_unit: string; remaining_quantity: number; reconstitution_ml?: number }
+    inventory?: {
+      package_quantity: number
+      package_unit: string
+      remaining_quantity: number
+      reconstitution_ml?: number
+      expires_at?: string
+      opened_at?: string
+      use_within_days?: number
+    }
+    /** Andere Darreichungsform als das Vial — dann mit eigener Zutat, ohne Katalog. */
+    form?: {
+      dosage_form: string
+      zutat: { amount_value: number; amount_unit: string; basis_value: number; basis_unit: string }
+    }
     /** false: nur der Eintrag, ohne Plan. */
     plan?: boolean
   },
 ): void {
   const item = {
-    id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: 'vial',
+    id: null, display_name: name, category: options.category ?? 'peptide', tracking_level: 'complete', dosage_form: options.form?.dosage_form ?? 'vial',
     brand: null, color_hex: '#10b981', notes: null, pk_profile_method: null,
     inventory: options.inventory
       ? { enabled: true, batch_number: null, expires_at: null, reconstitution_ml: null, ...options.inventory }
       : { enabled: false, package_quantity: null, package_unit: null, remaining_quantity: null, batch_number: null, expires_at: null },
   }
-  const ingredients = [{
-    catalog_substance_id: mock.catalogId(name), custom_name: name,
-    amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml', position: 0,
-  }]
+  const ingredients = [options.form
+    ? { catalog_substance_id: null, custom_name: name, ...options.form.zutat, position: 0 }
+    : {
+      catalog_substance_id: mock.catalogId(name), custom_name: name,
+      amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml', position: 0,
+    }]
   if (options.plan === false) {
     mock.callRpc('save_stack_item', { p_item: item, p_ingredients: ingredients, p_idempotency_key: `seed-${name}` })
     return

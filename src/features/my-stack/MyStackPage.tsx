@@ -135,7 +135,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [rekonstitutionDontAsk,setRekonstitutionDontAsk]= useState(false)
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
-  const [zyklusBtnNew,   dismissZyklusBtn]     = useNew('zyklus_btn')
+  const [, dismissZyklusBtn]                   = useNew('zyklus_btn')
 
   // ── Inventar ─────────────────────────────────────────────────────────────
   // ── Laden ─────────────────────────────────────────────────────────────────
@@ -2079,9 +2079,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             timeZone={timeZone}
             animationEpoch={animationEpoch}
             openDetail={oeffneVollbild}
-            openNewCycle={openNewCycle}
-            zyklusBtnNew={zyklusBtnNew}
-            dismissZyklusBtn={dismissZyklusBtn}
+            aktivAlt={FEATURES.planTimelineV2 ? null : activePeptideIds}
             hervorgehobenId={hervorgehobenId}
             hervorhebungGesehen={hervorhebungGesehen}
           />

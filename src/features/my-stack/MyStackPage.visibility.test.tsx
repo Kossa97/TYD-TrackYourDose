@@ -818,14 +818,17 @@ describe('MyStackPage non-vial visibility', () => {
   })
 
 
-  it('summarizes a non-vial item with dosage form and ingredient strength', async () => {
+  it('summarizes a non-vial item with its composition', async () => {
     await renderPage()
 
     const card = visibleCardFor(qaName)
     expect(card).not.toBeNull()
-    expect(card?.textContent).toContain('dosage_form_other')
-    // Eine Mischung nennt in der Zeile ihre Wirkstoffe; die Mengen stehen im Vollbild.
-    expect(card?.textContent).toContain('Magnesium + Vitamin D3')
+    // Die Zeile zeigt die Zusammensetzung — eine Mischung jeden Wirkstoff
+    // mit Namen und Menge —, nicht die Darreichungsform.
+    expect(card?.textContent).not.toContain('dosage_form_other')
+    expect(card?.textContent).toContain('Magnesium 100 mg')
+    // Zahlen in der Schreibweise der Sprache: 5.000 auf Deutsch.
+    expect(card?.textContent).toContain('Vitamin D3 5.000 IU')
     expect(card?.textContent).not.toContain('method_subkutan')
   })
   it('shows an exact-name non-vial search result instead of a blank vial view', async () => {

@@ -1,26 +1,25 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { addDays, format, parseISO } from 'date-fns'
-import { CalendarPlus, ChevronRight, Clock, Package, PauseCircle } from 'lucide-react'
+import { ChevronRight, Hourglass, Package } from 'lucide-react'
 import type { SloshEngine } from '../../../components/sloshEngine'
-import { NewDot } from '../../../components/NewDot'
 import { SloshProvider } from '../../../components/SloshContext'
 import { StackStage } from '../components/StackStage'
 import { type LoadedStackItemIngredient } from '../services/stackItems'
-import { getDosageForm, isStageRenderable } from '../lib/dosageForms'
+import { isStageRenderable } from '../lib/dosageForms'
 import { getStableStackItemColor } from '../lib/colors'
-import { anbruchArt } from '../lib/bestand'
-import { daysLabel, formatAmount, stockAmountLabel, vorratZeilen } from '../lib/bestandLabels'
-import { zeilenPlanFuer, zeilenStand, type ZeilenHinweis, type ZeilenStand } from '../lib/listRow'
+import { formatAmount, stockAmountLabel } from '../lib/bestandLabels'
+import { formatLocalDay } from '../lib/localDays'
+import { ABLAUF_BALD_TAGE, haltbarkeitFuer, istAktiv, type Haltbarkeit } from '../lib/listRow'
 import { useMinuteClock } from '../lib/useMinuteClock'
 import type { Translate } from '../lib/planLabels'
-import { localDateTimeKey, type CycleTimeline } from '../../../lib/planTimeline'
+import { type CycleTimeline } from '../../../lib/planTimeline'
 import { type Peptide, getVialFillPct } from './model'
 
 /**
- * Listenansicht: je Substanz eine Zeile — Objekt, Name, naechste Einnahme,
- * Reichweite, hoechstens ein Hinweis. Ein Tipp oeffnet das Vollbild wie im
- * Karussell; dort stehen Plan, Bestand, Bearbeiten und Loeschen.
+ * Listenansicht: je Substanz eine Zeile — fuer jede Darreichungsform gleich:
+ * Objekt, Name, aktiv/inaktiv, Zusammensetzung, Haltbarkeit. Mehr nicht. Ein
+ * Tipp oeffnet das Vollbild wie im Karussell; dort stehen Plan, Bestand,
+ * Bearbeiten und Loeschen.
  *
  * Steht auch unter dem Karussell: fuer die Substanzen ohne Buehnengrafik.
  */
@@ -33,9 +32,7 @@ export function StackListView({
   timeZone,
   animationEpoch,
   openDetail,
-  openNewCycle,
-  zyklusBtnNew,
-  dismissZyklusBtn,
+  aktivAlt,
   hervorgehobenId,
   hervorhebungGesehen,
 }: {
@@ -49,9 +46,12 @@ export function StackListView({
   animationEpoch: number
   /** Oeffnet das Vollbild; `ursprung` ist das Element, aus dem es auffliegt. */
   openDetail: (p: Peptide, ursprung: HTMLElement) => void
-  openNewCycle: (p: Peptide) => void
-  zyklusBtnNew: boolean
-  dismissZyklusBtn: () => void
+  /**
+   * Ohne Plan-Zeitleiste (alter Datenpfad): die Substanzen mit aktivem
+   * Zyklus. Mit Zeitleiste null — dann entscheidet der Plan selbst, und
+   * pausiert zaehlt als inaktiv.
+   */
+  aktivAlt: ReadonlySet<string> | null
   /** Eine eben gespeicherte Substanz: die Zeile rueckt ins Bild und leuchtet kurz. */
   hervorgehobenId: string | null
   hervorhebungGesehen: () => void
@@ -78,11 +78,11 @@ export function StackListView({
     return () => window.clearTimeout(timer)
   }, [hervorgehobenId, hervorgehobenSichtbar, hervorhebungGesehen])
 
-  // Der Neu-Punkt am ERSTEN „Plan anlegen", nicht an jedem — nach derselben
-  // Regel, nach der die Zeile den Knopf zeigt.
-  const erstesOhnePlan = timelineState === 'ready' && zyklusBtnNew
-    ? listPeptides.find(p => zeilenPlanFuer({ item: p, timelines: timelinesOf(p.id), now, timeZone }).art === 'kein_plan')?.id ?? null
-    : null
+  const aktivVon = (p: Peptide): boolean | null => {
+    if (aktivAlt) return aktivAlt.has(p.id)
+    if (timelineState !== 'ready') return null
+    return istAktiv(timelinesOf(p.id), now, timeZone)
+  }
 
   return (
     <ul
@@ -97,15 +97,12 @@ export function StackListView({
           <StackListRow
             key={p.id}
             p={p}
-            timelines={timelinesOf(p.id)}
-            timelineState={timelineState}
+            aktiv={aktivVon(p)}
             timeZone={timeZone}
             minute={minute}
             animationEpoch={animationEpoch}
             hervorgehoben={hervorgehobenId === p.id}
-            neuPunkt={zyklusBtnNew && erstesOhnePlan === p.id}
             onOpen={ursprung => openDetail(p, ursprung)}
-            onNewPlan={() => { openNewCycle(p); dismissZyklusBtn() }}
           />
         ))}
       </SloshProvider>
@@ -113,90 +110,54 @@ export function StackListView({
   )
 }
 
-// Rot fuer das, was schon eingetreten ist, Gelb fuer das, was droht. Die
-// Farben fuer das helle Design stehen in index.css (`data-list-chip`).
-const HINWEIS_TON: Record<ZeilenHinweis['art'], 'rot' | 'gelb'> = {
-  abgelaufen: 'rot',
-  leer: 'rot',
-  pruefen: 'gelb',
-  knapp: 'gelb',
-  laeuft_ab: 'gelb',
+/**
+ * Wann es ablaeuft: weit weg ruhig, bald gelb, vorbei rot. Die Farben fuer
+ * das helle Design stehen in index.css (`data-list-haltbar`, `data-list-status`).
+ */
+function haltbarText(t: Translate, haltbar: Haltbarkeit, language: string): string {
+  if (haltbar.tage < 0) return String(t('my_stack_list_expired_since', { date: formatLocalDay(haltbar.bis, language) }))
+  if (haltbar.tage === 0) return String(t('my_stack_expires_today'))
+  if (haltbar.tage <= ABLAUF_BALD_TAGE) {
+    return String(t(haltbar.tage === 1 ? 'my_stack_list_expires_in_single' : 'my_stack_list_expires_in_multiple', { n: haltbar.tage }))
+  }
+  return String(t('my_stack_list_keeps_until', { date: formatLocalDay(haltbar.bis, language) }))
 }
-const CHIP_KLASSE = {
-  rot: 'border-red-400/30 bg-red-500/10 text-red-300',
-  gelb: 'border-amber-300/30 bg-amber-300/10 text-amber-200',
+
+function haltbarTon(haltbar: Haltbarkeit): 'rot' | 'gelb' | 'ruhig' {
+  if (haltbar.tage < 0) return 'rot'
+  if (haltbar.tage <= ABLAUF_BALD_TAGE) return 'gelb'
+  return 'ruhig'
+}
+
+const HALTBAR_KLASSE = {
+  rot: 'text-red-300',
+  gelb: 'text-amber-200',
+  ruhig: 'text-slate-500',
 } as const
 
-function hinweisText(t: Translate, hinweis: ZeilenHinweis): string {
-  switch (hinweis.art) {
-    case 'abgelaufen': return String(t('my_stack_list_expired'))
-    case 'leer': return String(t('my_stack_stock_empty'))
-    case 'pruefen': return String(t('my_stack_list_review'))
-    case 'knapp': return String(t('my_stack_list_low'))
-    case 'laeuft_ab':
-      if (hinweis.tage === 0) return String(t('my_stack_expires_today'))
-      return String(t(hinweis.tage === 1 ? 'my_stack_list_expires_in_single' : 'my_stack_list_expires_in_multiple', { n: hinweis.tage }))
-  }
-}
-
-/** „Heute, 08:00", „Morgen, 20:00", sonst „Mo., 5.10., 08:00" — mit Menge. */
-function naechsteText(
-  t: Translate,
-  plan: Extract<ZeilenStand['plan'], { art: 'naechste' }>,
-  heute: string,
-  language: string,
-): string {
-  const morgen = format(addDays(parseISO(heute), 1), 'yyyy-MM-dd')
-  const wann = plan.localDate === heute
-    ? String(t('my_stack_list_today', { time: plan.time }))
-    : plan.localDate === morgen
-      ? String(t('my_stack_list_tomorrow', { time: plan.time }))
-      : `${new Intl.DateTimeFormat(language, { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' })
-        .format(new Date(`${plan.localDate}T12:00:00.000Z`))}, ${plan.time}`
-  const menge = plan.dose != null ? `${formatAmount(plan.dose, language)} ${plan.unit ?? ''}`.trim() : null
-  return menge ? `${wann} · ${menge}` : wann
-}
-
 /**
- * Die Staerke in einem Stueck: „5 mg" fuer ein Vial, eine Tablette, eine
- * Kapsel — die Packungseinheit versteht sich dort von selbst —, sonst mit
- * Bezug („10 mg / 3 ml"). Mischungen nennen ihre Wirkstoffe.
+ * Woraus die Substanz besteht, fuer jede Form gleich: Menge je Bezug
+ * („5 mg / 1 Vial", „500 mg / 1 Tablette", „10 mg / 3 ml"). Eine Mischung
+ * nennt jeden Wirkstoff mit Namen; ein einzelner Wirkstoff, der so heisst
+ * wie der Eintrag, braucht seinen Namen nicht noch einmal.
  */
-function staerkeText(t: Translate, p: Peptide, language: string): string | null {
+function zusammensetzungText(t: Translate, p: Peptide, language: string): string | null {
   const zutaten = p.ingredients as LoadedStackItemIngredient[]
-  if (zutaten.length > 1) {
-    return zutaten
-      .map(zutat => zutat.custom_name || zutat.substance_catalog?.canonical_name)
-      .filter(Boolean)
-      .join(' + ') || null
-  }
-  const zutat = zutaten[0]
-  if (zutat?.amount_value != null && zutat.amount_unit) {
-    const menge = `${formatAmount(zutat.amount_value, language)} ${zutat.amount_unit}`
-    const selbstverstaendlich = zutat.basis_value === 1 && zutat.basis_unit === getDosageForm(p.dosage_form).basisUnits[0]
-    if (selbstverstaendlich || zutat.basis_value == null || !zutat.basis_unit) return menge
-    return `${menge} / ${stockAmountLabel(t, zutat.basis_value, zutat.basis_unit, language)}`
-  }
+  const teile = zutaten.map(zutat => {
+    const name = zutat.custom_name || zutat.substance_catalog?.canonical_name || null
+    const menge = zutat.amount_value != null && zutat.amount_unit
+      ? [
+        `${formatAmount(zutat.amount_value, language)} ${zutat.amount_unit}`,
+        zutat.basis_value != null && zutat.basis_unit ? stockAmountLabel(t, zutat.basis_value, zutat.basis_unit, language) : null,
+      ].filter(Boolean).join(' / ')
+      : null
+    const mitNamen = zutaten.length > 1 || (name !== null && name.toLowerCase() !== p.name.toLowerCase())
+    return [mitNamen ? name : null, menge].filter(Boolean).join(' ')
+  }).filter(Boolean)
+  if (teile.length > 0) return teile.join(' · ')
   // Aeltere Eintraege kennen nur die Vial-Spalten.
   if (p.vial_amount_mg) return `${formatAmount(p.vial_amount_mg, language)} ${p.vial_amount_unit ?? 'mg'}`
   return null
-}
-
-/**
- * Was rechts steht: wie lange es reicht — oder, ohne Rechnung, was noch da
- * ist. `reicht` sagt, welches der beiden es ist.
- */
-function vorratText(t: Translate, p: Peptide, stand: ZeilenStand, language: string): { text: string; reicht: boolean } | null {
-  const range = stand.reichweite
-  if (!range || !p.inventory?.enabled) return null
-  switch (range.art) {
-    case 'tage': return { text: daysLabel(t, range.tage), reicht: true }
-    case 'laenger': return { text: String(t('my_stack_list_range_long', { n: range.tage })), reicht: true }
-    case 'leer': return null
-    case 'kein_plan':
-    case 'unbekannt':
-      return { text: vorratZeilen(t, p.inventory, anbruchArt(p.dosage_form), language).gross, reicht: false }
-  }
 }
 
 /**
@@ -234,83 +195,40 @@ function Eingepasst({ children }: { children: ReactNode }) {
 
 function StackListRow({
   p,
-  timelines,
-  timelineState,
+  aktiv,
   timeZone,
   minute,
   animationEpoch,
   hervorgehoben,
-  neuPunkt,
   onOpen,
-  onNewPlan,
 }: {
   p: Peptide
-  timelines: CycleTimeline[]
-  timelineState: 'ready' | 'loading' | 'error'
+  /** null, solange die Plaene laden — dann sagt die Zeile nichts dazu. */
+  aktiv: boolean | null
   timeZone: string
   minute: number
   animationEpoch: number
   hervorgehoben: boolean
-  neuPunkt: boolean
   onOpen: (ursprung: HTMLElement) => void
-  onNewPlan: () => void
 }) {
   const { t, i18n } = useTranslation()
   const tr = t as Translate
   const language = i18n.resolvedLanguage ?? i18n.language
   const objektRef = useRef<HTMLSpanElement | null>(null)
 
-  // Die Plaene kommen als stabile Liste je Substanz (`timelinesOf`), also
-  // rechnet die Zeile nur neu, wenn sich Plan, Eintrag oder Minute aendern.
-  const stand = useMemo(
-    () => zeilenStand({ item: p, timelines, now: new Date(minute), timeZone }),
-    [p, timelines, minute, timeZone],
-  )
-
-  const heute = localDateTimeKey(new Date(minute), timeZone).slice(0, 10)
+  const haltbar = useMemo(() => haltbarkeitFuer(p, new Date(minute), timeZone), [p, minute, timeZone])
   const stageRenderable = isStageRenderable(p.dosage_form)
-  const fillPct = getVialFillPct(p)
   const farbe = p.color_hex ?? getStableStackItemColor(p.id)
-  const plaeneBereit = timelineState === 'ready'
-  const keinPlan = plaeneBereit && stand.plan.art === 'kein_plan'
-  const vorrat = vorratText(tr, p, stand, language)
-  const staerke = staerkeText(tr, p, language)
-  const detail = [String(t(`dosage_form_${p.dosage_form}`)), staerke].filter(Boolean).join(' · ')
-
-  const planZeile = (() => {
-    if (!plaeneBereit) return null
-    const plan = stand.plan
-    switch (plan.art) {
-      case 'naechste':
-        return (
-          <span className="flex min-w-0 items-center gap-1 text-slate-200">
-            <Clock size={12} aria-hidden="true" data-list-uhr className="shrink-0 text-cyan-300" />
-            <span className="truncate">{naechsteText(tr, plan, heute, language)}</span>
-          </span>
-        )
-      case 'pausiert':
-        return (
-          <span className="flex min-w-0 items-center gap-1 text-slate-400">
-            <PauseCircle size={12} aria-hidden="true" className="shrink-0" />
-            <span className="truncate">{t('my_stack_plan_status_paused')}</span>
-          </span>
-        )
-      case 'ohne_termin':
-        return <span className="truncate text-slate-400">{t('my_stack_plan_next_intake_none')}</span>
-      case 'pruefen':
-        return <span className="truncate text-slate-400">{t('my_stack_list_review_locked')}</span>
-      case 'kein_plan':
-        return <span className="truncate text-slate-500">{t(plan.hatteZyklen ? 'kein_aktiver_zyklus' : 'noch_kein_zyklus')}</span>
-    }
-  })()
+  const zusammensetzung = zusammensetzungText(tr, p, language)
+  const ton = haltbar ? haltbarTon(haltbar) : null
 
   return (
     <li
       data-list-row={p.id}
-      data-list-hint={stand.hinweis?.art ?? undefined}
+      data-list-active={aktiv === null ? undefined : String(aktiv)}
       // Keine `bg-slate-900/…`-Klasse, auch nicht als hover-Variante: das
       // helle Design faerbt jede Klasse mit diesem Wortlaut dauerhaft ein.
-      className={`flex items-stretch overflow-hidden rounded-2xl border bg-slate-950 transition-[border-color,box-shadow] duration-500 ${hervorgehoben
+      className={`overflow-hidden rounded-2xl border bg-slate-950 transition-[border-color,box-shadow] duration-500 ${hervorgehoben
         ? 'border-cyan-300/60 shadow-[0_0_0_3px_rgba(103,232,249,0.15)]'
         : 'border-slate-800'}`}
     >
@@ -318,32 +236,25 @@ function StackListRow({
         type="button"
         aria-label={String(t('my_stack_list_open', { name: p.name }))}
         onClick={event => onOpen(objektRef.current ?? event.currentTarget)}
-        className="flex min-w-0 flex-1 items-center gap-3 bg-transparent py-2 pl-2 pr-1 text-left transition-colors active:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300"
+        className="flex w-full min-w-0 items-center gap-3 bg-transparent py-2.5 pl-2 pr-2 text-left transition-colors active:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300"
       >
-        <span className="flex w-11 shrink-0 flex-col items-center gap-0.5">
-          {/* Feste Flaeche: das Objekt wird hineingepasst, nicht umgekehrt. */}
-          <span ref={objektRef} data-list-object className="flex h-14 w-11">
-            {stageRenderable ? (
-              <Eingepasst>
-                <StackStage
-                  key={animationEpoch}
-                  item={{ ...p, color_hex: farbe }}
-                  fillPct={fillPct ?? 100}
-                  animateOnMount={true}
-                  isActive={false}
-                  size="mini"
-                  showLabel={false}
-                />
-              </Eingepasst>
-            ) : (
-              <span className="m-auto grid h-10 w-10 place-items-center rounded-xl border border-slate-800 bg-slate-800 text-slate-500">
-                <Package size={18} aria-hidden="true" />
-              </span>
-            )}
-          </span>
-          {fillPct !== null && (
-            <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">
-              {Math.round(fillPct)}%
+        {/* Feste Flaeche: das Objekt wird hineingepasst, nicht umgekehrt. */}
+        <span ref={objektRef} data-list-object className="flex h-14 w-11 shrink-0">
+          {stageRenderable ? (
+            <Eingepasst>
+              <StackStage
+                key={animationEpoch}
+                item={{ ...p, color_hex: farbe }}
+                fillPct={getVialFillPct(p) ?? 100}
+                animateOnMount={true}
+                isActive={false}
+                size="mini"
+                showLabel={false}
+              />
+            </Eingepasst>
+          ) : (
+            <span className="m-auto grid h-10 w-10 place-items-center rounded-xl border border-slate-800 bg-slate-800 text-slate-500">
+              <Package size={18} aria-hidden="true" />
             </span>
           )}
         </span>
@@ -351,56 +262,30 @@ function StackListRow({
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-2">
             <span className="truncate font-semibold text-white">{p.name}</span>
-            {stand.hinweis && (
+            {aktiv !== null && (
               <span
-                data-list-chip={HINWEIS_TON[stand.hinweis.art]}
-                className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold leading-tight ${CHIP_KLASSE[HINWEIS_TON[stand.hinweis.art]]}`}
+                data-list-status={aktiv ? 'aktiv' : 'inaktiv'}
+                className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold leading-tight ${aktiv
+                  ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300'
+                  : 'border-slate-700 bg-slate-800 text-slate-400'}`}
               >
-                {hinweisText(tr, stand.hinweis)}
+                {aktiv ? t('aktiv_badge') : t('inaktiv_badge')}
               </span>
             )}
           </span>
-          {/* Die naechste Einnahme bekommt die ganze Breite — sie ist das,
-              wonach man in der Liste sucht. */}
-          {planZeile && <span className="flex min-w-0 text-xs">{planZeile}</span>}
-          {(detail || vorrat) && (
-            <span className="flex min-w-0 items-center justify-between gap-2 text-[11px] text-slate-500">
-              <span className="truncate">{detail}</span>
-              {vorrat && (
-                <span
-                  title={vorrat.reicht ? String(t('my_stack_list_range_title', { range: vorrat.text })) : undefined}
-                  className="flex shrink-0 items-center gap-1 font-semibold tabular-nums text-slate-400"
-                >
-                  <Package size={11} aria-hidden="true" />
-                  {vorrat.text}
-                </span>
-              )}
+          {zusammensetzung && (
+            <span className="line-clamp-2 text-xs text-slate-300">{zusammensetzung}</span>
+          )}
+          {haltbar && ton && (
+            <span data-list-haltbar={ton} className={`flex min-w-0 items-center gap-1 text-[11px] ${HALTBAR_KLASSE[ton]}`}>
+              <Hourglass size={11} aria-hidden="true" className="shrink-0" />
+              <span className="truncate">{haltbarText(tr, haltbar, language)}</span>
             </span>
           )}
         </span>
 
-        {!keinPlan && <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-slate-600" />}
+        <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-slate-600" />
       </button>
-
-      {/* Ohne Plan der eine Schritt, der fehlt — neben der Zeile, nicht in
-          ihr: ein Knopf im Knopf waere fuer Tastatur und Vorleser keiner.
-          Nur ein Symbol, damit der Name nicht schrumpft; die Zeile sagt
-          daneben „Noch kein Zyklus". */}
-      {keinPlan && (
-        <button
-          type="button"
-          data-ob="btn-zyklus-add"
-          data-list-plan-add
-          onClick={onNewPlan}
-          aria-label={String(t('my_stack_list_add_plan'))}
-          title={String(t('my_stack_list_add_plan'))}
-          className="relative my-auto mr-2 grid h-10 w-10 shrink-0 place-items-center rounded-full border border-violet-500/35 bg-violet-500/15 text-violet-200 transition-colors hover:bg-violet-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
-        >
-          <CalendarPlus size={17} aria-hidden="true" />
-          {/* NewDot setzt selbst `relative` — die Lage gibt ihm deshalb eine Huelle. */}
-          {neuPunkt && <span className="absolute right-0 top-0"><NewDot /></span>}
-        </button>
-      )}
     </li>
   )
 }

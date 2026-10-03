@@ -1645,10 +1645,9 @@ main.flex-1 {
 /* My-Stack-Liste: die Farbtoene der Zeile sind fuer dunklen Grund gemischt
    (helle Schrift auf getoentem Glas). Auf hellem Grund dieselben Toene,
    nur dunkler gesetzt. */
-[data-theme="light"] [data-list-chip="rot"] { color: #b91c1c; background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-[data-theme="light"] [data-list-chip="gelb"] { color: #92400e; background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
-[data-theme="light"] [data-list-plan-add] { color: #6d28d9; background-color: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.35); }
-[data-theme="light"] [data-list-row] [data-list-uhr] { color: #0e7490; }
+[data-theme="light"] [data-list-haltbar="rot"] { color: #b91c1c; }
+[data-theme="light"] [data-list-haltbar="gelb"] { color: #92400e; }
+[data-theme="light"] [data-list-status="aktiv"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
 
 /* Vial label: restore transparency in light mode.
    The global bg-slate-950/* override replaces rgba(2,6,23,0.82) with a
