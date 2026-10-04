@@ -135,14 +135,22 @@ test('Nasenspray: Einnahme in Sprühstößen, Bestand in Sprays, Knopf „Neues 
   await expect(detail.locator('[data-stack-detail-field="wirkstoff"]')).toContainText('125 mcg / 1 Sprühstoß')
 })
 
-/** Zieht die Zeile mit dem Zeiger waagerecht um `dx` Pixel. */
-async function wische(page: import('@playwright/test').Page, row: import('@playwright/test').Locator, dx: number) {
+/**
+ * Zieht die Zeile mit dem Zeiger waagerecht um `dx` Pixel. `ruhig`: langsam
+ * und vor dem Loslassen stillhalten — dann zaehlt nur die Strecke, nicht der
+ * Schwung.
+ */
+async function wische(page: import('@playwright/test').Page, row: import('@playwright/test').Locator, dx: number, ruhig = false) {
   const box = (await row.boundingBox())!
   const y = box.y + box.height / 2
   const x = box.x + box.width * 0.7
   await page.mouse.move(x, y)
   await page.mouse.down()
-  for (let i = 1; i <= 6; i++) await page.mouse.move(x + (dx * i) / 6, y)
+  for (let i = 1; i <= 6; i++) {
+    await page.mouse.move(x + (dx * i) / 6, y)
+    if (ruhig) await page.waitForTimeout(30)
+  }
+  if (ruhig) await page.waitForTimeout(150)
   await page.mouse.up()
 }
 
@@ -165,14 +173,74 @@ test('Liste: nach links wischen zeigt Bearbeiten und Löschen; Tipp daneben schl
   await expect(page.getByRole('dialog', { name: 'TB-500' })).toBeVisible()
   await page.goBack()
 
-  // Kurz gezogen rastet zurueck.
-  await wische(page, bpc, -40)
+  // Kurz und ruhig gezogen rastet zurueck.
+  await wische(page, bpc, -40, true)
   await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
 
   // Loeschen fragt wie im Vollbild nach.
   await wische(page, bpc, -160)
   await bpc.getByRole('button', { name: 'Löschen' }).click()
   await expect(page.getByRole('dialog', { name: 'Substanz entfernen' })).toBeVisible()
+})
+
+/**
+ * Echter Finger (Chromium, CDP): Touch-Ereignisse statt Maus — prueft den
+ * Touch-Weg, das Durchwischen und ob die Seite dabei mitscrollt. Schnippen
+ * (Geschwindigkeit) prueft `useWischZeile.test.ts`: die Abstaende zwischen
+ * den Ereignissen bestimmt hier der Testrechner, nicht der Test.
+ */
+async function fingerWisch(
+  page: import('@playwright/test').Page,
+  row: import('@playwright/test').Locator,
+  { dx, dy = 0, schritte }: { dx: number; dy?: number; schritte: number },
+) {
+  const box = (await row.boundingBox())!
+  const x = box.x + box.width * 0.8
+  const y = box.y + box.height / 2
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
+  for (let i = 1; i <= schritte; i++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + (dx * i) / schritte, y: y + (dy * i) / schritte }] })
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await cdp.detach()
+}
+
+test('Liste, Finger: Wischen öffnet und schließt, die Seite scrollt dabei nicht mit', async ({ page, mock }, info) => {
+  test.skip(info.project.name === 'pixel-7' ? false : !info.project.use.hasTouch, 'braucht Touch')
+  for (const name of ['BPC-157', 'TB-500', 'GHK-Cu', 'Ipamorelin', 'CJC-1295', 'Semax', 'Selank', 'MOTS-c']) {
+    seedPeptide(mock, name, { startDate: '2026-09-01' })
+  }
+  await page.goto('/my-stack')
+  const bpc = zeile(page, 'BPC-157')
+  await expect(bpc).toBeVisible()
+  const scrollVorher = await page.evaluate(() => window.scrollY)
+
+  // Schraeg nach unten gewischt: die Zeile oeffnet, die Seite bleibt stehen.
+  await fingerWisch(page, bpc, { dx: -120, dy: 24, schritte: 6 })
+  await expect(bpc).toHaveAttribute('data-list-open', 'true')
+  await expect(bpc.getByRole('button', { name: 'Löschen' })).toBeVisible()
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollVorher)
+  await expect(page.getByRole('dialog', { name: 'BPC-157' })).toHaveCount(0)
+
+  // Nach rechts: wieder zu.
+  await fingerWisch(page, bpc, { dx: 120, schritte: 6 })
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+
+  // Senkrecht ist Scrollen, kein Wischen.
+  await fingerWisch(page, bpc, { dx: -6, dy: -60, schritte: 6 })
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+})
+
+test('Liste, Finger: ganz durchgewischt fragt sofort nach dem Löschen', async ({ page, mock }, info) => {
+  test.skip(info.project.name === 'pixel-7' ? false : !info.project.use.hasTouch, 'braucht Touch')
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  const bpc = zeile(page, 'BPC-157')
+  const breite = (await bpc.boundingBox())!.width
+  await fingerWisch(page, bpc, { dx: -breite * 0.75, schritte: 12 })
+  await expect(page.getByRole('dialog', { name: 'Substanz entfernen' })).toBeVisible()
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
 })
 
 test('Liste: Bearbeiten aus dem Wischen öffnet das Formular', async ({ page, mock }) => {

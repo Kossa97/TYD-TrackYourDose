@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Package, Pencil, Trash2 } from 'lucide-react'
 import type { SloshEngine } from '../../../components/sloshEngine'
@@ -10,6 +10,7 @@ import { getStableStackItemColor } from '../lib/colors'
 import { formatAmount, stockAmountLabel } from '../lib/bestandLabels'
 import { GRUPPEN, gruppeVon, haltbarkeitFuer, istAktiv, type Gruppe, type Haltbarkeit } from '../lib/listRow'
 import { HaltbarkeitChip } from './HaltbarkeitChip'
+import { useWischZeile } from './useWischZeile'
 import { useMinuteClock } from '../lib/useMinuteClock'
 import type { Translate } from '../lib/planLabels'
 import { type CycleTimeline } from '../../../lib/planTimeline'
@@ -176,75 +177,6 @@ function gruppenTitel(t: Translate, gruppe: Gruppe): string {
   return String(t(gruppe === 'aktiv' ? 'aktiv_badge' : 'inaktiv_badge'))
 }
 
-/** So weit schiebt sich die Zeile auf, um die zwei Aktionen zu zeigen. */
-const AKTIONEN_BREITE = 144
-/** Erst ab dieser Strecke ist ein Ziehen ein Wischen — darunter ein Tipp oder Scrollen. */
-const WISCH_SCHWELLE = 10
-
-/**
- * Wischen nach links an einer Zeile. Waagerecht und deutlich genug, dann
- * folgt die Zeile dem Finger; beim Loslassen rastet sie offen oder zu.
- * Senkrecht bleibt Scrollen — `touch-pan-y` laesst es dem Browser.
- */
-function useWischen(offen: boolean, onOffen: (offen: boolean) => void) {
-  const start = useRef<{ x: number; y: number; basis: number } | null>(null)
-  const wischt = useRef(false)
-  const gewischt = useRef(false)
-  // Der letzte Stand fuer das Loslassen — der State kaeme bei einem
-  // schnellen Schnippen noch nicht an.
-  const letzterVersatz = useRef<number | null>(null)
-  const [versatz, setVersatz] = useState<number | null>(null)
-
-  const onPointerDown = (event: ReactPointerEvent) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-    start.current = { x: event.clientX, y: event.clientY, basis: offen ? -AKTIONEN_BREITE : 0 }
-    wischt.current = false
-    gewischt.current = false
-  }
-  const onPointerMove = (event: ReactPointerEvent) => {
-    const s = start.current
-    if (!s) return
-    // Maus ausserhalb losgelassen: kein pointerup hier — dann ist Schluss.
-    if (event.pointerType === 'mouse' && event.buttons === 0) {
-      ende()
-      return
-    }
-    const dx = event.clientX - s.x
-    const dy = event.clientY - s.y
-    if (!wischt.current) {
-      if (Math.abs(dx) < WISCH_SCHWELLE || Math.abs(dx) < Math.abs(dy)) {
-        if (Math.abs(dy) > WISCH_SCHWELLE) start.current = null
-        return
-      }
-      wischt.current = true
-      gewischt.current = true
-      ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
-    }
-    const neu = Math.min(0, Math.max(-AKTIONEN_BREITE - 24, s.basis + dx))
-    letzterVersatz.current = neu
-    setVersatz(neu)
-  }
-  function ende() {
-    const zuletzt = letzterVersatz.current
-    if (wischt.current && zuletzt !== null) onOffen(zuletzt < -AKTIONEN_BREITE / 2)
-    start.current = null
-    wischt.current = false
-    letzterVersatz.current = null
-    setVersatz(null)
-  }
-  return {
-    versatz: versatz ?? (offen ? -AKTIONEN_BREITE : 0),
-    zieht: versatz !== null,
-    /** Nach einem Wischen kommt noch ein Klick — der oeffnet nichts. */
-    klickVerschlucken: () => {
-      const war = gewischt.current
-      gewischt.current = false
-      return war
-    },
-    handlers: { onPointerDown, onPointerMove, onPointerUp: ende, onPointerCancel: ende },
-  }
-}
-
 /**
  * Woraus die Substanz besteht, fuer jede Form gleich: Menge je Bezug
  * („5 mg / 1 Vial", „500 mg / 1 Tablette", „10 mg / 3 ml"). Eine Mischung
@@ -303,6 +235,18 @@ function Eingepasst({ children }: { children: ReactNode }) {
   )
 }
 
+/**
+ * Wie bei iOS: zuerst kommt das Symbol (blass und klein, dann ganz), die
+ * Beschriftung erst, wenn sie Platz hat — nie abgeschnitten.
+ */
+const AKTION_SYMBOL: CSSProperties = {
+  opacity: 'var(--wisch-fortschritt, 0)',
+  transform: 'scale(calc(0.6 + 0.4 * var(--wisch-fortschritt, 0)))',
+}
+const AKTION_TEXT: CSSProperties = {
+  opacity: 'clamp(0, calc((var(--wisch-fortschritt, 0) - 0.8) * 5), 1)',
+}
+
 function StackListRow({
   p,
   gruppe,
@@ -334,68 +278,79 @@ function StackListRow({
   const tr = t as Translate
   const language = i18n.resolvedLanguage ?? i18n.language
   const objektRef = useRef<HTMLSpanElement | null>(null)
-  const wischen = useWischen(offen, onOffen)
+  const { zeileRef, vorneRef, aktionenRef, klickVerschlucken } = useWischZeile({ offen, onOffen, onVoll: onRemove })
 
   const stageRenderable = isStageRenderable(p.dosage_form)
   const farbe = p.color_hex ?? getStableStackItemColor(p.id)
   const zusammensetzung = zusammensetzungText(tr, p, language)
-  const aktionSichtbar = offen || wischen.zieht
 
   return (
     <li
+      ref={zeileRef}
       data-list-row={p.id}
       data-list-group={gruppe}
       data-list-active={aktiv === null ? undefined : String(aktiv)}
       data-list-open={offen || undefined}
       // Keine `bg-slate-900/…`-Klasse, auch nicht als hover-Variante: das
       // helle Design faerbt jede Klasse mit diesem Wortlaut dauerhaft ein.
-      className={`relative overflow-hidden rounded-2xl border bg-slate-950 transition-[border-color,box-shadow] duration-500 ${hervorgehoben
+      className={`relative touch-pan-y select-none overflow-hidden rounded-2xl border bg-slate-950 transition-[border-color,box-shadow] duration-500 ${hervorgehoben
         ? 'border-cyan-300/60 shadow-[0_0_0_3px_rgba(103,232,249,0.15)]'
         : 'border-slate-800'}`}
     >
-      {/* Unter der Zeile: die beiden Aktionen. Erreichbar nur, wenn sie
-          offen steht — sonst ist das Vollbild der Weg dorthin. */}
+      {/* Unter der Zeile: die beiden Aktionen. Ihre Breite folgt dem Finger
+          (gesetzt in `useWischZeile`), Symbol und Text blenden mit dem
+          Fortschritt auf. Ganz durchgewischt (`data-voll`) nimmt „Loeschen"
+          die ganze Breite. Per Tastatur erreichbar nur, wenn die Zeile offen
+          steht — sonst ist das Vollbild der Weg dorthin. */}
       <div
-        aria-hidden={!aktionSichtbar || undefined}
-        className="absolute inset-y-0 right-0 flex"
-        style={{ width: AKTIONEN_BREITE }}
+        ref={aktionenRef}
+        aria-hidden={!offen || undefined}
+        className="group/aktionen absolute inset-y-0 right-0 flex w-0 overflow-hidden"
       >
         <button
           type="button"
-          tabIndex={aktionSichtbar ? 0 : -1}
-          onClick={onEdit}
+          tabIndex={offen ? 0 : -1}
+          onClick={() => { if (!klickVerschlucken()) onEdit() }}
           aria-label={String(t('bearbeiten'))}
-          className="flex flex-1 flex-col items-center justify-center gap-1 bg-sky-600 text-[11px] font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+          className="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 overflow-hidden whitespace-nowrap bg-sky-600 text-[11px] font-semibold text-white transition-[flex-grow] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white group-data-[voll]/aktionen:grow-0"
         >
-          <Pencil size={17} aria-hidden="true" />
-          {t('bearbeiten')}
+          <span className="flex flex-col items-center gap-1">
+            <Pencil size={17} aria-hidden="true" style={AKTION_SYMBOL} />
+            <span style={AKTION_TEXT}>{t('bearbeiten')}</span>
+          </span>
         </button>
         <button
           type="button"
-          tabIndex={aktionSichtbar ? 0 : -1}
-          onClick={onRemove}
+          tabIndex={offen ? 0 : -1}
+          onClick={() => { if (!klickVerschlucken()) onRemove() }}
           aria-label={String(t('loeschen'))}
           data-list-delete
-          className="flex flex-1 flex-col items-center justify-center gap-1 bg-red-600 text-[11px] font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+          // Ganz durchgewischt wandert die Aufschrift an die linke Kante —
+          // dorthin, wo der Finger ist.
+          className="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 group-data-[voll]/aktionen:items-start group-data-[voll]/aktionen:pl-7 overflow-hidden whitespace-nowrap bg-red-600 text-[11px] font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
         >
-          <Trash2 size={17} aria-hidden="true" />
-          {t('loeschen')}
+          <span className="flex flex-col items-center gap-1">
+            <Trash2 size={17} aria-hidden="true" style={AKTION_SYMBOL} />
+            <span style={AKTION_TEXT}>{t('loeschen')}</span>
+          </span>
         </button>
       </div>
 
       <button
+        ref={vorneRef}
         type="button"
         aria-label={String(t('my_stack_list_open', { name: p.name }))}
-        {...wischen.handlers}
         onClick={event => {
-          if (wischen.klickVerschlucken()) return
+          if (klickVerschlucken()) return
           // Offen: ein Tipp schliesst nur — kein Vollbild aus Versehen.
           if (offen) { onOffen(false); return }
           onOpen(objektRef.current ?? event.currentTarget)
         }}
-        style={{ transform: `translateX(${wischen.versatz}px)` }}
-        className={`relative flex w-full min-w-0 touch-pan-y items-center gap-3 bg-slate-950 py-2.5 pl-2 pr-2 text-left active:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 ${wischen.zieht ? '' : 'transition-transform duration-200 ease-out'}`}
-      >        {/* Feste Flaeche: das Objekt wird hineingepasst, nicht umgekehrt. */}
+        // `select-none` und kein Callout: langes Halten beim Wischen markiert
+        // nichts und oeffnet kein Menue.
+        className="relative flex w-full min-w-0 touch-pan-y select-none items-center gap-3 bg-slate-950 py-2.5 pl-2 pr-2 text-left [-webkit-touch-callout:none] active:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300"
+      >
+        {/* Feste Flaeche: das Objekt wird hineingepasst, nicht umgekehrt. */}
         <span ref={objektRef} data-list-object className="flex h-14 w-11 shrink-0">
           {stageRenderable ? (
             <Eingepasst>
