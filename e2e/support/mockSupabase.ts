@@ -491,6 +491,13 @@ export class MockSupabase {
       return saved
     })
 
+    this.onRpc('end_cycle', params => {
+      const cycleId = params.p_cycle_id as string
+      const cycle = this.table('cycles').find(row => row.id === cycleId)
+      if (cycle) Object.assign(cycle, { active: false, ended_at: this.now().toISOString() })
+      return { cycle_id: cycleId }
+    })
+
     this.onRpc('create_plan_version', params => {
       const cycleId = params.p_cycle_id as string
       const snapshot = { ...(params.p_schedule as Row) }

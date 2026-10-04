@@ -1754,5 +1754,12 @@
   "review_delete_desc": "The review and its notes are removed. The cycle and your intake log stay.",
   "review_deleting": "Deleting …",
   "review_substance_delete_one": "1 review of this substance is deleted too.",
-  "review_substance_delete_many": "{{n}} reviews of this substance are deleted too."
+  "review_substance_delete_many": "{{n}} reviews of this substance are deleted too.",
+  "review_cycle_general_hint": "Applies to the substance in general, not to a specific period.",
+  "review_prompt_title": "Cycle ended — how was {{name}}?",
+  "review_prompt_rate": "Rate",
+  "review_prompt_later": "Later",
+  "review_unrated_one": "1 finished cycle not rated yet",
+  "review_unrated_many": "{{n}} finished cycles not rated yet",
+  "review_unrated_action": "Rate now"
 }

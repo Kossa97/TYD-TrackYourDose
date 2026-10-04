@@ -148,3 +148,74 @@ test('My Stack: endgültig löschen sagt, wie viele Bewertungen mitgehen', async
   await expect(page.getByRole('dialog', { name: 'Substanz entfernen' }).locator('[data-delete-reviews]'))
     .toHaveText('Auch 2 Bewertungen dieser Substanz werden gelöscht.')
 })
+
+test('Ohne Zyklus: eine Substanz ohne Plan lässt sich bewerten — und eine mit Plan auch allgemein', async ({ page, mock }) => {
+  seedPeptide(mock, 'Magnesium', {
+    startDate: '2026-09-01', category: 'supplement', plan: false,
+    form: { dosage_form: 'tablet', zutat: { amount_value: 400, amount_unit: 'mg', basis_value: 1, basis_unit: 'tablet' } },
+  })
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-08-12' })
+  await page.goto('/bewertungen')
+
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  await sheet.getByRole('radio', { name: 'Magnesium' }).click()
+  await expect(sheet.getByRole('radio', { name: 'Ohne Zyklus' })).toHaveAttribute('aria-checked', 'true')
+  await expect(sheet.locator('[data-review-general]')).toHaveText('Für diese Substanz gibt es noch keinen Zyklus — die Bewertung wird ohne gespeichert.')
+  await sheet.getByRole('radio', { name: '4 Sterne' }).click()
+  await sheet.getByRole('button', { name: 'Speichern' }).click()
+  await expect(sheet).toBeHidden()
+
+  // Mit Plan: „Ohne Zyklus" gilt allgemein — und geht beliebig oft.
+  for (const sterne of ['3 Sterne', '5 Sterne']) {
+    await page.getByRole('button', { name: 'Neu' }).click()
+    const weitere = page.getByRole('dialog', { name: 'Neue Bewertung' })
+    await weitere.getByRole('radio', { name: 'BPC-157' }).click()
+    await weitere.getByRole('radio', { name: 'Ohne Zyklus' }).click()
+    await expect(weitere.locator('[data-review-general]')).toHaveText('Gilt für die Substanz allgemein, nicht für einen bestimmten Zeitraum.')
+    await expect(weitere.locator('[data-review-context]')).toHaveCount(0)
+    await weitere.getByRole('radio', { name: sterne }).click()
+    await weitere.getByRole('button', { name: 'Speichern' }).click()
+    await expect(weitere).toBeHidden()
+  }
+  expect(mock.table('reviews').map(row => row.cycle_id)).toEqual([null, null, null])
+})
+
+test('Noch nicht bewertet: beendete Zyklen ohne Bewertung stehen oben, ein Tipp öffnet den richtigen', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-08-12' })
+  const zyklus = beende(mock, 'BPC-157', '2026-09-20')
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  await page.goto('/bewertungen')
+
+  const hinweis = page.locator('[data-review-unrated]')
+  await expect(hinweis).toContainText('1 beendeter Zyklus noch nicht bewertet')
+  await hinweis.getByRole('button', { name: 'Jetzt bewerten' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  await expect(sheet.getByRole('radio', { name: 'BPC-157' })).toHaveAttribute('aria-checked', 'true')
+  await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026 – 19.09.2026')
+  await sheet.getByRole('radio', { name: '5 Sterne' }).click()
+  await sheet.getByRole('button', { name: 'Speichern' }).click()
+  await expect(sheet).toBeHidden()
+  expect(mock.table('reviews')[0]).toMatchObject({ cycle_id: zyklus })
+  await expect(hinweis).toHaveCount(0)
+})
+
+test('Plan beenden in My Stack fragt einmal „Wie war\'s?" — Bewerten führt zum richtigen Zyklus', async ({ page, mock }) => {
+  await page.addInitScript(() => localStorage.setItem('tyd_peptide_view', 'list'))
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-08-12' })
+  await page.goto('/my-stack')
+  await page.getByRole('button', { name: 'BPC-157 öffnen' }).click()
+  const detail = page.getByRole('dialog', { name: 'BPC-157' })
+  await detail.getByRole('button', { name: /Plan & Verlauf öffnen/ }).click()
+  await page.getByRole('button', { name: 'Beenden', exact: true }).last().click()
+  await page.getByRole('button', { name: 'Plan beenden' }).last().click()
+
+  const frage = page.locator('[data-review-prompt]')
+  await expect(frage).toContainText('Zyklus beendet — wie war BPC-157?')
+  await frage.getByRole('button', { name: 'Bewerten' }).click()
+
+  await expect(page).toHaveURL(/\/bewertungen$/)
+  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  await expect(sheet.getByRole('radio', { name: 'BPC-157' })).toHaveAttribute('aria-checked', 'true')
+  await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026')
+})

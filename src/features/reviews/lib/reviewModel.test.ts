@@ -4,6 +4,7 @@ import {
   entwurfAus,
   gruppiereBewertungen,
   passtZurSuche,
+  unbewerteteZyklen,
   entwurfGueltig,
   erfahrungAusSternen,
   leererEntwurf,
@@ -57,14 +58,14 @@ const zyklen = [
 
 describe('Vorschlag beim Bewerten', () => {
   it('zuerst der zuletzt beendete Zyklus ohne Bewertung', () => {
-    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set())).toBe('neu')
-    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu']))).toBe('alt')
+    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(), now)).toBe('neu')
+    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu']), now)).toBe('alt')
   })
 
   it('sind alle beendeten bewertet: der laufende; sonst keiner', () => {
-    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu', 'alt']))).toBe('laeuft')
-    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu', 'alt', 'laeuft']))).toBeNull()
-    expect(vorgeschlagenerZyklus(zyklen, 'unbekannt', new Set())).toBeNull()
+    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu', 'alt']), now)).toBe('laeuft')
+    expect(vorgeschlagenerZyklus(zyklen, 'bpc', new Set(['neu', 'alt', 'laeuft']), now)).toBeNull()
+    expect(vorgeschlagenerZyklus(zyklen, 'unbekannt', new Set(), now)).toBeNull()
   })
 })
 
@@ -104,14 +105,14 @@ describe('was dabei war', () => {
     const kontext = zyklusKontext(kurz, now, timeZone, 'de', t)
     expect(kontext.zeitraum).toBe('01.09.2026 – 01.09.2026')
     expect(kontext.dauer).toBe('1 Tag')
-    expect(zyklusKurz(kurz, timeZone, 'de', t)).toMatch(/^Sept?\.? 2026$/)
+    expect(zyklusKurz(kurz, now, timeZone, 'de', t)).toMatch(/^Sept?\.? 2026$/)
   })
 
   it('kurz fuer die Auswahl', () => {
     // Abkuerzungen (mit oder ohne Punkt) kommen aus der ICU-Version.
-    expect(zyklusKurz(zyklen[1], timeZone, 'de', t)).toMatch(/^Aug\.? – Sept?\.? 2026$/)
-    expect(zyklusKurz(zyklen[2], timeZone, 'de', t)).toMatch(/^seit Sept?\.? 2026$/)
-    expect(zyklusKurz(zyklen[0], timeZone, 'de', t)).toMatch(/^Mär(z|\.)? – Apr\.? 2026$/)
+    expect(zyklusKurz(zyklen[1], now, timeZone, 'de', t)).toMatch(/^Aug\.? – Sept?\.? 2026$/)
+    expect(zyklusKurz(zyklen[2], now, timeZone, 'de', t)).toMatch(/^seit Sept?\.? 2026$/)
+    expect(zyklusKurz(zyklen[0], now, timeZone, 'de', t)).toMatch(/^Mär(z|\.)? – Apr\.? 2026$/)
   })
 })
 
@@ -186,5 +187,23 @@ describe('Uebersicht', () => {
     expect(passtZurSuche(liste[0], 'bpc')).toBe(true)
     expect(passtZurSuche(liste[0], 'xyz')).toBe(false)
     expect(passtZurSuche(liste[0], '  ')).toBe(true)
+  })
+})
+
+describe('noch nicht bewertet', () => {
+  it('ein Plan mit festem Ende in der Zukunft laeuft noch — nicht „beendet", nicht vorgeschlagen als beendet', () => {
+    const geplant = zyklus('geplant', 'bpc', '2026-09-20', '2026-10-30')
+    expect(unbewerteteZyklen([geplant], [], new Set(['bpc']), now)).toEqual([])
+    expect(zyklusKontext(geplant, now, timeZone, 'de', t).laeuft).toBe(true)
+    expect(zyklusKontext(geplant, now, timeZone, 'de', t).zeitraum).toBe('seit 20.09.2026')
+    expect(vorgeschlagenerZyklus([...zyklen, geplant], 'bpc', new Set(['neu', 'alt', 'laeuft']), now)).toBe('geplant')
+  })
+
+  it('nur beendete Zyklen ohne Bewertung, aktiver Substanzen, zuletzt beendet zuerst', () => {
+    const aktiv = new Set(['bpc', 'tb'])
+    expect(unbewerteteZyklen(zyklen, [], aktiv, now).map(z => z.cycle.id)).toEqual(['neu', 'alt'])
+    expect(unbewerteteZyklen(zyklen, [{ cycle_id: 'neu' }, { cycle_id: null }], aktiv, now).map(z => z.cycle.id)).toEqual(['alt'])
+    // Archiviert: zaehlt nicht.
+    expect(unbewerteteZyklen(zyklen, [], new Set(['tb']), now)).toEqual([])
   })
 })

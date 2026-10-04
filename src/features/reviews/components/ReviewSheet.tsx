@@ -65,7 +65,7 @@ export function ReviewSheet({
 
   const waehleSubstanz = (id: string) => {
     if (id === draft.stack_item_id) return
-    setze({ stack_item_id: id, cycle_id: vorgeschlagenerZyklus(timelines, id, bewertet) })
+    setze({ stack_item_id: id, cycle_id: vorgeschlagenerZyklus(timelines, id, bewertet, now) })
   }
 
   return (
@@ -112,7 +112,7 @@ export function ReviewSheet({
               optionen={[
                 ...zyklen.map(z => ({
                   wert: z.cycle.id,
-                  label: zyklusKurz(z, timeZone, language, tr),
+                  label: zyklusKurz(z, now, timeZone, language, tr),
                   hinweis: bewertet.has(z.cycle.id) ? String(t('review_cycle_rated')) : undefined,
                   gesperrt: bewertet.has(z.cycle.id),
                 })),
@@ -129,8 +129,10 @@ export function ReviewSheet({
                 ))}
               </p>
             )}
-            {!kontext && zyklen.length === 0 && (
-              <p className="mt-2 text-xs text-slate-500">{t('review_cycle_none_hint')}</p>
+            {!draft.cycle_id && (
+              <p data-review-general className="mt-2 text-xs text-slate-500">
+                {zyklen.length === 0 ? t('review_cycle_none_hint') : t('review_cycle_general_hint')}
+              </p>
             )}
           </Abschnitt>
 

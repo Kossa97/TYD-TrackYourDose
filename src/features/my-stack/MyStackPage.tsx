@@ -106,6 +106,7 @@ import {
 import { AddVialTile } from './page/stackTiles'
 import { StackTabBar } from './page/StackTabBar'
 import { useMyStackData } from './page/useMyStackData'
+import { BewertenAnstoss } from '../reviews/components/BewertenAnstoss'
 import { DeleteSubstanceDialog } from './page/DeleteSubstanceDialog'
 import { VialCarousel } from './page/VialCarousel'
 import { StageDetailView } from './page/StageDetailView'
@@ -906,6 +907,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       idempotencyKey: mutation.mutation.key,
     })
     completeLifecycleMutation(mutation.identity, next)
+    frageNachBewertung(timeline)
+  }
+
+  // Zyklus beendet: einmal kurz fragen, wie es war (Bewertungen v2).
+  const frageNachBewertung = (timeline: CycleTimeline) => {
+    const { stack_item_id: stackItemId, id: cycleId } = timeline.cycle
+    const name = peptides.find(p => p.id === stackItemId)?.name ?? ''
+    toast(meldung => (
+      <BewertenAnstoss
+        name={name}
+        onSpaeter={() => toast.dismiss(meldung.id)}
+        onBewerten={() => {
+          toast.dismiss(meldung.id)
+          navigate(`/bewertungen?bewerten=${encodeURIComponent(stackItemId)}&zyklus=${encodeURIComponent(cycleId)}`)
+        }}
+      />
+    ), { id: `bewerten-${cycleId}`, duration: 12000 })
   }
 
   const restartTimeline = async (timeline: CycleTimeline) => {

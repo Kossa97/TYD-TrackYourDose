@@ -114,11 +114,22 @@ export function zeileAus(draft: ReviewDraft, userId: string, vorher?: Pick<Revie
 }
 
 /**
+ * Beendet heisst: das Ende liegt hinter uns. Ein Plan mit festem Enddatum
+ * traegt sein Ende schon vorher in `ended_at` — bis dahin laeuft er.
+ */
+export function istBeendet(timeline: CycleTimeline, now: Date): boolean {
+  const ende = timeline.cycle.ended_at
+  return ende !== null && new Date(ende).getTime() <= now.getTime()
+}
+
+/**
  * Erster und letzter Tag. Am Starttag beendet, laege der letzte Tag vor dem
  * ersten (das Ende ist eine Grenze) — dann zaehlt der eine Tag.
  */
-function periode(timeline: CycleTimeline, timeZone: string): { first: string; last: string | null } {
+function periode(timeline: CycleTimeline, timeZone: string, now?: Date): { first: string; last: string | null } {
   const { first, last } = cyclePeriod(timeline, timeZone)
+  // Noch nicht beendet (Ende geplant, aber nicht erreicht): laeuft noch.
+  if (now && !istBeendet(timeline, now)) return { first, last: null }
   return { first, last: last !== null && last < first ? first : last }
 }
 
@@ -137,12 +148,13 @@ export function vorgeschlagenerZyklus(
   timelines: readonly CycleTimeline[],
   stackItemId: string,
   bewertet: ReadonlySet<string>,
+  now: Date,
 ): string | null {
   const offen = zyklenVon(timelines, stackItemId).filter(timeline => !bewertet.has(timeline.cycle.id))
   const beendet = offen
-    .filter(timeline => timeline.cycle.ended_at)
+    .filter(timeline => istBeendet(timeline, now))
     .sort((a, b) => b.cycle.ended_at!.localeCompare(a.cycle.ended_at!))
-  return beendet[0]?.cycle.id ?? offen.find(timeline => !timeline.cycle.ended_at)?.cycle.id ?? null
+  return beendet[0]?.cycle.id ?? offen.find(timeline => !istBeendet(timeline, now))?.cycle.id ?? null
 }
 
 /**
@@ -219,7 +231,7 @@ export function zyklusKontext(
   language: string,
   t: Translate,
 ): ZyklusKontext {
-  const { first, last } = periode(timeline, timeZone)
+  const { first, last } = periode(timeline, timeZone, now)
   const heute = localDateTimeKey(now, timeZone).slice(0, 10)
   const laeuft = last === null
   const bis = last ?? heute
@@ -238,8 +250,8 @@ export function zyklusKontext(
 }
 
 /** Kurz fuer die Auswahl: „Aug – Sep 2026", „seit Sep 2026". */
-export function zyklusKurz(timeline: CycleTimeline, timeZone: string, language: string, t: Translate): string {
-  const { first, last } = periode(timeline, timeZone)
+export function zyklusKurz(timeline: CycleTimeline, now: Date, timeZone: string, language: string, t: Translate): string {
+  const { first, last } = periode(timeline, timeZone, now)
   const monat = (tag: string, mitJahr: boolean) => new Intl.DateTimeFormat(language, {
     month: 'short', ...(mitJahr ? { year: 'numeric' } : {}), timeZone: 'UTC',
   }).format(new Date(`${tag}T00:00:00.000Z`))
@@ -310,4 +322,23 @@ export function passtZurSuche(review: Review, suche: string): boolean {
   if (!s) return true
   return [review.stack_items?.display_name, review.title, review.body, review.pros, review.cons]
     .some(text => (text ?? '').toLowerCase().includes(s))
+}
+
+/**
+ * Beendete Zyklen ohne Bewertung, zuletzt beendet zuerst — fuer die Zeile
+ * „2 Zyklen noch nicht bewertet". Archivierte Substanzen zaehlen nicht mit:
+ * wer etwas weggelegt hat, soll nicht daran erinnert werden.
+ */
+export function unbewerteteZyklen(
+  timelines: readonly CycleTimeline[],
+  reviews: readonly Pick<Review, 'cycle_id'>[],
+  aktiveSubstanzen: ReadonlySet<string>,
+  now: Date,
+): CycleTimeline[] {
+  const bewertet = new Set(reviews.map(review => review.cycle_id).filter(Boolean))
+  return timelines
+    .filter(timeline => istBeendet(timeline, now)
+      && !bewertet.has(timeline.cycle.id)
+      && aktiveSubstanzen.has(timeline.cycle.stack_item_id))
+    .sort((a, b) => b.cycle.ended_at!.localeCompare(a.cycle.ended_at!))
 }

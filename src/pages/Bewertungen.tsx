@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { Globe, Pencil, Plus, RefreshCw, Search, Star, Trash2 } from 'lucide-react'
@@ -16,6 +17,7 @@ import {
   gruppiereBewertungen,
   leererEntwurf,
   passtZurSuche,
+  unbewerteteZyklen,
   vorgeschlagenerZyklus,
   zyklusKurz,
   zyklusZumDatum,
@@ -51,6 +53,9 @@ export function Bewertungen() {
   const [loeschen, setLoeschen] = useState<Review | null>(null)
   const [loescht, setLoescht] = useState(false)
   const [offeneZeile, setOffeneZeile] = useState<string | null>(null)
+  const [kontextGeladen, setKontextGeladen] = useState(false)
+  // Aus „Plan beenden" kommend: ?bewerten=<Substanz>&zyklus=<Zyklus>.
+  const [parameter, setParameter] = useSearchParams()
 
   const load = async () => {
     try {
@@ -68,6 +73,7 @@ export function Bewertungen() {
     ])
     if (items.status === 'fulfilled' && items.value.data) setStackItems(items.value.data as ReviewSubstanz[])
     if (zyklen.status === 'fulfilled') setTimelines(zyklen.value)
+    setKontextGeladen(true)
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,7 +105,7 @@ export function Bewertungen() {
     const erste = stackItems.find(item => !item.archived)
     if (!erste) return toast.error(t('zuerst_peptid'))
     const belegt = new Set(reviews.filter(r => r.cycle_id).map(r => r.cycle_id!))
-    setSheet({ id: null, start: leererEntwurf(erste.id, vorgeschlagenerZyklus(timelines, erste.id, belegt)) })
+    setSheet({ id: null, start: leererEntwurf(erste.id, vorgeschlagenerZyklus(timelines, erste.id, belegt, now)) })
   }
 
   const openEdit = (r: Review) => {
@@ -113,6 +119,26 @@ export function Bewertungen() {
     }
     setSheet({ id: r.id, start })
   }
+
+  const aktiveSubstanzen = useMemo(() => new Set(stackItems.filter(item => !item.archived).map(item => item.id)), [stackItems])
+  const offen = useMemo(() => unbewerteteZyklen(timelines, reviews, aktiveSubstanzen, now), [timelines, reviews, aktiveSubstanzen, now])
+
+  /** Einen bestimmten Zyklus bewerten — oder, ist er schon bewertet, die Bewertung oeffnen. */
+  const bewerteZyklus = (stackItemId: string, cycleId: string | null) => {
+    const vorhanden = cycleId ? reviews.find(r => r.cycle_id === cycleId) : undefined
+    if (vorhanden) return openEdit(vorhanden)
+    const passt = cycleId && timelines.some(z => z.cycle.id === cycleId && z.cycle.stack_item_id === stackItemId)
+    setSheet({ id: null, start: leererEntwurf(stackItemId, passt ? cycleId : null) })
+  }
+
+  useEffect(() => {
+    const stackItemId = parameter.get('bewerten')
+    if (!stackItemId || ladeZustand !== 'fertig' || !kontextGeladen) return
+    if (stackItems.some(item => item.id === stackItemId)) bewerteZyklus(stackItemId, parameter.get('zyklus'))
+    // Nur einmal: Zurueck oder Neuladen oeffnet das Sheet nicht erneut.
+    setParameter({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parameter, ladeZustand, kontextGeladen])
 
   const save = async (draft: ReviewDraft) => {
     if (!sheet) return
@@ -145,7 +171,7 @@ export function Bewertungen() {
 
   const zyklusText = (r: Review) => {
     const timeline = r.cycle_id ? zyklusVon.get(r.cycle_id) : undefined
-    return timeline ? zyklusKurz(timeline, timeZone, language, tr) : String(t('review_cycle_none'))
+    return timeline ? zyklusKurz(timeline, now, timeZone, language, tr) : String(t('review_cycle_none'))
   }
 
   return (
@@ -168,6 +194,22 @@ export function Bewertungen() {
 
       {/* Erst ab vier Bewertungen — aber nie verschwinden, solange eine Suche
           filtert: sonst bliebe der Filter unsichtbar aktiv. */}
+      {offen.length > 0 && ladeZustand === 'fertig' && (
+        <div data-review-unrated className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-amber-200">
+            <Star size={15} aria-hidden="true" className="shrink-0 text-amber-400" />
+            {offen.length === 1 ? t('review_unrated_one') : t('review_unrated_many', { n: offen.length })}
+          </p>
+          <button
+            type="button"
+            onClick={() => bewerteZyklus(offen[0].cycle.stack_item_id, offen[0].cycle.id)}
+            className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-slate-950"
+          >
+            {t('review_unrated_action')}
+          </button>
+        </div>
+      )}
+
       {(reviews.length > 3 || suche !== '') && (
         <div className="mb-4 flex gap-2">
           <div className="relative flex-1">
