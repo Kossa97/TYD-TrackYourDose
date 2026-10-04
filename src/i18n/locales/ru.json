@@ -1456,9 +1456,5 @@
   "rechner_scale_capacity_unknown": "Select a syringe",
   "my_stack_go_to_add_tile": "Go to the “New substance” tile",
   "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-  "my_stack_list_expires_in_single": "Expires tomorrow",
-  "my_stack_list_expires_in_multiple": "Expires in {{n}} days",
-  "my_stack_list_open": "Open {{name}}",
-  "my_stack_list_expired_since": "Expired since {{date}}",
-  "my_stack_list_keeps_until": "Keeps until {{date}}"
+  "my_stack_list_open": "Open {{name}}"
 }

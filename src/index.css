@@ -1642,11 +1642,13 @@ main.flex-1 {
 [data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
 [data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
 
-/* My-Stack-Liste: die Farbtoene der Zeile sind fuer dunklen Grund gemischt
+/* My Stack (Liste und Karussell): die Farbtoene der Abzeichen sind fuer dunklen Grund gemischt
    (helle Schrift auf getoentem Glas). Auf hellem Grund dieselben Toene,
    nur dunkler gesetzt. */
-[data-theme="light"] [data-list-haltbar="rot"] { color: #b91c1c; }
-[data-theme="light"] [data-list-haltbar="gelb"] { color: #92400e; }
+[data-theme="light"] [data-haltbarkeit="gut"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
+[data-theme="light"] [data-haltbarkeit="bald"] { color: #92400e; background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
+[data-theme="light"] [data-expired-badge] { color: #b91c1c; background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); }
+[data-theme="light"] [data-expired-badge] .tyd-expired-icon { color: #dc2626; }
 [data-theme="light"] [data-list-status="aktiv"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
 
 /* Vial label: restore transparency in light mode.

@@ -2045,6 +2045,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             loading={loading}
             viewMode={viewMode}
             activePeptide={activePeptide}
+            timeZone={timeZone}
             reiterLeiste={reiterLeiste}
             selectPeptideOffset={selectPeptideOffset}
             addTileActive={addTileActive}

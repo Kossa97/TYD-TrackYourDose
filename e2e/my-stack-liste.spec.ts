@@ -35,12 +35,13 @@ test('Liste: Name, Zusammensetzung, Haltbarkeit und aktiv/inaktiv — für jede 
   await expect(bpc).toBeVisible()
   await expect(bpc).toContainText('Aktiv')
   await expect(bpc).toContainText('5 mg / 2 ml')
-  await expect(bpc).toContainText('Haltbar bis 31.03.2027')
+  // Wie im Karussell: „Haltbar noch n Tage" — hier das Datum auf der Packung.
+  await expect(bpc.locator('[data-haltbarkeit="gut"]')).toHaveText(/^Haltbar noch \d+ Tage$/)
 
   const magnesium = zeile(page, 'Magnesium')
   await expect(magnesium).toContainText('Inaktiv')
   await expect(magnesium).toContainText('400 mg / 1 Tablette')
-  await expect(magnesium).toContainText('Läuft in 3 Tagen ab')
+  await expect(magnesium.locator('[data-haltbarkeit="bald"]')).toHaveText('Haltbar noch 3 Tage')
 
   // Nur diese vier Angaben: keine Einnahme, kein Vorrat, keine Aktionen.
   await expect(bpc).not.toContainText('250 mcg')
@@ -68,4 +69,19 @@ test('Liste: Antippen öffnet das Vollbild, Zurück schließt es', async ({ page
   await page.goBack()
   await expect(detail).toBeHidden()
   await expect(page.getByRole('button', { name: 'BPC-157 öffnen' })).toBeVisible()
+})
+
+test('Liste: abgelaufen zeigt dasselbe Alarm-Abzeichen wie das Karussell', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', {
+    startDate: '2026-09-01',
+    inventory: { package_quantity: 5, package_unit: 'vial', remaining_quantity: 3, reconstitution_ml: 2, expires_at: '2026-09-20' },
+  })
+  await page.goto('/my-stack')
+  await expect(zeile(page, 'BPC-157').locator('[data-expired-badge]')).toBeVisible()
+
+  // Dieselbe Substanz im Karussell: dasselbe Abzeichen ueber der Buehne.
+  await page.evaluate(() => localStorage.setItem('tyd_peptide_view', 'vials'))
+  await page.addInitScript(() => localStorage.setItem('tyd_peptide_view', 'vials'))
+  await page.reload()
+  await expect(page.locator('[data-my-stack-carousel] [data-expired-badge]')).toBeVisible()
 })

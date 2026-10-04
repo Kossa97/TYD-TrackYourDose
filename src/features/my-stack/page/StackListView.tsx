@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, Hourglass, Package } from 'lucide-react'
+import { ChevronRight, Package } from 'lucide-react'
 import type { SloshEngine } from '../../../components/sloshEngine'
 import { SloshProvider } from '../../../components/SloshContext'
 import { StackStage } from '../components/StackStage'
@@ -8,8 +8,8 @@ import { type LoadedStackItemIngredient } from '../services/stackItems'
 import { isStageRenderable } from '../lib/dosageForms'
 import { getStableStackItemColor } from '../lib/colors'
 import { formatAmount, stockAmountLabel } from '../lib/bestandLabels'
-import { formatLocalDay } from '../lib/localDays'
-import { ABLAUF_BALD_TAGE, haltbarkeitFuer, istAktiv, type Haltbarkeit } from '../lib/listRow'
+import { haltbarkeitFuer, istAktiv } from '../lib/listRow'
+import { HaltbarkeitChip } from './HaltbarkeitChip'
 import { useMinuteClock } from '../lib/useMinuteClock'
 import type { Translate } from '../lib/planLabels'
 import { type CycleTimeline } from '../../../lib/planTimeline'
@@ -111,31 +111,6 @@ export function StackListView({
 }
 
 /**
- * Wann es ablaeuft: weit weg ruhig, bald gelb, vorbei rot. Die Farben fuer
- * das helle Design stehen in index.css (`data-list-haltbar`, `data-list-status`).
- */
-function haltbarText(t: Translate, haltbar: Haltbarkeit, language: string): string {
-  if (haltbar.tage < 0) return String(t('my_stack_list_expired_since', { date: formatLocalDay(haltbar.bis, language) }))
-  if (haltbar.tage === 0) return String(t('my_stack_expires_today'))
-  if (haltbar.tage <= ABLAUF_BALD_TAGE) {
-    return String(t(haltbar.tage === 1 ? 'my_stack_list_expires_in_single' : 'my_stack_list_expires_in_multiple', { n: haltbar.tage }))
-  }
-  return String(t('my_stack_list_keeps_until', { date: formatLocalDay(haltbar.bis, language) }))
-}
-
-function haltbarTon(haltbar: Haltbarkeit): 'rot' | 'gelb' | 'ruhig' {
-  if (haltbar.tage < 0) return 'rot'
-  if (haltbar.tage <= ABLAUF_BALD_TAGE) return 'gelb'
-  return 'ruhig'
-}
-
-const HALTBAR_KLASSE = {
-  rot: 'text-red-300',
-  gelb: 'text-amber-200',
-  ruhig: 'text-slate-500',
-} as const
-
-/**
  * Woraus die Substanz besteht, fuer jede Form gleich: Menge je Bezug
  * („5 mg / 1 Vial", „500 mg / 1 Tablette", „10 mg / 3 ml"). Eine Mischung
  * nennt jeden Wirkstoff mit Namen; ein einzelner Wirkstoff, der so heisst
@@ -220,7 +195,6 @@ function StackListRow({
   const stageRenderable = isStageRenderable(p.dosage_form)
   const farbe = p.color_hex ?? getStableStackItemColor(p.id)
   const zusammensetzung = zusammensetzungText(tr, p, language)
-  const ton = haltbar ? haltbarTon(haltbar) : null
 
   return (
     <li
@@ -276,12 +250,10 @@ function StackListRow({
           {zusammensetzung && (
             <span className="line-clamp-2 text-xs text-slate-300">{zusammensetzung}</span>
           )}
-          {haltbar && ton && (
-            <span data-list-haltbar={ton} className={`flex min-w-0 items-center gap-1 text-[11px] ${HALTBAR_KLASSE[ton]}`}>
-              <Hourglass size={11} aria-hidden="true" className="shrink-0" />
-              <span className="truncate">{haltbarText(tr, haltbar, language)}</span>
-            </span>
-          )}
+          {/* Wie im Karussell: dasselbe Abzeichen, dieselbe Frist. */}
+          <span className="mt-1 flex text-xs">
+            <HaltbarkeitChip tage={haltbar?.tage ?? null} substanzId={p.id} />
+          </span>
         </span>
 
         <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-slate-600" />

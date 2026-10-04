@@ -525,11 +525,7 @@ export const MY_STACK_EN = {
   my_stack_go_to_item: 'Go to {{name}}',
   my_stack_go_to_add_tile: 'Go to the “New substance” tile',
   my_stack_save_item_incomplete: 'Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.',
-  my_stack_list_expires_in_single: 'Expires tomorrow',
-  my_stack_list_expires_in_multiple: 'Expires in {{n}} days',
   my_stack_list_open: 'Open {{name}}',
-  my_stack_list_expired_since: 'Expired since {{date}}',
-  my_stack_list_keeps_until: 'Keeps until {{date}}',
 }
 
 export const MY_STACK_DE = {
@@ -1058,11 +1054,7 @@ export const MY_STACK_DE = {
   my_stack_go_to_item: 'Zu {{name}}',
   my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
   my_stack_save_item_incomplete: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
-  my_stack_list_expires_in_single: 'Läuft morgen ab',
-  my_stack_list_expires_in_multiple: 'Läuft in {{n}} Tagen ab',
   my_stack_list_open: '{{name}} öffnen',
-  my_stack_list_expired_since: 'Abgelaufen seit {{date}}',
-  my_stack_list_keeps_until: 'Haltbar bis {{date}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

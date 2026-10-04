@@ -11,13 +11,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { SloshProvider } from '../../../components/SloshContext'
-import { ExpiredBadge } from '../components/ExpiredBadge'
-import { expiryDaysLeft } from '../../../lib/peptideExpiry'
+import { HaltbarkeitChip } from './HaltbarkeitChip'
+import { haltbarkeitFuer } from '../lib/listRow'
 import { StageFit } from '../components/StageFit'
 import { StackStage } from '../components/StackStage'
 import { getDosageForm } from '../lib/dosageForms'
 import { getStableStackItemColor } from '../lib/colors'
-import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct, expiryText } from './model'
+import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct } from './model'
 import { AddStageTile } from './stackTiles'
 import { VialPositionRow } from './VialPositionRow'
 
@@ -28,6 +28,7 @@ export function VialCarousel({
   loading,
   viewMode,
   activePeptide,
+  timeZone,
   reiterLeiste,
   selectPeptideOffset,
   addTileActive,
@@ -54,6 +55,7 @@ export function VialCarousel({
   loading: boolean
   viewMode: "vials" | "list"
   activePeptide: Peptide | null
+  timeZone: string
   reiterLeiste: ReactNode
   selectPeptideOffset: (offset: number) => void
   addTileActive: boolean
@@ -111,20 +113,14 @@ export function VialCarousel({
                   {t('neues_peptid_title')}
                 </span>
               ) : (() => {
-                const days = expiryDaysLeft(activePeptide)
-                const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days >= 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
-                const expiryLabel = days === null
-                  ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                  : expiryText(t, days)
+                // Dieselbe Frist wie in der Liste: nach dem Anmischen oder
+                // Oeffnen, sonst das Datum auf der Packung — die fruehere.
+                const days = haltbarkeitFuer(activePeptide, new Date(), timeZone)?.tage ?? null
                 const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
 
                 return (
                   <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                    {/* Abgelaufen: Alarm und „seit X Tagen" im Wechsel. Der
-                        `key` laesst den Takt je Substanz mit dem Alarm beginnen. */}
-                    {days !== null && days < 0
-                      ? <ExpiredBadge key={activePeptide.id} daysSince={-days} />
-                      : <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>}
+                    <HaltbarkeitChip tage={days} substanzId={activePeptide.id} />
                     <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
                       {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
                     </span>
