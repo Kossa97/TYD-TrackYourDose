@@ -29,7 +29,9 @@ function makeData(overrides: Partial<ProtocolData> = {}): ProtocolData {
       { type: 'effect', description: 'Bessere Regeneration', severity: 4, stack_item_name: 'BPC-157', occurred_at: '2026-06-10T08:00:00Z' },
     ],
     reviews: [
-      { stack_item_name: 'BPC-157', rating: 5, experience: 'gut' },
+      { stack_item_name: 'BPC-157', rating: 5, experience: 'gut', wirkung: 5, vertraeglichkeit: 4, wieder_nehmen: 'ja' },
+      // Alt, ohne Kriterien: muss genauso durchlaufen.
+      { stack_item_name: 'TB-500', rating: 3, experience: 'mittel' },
     ],
     dailyLogs: [
       { log_date: '2026-06-01', energie: 6, schlaf: 7, wohlbefinden: 6, libido: 5 },

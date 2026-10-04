@@ -1761,5 +1761,16 @@
   "review_prompt_later": "Später",
   "review_unrated_one": "1 beendeter Zyklus noch nicht bewertet",
   "review_unrated_many": "{{n}} beendete Zyklen noch nicht bewertet",
-  "review_unrated_action": "Jetzt bewerten"
+  "review_unrated_action": "Jetzt bewerten",
+  "review_public_profile_title": "Besucher sehen nur Bewertungen, die du freigibst",
+  "review_public_profile_desc": "Gib jede Bewertung einzeln frei („Im öffentlichen Profil zeigen\"). Nur Sterne und Text — nie Dosis, Zyklus, Alter oder genaue Daten.",
+  "review_public_profile_link": "Zu den Bewertungen",
+  "public_profile_unavailable": "Profil nicht verfügbar",
+  "public_profile_unavailable_desc": "@{{name}} gibt es nicht oder ist privat.",
+  "public_profile_error": "Das Profil konnte nicht geladen werden.",
+  "public_profile_to_app": "Zur App",
+  "public_profile_badge": "TrackYourDose · Forschungsprofil",
+  "public_profile_no_reviews": "Noch keine freigegebenen Bewertungen.",
+  "public_profile_footer": "Nur für Forschungszwecke. Keine medizinische Beratung.",
+  "review_again_share": "Wieder nehmen: {{ja}} von {{von}}"
 }

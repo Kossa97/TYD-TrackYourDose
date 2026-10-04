@@ -789,7 +789,7 @@ export function Protokoll() {
         .order('occurred_at', { ascending: false }),
       supabase
         .from('reviews')
-        .select('id, stack_item_id, rating, experience, stack_items(display_name)')
+        .select('id, stack_item_id, rating, experience, wirkung, vertraeglichkeit, wieder_nehmen, stack_items(display_name)')
         .eq('user_id', user.id)
         .gte('created_at', `${range.from}T00:00:00`)
         .lte('created_at', `${range.to}T23:59:59`),
@@ -1175,6 +1175,16 @@ export function Protokoll() {
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)' }}>{row.name}</span>
                       <span style={{ fontSize: 10, color: '#64748b', textAlign: 'right' }}>
                         {t('protokoll_review_stat', { rating: row.avgRating, count: row.count })}
+                        {/* Bewertungen v2: Kriterien, sobald es welche gibt. */}
+                        {(row.avgWirkung !== null || row.avgVertraeglichkeit !== null || row.wiederBeantwortet > 0) && (
+                          <span data-review-criteria-stat style={{ display: 'block', marginTop: 2 }}>
+                            {[
+                              row.avgWirkung !== null ? `${t('review_effect')} ${row.avgWirkung}/5` : null,
+                              row.avgVertraeglichkeit !== null ? `${t('review_tolerability')} ${row.avgVertraeglichkeit}/5` : null,
+                              row.wiederBeantwortet > 0 ? t('review_again_share', { ja: row.wiederJa, von: row.wiederBeantwortet }) : null,
+                            ].filter(Boolean).join(' · ')}
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}

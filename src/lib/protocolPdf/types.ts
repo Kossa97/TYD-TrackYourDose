@@ -62,6 +62,10 @@ export interface PdfReview {
   stack_item_name: string | null
   rating: number
   experience: 'gut' | 'mittel' | 'schlecht' | null
+  /** Bewertungen v2 — bei alten Bewertungen leer. */
+  wirkung?: number | null
+  vertraeglichkeit?: number | null
+  wieder_nehmen?: 'ja' | 'unsicher' | 'nein' | null
 }
 
 export interface PdfDailyLog {

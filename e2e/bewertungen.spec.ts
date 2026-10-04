@@ -219,3 +219,27 @@ test('Plan beenden in My Stack fragt einmal „Wie war\'s?" — Bewerten führt 
   await expect(sheet.getByRole('radio', { name: 'BPC-157' })).toHaveAttribute('aria-checked', 'true')
   await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026')
 })
+
+test('Öffentliches Profil: nur freigegebene Bewertungen, ohne Alter und Dosis; privat sieht aus wie unbekannt', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-08-12' })
+  mock.insert('profiles', { id: TEST_USER.id, username: 'anna', display_name: 'Anna', public_bio: 'Ich teste.', is_public: true, age: 33 })
+  bewertung(mock, 'BPC-157', { title: 'Geteilt', rating: 5, wirkung: 4, is_public: true, created_at: '2026-09-21T10:00:00.000Z' })
+  bewertung(mock, 'BPC-157', { title: 'Privat', rating: 1, is_public: false })
+
+  await page.goto('/u/anna')
+  await expect(page.getByRole('heading', { name: 'Anna' })).toBeVisible()
+  await expect(page.locator('[data-public-review]')).toHaveCount(1)
+  await expect(page.locator('[data-public-review]')).toContainText('Geteilt')
+  await expect(page.locator('[data-public-review]')).toContainText('Wirkung 4/5')
+  await expect(page.locator('[data-public-review]')).toContainText('September 2026')
+  await expect(page.getByText('Privat', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('33')).toHaveCount(0)
+  await expect(page.getByText('250 mcg')).toHaveCount(0)
+
+  // Privat und unbekannt: dieselbe Antwort.
+  mock.table('profiles')[0].is_public = false
+  await page.goto('/u/anna')
+  await expect(page.getByText('Profil nicht verfügbar')).toBeVisible()
+  await page.goto('/u/gibtsnicht')
+  await expect(page.getByText('Profil nicht verfügbar')).toBeVisible()
+})

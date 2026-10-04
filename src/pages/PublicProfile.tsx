@@ -1,241 +1,141 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { FlaskConical, Lock, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { FlaskConical, Star, BookHeart, User, Lock, CalendarDays, Zap, AlertTriangle } from 'lucide-react'
-import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
+import type { WiederNehmen } from '../features/reviews/lib/reviewModel'
 
-interface Profile {
-  id: string; username: string; display_name: string | null
-  age: number | null; gender: string | null; is_public: boolean
-  public_bio: string | null; share_peptide: boolean
-  share_kalender: boolean; share_tagebuch: boolean; share_bewertungen: boolean
-}
-interface StackItem { id: string; display_name: string; default_method: string }
-interface Review { id: string; rating: number; title: string; body: string | null; created_at: string; stack_items: { display_name: string } | null }
-interface Effect { id: string; type: string; description: string; severity: number; status: string; duration: string | null; occurred_at: string }
-interface DoseLog { id: string; dose: number; unit: string; method: string; logged_at: string; stack_items: { display_name: string } | null }
+/**
+ * Oeffentliches Profil (/u/<name>): Anzeigename, Bio und die Bewertungen,
+ * die der Nutzer einzeln freigegeben hat — mehr nicht. Alles kommt aus
+ * einer Datenbankfunktion (`public_profile_reviews`), die nur genau das
+ * herausgibt; die Tabellen selbst bleiben fuer Besucher zu. Dosis, Zyklus,
+ * Alter, Geschlecht und genaue Daten erscheinen hier nie.
+ */
 
-const SEVERITY_COLORS: Record<number, string> = {
-  1: 'text-emerald-400', 2: 'text-lime-400', 3: 'text-amber-400', 4: 'text-orange-400', 5: 'text-red-400',
-}
-const SEVERITY_LABELS: Record<number, string> = {
-  1: 'Sehr leicht', 2: 'Leicht', 3: 'Mittel', 4: 'Stark', 5: 'Sehr stark',
-}
-
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {[1,2,3,4,5].map(i => (
-        <Star key={i} size={13} className={i <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600'} />
-      ))}
-    </div>
-  )
+interface OeffentlicheBewertung {
+  id: string
+  substanz: string
+  rating: number
+  title: string | null
+  body: string | null
+  pros: string | null
+  cons: string | null
+  wirkung: number | null
+  vertraeglichkeit: number | null
+  wieder_nehmen: WiederNehmen | null
+  /** „2026-09" — nur der Monat. */
+  monat: string
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <h2 className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-      {icon} {title}
-    </h2>
-  )
+interface OeffentlichesProfil {
+  username: string
+  display_name: string | null
+  public_bio: string | null
+  reviews: OeffentlicheBewertung[]
 }
 
 export function PublicProfile() {
   const { username } = useParams<{ username: string }>()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [stackItems, setStackItems] = useState<StackItem[]>([])
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [effects, setEffects] = useState<Effect[]>([])
-  const [logs, setLogs] = useState<DoseLog[]>([])
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
+  // Das Ergebnis merkt sich, fuer wen es geladen wurde: wechselt die
+  // Adresse, gilt es nicht mehr — das alte Profil steht nie unter dem neuen Namen.
+  const [ergebnis, setErgebnis] = useState<{
+    fuer: string
+    zustand: 'da' | 'nicht_da' | 'fehler'
+    profil: OeffentlichesProfil | null
+  } | null>(null)
 
   useEffect(() => {
-    const load = async () => {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, age, gender, is_public, public_bio, share_peptide, share_kalender, share_tagebuch, share_bewertungen')
-        .eq('username', username?.toLowerCase())
-        .single()
-
-      if (!prof) { setNotFound(true); setLoading(false); return }
-      setProfile(prof as Profile)
-      if (!prof.is_public) { setLoading(false); return }
-
-      const uid = prof.id
-
-      const fetches = await Promise.all([
-        prof.share_peptide
-          ? supabase.from('stack_items').select('id, display_name, default_method').eq('user_id', uid).order('display_name')
-          : Promise.resolve({ data: [] }),
-        prof.share_bewertungen
-          ? supabase.from('reviews').select('id, rating, title, body, created_at, stack_items(display_name)').eq('user_id', uid).eq('is_public', true).order('created_at', { ascending: false })
-          : Promise.resolve({ data: [] }),
-        prof.share_tagebuch
-          ? supabase.from('effects').select('id, type, description, severity, status, duration, occurred_at').eq('user_id', uid).order('occurred_at', { ascending: false }).limit(20)
-          : Promise.resolve({ data: [] }),
-        prof.share_kalender
-          ? supabase.from('dose_logs').select('id, dose, unit, method, logged_at, stack_items(display_name)').eq('user_id', uid).order('logged_at', { ascending: false }).limit(30)
-          : Promise.resolve({ data: [] }),
-      ])
-
-      if (fetches[0].data) setStackItems(fetches[0].data as StackItem[])
-      if (fetches[1].data) setReviews(fetches[1].data as Review[])
-      if (fetches[2].data) setEffects(fetches[2].data as Effect[])
-      if (fetches[3].data) setLogs(fetches[3].data as DoseLog[])
-      setLoading(false)
-    }
-    load()
+    let aktuell = true
+    const fuer = username ?? ''
+    void supabase.rpc('public_profile_reviews', { p_username: fuer }).then(({ data, error }) => {
+      if (!aktuell) return
+      if (error) return setErgebnis({ fuer, zustand: 'fehler', profil: null })
+      setErgebnis({ fuer, zustand: data ? 'da' : 'nicht_da', profil: (data as OeffentlichesProfil | null) ?? null })
+    })
+    return () => { aktuell = false }
   }, [username])
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950">
-      <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+  const gilt = ergebnis && ergebnis.fuer === (username ?? '') ? ergebnis : null
+  const zustand = gilt?.zustand ?? 'laedt'
+  const profil = gilt?.profil ?? null
+
+  if (zustand === 'laedt') return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
     </div>
   )
 
-  if (notFound) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-400 gap-4 px-6 text-center">
-      <User size={40} className="opacity-30" />
-      <p className="text-lg font-semibold text-white">Profil nicht gefunden</p>
-      <p className="text-sm">@{username} existiert nicht.</p>
-      <Link to="/auth" className="btn-primary px-6 py-2">Zur App</Link>
+  // Nicht gefunden und privat sehen gleich aus: von aussen soll man nicht
+  // erkennen, ob es ein Konto gibt.
+  if (zustand !== 'da' || !profil) return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center text-slate-400">
+      <Lock size={40} aria-hidden="true" className="opacity-30" />
+      <p className="text-lg font-semibold text-white">
+        {zustand === 'fehler' ? t('public_profile_error') : t('public_profile_unavailable')}
+      </p>
+      <p className="text-sm">{zustand === 'fehler' ? null : t('public_profile_unavailable_desc', { name: username })}</p>
+      <Link to="/auth" className="btn-primary mt-2 px-6 py-2">{t('public_profile_to_app')}</Link>
     </div>
   )
 
-  if (!profile?.is_public) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-400 gap-4 px-6 text-center">
-      <Lock size={40} className="opacity-30" />
-      <p className="text-lg font-semibold text-white">Dieses Profil ist privat</p>
-      <p className="text-sm">@{username} hat sein Profil nicht öffentlich geteilt.</p>
-      <Link to="/auth" className="btn-primary px-6 py-2 mt-2">Zur App</Link>
-    </div>
-  )
-
-  const hasContent = stackItems.length > 0 || reviews.length > 0 || effects.length > 0 || logs.length > 0
+  const monat = (wert: string) => new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(`${wert}-01T00:00:00.000Z`))
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="mx-auto max-w-lg px-4 py-8">
+        <header className="mb-8 flex flex-col items-center text-center">
+          <h1 className="text-2xl font-bold">{profil.display_name || profil.username}</h1>
+          <p className="mt-0.5 text-sm text-slate-400">@{profil.username}</p>
+          {profil.public_bio && <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-300">{profil.public_bio}</p>}
+          <p className="mt-4 flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-500">
+            <FlaskConical size={11} aria-hidden="true" /> {t('public_profile_badge')}
+          </p>
+        </header>
 
-        {/* Profil-Header */}
-        <div className="flex flex-col items-center mb-8 text-center">
-          <div className="bg-sky-500/10 p-6 rounded-full mb-3">
-            <User size={40} className="text-sky-400" />
-          </div>
-          <h1 className="text-2xl font-bold">{profile.display_name ?? profile.username}</h1>
-          <p className="text-slate-400 text-sm mt-0.5">@{profile.username}</p>
-          {(profile.age || profile.gender) && (
-            <p className="text-slate-500 text-sm mt-1">
-              {[profile.age && `${profile.age} Jahre`, profile.gender].filter(Boolean).join(' · ')}
+        <section aria-labelledby="public-reviews">
+          <h2 id="public-reviews" className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <Star size={13} aria-hidden="true" /> {t('bewertungen_title')}
+          </h2>
+          {profil.reviews.length === 0 ? (
+            <p className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-8 text-center text-sm text-slate-500">
+              {t('public_profile_no_reviews')}
             </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {profil.reviews.map(r => {
+                const kriterien = [
+                  r.wirkung ? `${t('review_effect')} ${r.wirkung}/5` : null,
+                  r.vertraeglichkeit ? `${t('review_tolerability')} ${r.vertraeglichkeit}/5` : null,
+                  r.wieder_nehmen ? `${t('review_again')} ${t(`review_again_${r.wieder_nehmen}`)}` : null,
+                ].filter(Boolean)
+                return (
+                  <li key={r.id} data-public-review className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 truncate text-sm font-semibold text-sky-400">{r.substanz}</p>
+                      <span className="flex shrink-0 gap-0.5" role="img" aria-label={String(t(r.rating === 1 ? 'review_star_one' : 'review_star_many', { n: r.rating }))}>
+                        {[1, 2, 3, 4, 5].map(stern => (
+                          <Star key={stern} size={13} aria-hidden="true" className={stern <= r.rating ? 'text-amber-400' : 'text-slate-700'} fill={stern <= r.rating ? 'currentColor' : 'transparent'} />
+                        ))}
+                      </span>
+                    </div>
+                    {r.title && <p className="mt-1 font-semibold text-white">{r.title}</p>}
+                    {kriterien.length > 0 && <p className="mt-1 text-xs text-slate-400">{kriterien.join(' · ')}</p>}
+                    {r.body && <p className="mt-1.5 text-sm text-slate-300">{r.body}</p>}
+                    {r.pros && <p className="mt-1.5 text-xs"><span className="font-semibold text-emerald-400">+ </span><span className="text-slate-300">{r.pros}</span></p>}
+                    {r.cons && <p className="mt-1 text-xs"><span className="font-semibold text-red-400">− </span><span className="text-slate-300">{r.cons}</span></p>}
+                    <p className="mt-2 text-[11px] text-slate-600">{monat(r.monat)}</p>
+                  </li>
+                )
+              })}
+            </ul>
           )}
-          {profile.public_bio && (
-            <p className="text-slate-300 text-sm mt-3 max-w-xs leading-relaxed">{profile.public_bio}</p>
-          )}
-          <div className="flex items-center gap-2 mt-4 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
-            <FlaskConical size={11} /> Peptid Tracker · Forschungsprofil
-          </div>
-        </div>
+        </section>
 
-        {!hasContent && (
-          <div className="card text-center py-10 text-slate-500">
-            <p>Keine Inhalte freigegeben</p>
-          </div>
-        )}
-
-        {/* Substanzen */}
-        {stackItems.length > 0 && (
-          <section className="mb-6">
-            <SectionHeader icon={<FlaskConical size={13} />} title="Verwendete Substanzen" />
-            <div className="space-y-2">
-              {stackItems.map(item => (
-                <div key={item.id} className="card flex items-center justify-between">
-                  <p className="font-medium text-white">{item.display_name}</p>
-                  <div className="text-slate-400 text-xs text-right">
-                    <span>{item.default_method}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Kalender / Dosen */}
-        {logs.length > 0 && (
-          <section className="mb-6">
-            <SectionHeader icon={<CalendarDays size={13} />} title="Protokollierte Dosen (letzte 30)" />
-            <div className="space-y-2">
-              {logs.map(l => (
-                <div key={l.id} className="card flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-white text-sm">{l.stack_items?.display_name ?? '—'}</p>
-                    <p className="text-slate-400 text-xs">{l.dose} {l.unit} · {l.method}</p>
-                  </div>
-                  <p className="text-slate-500 text-xs shrink-0">
-                    {format(new Date(l.logged_at), 'dd.MM.yy HH:mm', { locale: de })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Tagebuch */}
-        {effects.length > 0 && (
-          <section className="mb-6">
-            <SectionHeader icon={<BookHeart size={13} />} title="Tagebuch" />
-            <div className="space-y-2">
-              {effects.map(e => (
-                <div key={e.id} className={`card border ${e.type === 'effect' ? 'border-emerald-500/20' : 'border-amber-500/20'}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    {e.type === 'effect'
-                      ? <Zap size={12} className="text-emerald-400" />
-                      : <AlertTriangle size={12} className="text-amber-400" />}
-                    <span className={`text-xs font-medium ${e.type === 'effect' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {e.type === 'effect' ? 'Wirkung' : 'Nebenwirkung'}
-                    </span>
-                    <span className={`text-xs ml-auto ${SEVERITY_COLORS[e.severity]}`}>
-                      {SEVERITY_LABELS[e.severity]}
-                    </span>
-                  </div>
-                  <p className="text-white text-sm">{e.description}</p>
-                  <div className="flex items-center gap-3 mt-1 text-slate-500 text-xs">
-                    <span>{format(new Date(e.occurred_at), 'dd.MM.yyyy', { locale: de })}</span>
-                    {e.duration && <span>· {e.duration}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Bewertungen */}
-        {reviews.length > 0 && (
-          <section className="mb-6">
-            <SectionHeader icon={<Star size={13} />} title="Bewertungen" />
-            <div className="space-y-3">
-              {reviews.map(r => (
-                <div key={r.id} className="card">
-                  <p className="text-sky-400 text-xs font-medium mb-1">{r.stack_items?.display_name}</p>
-                  <div className="flex items-center gap-2 mb-1">
-                    <StarRow rating={r.rating} />
-                    <p className="font-semibold text-white text-sm">{r.title}</p>
-                  </div>
-                  {r.body && <p className="text-slate-300 text-sm">{r.body}</p>}
-                  <p className="text-slate-600 text-xs mt-2">
-                    {format(new Date(r.created_at), 'dd. MMMM yyyy', { locale: de })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <p className="text-center text-slate-700 text-xs mt-8 pb-4">
-          Peptid Tracker · Nur für Forschungszwecke
-        </p>
+        <p className="mt-8 pb-4 text-center text-xs text-slate-600">{t('public_profile_footer')}</p>
       </div>
     </div>
   )

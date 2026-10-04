@@ -87,7 +87,7 @@ export async function loadProtocolData(userId: string, range: PdfDateRange): Pro
       .eq('user_id', userId)
       .gte('occurred_at', range.from).lte('occurred_at', toBound)
       .order('occurred_at', { ascending: false }),
-    supabase.from('reviews').select('rating, experience, stack_items(display_name)')
+    supabase.from('reviews').select('rating, experience, wirkung, vertraeglichkeit, wieder_nehmen, stack_items(display_name)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     supabase.from('daily_logs').select('log_date, energie, schlaf, wohlbefinden, libido')
@@ -121,8 +121,15 @@ export async function loadProtocolData(userId: string, range: PdfDateRange): Pro
         type: e.type, description: e.description, severity: e.severity,
         occurred_at: e.occurred_at, stack_item_name: embedName(e.stack_items),
       })),
-    reviews: ((reviewRes.data as { rating: number; experience: 'gut' | 'mittel' | 'schlecht' | null; stack_items: { display_name: string } | { display_name: string }[] | null }[] | null) ?? [])
-      .map(r => ({ rating: r.rating, experience: r.experience, stack_item_name: embedName(r.stack_items) })),
+    reviews: ((reviewRes.data as {
+      rating: number; experience: 'gut' | 'mittel' | 'schlecht' | null
+      wirkung: number | null; vertraeglichkeit: number | null; wieder_nehmen: 'ja' | 'unsicher' | 'nein' | null
+      stack_items: { display_name: string } | { display_name: string }[] | null
+    }[] | null) ?? [])
+      .map(r => ({
+        rating: r.rating, experience: r.experience, stack_item_name: embedName(r.stack_items),
+        wirkung: r.wirkung, vertraeglichkeit: r.vertraeglichkeit, wieder_nehmen: r.wieder_nehmen,
+      })),
     dailyLogs: ((dailyRes.data as { log_date: string; energie: number | null; schlaf: number | null; wohlbefinden: number | null; libido: number | null }[] | null) ?? []),
     stackItemNames,
   }

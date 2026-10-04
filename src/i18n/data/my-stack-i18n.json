@@ -598,7 +598,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1199,7 +1210,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1800,7 +1822,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2401,7 +2434,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3002,7 +3046,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3603,7 +3658,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4204,7 +4270,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4805,7 +4882,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5406,7 +5494,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6007,7 +6106,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6608,7 +6718,18 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7209,6 +7330,17 @@
     "review_prompt_later": "Later",
     "review_unrated_one": "1 finished cycle not rated yet",
     "review_unrated_many": "{{n}} finished cycles not rated yet",
-    "review_unrated_action": "Rate now"
+    "review_unrated_action": "Rate now",
+    "review_public_profile_title": "Visitors see only reviews you share",
+    "review_public_profile_desc": "Share each review individually with \"Show on public profile\". Stars and text only — never your dose, cycle, age or exact dates.",
+    "review_public_profile_link": "Go to reviews",
+    "public_profile_unavailable": "Profile not available",
+    "public_profile_unavailable_desc": "@{{name}} does not exist or is private.",
+    "public_profile_error": "The profile could not be loaded.",
+    "public_profile_to_app": "Go to the app",
+    "public_profile_badge": "TrackYourDose · Research profile",
+    "public_profile_no_reviews": "No shared reviews yet.",
+    "public_profile_footer": "For research purposes only. Not medical advice.",
+    "review_again_share": "Take again: {{ja}} of {{von}}"
   }
 }

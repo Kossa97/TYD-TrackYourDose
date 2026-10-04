@@ -13,6 +13,10 @@ export interface ReviewRow {
   stack_item_id: string
   rating: number
   experience: 'gut' | 'mittel' | 'schlecht'
+  /** Bewertungen v2 — bei alten Bewertungen leer. */
+  wirkung?: number | null
+  vertraeglichkeit?: number | null
+  wieder_nehmen?: 'ja' | 'unsicher' | 'nein' | null
   stack_items: { display_name: string }
 }
 
@@ -34,6 +38,12 @@ export interface PeptideReviewStat {
   count: number
   good: number
   bad: number
+  /** Mittel nur ueber Bewertungen, die das Kriterium haben; null ohne. */
+  avgWirkung: number | null
+  avgVertraeglichkeit: number | null
+  /** „Wieder nehmen?" mit Ja — von wie vielen, die es beantwortet haben. */
+  wiederJa: number
+  wiederBeantwortet: number
 }
 
 function normalizeDescription(text: string) {
@@ -79,24 +89,38 @@ export function effectsByPeptide(effects: EffectRow[]): PeptideEffectStat[] {
 }
 
 export function reviewsByPeptide(reviews: ReviewRow[]): PeptideReviewStat[] {
-  const grouped = new Map<string, { name: string; ratings: number[]; good: number; bad: number }>()
+  const grouped = new Map<string, {
+    name: string; ratings: number[]; good: number; bad: number
+    wirkung: number[]; vertraeglichkeit: number[]; wiederJa: number; wiederBeantwortet: number
+  }>()
   for (const row of reviews) {
     const name = row.stack_items?.display_name?.trim() || '—'
-    const entry = grouped.get(name) ?? { name, ratings: [], good: 0, bad: 0 }
+    const entry = grouped.get(name) ?? { name, ratings: [], good: 0, bad: 0, wirkung: [], vertraeglichkeit: [], wiederJa: 0, wiederBeantwortet: 0 }
     entry.ratings.push(row.rating)
     if (row.experience === 'gut') entry.good += 1
     else if (row.experience === 'schlecht') entry.bad += 1
+    if (row.wirkung) entry.wirkung.push(row.wirkung)
+    if (row.vertraeglichkeit) entry.vertraeglichkeit.push(row.vertraeglichkeit)
+    if (row.wieder_nehmen) {
+      entry.wiederBeantwortet += 1
+      if (row.wieder_nehmen === 'ja') entry.wiederJa += 1
+    }
     grouped.set(name, entry)
   }
+  const mittel = (werte: number[]) => werte.length > 0
+    ? Math.round((werte.reduce((sum, value) => sum + value, 0) / werte.length) * 10) / 10
+    : null
   return [...grouped.values()]
     .map(entry => ({
       name: entry.name,
-      avgRating: entry.ratings.length > 0
-        ? Math.round((entry.ratings.reduce((sum, value) => sum + value, 0) / entry.ratings.length) * 10) / 10
-        : 0,
+      avgRating: mittel(entry.ratings) ?? 0,
       count: entry.ratings.length,
       good: entry.good,
       bad: entry.bad,
+      avgWirkung: mittel(entry.wirkung),
+      avgVertraeglichkeit: mittel(entry.vertraeglichkeit),
+      wiederJa: entry.wiederJa,
+      wiederBeantwortet: entry.wiederBeantwortet,
     }))
     .sort((a, b) => b.count - a.count)
 }

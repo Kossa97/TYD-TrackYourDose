@@ -491,6 +491,27 @@ export class MockSupabase {
       return saved
     })
 
+    // Nachbild von supabase-reviews-public.sql: nur oeffentliche Profile,
+    // nur freigegebene Bewertungen, nur die freigegebenen Felder.
+    this.onRpc('public_profile_reviews', params => {
+      const name = String(params.p_username ?? '').trim().toLowerCase()
+      const profil = this.table('profiles').find(row => String(row.username ?? '').toLowerCase() === name && row.is_public === true)
+      if (!profil) return null
+      const substanz = (id: unknown) => this.table('stack_items').find(row => row.id === id)?.display_name ?? null
+      return {
+        username: profil.username, display_name: profil.display_name ?? null, public_bio: profil.public_bio ?? null,
+        reviews: this.table('reviews')
+          .filter(row => row.user_id === profil.id && row.is_public === true)
+          .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+          .map(row => ({
+            id: row.id, substanz: substanz(row.stack_item_id), rating: row.rating, title: row.title || null,
+            body: row.body ?? null, pros: row.pros ?? null, cons: row.cons ?? null,
+            wirkung: row.wirkung ?? null, vertraeglichkeit: row.vertraeglichkeit ?? null, wieder_nehmen: row.wieder_nehmen ?? null,
+            monat: String(row.created_at).slice(0, 7),
+          })),
+      }
+    })
+
     this.onRpc('end_cycle', params => {
       const cycleId = params.p_cycle_id as string
       const cycle = this.table('cycles').find(row => row.id === cycleId)

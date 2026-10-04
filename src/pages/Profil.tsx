@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages, Bell, BellOff, Send, ShieldCheck, FileText, Monitor, Sun, Moon } from 'lucide-react'
+import { LogOut, Save, User, Globe, Lock, Copy, Check, Star, Languages, Bell, BellOff, Send, ShieldCheck, FileText, Monitor, Sun, Moon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 import { useTranslation } from 'react-i18next'
@@ -29,43 +29,6 @@ const defaultProfile = (): Profile => ({
   share_tagebuch: false, share_bewertungen: false,
 })
 
-interface ShareToggleProps {
-  icon: React.ReactNode
-  label: string
-  description: string
-  value: boolean
-  onChange: (v: boolean) => void
-  disabled?: boolean
-}
-
-function ShareToggle({ icon, label, description, value, onChange, disabled }: ShareToggleProps) {
-  return (
-    <div className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-colors ${
-      value && !disabled ? 'border-sky-500/30 bg-sky-500/5' : 'border-slate-800 bg-slate-800/30'
-    } ${disabled ? 'opacity-40' : ''}`}>
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={`shrink-0 ${value && !disabled ? 'text-sky-400' : 'text-slate-500'}`}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-200">{label}</p>
-          <p className="text-xs text-slate-500 truncate">{description}</p>
-        </div>
-      </div>
-      <button
-        disabled={disabled}
-        onClick={() => onChange(!value)}
-        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-          value && !disabled ? 'bg-sky-500' : 'bg-slate-700'
-        }`}
-      >
-        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-          value && !disabled ? 'left-6' : 'left-1'
-        }`} />
-      </button>
-    </div>
-  )
-}
 
 export function Profil() {
   const { user, signOut } = useAuth()
@@ -119,14 +82,6 @@ export function Profil() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const set = <K extends keyof Profile>(field: K) => (val: Profile[K]) =>
-    setProfile(p => ({ ...p, [field]: val }))
-
-  const sharedCount = [
-    profile.share_peptide, profile.share_kalender,
-    profile.share_tagebuch, profile.share_bewertungen,
-  ].filter(Boolean).length
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -156,11 +111,6 @@ export function Profil() {
               ? <Globe size={16} className="text-sky-400" />
               : <Lock size={16} className="text-slate-400" />}
             <h2 className="font-semibold text-slate-300">{t('profil_teilen')}</h2>
-            {profile.is_public && (
-              <span className="badge bg-sky-500/10 text-sky-400 text-xs">
-                {t('bereiche_count', { n: sharedCount })}
-              </span>
-            )}
           </div>
           <button
             onClick={() => setProfile(p => ({ ...p, is_public: !p.is_public }))}
@@ -197,48 +147,18 @@ export function Profil() {
                 onChange={e => setProfile(p => ({ ...p, public_bio: e.target.value }))} />
             </div>
 
-            {/* Inhalts-Schalter */}
-            <div>
-              <p className="label mb-2">{t('inhalte_sichtbar')}</p>
-              <div className="space-y-2">
-                <ShareToggle
-                  icon={<FlaskConical size={16} />}
-                  label={t('nav_peptide')}
-                  description={t('share_peptide_desc')}
-                  value={profile.share_peptide}
-                  onChange={set('share_peptide')}
-                />
-                <ShareToggle
-                  icon={<CalendarDays size={16} />}
-                  label={t('share_kalender_voll')}
-                  description={t('share_kalender_desc_t')}
-                  value={profile.share_kalender}
-                  onChange={set('share_kalender')}
-                />
-                <ShareToggle
-                  icon={<BookHeart size={16} />}
-                  label={t('tile_tagebuch')}
-                  description={t('share_tagebuch_desc_t')}
-                  value={profile.share_tagebuch}
-                  onChange={set('share_tagebuch')}
-                />
-                <ShareToggle
-                  icon={<Star size={16} />}
-                  label={t('tile_bewertungen')}
-                  description={t('share_bewertungen_desc_t')}
-                  value={profile.share_bewertungen}
-                  onChange={set('share_bewertungen')}
-                />
-              </div>
+            {/* Was Besucher sehen: nur einzeln freigegebene Bewertungen.
+                Stack, Kalender und Tagebuch sind (noch) nie oeffentlich —
+                die alten Schalter wirkten fuer Besucher nie und sind weg. */}
+            <div data-profile-public-content className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                <Star size={15} aria-hidden="true" className="text-amber-400" /> {t('review_public_profile_title')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">{t('review_public_profile_desc')}</p>
+              <Link to="/bewertungen" className="mt-2 inline-block text-xs font-semibold text-sky-400">
+                {t('review_public_profile_link')}
+              </Link>
             </div>
-
-            {sharedCount === 0 && (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                <p className="text-amber-400 text-xs">
-                  {t('kein_bereich_warning')}
-                </p>
-              </div>
-            )}
           </div>
         ) : (
           <p className="text-slate-500 text-sm">

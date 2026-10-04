@@ -83,8 +83,8 @@ interface Copy {
   aggDay: string; aggWeek: string; aggMonth: string; aggQuarter: string
   unitDay: string; unitWeek: string; unitMonth: string; unitQuarter: string
   effectType: string; effectDesc: string; effectSeverity: string; effectDate: string; effect: string; sideEffect: string
-  reviewSubstance: string; reviewRating: string; reviewExperience: string
-  expGood: string; expMedium: string; expBad: string
+  reviewSubstance: string; reviewRating: string; reviewEffect: string; reviewTolerability: string; reviewAgain: string
+  againYes: string; againUnsure: string; againNo: string
   notesEmpty: string
   disclaimerTitle: string; disclaimer: string
   noData: string
@@ -124,8 +124,8 @@ const COPY: Record<PdfLang, Copy> = {
     unitDay: 'Tage', unitWeek: 'Wochen', unitMonth: 'Monate', unitQuarter: 'Quartale',
     effectType: 'Typ', effectDesc: 'Beschreibung', effectSeverity: 'Stärke', effectDate: 'Datum',
     effect: 'Wirkung', sideEffect: 'Nebenwirkung',
-    reviewSubstance: 'Substanz', reviewRating: 'Bewertung', reviewExperience: 'Erfahrung',
-    expGood: 'Gut', expMedium: 'Mittel', expBad: 'Schlecht',
+    reviewSubstance: 'Substanz', reviewRating: 'Bewertung', reviewEffect: 'Wirkung', reviewTolerability: 'Verträglichkeit', reviewAgain: 'Wieder nehmen',
+    againYes: 'Ja', againUnsure: 'Unsicher', againNo: 'Nein',
     notesEmpty: '(keine Notiz eingetragen)',
     disclaimerTitle: 'Hinweis',
     disclaimer: 'Dieses Dokument dient ausschließlich der persönlichen Dokumentation und Forschung. Es ist kein medizinischer Rat, keine Diagnose und keine Therapieempfehlung. Angaben werden vom Nutzer selbst erfasst. Konsultiere vor Entscheidungen eine medizinische Fachperson.',
@@ -164,8 +164,8 @@ const COPY: Record<PdfLang, Copy> = {
     unitDay: 'days', unitWeek: 'weeks', unitMonth: 'months', unitQuarter: 'quarters',
     effectType: 'Type', effectDesc: 'Description', effectSeverity: 'Severity', effectDate: 'Date',
     effect: 'Effect', sideEffect: 'Side effect',
-    reviewSubstance: 'Substance', reviewRating: 'Rating', reviewExperience: 'Experience',
-    expGood: 'Good', expMedium: 'Medium', expBad: 'Poor',
+    reviewSubstance: 'Substance', reviewRating: 'Rating', reviewEffect: 'Effect', reviewTolerability: 'Tolerability', reviewAgain: 'Take again',
+    againYes: 'Yes', againUnsure: 'Unsure', againNo: 'No',
     notesEmpty: '(no note entered)',
     disclaimerTitle: 'Note',
     disclaimer: 'This document is for personal documentation and research only. It is not medical advice, diagnosis, or treatment recommendation. All data is self-reported by the user. Consult a medical professional before making decisions.',
@@ -984,17 +984,22 @@ function renderEffects(ctx: Ctx, data: ProtocolData) {
 
 function renderReviews(ctx: Ctx, data: ProtocolData) {
   const { c } = ctx
-  const expLabel = (e: string | null) =>
-    e === 'gut' ? c.expGood : e === 'mittel' ? c.expMedium : e === 'schlecht' ? c.expBad : '–'
+  // Bewertungen v2: Wirkung, Vertraeglichkeit, „Wieder nehmen?" — bei alten
+  // Bewertungen ohne diese Angaben ein Strich.
+  const skala = (wert: number | null | undefined) => (wert ? `${wert}/5` : '–')
+  const wieder = (wert: string | null | undefined) =>
+    wert === 'ja' ? c.againYes : wert === 'unsicher' ? c.againUnsure : wert === 'nein' ? c.againNo : '–'
   const body = data.reviews.map(r => [
     r.stack_item_name ?? '–',
     `${'*'.repeat(Math.max(0, Math.min(5, r.rating)))}${'.'.repeat(5 - Math.max(0, Math.min(5, r.rating)))}  (${r.rating}/5)`,
-    expLabel(r.experience),
+    skala(r.wirkung),
+    skala(r.vertraeglichkeit),
+    wieder(r.wieder_nehmen),
   ])
   autoTableSafe(ctx, {
-    head: [[c.reviewSubstance, c.reviewRating, c.reviewExperience]],
+    head: [[c.reviewSubstance, c.reviewRating, c.reviewEffect, c.reviewTolerability, c.reviewAgain]],
     body,
-    columnStyles: { 0: { fontStyle: 'bold' }, 1: { cellWidth: 46 } },
+    columnStyles: { 0: { fontStyle: 'bold' }, 1: { cellWidth: 40 }, 2: { cellWidth: 22 }, 3: { cellWidth: 30 }, 4: { cellWidth: 28 } },
   })
 }
 
