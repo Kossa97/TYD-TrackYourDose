@@ -30,7 +30,7 @@ test('Bewerten: der beendete Zyklus ist vorgewählt, ohne Sterne kein Speichern,
   await page.goto('/bewertungen')
 
   await page.getByRole('button', { name: 'Neu' }).click()
-  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  const sheet = page.getByRole('dialog', { name: 'Neue Erfahrung' })
   await expect(sheet).toBeVisible()
 
   // Vorgewaehlt: der beendete Zyklus — mit allem, was dabei war.
@@ -50,7 +50,7 @@ test('Bewerten: der beendete Zyklus ist vorgewählt, ohne Sterne kein Speichern,
   await sheet.getByRole('radio', { name: 'Wirkung: 5 / 5' }).click()
   await sheet.getByRole('radio', { name: 'Verträglichkeit: 4 / 5' }).click()
   await sheet.getByRole('radio', { name: 'Ja' }).click()
-  await sheet.getByLabel('Erfahrung').fill('Schnell gemerkt.')
+  await sheet.getByLabel('Notiz', { exact: true }).fill('Schnell gemerkt.')
   await sheet.getByRole('button', { name: 'Speichern' }).click()
   await expect(sheet).toBeHidden()
 
@@ -64,8 +64,8 @@ test('Bewerten: der beendete Zyklus ist vorgewählt, ohne Sterne kein Speichern,
 
   // Fuer denselben Zyklus gibt es keine zweite: er steht als „bewertet" gesperrt.
   await page.getByRole('button', { name: 'Neu' }).click()
-  const zweites = page.getByRole('dialog', { name: 'Neue Bewertung' })
-  await expect(zweites.getByRole('radiogroup', { name: 'Zyklus' }).getByRole('radio', { name: /bewertet/ })).toBeDisabled()
+  const zweites = page.getByRole('dialog', { name: 'Neue Erfahrung' })
+  await expect(zweites.getByRole('radiogroup', { name: 'Zyklus' }).getByRole('radio', { name: /festgehalten/ })).toBeDisabled()
   await expect(zweites.getByRole('radio', { name: 'Ohne Zyklus' })).toHaveAttribute('aria-checked', 'true')
 })
 
@@ -81,8 +81,8 @@ test('Bewerten: eine alte Bewertung ohne Zyklus bekommt den passenden vorgeschla
   await page.goto('/bewertungen')
   await expect(page.getByText('Alt', { exact: true })).toBeVisible()
 
-  await page.getByRole('button', { name: /^Bewertung bearbeiten: BPC-157/ }).click()
-  const sheet = page.getByRole('dialog', { name: 'Bewertung bearbeiten' })
+  await page.getByRole('button', { name: /^Erfahrung bearbeiten: BPC-157/ }).click()
+  const sheet = page.getByRole('dialog', { name: 'Erfahrung bearbeiten' })
   // Die alten Sterne sind da; der Zyklus vom 01.09. ist vorgeschlagen.
   await expect(sheet.getByRole('radio', { name: '3 Sterne' })).toHaveAttribute('aria-checked', 'true')
   await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026')
@@ -100,9 +100,12 @@ test('Übersicht: je Substanz gruppiert, mit Schnitt; Wischen und eigenes Lösch
   bewertung(mock, 'TB-500', { rating: 4, title: 'Solide' })
   await page.goto('/bewertungen')
 
+  // Erfahrungen, keine Produktbewertung: der Hinweis steht oben.
+  await expect(page.getByRole('heading', { name: 'Erfahrungen', level: 1 })).toBeVisible()
+  await expect(page.locator('[data-review-disclaimer]')).toContainText('keine Empfehlung')
   const bpc = page.locator('section[data-review-group]', { has: page.getByRole('heading', { name: 'BPC-157' }) })
   await expect(bpc).toContainText('3,5')
-  await expect(bpc).toContainText('2 Bewertungen')
+  await expect(bpc).toContainText('2 Einträge')
   // Der Zyklus zuerst, die alte ohne Zyklus dahinter.
   await expect(bpc.locator('[data-review-cycle]')).toHaveText([/2026/, 'Ohne Zyklus'])
 
@@ -115,14 +118,14 @@ test('Übersicht: je Substanz gruppiert, mit Schnitt; Wischen und eigenes Lösch
   for (let i = 1; i <= 6; i++) await page.mouse.move(box.x + box.width * 0.7 - 30 * i, box.y + box.height / 2)
   await page.mouse.up()
   await zeile.getByRole('button', { name: 'Löschen' }).click()
-  const frage = page.getByRole('alertdialog', { name: 'Bewertung löschen?' })
+  const frage = page.getByRole('alertdialog', { name: 'Erfahrung löschen?' })
   await expect(frage).toContainText('BPC-157')
   // Abbrechen hat den Fokus: Enter loescht nichts.
   await expect(frage.getByRole('button', { name: 'Abbrechen' })).toBeFocused()
   await frage.getByRole('button', { name: 'Löschen' }).click()
   await expect(frage).toBeHidden()
   expect(mock.table('reviews').map(row => row.title).sort()).toEqual(['Frueher', 'Solide'])
-  await expect(bpc).toContainText('1 Bewertung')
+  await expect(bpc).toContainText('1 Eintrag')
 })
 
 test('Übersicht: Ladefehler steht da, mit „Erneut versuchen"', async ({ page, mock }) => {
@@ -131,7 +134,7 @@ test('Übersicht: Ladefehler steht da, mit „Erneut versuchen"', async ({ page,
   await page.route('**/rest/v1/reviews*', route => route.fulfill({ status: 500, json: { message: 'kaputt' } }), { times: 1 })
   await page.goto('/bewertungen')
   const fehler = page.getByRole('alert')
-  await expect(fehler).toContainText('Bewertungen konnten nicht geladen werden')
+  await expect(fehler).toContainText('Erfahrungen konnten nicht geladen werden')
   await fehler.getByRole('button', { name: 'Erneut versuchen' }).click()
   await expect(fehler).toBeHidden()
   await expect(page.getByText('Da', { exact: true })).toBeVisible()
@@ -146,7 +149,7 @@ test('My Stack: endgültig löschen sagt, wie viele Bewertungen mitgehen', async
   await page.getByRole('button', { name: 'BPC-157 öffnen' }).click()
   await page.getByRole('dialog', { name: 'BPC-157' }).getByRole('button', { name: 'Löschen' }).click()
   await expect(page.getByRole('dialog', { name: 'Substanz entfernen' }).locator('[data-delete-reviews]'))
-    .toHaveText('Auch 2 Bewertungen dieser Substanz werden gelöscht.')
+    .toHaveText('Auch 2 Erfahrungen dieser Substanz werden gelöscht.')
 })
 
 test('Ohne Zyklus: eine Substanz ohne Plan lässt sich bewerten — und eine mit Plan auch allgemein', async ({ page, mock }) => {
@@ -158,10 +161,10 @@ test('Ohne Zyklus: eine Substanz ohne Plan lässt sich bewerten — und eine mit
   await page.goto('/bewertungen')
 
   await page.getByRole('button', { name: 'Neu' }).click()
-  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  const sheet = page.getByRole('dialog', { name: 'Neue Erfahrung' })
   await sheet.getByRole('radio', { name: 'Magnesium' }).click()
   await expect(sheet.getByRole('radio', { name: 'Ohne Zyklus' })).toHaveAttribute('aria-checked', 'true')
-  await expect(sheet.locator('[data-review-general]')).toHaveText('Für diese Substanz gibt es noch keinen Zyklus — die Bewertung wird ohne gespeichert.')
+  await expect(sheet.locator('[data-review-general]')).toHaveText('Für diese Substanz gibt es noch keinen Zyklus — der Eintrag wird ohne gespeichert.')
   await sheet.getByRole('radio', { name: '4 Sterne' }).click()
   await sheet.getByRole('button', { name: 'Speichern' }).click()
   await expect(sheet).toBeHidden()
@@ -169,7 +172,7 @@ test('Ohne Zyklus: eine Substanz ohne Plan lässt sich bewerten — und eine mit
   // Mit Plan: „Ohne Zyklus" gilt allgemein — und geht beliebig oft.
   for (const sterne of ['3 Sterne', '5 Sterne']) {
     await page.getByRole('button', { name: 'Neu' }).click()
-    const weitere = page.getByRole('dialog', { name: 'Neue Bewertung' })
+    const weitere = page.getByRole('dialog', { name: 'Neue Erfahrung' })
     await weitere.getByRole('radio', { name: 'BPC-157' }).click()
     await weitere.getByRole('radio', { name: 'Ohne Zyklus' }).click()
     await expect(weitere.locator('[data-review-general]')).toHaveText('Gilt für die Substanz allgemein, nicht für einen bestimmten Zeitraum.')
@@ -188,9 +191,9 @@ test('Noch nicht bewertet: beendete Zyklen ohne Bewertung stehen oben, ein Tipp 
   await page.goto('/bewertungen')
 
   const hinweis = page.locator('[data-review-unrated]')
-  await expect(hinweis).toContainText('1 beendeter Zyklus noch nicht bewertet')
-  await hinweis.getByRole('button', { name: 'Jetzt bewerten' }).click()
-  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  await expect(hinweis).toContainText('1 beendeter Zyklus noch ohne Erfahrung')
+  await hinweis.getByRole('button', { name: 'Jetzt festhalten' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Neue Erfahrung' })
   await expect(sheet.getByRole('radio', { name: 'BPC-157' })).toHaveAttribute('aria-checked', 'true')
   await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026 – 19.09.2026')
   await sheet.getByRole('radio', { name: '5 Sterne' }).click()
@@ -211,11 +214,11 @@ test('Plan beenden in My Stack fragt einmal „Wie war\'s?" — Bewerten führt 
   await page.getByRole('button', { name: 'Plan beenden' }).last().click()
 
   const frage = page.locator('[data-review-prompt]')
-  await expect(frage).toContainText('Zyklus beendet — wie war BPC-157?')
-  await frage.getByRole('button', { name: 'Bewerten' }).click()
+  await expect(frage).toContainText('Zyklus BPC-157 beendet — festhalten, wie es dir ging?')
+  await frage.getByRole('button', { name: 'Festhalten' }).click()
 
   await expect(page).toHaveURL(/\/bewertungen$/)
-  const sheet = page.getByRole('dialog', { name: 'Neue Bewertung' })
+  const sheet = page.getByRole('dialog', { name: 'Neue Erfahrung' })
   await expect(sheet.getByRole('radio', { name: 'BPC-157' })).toHaveAttribute('aria-checked', 'true')
   await expect(sheet.locator('[data-review-context]')).toContainText('12.08.2026')
 })
@@ -229,6 +232,7 @@ test('Öffentliches Profil: nur freigegebene Bewertungen, ohne Alter und Dosis; 
   await page.goto('/u/anna')
   await expect(page.getByRole('heading', { name: 'Anna' })).toBeVisible()
   await expect(page.locator('[data-public-review]')).toHaveCount(1)
+  await expect(page.locator('[data-review-disclaimer]')).toContainText('keine Empfehlung')
   await expect(page.locator('[data-public-review]')).toContainText('Geteilt')
   await expect(page.locator('[data-public-review]')).toContainText('Wirkung 4/5')
   await expect(page.locator('[data-public-review]')).toContainText('September 2026')

@@ -26,7 +26,7 @@ export const enCategories: FaqCategory[] = [
           'Home is the control center of the app.',
           '- Status cards show active cycles, logs, stock, and other key signals',
           '- Quick actions jump into logging, calculator, progress, or simulation',
-          '- Feature tiles open Calendar, My Stack, Calculator, Injections, Protocol, Lab, Bloodwork, Health, Journal, Reviews, FAQ, and Profile',
+          '- Feature tiles open Calendar, My Stack, Calculator, Injections, Protocol, Lab, Bloodwork, Health, Journal, Experiences, FAQ, and Profile',
         ],
       },
       {
@@ -580,15 +580,15 @@ export const enCategories: FaqCategory[] = [
   },
   {
     id: 'bewertungen',
-    title: 'Reviews & research',
+    title: 'Experiences & research',
     items: [
       {
-        q: 'What are Reviews for?',
-        a: 'Reviews are personal experience reports for substances. You can store stars, overall rating, pros, cons, and a written note.',
+        q: 'What are Experiences for?',
+        a: 'Experiences are personal, subjective notes on your cycles: how it went for you, with stars, effect, tolerability and text. They are not a recommendation and make no statement about the efficacy or safety of any substance.',
       },
       {
-        q: 'Are reviews public?',
-        a: 'No, not automatically. They only become visible if you enable profile sharing and turn on the Reviews section.',
+        q: 'Are experiences public?',
+        a: 'No, not automatically. An entry is visible only if you share it individually — and only if your profile is public. Dose, cycle and exact dates never appear.',
       },
       {
         q: 'What is The Lab?',
@@ -620,7 +620,7 @@ export const enCategories: FaqCategory[] = [
         q: 'How does the public profile work?',
         a: [
           'First enable Share profile.',
-          'Then choose which sections may be visible: Peptides, Calendar, Journal, or Reviews.',
+          'Visitors then see only your name, bio and the experiences you share individually. Stack, calendar and journal stay private.',
           'Sections that are not enabled remain private.',
         ],
       },

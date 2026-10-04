@@ -100,6 +100,7 @@ export function PublicProfile() {
           <h2 id="public-reviews" className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <Star size={13} aria-hidden="true" /> {t('bewertungen_title')}
           </h2>
+          <p data-review-disclaimer className="-mt-1 mb-3 text-xs text-slate-500">{t('review_disclaimer')}</p>
           {profil.reviews.length === 0 ? (
             <p className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-8 text-center text-sm text-slate-500">
               {t('public_profile_no_reviews')}

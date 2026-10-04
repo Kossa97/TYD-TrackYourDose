@@ -26,7 +26,7 @@ export const deCategories: FaqCategory[] = [
           'Home ist die Startzentrale der App.',
           '- Oben stehen Statuskarten wie aktive Zyklen, heutige Logs oder niedriger Vorrat',
           '- Schnellaktionen führen direkt zu Logging, Rechner, Fortschritt oder Simulation',
-          '- Feature-Kacheln führen zu Kalender, My Stack, Rechner, Injektionen, Protokoll, Lab, Blutwerte, Health, Tagebuch, Bewertungen, FAQ und Profil',
+          '- Feature-Kacheln führen zu Kalender, My Stack, Rechner, Injektionen, Protokoll, Lab, Blutwerte, Health, Tagebuch, Erfahrungen, FAQ und Profil',
         ],
       },
       {
@@ -580,15 +580,15 @@ export const deCategories: FaqCategory[] = [
   },
   {
     id: 'bewertungen',
-    title: 'Bewertungen & Research',
+    title: 'Erfahrungen & Research',
     items: [
       {
-        q: 'Wofür sind Bewertungen?',
-        a: 'Bewertungen sind persönliche Erfahrungsberichte zu Substanzen. Du kannst Sterne, Gesamturteil, Vorteile, Nachteile und einen Text erfassen.',
+        q: 'Wofür sind Erfahrungen?',
+        a: 'Erfahrungen sind persönliche, subjektive Notizen zu deinen Zyklen: wie es dir ging, mit Sternen, Wirkung, Verträglichkeit und Text. Sie sind keine Empfehlung und keine Aussage über Wirksamkeit oder Sicherheit einer Substanz.',
       },
       {
-        q: 'Sind Bewertungen öffentlich?',
-        a: 'Nein, nicht automatisch. Sie werden nur sichtbar, wenn du dein Profil freigibst und den Bereich Bewertungen aktivierst.',
+        q: 'Sind Erfahrungen öffentlich?',
+        a: 'Nein, nicht automatisch. Sichtbar wird nur ein Eintrag, den du einzeln freigibst — und nur, wenn dein Profil öffentlich ist. Dosis, Zyklus und genaue Daten erscheinen nie.',
       },
       {
         q: 'Was ist The Lab?',
@@ -620,7 +620,7 @@ export const deCategories: FaqCategory[] = [
         q: 'Wie funktioniert das öffentliche Profil?',
         a: [
           'Du aktivierst zuerst Profil teilen.',
-          'Danach wählst du einzeln, welche Bereiche sichtbar sein dürfen: Peptide, Kalender, Tagebuch oder Bewertungen.',
+          'Sichtbar sind danach nur Name, Bio und die Erfahrungen, die du einzeln freigibst. Stack, Kalender und Tagebuch bleiben privat.',
           'Nicht freigegebene Bereiche bleiben privat.',
         ],
       },

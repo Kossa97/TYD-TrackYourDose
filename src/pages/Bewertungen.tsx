@@ -182,6 +182,9 @@ export function Bewertungen() {
           <Plus size={16} aria-hidden="true" /> {t('new')}
         </button>
       </div>
+      {/* Persoenliche Notizen, keine Produktbewertung: das steht da, damit
+          niemand Sterne als Empfehlung einer Substanz liest. */}
+      <p data-review-disclaimer className="-mt-2 mb-4 text-xs text-slate-500">{t('review_disclaimer')}</p>
 
       {ladeZustand === 'fehler' && (
         <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3">

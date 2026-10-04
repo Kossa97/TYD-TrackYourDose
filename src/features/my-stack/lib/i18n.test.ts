@@ -597,6 +597,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'public_profile_to_app',
   'public_profile_badge',
   'public_profile_no_reviews',
+  'review_disclaimer',
   'public_profile_footer',
   'my_stack_expired_full_today',
   'my_stack_expired_full_day',
@@ -632,9 +633,11 @@ const EXPECTED_MY_STACK_KEYS = [
 // Aktualisiert fuer die neuen Rechner- und Einheitenumrechner-Texte (`rechner_*`),
 // zuletzt fuer den allgemeinen Fluessigkeitsrechner mit vertikaler Spritze
 // und die getrennten Kalendertexte fuer bestaetigte und nicht bestaetigte Einnahmen.
+// Bewusst geaendert (Oktober 2026): „Bewertungen" heisst jetzt „Erfahrungen"
+// (bewertungen_title, tile_bewertungen, neue_bewertung, … — nur de/en).
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '4c52da86a8c0cca4dd9d3fdd1d31a0edd6e8e5fabbaa257ab4c2b3f5cc0b9f32',
-  en: '3068827563ca5033c8611f0c1d1ba0709be914af4f234725588795d71eb0e759',
+  de: '1d3db03025122dad17d4fa6b14288810d4068aceeef94179f26dc581082b8da0',
+  en: '47b6dfef280eaeb5dfe353cf255c4a8afa19389e5b4bcd29f3d48acdae7b086f',
 } as const
 // Die zwoelf weiteren Sprachen erhalten fuer die neuen Kalendertexte
 // englische Platzhalter (Regel in CLAUDE.md).

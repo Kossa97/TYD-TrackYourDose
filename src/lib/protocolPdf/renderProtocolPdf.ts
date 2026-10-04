@@ -105,7 +105,7 @@ const COPY: Record<PdfLang, Copy> = {
     sectionTitles: {
       personal: 'Persönliche Angaben', summary: 'Zusammenfassung', cycles: 'Protokoll / Zyklen',
       adherence: 'Einnahmetreue', bloodwork: 'Blutwerte', weight: 'Gewichtsverlauf',
-      wellness: 'Wohlbefinden', effects: 'Wirkungen & Nebenwirkungen', reviews: 'Bewertungen',
+      wellness: 'Wohlbefinden', effects: 'Wirkungen & Nebenwirkungen', reviews: 'Erfahrungen',
       notes: 'Notizen / Fragen',
     },
     age: 'Alter', gender: 'Geschlecht', height: 'Größe', weight: 'Gewicht', years: 'Jahre',
@@ -145,7 +145,7 @@ const COPY: Record<PdfLang, Copy> = {
     sectionTitles: {
       personal: 'Personal details', summary: 'Summary', cycles: 'Protocol / cycles',
       adherence: 'Adherence', bloodwork: 'Bloodwork', weight: 'Weight trend',
-      wellness: 'Well-being', effects: 'Effects & side effects', reviews: 'Ratings',
+      wellness: 'Well-being', effects: 'Effects & side effects', reviews: 'Experiences',
       notes: 'Notes / questions',
     },
     age: 'Age', gender: 'Gender', height: 'Height', weight: 'Weight', years: 'years',
@@ -255,7 +255,7 @@ function applyCoachCopy(base: Copy, lang: PdfLang): Copy {
         weight: 'Körpergewicht',
         wellness: 'Wohlbefinden',
         effects: 'Feedback & Nebenwirkungen',
-        reviews: 'Bewertungen',
+        reviews: 'Erfahrungen',
         notes: 'Notizen für den Coach',
       },
       disclaimerTitle: 'Hinweis',
@@ -282,7 +282,7 @@ function applyCoachCopy(base: Copy, lang: PdfLang): Copy {
       weight: 'Body weight',
       wellness: 'Well-being',
       effects: 'Feedback & side effects',
-      reviews: 'Ratings',
+      reviews: 'Experiences',
       notes: 'Notes for the coach',
     },
     disclaimerTitle: 'Note',
@@ -311,7 +311,7 @@ function applyForumCopy(base: Copy, lang: PdfLang): Copy {
         weight: 'Gewicht',
         wellness: 'Wohlbefinden',
         effects: 'Wirkungen & Nebenwirkungen',
-        reviews: 'Bewertungen',
+        reviews: 'Erfahrungen',
       },
       disclaimerTitle: 'Hinweis zum Teilen',
       disclaimer:
@@ -336,7 +336,7 @@ function applyForumCopy(base: Copy, lang: PdfLang): Copy {
       weight: 'Weight',
       wellness: 'Well-being',
       effects: 'Effects & side effects',
-      reviews: 'Ratings',
+      reviews: 'Experiences',
     },
     disclaimerTitle: 'Sharing note',
     disclaimer:
