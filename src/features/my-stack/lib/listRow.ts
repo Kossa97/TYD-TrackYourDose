@@ -12,7 +12,7 @@ import type { StackItemInventory } from '../types'
  * Reine Rechnung, damit Liste und Tests dieselbe Antwort sehen.
  */
 
-/** Ab so wenigen Tagen heisst es „Läuft in n Tagen ab" statt „Haltbar bis". */
+/** Ab so wenigen Tagen Resthaltbarkeit wird das Abzeichen gelb. */
 export const ABLAUF_BALD_TAGE = 7
 
 export interface Haltbarkeit {
@@ -20,6 +20,12 @@ export interface Haltbarkeit {
   bis: string
   /** Kalendertage bis dahin: 0 heute, negativ abgelaufen. */
   tage: number
+  /**
+   * Ob die Frist nach dem Anmischen oder Oeffnen vorbei ist — die einzige,
+   * die ein neu angemischtes Vial oder eine neu geoeffnete Packung behebt.
+   * Ein abgelaufenes Packungsdatum behebt das nicht.
+   */
+  anbruchAbgelaufen: boolean
 }
 
 export interface HaltbarkeitsEintrag {
@@ -38,18 +44,22 @@ export interface HaltbarkeitsEintrag {
  * (`reconstitution_date` + `expiry_days`), neuere im Bestand.
  */
 export function haltbarkeitFuer(item: HaltbarkeitsEintrag, now: Date, timeZone: string): Haltbarkeit | null {
-  const fristen: string[] = []
-  const nachOeffnen = item.inventory ? haltbarBis(item.inventory) : null
-  if (nachOeffnen) fristen.push(nachOeffnen)
-  else if (item.reconstitution_date && item.expiry_days) {
-    fristen.push(shiftLocalDay(item.reconstitution_date.slice(0, 10), Number(item.expiry_days)))
-  }
-  if (item.inventory?.expires_at) fristen.push(item.inventory.expires_at.slice(0, 10))
+  const anbruch = (item.inventory ? haltbarBis(item.inventory) : null)
+    ?? (item.reconstitution_date && item.expiry_days
+      ? shiftLocalDay(item.reconstitution_date.slice(0, 10), Number(item.expiry_days))
+      : null)
+  const fristen = [anbruch, item.inventory?.expires_at?.slice(0, 10) ?? null]
+    .filter((frist): frist is string => frist !== null)
   if (fristen.length === 0) return null
 
   const bis = fristen.sort()[0]
   const heute = localDateTimeKey(now, timeZone).slice(0, 10)
-  return { bis, tage: differenceInCalendarDays(parseISO(bis), parseISO(heute)) }
+  return {
+    bis,
+    tage: differenceInCalendarDays(parseISO(bis), parseISO(heute)),
+    // ISO-Tage lassen sich als Text vergleichen.
+    anbruchAbgelaufen: anbruch !== null && anbruch < heute,
+  }
 }
 
 /** Aktiv heisst: ein Zyklus laeuft jetzt — nicht pausiert, nicht erst geplant, nicht beendet. */

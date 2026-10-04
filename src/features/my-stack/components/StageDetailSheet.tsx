@@ -27,6 +27,8 @@ export interface StageDetailSheetProps {
   sideActions?: ReactNode
   /** Eine Aktion mit Text unter dem Namen, etwa „Neues Vial anmischen". */
   belowTitle?: ReactNode
+  /** Oben links, gegenueber dem Schliessen-Knopf — etwa die Haltbarkeit. */
+  topLeft?: ReactNode
   children: ReactNode
   onClose: () => void
   /** Waehrend des Flugs still: schwappende Fluessigkeit im Flug wirkt falsch. */
@@ -41,7 +43,7 @@ function magBewegen(): boolean {
 }
 
 export function StageDetailSheet({
-  originRect, stage, title, sideActions, belowTitle, children, onClose, onFlightChange,
+  originRect, stage, title, sideActions, belowTitle, topLeft, children, onClose, onFlightChange,
 }: StageDetailSheetProps) {
   const objektRef = useRef<HTMLDivElement>(null)
   const [gelandet, setGelandet] = useState(false)
@@ -110,7 +112,8 @@ export function StageDetailSheet({
       {/* Das Vollbild liegt auch unter der Statuszeile des iPhones (Uhr,
           Akku). Ohne den Abstand der Schutzzone sass der Schliessen-Knopf
           mitten in der Akkuanzeige — die anderen Vollbilder halten ihn schon. */}
-      <div className="flex items-center justify-end pb-3 pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))] pt-[calc(0.75rem+env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between gap-3 pb-3 pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))] pt-[calc(0.75rem+env(safe-area-inset-top))]">
+        <div data-stage-detail-top-left className="flex min-w-0 text-xs">{topLeft}</div>
         <button
           type="button"
           onClick={onClose}

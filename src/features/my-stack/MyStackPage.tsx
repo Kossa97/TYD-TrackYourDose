@@ -2108,6 +2108,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         detailUrsprung={detailUrsprung}
         peptide={detailPeptide}
         rekonstitutionWiederholen={handleRekonstitution}
+        timeZone={timeZone}
         closeStageDetail={closeStageDetail}
         sloshEngine={sloshEngine}
         openEditPeptide={openEditPeptide}

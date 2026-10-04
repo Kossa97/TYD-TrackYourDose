@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { SloshEngine } from '../../../components/sloshEngine'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2, Pencil, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Trash2, Pencil, RefreshCw } from 'lucide-react'
 import { SloshProvider } from '../../../components/SloshContext'
 import { StageDetailSheet } from '../components/StageDetailSheet'
 import { type BestandEditorArt } from '../components/Bestand'
@@ -11,6 +11,8 @@ import { StackStage } from '../components/StackStage'
 import { denyProps } from '../../../lib/denyFeedback'
 import { getStableStackItemColor } from '../lib/colors'
 import { type Peptide, getVialFillPct } from './model'
+import { haltbarkeitFuer } from '../lib/listRow'
+import { HaltbarkeitChip } from './HaltbarkeitChip'
 
 /**
  * Das Vollbild hinter einem Objekt: Plan, Bestand, Angaben — geoeffnet per FLIP aus dem Karussell oder der Liste.
@@ -25,6 +27,7 @@ export function StageDetailView({
   setBestandEdit,
   eintragDetails,
   rekonstitutionWiederholen,
+  timeZone,
 }: {
   detailUrsprung: DOMRect | null
   /** Die Substanz in der Historie — aus dem Karussell oder der Liste. */
@@ -37,8 +40,17 @@ export function StageDetailView({
   eintragDetails: (eintrag: Peptide) => ReactNode
   /** Aeltere Eintraege ohne gefuehrten Bestand: das Anmischdatum neu setzen. */
   rekonstitutionWiederholen: (p: Peptide) => void
+  timeZone: string
 }) {
   const { t } = useTranslation()
+  const haltbar = activePeptide ? haltbarkeitFuer(activePeptide, new Date(), timeZone) : null
+  // Ist die Frist nach dem Anmischen vorbei, ist der Knopf darunter genau
+  // das, was hilft — dann blinkt sein Symbol wie das Abzeichen. Ein
+  // abgelaufenes Packungsdatum behebt neues Anmischen nicht.
+  const anmischenHilft = haltbar?.anbruchAbgelaufen === true
+  const knopfSymbol = anmischenHilft
+    ? <AlertTriangle size={15} aria-hidden="true" data-anmischen-alarm className="tyd-expired-icon shrink-0 text-red-400" />
+    : <RefreshCw size={15} aria-hidden="true" />
   return (
     <>
       {detailUrsprung && activePeptide && (
@@ -47,6 +59,7 @@ export function StageDetailView({
           onClose={closeStageDetail}
           onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
           title={activePeptide.name}
+          topLeft={<HaltbarkeitChip tage={haltbar?.tage ?? null} substanzId={activePeptide.id} />}
           sideActions={(
             <>
               {/* Nur Symbole: was ein Stift und ein Papierkorb tun, liest
@@ -86,7 +99,7 @@ export function StageDetailView({
                   onClick={() => rekonstitutionWiederholen(activePeptide)}
                   className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
                 >
-                  <RefreshCw size={15} aria-hidden="true" />
+                  {knopfSymbol}
                   {String(t('rekonstitution_wdh'))}
                 </button>
               )
@@ -104,7 +117,7 @@ export function StageDetailView({
                 })))}
                 className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 aria-disabled:border-slate-800 aria-disabled:bg-slate-900/60 aria-disabled:text-slate-600"
               >
-                <RefreshCw size={15} aria-hidden="true" />
+                {nichtsZuOeffnen ? <RefreshCw size={15} aria-hidden="true" /> : knopfSymbol}
                 {String(t(art === 'vial' ? 'my_stack_stock_mix_new' : art === 'pen' ? 'my_stack_stock_open_new_pen' : 'my_stack_stock_open_new_bottle'))}
               </button>
             )

@@ -44,22 +44,30 @@ describe('haltbarkeitFuer', () => {
 
   it('das Datum auf der Packung — fuer jede Form, etwa Tabletten', () => {
     expect(haltbarkeitFuer({ inventory: inventory({ expires_at: '2027-03-31' }) }, now, timeZone))
-      .toEqual({ bis: '2027-03-31', tage: 187 })
+      .toEqual({ bis: '2027-03-31', tage: 187, anbruchAbgelaufen: false })
   })
 
   it('nach dem Oeffnen: Tage ab dem Oeffnen, aus dem Bestand', () => {
     const geoeffnet = inventory({ opened_at: '2026-09-20', use_within_days: 28 })
-    expect(haltbarkeitFuer({ inventory: geoeffnet }, now, timeZone)).toEqual({ bis: '2026-10-18', tage: 23 })
+    expect(haltbarkeitFuer({ inventory: geoeffnet }, now, timeZone)).toEqual({ bis: '2026-10-18', tage: 23, anbruchAbgelaufen: false })
   })
 
   it('aeltere Eintraege: Anmischdatum und Haltbarkeit am Eintrag', () => {
     expect(haltbarkeitFuer({ reconstitution_date: '2026-09-01', expiry_days: 27 }, now, timeZone))
-      .toEqual({ bis: '2026-09-28', tage: 3 })
+      .toEqual({ bis: '2026-09-28', tage: 3, anbruchAbgelaufen: false })
   })
 
   it('gelten beide Fristen, zaehlt die fruehere', () => {
     const beides = inventory({ opened_at: '2026-09-20', use_within_days: 28, expires_at: '2026-10-01' })
-    expect(haltbarkeitFuer({ inventory: beides }, now, timeZone)).toEqual({ bis: '2026-10-01', tage: 6 })
+    expect(haltbarkeitFuer({ inventory: beides }, now, timeZone)).toEqual({ bis: '2026-10-01', tage: 6, anbruchAbgelaufen: false })
+  })
+
+  it('weiss, ob die Frist nach dem Anmischen vorbei ist — nur die behebt neues Anmischen', () => {
+    const angemischtAbgelaufen = inventory({ opened_at: '2026-08-20', use_within_days: 28 })
+    expect(haltbarkeitFuer({ inventory: angemischtAbgelaufen }, now, timeZone))
+      .toEqual({ bis: '2026-09-17', tage: -8, anbruchAbgelaufen: true })
+    const nurPackungAbgelaufen = inventory({ opened_at: '2026-09-20', use_within_days: 28, expires_at: '2026-09-20' })
+    expect(haltbarkeitFuer({ inventory: nurPackungAbgelaufen }, now, timeZone)?.anbruchAbgelaufen).toBe(false)
   })
 
   it('abgelaufen ist negativ, heute ist 0', () => {

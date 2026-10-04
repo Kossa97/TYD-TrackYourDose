@@ -86,3 +86,27 @@ test('Liste: abgelaufen steht ausgeschrieben da, wie im Karussell', async ({ pag
   await page.reload()
   await expect(page.locator('[data-my-stack-carousel] [data-expired-badge]')).toHaveText('Seit 8 Tagen abgelaufen!')
 })
+
+test('Vollbild: Haltbarkeit oben links; abgelaufen angemischt — der Anmisch-Knopf alarmiert', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', {
+    startDate: '2026-09-01',
+    inventory: { package_quantity: 5, package_unit: 'vial', remaining_quantity: 3, reconstitution_ml: 2, opened_at: '2026-08-20', use_within_days: 28 },
+  })
+  seedPeptide(mock, 'TB-500', {
+    startDate: '2026-09-01',
+    inventory: { package_quantity: 5, package_unit: 'vial', remaining_quantity: 3, reconstitution_ml: 2, expires_at: '2027-03-31' },
+  })
+  await page.goto('/my-stack')
+
+  await page.getByRole('button', { name: 'BPC-157 öffnen' }).click()
+  const detail = page.getByRole('dialog', { name: 'BPC-157' })
+  await expect(detail.locator('[data-stage-detail-top-left] [data-expired-badge]')).toHaveText('Seit 11 Tagen abgelaufen!')
+  await expect(detail.getByRole('button', { name: 'Neues Vial anmischen' }).locator('[data-anmischen-alarm]')).toBeVisible()
+  await page.goBack()
+
+  // Nicht abgelaufen: Haltbarkeit oben links, der Knopf bleibt ruhig.
+  await page.getByRole('button', { name: 'TB-500 öffnen' }).click()
+  const tb = page.getByRole('dialog', { name: 'TB-500' })
+  await expect(tb.locator('[data-stage-detail-top-left] [data-haltbarkeit="gut"]')).toBeVisible()
+  await expect(tb.locator('[data-anmischen-alarm]')).toHaveCount(0)
+})

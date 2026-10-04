@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 type Translate = (key: string, options?: Record<string, unknown>) => unknown
 
 /** „Seit heute abgelaufen!", „Seit 1 Tag abgelaufen!", „Seit 5 Tagen abgelaufen!" — in Kalendertagen. */
-export function expiredLabel(t: Translate, daysSince: number): string {
+function expiredLabel(t: Translate, daysSince: number): string {
   if (daysSince <= 0) return String(t('my_stack_expired_full_today'))
   if (daysSince === 1) return String(t('my_stack_expired_full_day'))
   return String(t('my_stack_expired_full_days', { n: daysSince }))
