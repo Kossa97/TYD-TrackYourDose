@@ -66,3 +66,17 @@ export function haltbarkeitFuer(item: HaltbarkeitsEintrag, now: Date, timeZone: 
 export function istAktiv(timelines: readonly CycleTimeline[], now: Date, timeZone: string): boolean {
   return timelines.some(timeline => resolveCycleAt(timeline, now, timeZone).status === 'active')
 }
+
+/** Die Gruppen der Liste, in dieser Reihenfolge. */
+export const GRUPPEN = ['achtung', 'aktiv', 'inaktiv'] as const
+export type Gruppe = (typeof GRUPPEN)[number]
+
+/**
+ * Abgelaufen oder bald (`ABLAUF_BALD_TAGE`): zuerst. Sonst aktiv vor
+ * inaktiv; solange die Plaene laden (`null`), steht alles vorn bei den
+ * aktiven — Ueberschriften zeigt die Liste dann noch nicht.
+ */
+export function gruppeVon(aktiv: boolean | null, haltbar: Haltbarkeit | null): Gruppe {
+  if (haltbar && haltbar.tage <= ABLAUF_BALD_TAGE) return 'achtung'
+  return aktiv === false ? 'inaktiv' : 'aktiv'
+}

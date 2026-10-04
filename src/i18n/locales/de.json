@@ -1706,5 +1706,9 @@
   "my_stack_stock_container_size": "je {{amount}}",
   "my_stack_basis_unit_choose": "Bitte wählen",
   "my_stack_basis_unit_custom": "Andere Einheit …",
-  "my_stack_basis_unit_from_list": "Aus der Liste wählen"
+  "my_stack_basis_unit_from_list": "Aus der Liste wählen",
+  "my_stack_strength_hint_per_unit_spray": "Wie viel Wirkstoff steckt in EINEM Sprühstoß? Trage die Zahl von der Verpackung ein. Beispiel: 125 mcg pro 1 Sprühstoß. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.",
+  "my_stack_strength_hint_per_unit_tablet": "Wie viel Wirkstoff steckt in EINER Tablette? Trage die Zahl von der Verpackung ein. Beispiel: 500 mg pro 1 Tablette. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.",
+  "my_stack_strength_hint_per_unit_patch": "Wie viel Wirkstoff steckt in EINEM Pflaster? Trage die Zahl von der Verpackung ein. Beispiel: 25 mcg pro 1 Pflaster. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.",
+  "my_stack_list_group_attention": "Braucht Aufmerksamkeit"
 }

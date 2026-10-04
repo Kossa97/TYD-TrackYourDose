@@ -19,6 +19,8 @@ export interface SprayRendererProps {
   lightOffset?: number
   stageLightRef?: Ref<StageLightHandle>
   sloshEngine?: SloshEngine
+  /** Wie voll der angebrochene Behaelter ist, 0–100. */
+  fillPct?: number
 }
 
 // "1000 IU / spray" — Wirkstoff je Spruehstoss, wie es auf der Flasche steht.

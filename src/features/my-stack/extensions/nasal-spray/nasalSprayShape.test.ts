@@ -97,8 +97,8 @@ describe('nasalSprayShape', () => {
     expect(NASAL_SPRAY_NOZZLE_PATH.trim().endsWith('Z')).toBe(true)
   })
 
-  it('traegt ein Etikett, aber keinen aussagekraeftigen Fuellstand', () => {
+  it('traegt ein Etikett und einen Pegel aus dem Bestand', () => {
     expect(carriesLabel(NASAL_SPRAY_SPEC)).toBe(true)
-    expect(NASAL_SPRAY_SPEC.hasMeaningfulFill).toBe(false)
+    expect(NASAL_SPRAY_SPEC.hasMeaningfulFill).toBe(true)
   })
 })

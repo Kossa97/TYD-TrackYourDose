@@ -17,8 +17,9 @@ export interface StageFormSpec {
   // tablet, capsule, patch, tube, powder. Not the same as „holds liquid": the
   // gel jar has one and uses no liquid physics at all.
   chamber: StageChamber | null
-  // Whether this form's fill level says anything. A vial is drawn down over
-  // weeks; a sealed ampoule is either full or gone.
+  // Whether this form's fill level can say anything. A vial is drawn down over
+  // weeks, a spray or dropper bottle too (from the tracked stock); a sealed
+  // ampoule is either full or gone.
   hasMeaningfulFill: boolean
 }
 

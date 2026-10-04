@@ -16,8 +16,9 @@ import { haltbarkeitFuer } from '../lib/listRow'
 import { StageFit } from '../components/StageFit'
 import { StackStage } from '../components/StackStage'
 import { getDosageForm } from '../lib/dosageForms'
+import { anbruchArt } from '../lib/bestand'
 import { getStableStackItemColor } from '../lib/colors'
-import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, getVialFillPct } from './model'
+import { type Peptide, type Cycle, vialCarouselItemWidth, vialCarouselItemGap, fuellstandFuer } from './model'
 import { AddStageTile } from './stackTiles'
 import { VialPositionRow } from './VialPositionRow'
 
@@ -124,9 +125,6 @@ export function VialCarousel({
                     <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
                       {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
                     </span>
-                    <span className="rounded-full bg-slate-900 px-2.5 py-1 font-semibold tabular-nums text-slate-500">
-                      {activeIndex + 1} / {stagePeptides.length}
-                    </span>
                   </div>
                 )
               })()}
@@ -219,10 +217,13 @@ export function VialCarousel({
                 // Steht die Kachel in der Mitte, ist keine Substanz aktiv.
                 const isActive = !addTileActive && p.id === activePeptide.id
                 const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
-                const vialPct = Math.round(getVialFillPct(p) ?? 100)
-                // Only forms whose fill level says something show it. A
-                // sealed ampoule would otherwise read "100 %" forever.
-                const showsFillPct = getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill ?? false
+                // Der Pegel aus dem Bestand — beim Vial wie bisher (ohne
+                // Angaben „100 %"), bei Spray und Tropfflasche der geoeffnete
+                // Behaelter, und nur mit gefuehrtem Bestand. Eine
+                // verschlossene Ampulle stuende sonst ewig bei „100 %".
+                const pegel = fuellstandFuer(p)
+                const vialPct = Math.round(pegel ?? 100)
+                const showsFillPct = pegel !== null || anbruchArt(p.dosage_form) === 'vial'
 
                 return (
                   <div

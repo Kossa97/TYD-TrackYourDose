@@ -54,7 +54,7 @@ describe('dropsShape', () => {
     // App kennt den Stand einer angebrochenen Tropfflasche nicht.
     expect(DROPS_FILL).toBeGreaterThan(0)
     expect(DROPS_FILL).toBeLessThan(1)
-    expect(DROPS_SPEC.hasMeaningfulFill).toBe(false)
+    expect(DROPS_SPEC.hasMeaningfulFill).toBe(true)
   })
 
   it('traegt ein Etikett, weil es einen Behaelter mit Fluessigkeit gibt', () => {

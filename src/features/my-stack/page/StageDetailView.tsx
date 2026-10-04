@@ -10,7 +10,7 @@ import { anbruchArt, vorratTeile } from '../lib/bestand'
 import { StackStage } from '../components/StackStage'
 import { denyProps } from '../../../lib/denyFeedback'
 import { getStableStackItemColor } from '../lib/colors'
-import { type Peptide, getVialFillPct } from './model'
+import { type Peptide, fuellstandFuer } from './model'
 import { haltbarkeitFuer } from '../lib/listRow'
 import { HaltbarkeitChip } from './HaltbarkeitChip'
 import { neuAnbrechenLabel } from '../lib/bestandLabels'
@@ -132,7 +132,7 @@ export function StageDetailView({
               <div style={{ width: 'min(9rem, 38vw)' }}>
                 <StackStage
                   item={{ ...activePeptide, color_hex: activePeptide.color_hex ?? getStableStackItemColor(activePeptide.id) }}
-                  fillPct={Math.round(getVialFillPct(activePeptide) ?? 100)}
+                  fillPct={Math.round(fuellstandFuer(activePeptide) ?? 100)}
                   isActive
                   size="carousel"
                 />

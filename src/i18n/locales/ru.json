@@ -1474,5 +1474,9 @@
   "my_stack_stock_container_size": "{{amount}} each",
   "my_stack_basis_unit_choose": "Please choose",
   "my_stack_basis_unit_custom": "Other unit …",
-  "my_stack_basis_unit_from_list": "Choose from list"
+  "my_stack_basis_unit_from_list": "Choose from list",
+  "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+  "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+  "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+  "my_stack_list_group_attention": "Needs attention"
 }

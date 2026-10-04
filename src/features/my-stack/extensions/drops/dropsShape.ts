@@ -121,11 +121,10 @@ export const DROPS_CHAMBER = {
   aspect: 64.8 / 166.4,
 } as const
 
-// Fester Pegel. Die App kennt den Stand einer angebrochenen Tropfflasche
-// nicht: getVialFillPct liest vials_in_stock, ein vial-spezifisches Altfeld.
-// Die Grafik zeigt das Objekt, eine Prozentzahl wäre eine Behauptung.
+// Pegel der vollen Flasche. Mit gefuehrtem Bestand skaliert ihn
+// `fuellstandFuer`; ohne steht die Flasche so da.
 //
-// Der Wert ist deshalb rein optisch: der Spiegel soll ein Stück unter der
+// Der Wert ist rein optisch: der Spiegel soll ein Stück unter der
 // Schulter stehen, wie bei einer normalen Flasche mit Kopfraum. Im Braunglas
 // war er unsichtbar und konnte irgendwo liegen; im Klarglas las sich 0,72 auf
 // der tiefer angesetzten Kammer als halbleere Flasche.
@@ -153,6 +152,7 @@ export const DROPS_GROUND_SHIFT = 5
 export const DROPS_SPEC: StageFormSpec = {
   viewBox: DROPS_VIEWBOX,
   chamber: DROPS_CHAMBER,
-  // Siehe DROPS_FILL: kein echter Füllstand, deshalb keine Prozentzeile.
-  hasMeaningfulFill: false,
+  // Mit gefuehrtem Bestand sagt der Pegel, wie voll die geoeffnete Flasche
+  // ist (`fuellstandFuer`); ohne steht sie voll da.
+  hasMeaningfulFill: true,
 }

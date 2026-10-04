@@ -526,6 +526,7 @@ export const MY_STACK_EN = {
   my_stack_go_to_add_tile: 'Go to the “New substance” tile',
   my_stack_save_item_incomplete: 'Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.',
   my_stack_list_open: 'Open {{name}}',
+  my_stack_list_group_attention: 'Needs attention',
   my_stack_expired_full_today: 'Expired today!',
   my_stack_expired_full_day: 'Expired 1 day ago!',
   my_stack_expired_full_days: 'Expired {{n}} days ago!',
@@ -544,6 +545,9 @@ export const MY_STACK_EN = {
   my_stack_basis_unit_choose: 'Please choose',
   my_stack_basis_unit_custom: 'Other unit …',
   my_stack_basis_unit_from_list: 'Choose from list',
+  my_stack_strength_hint_per_unit_spray: 'How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.',
+  my_stack_strength_hint_per_unit_tablet: 'How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.',
+  my_stack_strength_hint_per_unit_patch: 'How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.',
 }
 
 export const MY_STACK_DE = {
@@ -1073,6 +1077,7 @@ export const MY_STACK_DE = {
   my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
   my_stack_save_item_incomplete: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
   my_stack_list_open: '{{name}} öffnen',
+  my_stack_list_group_attention: 'Braucht Aufmerksamkeit',
   my_stack_expired_full_today: 'Seit heute abgelaufen!',
   my_stack_expired_full_day: 'Seit 1 Tag abgelaufen!',
   my_stack_expired_full_days: 'Seit {{n}} Tagen abgelaufen!',
@@ -1091,6 +1096,9 @@ export const MY_STACK_DE = {
   my_stack_basis_unit_choose: 'Bitte wählen',
   my_stack_basis_unit_custom: 'Andere Einheit …',
   my_stack_basis_unit_from_list: 'Aus der Liste wählen',
+  my_stack_strength_hint_per_unit_spray: 'Wie viel Wirkstoff steckt in EINEM Sprühstoß? Trage die Zahl von der Verpackung ein. Beispiel: 125 mcg pro 1 Sprühstoß. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.',
+  my_stack_strength_hint_per_unit_tablet: 'Wie viel Wirkstoff steckt in EINER Tablette? Trage die Zahl von der Verpackung ein. Beispiel: 500 mg pro 1 Tablette. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.',
+  my_stack_strength_hint_per_unit_patch: 'Wie viel Wirkstoff steckt in EINEM Pflaster? Trage die Zahl von der Verpackung ein. Beispiel: 25 mcg pro 1 Pflaster. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

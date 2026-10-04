@@ -30,7 +30,8 @@ export interface StackStageProps {
   stageLightRef?: Ref<StageLightHandle>
   sloshEngine?: SloshEngine
   animateOnMount?: boolean
-  // Vial only: an ampoule is full or gone, so it never receives one.
+  // Vial, Spray, Nasenspray, Tropfflasche: wie voll der angebrochene Behaelter
+  // ist. Eine Ampulle ist voll oder weg und bekommt keinen.
   fillPct?: number
 }
 
@@ -56,11 +57,11 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   }
 
   if (renderer === 'drops') {
-    return <DropsRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+    return <DropsRenderer item={item} fillPct={fillPct} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   if (renderer === 'nasal_spray') {
-    return <NasalSprayRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+    return <NasalSprayRenderer item={item} fillPct={fillPct} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   if (renderer === 'tube') {
@@ -89,7 +90,7 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   // Das Mundspray. Wie das Nasenspray eine Pumpflasche mit Etikett und
   // Schwappen — aber die kleinere, mit seitlicher Duese statt Nasenkegel.
   if (renderer === 'spray') {
-    return <SprayRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+    return <SprayRenderer item={item} fillPct={fillPct} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   return (

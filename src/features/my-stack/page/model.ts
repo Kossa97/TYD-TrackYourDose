@@ -5,7 +5,8 @@ import { Sunrise, Sun, Moon, Clock, type LucideIcon } from 'lucide-react'
 import { format, isValid, parseISO, addDays } from 'date-fns'
 import { scheduleForDay, type ScheduleSegment } from '../../../lib/intakeSchedule'
 import { expiryDaysLeft } from '../../../lib/peptideExpiry'
-import { anbruchArt, vialBuchtUeberBestand } from '../lib/bestand'
+import { anbruchArt, behaelterGroesse, vialBuchtUeberBestand, vorratTeile } from '../lib/bestand'
+import { getDosageForm } from '../lib/dosageForms'
 import { type LoadedStackItem } from '../services/stackItems'
 import type {
   IntakePlanDraft,
@@ -195,6 +196,25 @@ export function getVialFillPct(p: Peptide): number | null {
   return stock % 1 === 0 ? 100 : (stock % 1) * 100
 }
 
+/**
+ * Wie voll der angebrochene Behaelter ist, 0–100 — oder null, wenn das nichts
+ * aussagt. Beim Vial wie bisher; bei Spray, Nasenspray und Tropfflasche aus
+ * dem gefuehrten Bestand: der geoeffnete Behaelter, sonst ein voller (bzw.
+ * was vom letzten noch da ist), leer bei 0.
+ */
+export function fuellstandFuer(p: Peptide): number | null {
+  // Ob die Grafik einen Pegel hat, sagt die Form selbst (`hasMeaningfulFill`).
+  if (!getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill) return null
+  if (anbruchArt(p.dosage_form) === 'vial') return getVialFillPct(p)
+  const inventory = p.inventory
+  const groesse = inventory?.enabled ? behaelterGroesse(inventory) : null
+  if (!inventory || !groesse) return null
+  const teile = vorratTeile(inventory)
+  if (teile.rest <= 0) return 0
+  if (teile.angebrochenAnteil != null) return teile.angebrochenAnteil * 100
+  return Math.min(1, teile.rest / groesse) * 100
+}
+
 function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
   const av = a ?? null
   const bv = b ?? null
@@ -231,8 +251,8 @@ export function sortPeptides(list: Peptide[], sortBy: PeptideSortKey, activeIds:
       case 'name_desc': return b.name.localeCompare(a.name)
       case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
       case 'expiry_desc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), false)
-      case 'fill_asc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), true)
-      case 'fill_desc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), false)
+      case 'fill_asc': return compareNullableNum(fuellstandFuer(a), fuellstandFuer(b), true)
+      case 'fill_desc': return compareNullableNum(fuellstandFuer(a), fuellstandFuer(b), false)
       case 'recon_asc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, true)
       case 'recon_desc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, false)
       case 'stock_asc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, true)

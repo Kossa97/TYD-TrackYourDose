@@ -114,9 +114,9 @@ describe('sprayShape', () => {
     expect(bandLinks).toBeCloseTo(60 - SPRAY_WIDTHS.body / 2, 5)
   })
 
-  it('traegt ein Etikett und keinen Pegel', () => {
+  it('traegt ein Etikett und einen Pegel aus dem Bestand', () => {
     expect(carriesLabel(SPRAY_SPEC)).toBe(true)
     // Wie beim Nasenspray: die App kennt den Stand der offenen Flasche nicht.
-    expect(SPRAY_SPEC.hasMeaningfulFill).toBe(false)
+    expect(SPRAY_SPEC.hasMeaningfulFill).toBe(true)
   })
 })

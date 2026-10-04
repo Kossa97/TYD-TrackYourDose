@@ -35,6 +35,11 @@ export interface DropsVisualProps {
   focus?: number
   lightOffset?: number
   stageLightRef?: Ref<StageLightHandle>
+  /**
+   * Wie voll der angebrochene Behaelter ist, 0–100 — aus dem Bestand. Ohne
+   * Angabe die volle Flasche, wie sie im Regal steht.
+   */
+  fillPct?: number
 }
 
 const clamp01 = (value: number) => (Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0)
@@ -87,6 +92,7 @@ export function DropsVisual({
   focus,
   lightOffset = 0,
   stageLightRef,
+  fillPct,
 }: DropsVisualProps) {
   const uid = useId()
   const reducedMotion = usePrefersReducedMotion()
@@ -284,7 +290,7 @@ export function DropsVisual({
         <g data-drops-detail="liquid-window" clipPath={`url(#${uid}-innerClip)`}>
           <LiquidGraphic
             uid={`${uid}-liquid`}
-            fill={DROPS_FILL}
+            fill={fillPct == null ? DROPS_FILL : DROPS_FILL * clamp01(fillPct / 100)}
             chamberAspect={chamber.aspect}
             x={chamber.x}
             y={chamber.y}

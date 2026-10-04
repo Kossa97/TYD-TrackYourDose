@@ -1829,19 +1829,24 @@ describe('MyStackPage non-vial visibility', () => {
 describe('Füllstandsanzeige im Karussell', () => {
   it('bindet die Prozentzeile an die Form statt an die Darreichungsform', () => {
     // Die Buehne liegt seit der Aufteilung in page/VialCarousel.tsx.
-    const source = ['MyStackPage.tsx', 'page/VialCarousel.tsx']
+    const source = ['MyStackPage.tsx', 'page/VialCarousel.tsx', 'page/model.ts']
       .map(file => readFileSync(resolve(`src/features/my-stack/${file}`), 'utf8'))
       .join('\n')
 
     expect(source).toContain('hasMeaningfulFill')
+    expect(source).toContain("const showsFillPct = pegel !== null || anbruchArt(p.dosage_form) === 'vial'")
     expect(source).toContain('isActive && showsFillPct')
     // no branching on the dosage form itself — a new form must only have to
     // declare its capabilities, not be added here as well
     expect(source).not.toMatch(/dosage_form === '/)
   })
 
-  it('kennt genau eine Glasform mit aussagekräftigem Füllstand', () => {
+  it('kennt die Glasformen mit aussagekräftigem Füllstand', () => {
     expect(getDosageForm('vial').stageForm?.hasMeaningfulFill).toBe(true)
+    // Flaschen, die man ueber Wochen leert — mit gefuehrtem Bestand.
+    for (const form of ['spray', 'nasal_spray', 'drops'] as const) {
+      expect(getDosageForm(form).stageForm?.hasMeaningfulFill, form).toBe(true)
+    }
     expect(getDosageForm('ampoule').stageForm?.hasMeaningfulFill).toBe(false)
   })
 })

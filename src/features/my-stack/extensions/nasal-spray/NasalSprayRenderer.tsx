@@ -19,6 +19,8 @@ export interface NasalSprayRendererProps {
   lightOffset?: number
   stageLightRef?: Ref<StageLightHandle>
   sloshEngine?: SloshEngine
+  /** Wie voll der angebrochene Behaelter ist, 0–100. */
+  fillPct?: number
 }
 
 // "24 IU / spray" — Wirkstoff je Sprühstoß, wie es auf der Flasche steht.

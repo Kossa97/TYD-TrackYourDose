@@ -2088,6 +2088,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             timeZone={timeZone}
             animationEpoch={animationEpoch}
             openDetail={oeffneVollbild}
+            openEdit={openEditPeptide}
+            remove={removePeptide}
             aktivAlt={FEATURES.planTimelineV2 ? null : activePeptideIds}
             hervorgehobenId={hervorgehobenId}
             hervorhebungGesehen={hervorhebungGesehen}

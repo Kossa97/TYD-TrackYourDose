@@ -133,14 +133,34 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
   })
 
   it('gibt jeder Form eine Staerke-Form und einen Hinweis dazu', () => {
+    // Je Stueck: Spray, Tablette, Pflaster mit eigenem Beispiel; die
+    // Kapsel behaelt den allgemeinen Satz.
+    const erwartet: Record<string, string> = {
+      vial: 'my_stack_strength_hint_reconstituted',
+      ampoule: 'my_stack_strength_hint_per_volume',
+      pen: 'my_stack_strength_hint_per_volume',
+      tablet: 'my_stack_strength_hint_per_unit_tablet',
+      capsule: 'my_stack_strength_hint_per_unit',
+      drops: 'my_stack_strength_hint_per_volume',
+      powder: 'my_stack_strength_hint_per_mass',
+      nasal_spray: 'my_stack_strength_hint_per_unit_spray',
+      spray: 'my_stack_strength_hint_per_unit_spray',
+      gel: 'my_stack_strength_hint_per_mass',
+      patch: 'my_stack_strength_hint_per_unit_patch',
+      tube: 'my_stack_strength_hint_per_mass',
+      other: 'my_stack_no_dosage_advice',
+    }
+    expect(DOSAGE_FORMS.map(form => form.key).sort()).toEqual(Object.keys(erwartet).sort())
     for (const form of DOSAGE_FORMS) {
       expect(form.strengthShape, form.key).toBeTruthy()
-      expect(strengthHintKey(form.key), form.key).toBe(
-        form.strengthShape === 'free'
-          ? 'my_stack_no_dosage_advice'
-          : `my_stack_strength_hint_${form.strengthShape}`,
-      )
+      expect(strengthHintKey(form.key), form.key).toBe(erwartet[form.key])
     }
+  })
+
+  it('nennt beim Nasenspray ein Beispiel in Spruehstoessen, nicht in Kapseln', () => {
+    expect(strengthHintKey('nasal_spray')).toBe('my_stack_strength_hint_per_unit_spray')
+    expect(strengthHintKey('spray')).toBe('my_stack_strength_hint_per_unit_spray')
+    expect(strengthHintKey('capsule')).toBe('my_stack_strength_hint_per_unit')
   })
 
   it('ordnet jede Form der Staerke zu, die sie tatsaechlich hat', () => {

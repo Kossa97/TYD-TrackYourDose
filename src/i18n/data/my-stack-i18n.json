@@ -526,6 +526,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -543,7 +544,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1072,6 +1076,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -1089,7 +1094,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1618,6 +1626,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -1635,7 +1644,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2164,6 +2176,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -2181,7 +2194,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2710,6 +2726,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -2727,7 +2744,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3256,6 +3276,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -3273,7 +3294,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3802,6 +3826,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -3819,7 +3844,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4348,6 +4376,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -4365,7 +4394,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4894,6 +4926,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -4911,7 +4944,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5440,6 +5476,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -5457,7 +5494,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5986,6 +6026,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -6003,7 +6044,10 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6532,6 +6576,7 @@
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
     "my_stack_list_open": "Open {{name}}",
+    "my_stack_list_group_attention": "Needs attention",
     "my_stack_expired_full_today": "Expired today!",
     "my_stack_expired_full_day": "Expired 1 day ago!",
     "my_stack_expired_full_days": "Expired {{n}} days ago!",
@@ -6549,6 +6594,9 @@
     "my_stack_stock_container_size": "{{amount}} each",
     "my_stack_basis_unit_choose": "Please choose",
     "my_stack_basis_unit_custom": "Other unit …",
-    "my_stack_basis_unit_from_list": "Choose from list"
+    "my_stack_basis_unit_from_list": "Choose from list",
+    "my_stack_strength_hint_per_unit_spray": "How much active ingredient is in ONE spray? Enter the figure from the packaging. Example: 125 mcg per 1 spray. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_tablet": "How much active ingredient is in ONE tablet? Enter the figure from the packaging. Example: 500 mg per 1 tablet. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+    "my_stack_strength_hint_per_unit_patch": "How much active ingredient is in ONE patch? Enter the figure from the packaging. Example: 25 mcg per 1 patch. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation."
   }
 }

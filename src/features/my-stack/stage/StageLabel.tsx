@@ -100,6 +100,7 @@ export function StageLabel({
 }: StageLabelProps) {
   return (
     <div
+      data-stage-label
       {...wrapperProps}
       // Die Aufschrift steht MITTIG im Band — bei jeder Form gleich.
       //

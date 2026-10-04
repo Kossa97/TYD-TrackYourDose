@@ -83,8 +83,9 @@ export const SPRAY_DIP_TUBE = { x: 58.4, width: 3.2, top: 112, bottom: 284 } as 
 
 // Etwas weniger voll als das Nasenspray (0,94): erst dadurch steht das
 // Steigrohr ein Stueck frei im Kopfraum und ist als Rohr zu erkennen. Tiefer
-// als das hier sah die Flasche halb leer aus — bei hasMeaningfulFill: false
+// als das hier sah die Flasche halb leer aus — und ohne gefuehrten Bestand
 // waere das eine Behauptung ueber einen Stand, den die App nicht kennt.
+// Mit Bestand skaliert der Pegel von hier aus (`fillPct`).
 export const SPRAY_FILL = 0.88
 
 // Der gerade Teil des Innenraums. Das haelt die Kammer rechteckig, so braucht
@@ -119,7 +120,7 @@ export const SPRAY_HEAD_LIGHT_SHIFT = 8
 export const SPRAY_SPEC: StageFormSpec = {
   viewBox: SPRAY_VIEWBOX,
   chamber: SPRAY_CHAMBER,
-  // Wie beim Nasenspray: die App kennt den Stand der offenen Flasche nicht.
-  // Die Grafik zeigt das Objekt, eine Prozentzahl waere eine Behauptung.
-  hasMeaningfulFill: false,
+  // Wie beim Nasenspray: mit gefuehrtem Bestand sagt der Pegel, wie voll die geoeffnete Flasche
+  // ist (`fuellstandFuer`); ohne steht sie voll da.
+  hasMeaningfulFill: true,
 }

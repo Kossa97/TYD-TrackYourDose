@@ -39,6 +39,11 @@ export interface SprayVisualProps {
   focus?: number
   lightOffset?: number
   stageLightRef?: Ref<StageLightHandle>
+  /**
+   * Wie voll der angebrochene Behaelter ist, 0–100 — aus dem Bestand. Ohne
+   * Angabe die volle Flasche, wie sie im Regal steht.
+   */
+  fillPct?: number
 }
 
 const clamp01 = (value: number) => (Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0)
@@ -74,6 +79,7 @@ export function SprayVisual({
   focus,
   lightOffset = 0,
   stageLightRef,
+  fillPct,
 }: SprayVisualProps) {
   const uid = useId()
   const reducedMotion = usePrefersReducedMotion()
@@ -294,7 +300,7 @@ export function SprayVisual({
         <g data-spray-detail="liquid-window" clipPath={`url(#${uid}-innerClip)`}>
           <LiquidGraphic
             uid={`${uid}-liquid`}
-            fill={SPRAY_FILL}
+            fill={fillPct == null ? SPRAY_FILL : SPRAY_FILL * clamp01(fillPct / 100)}
             chamberAspect={SPRAY_CHAMBER.aspect}
             x={SPRAY_CHAMBER.x}
             y={SPRAY_CHAMBER.y}

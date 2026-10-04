@@ -25,6 +25,7 @@ export function VialPositionRow({ stagePeptides, activeIndex, addTileActive, sel
   const { t } = useTranslation()
   return (
     <div data-vial-position className="mb-2 mt-1 flex h-2.5 shrink-0 items-center justify-center">
+      <div className="relative flex items-center">
       <button
         type="button"
         onClick={selectAddTile}
@@ -67,6 +68,17 @@ export function VialPositionRow({ stagePeptides, activeIndex, addTileActive, sel
           />
         </div>
       )}
+      {/* „2 / 5" gehoert zur Position, nicht zur Haltbarkeit: hier unten
+          bricht es nie um, oben schob ein langer Hinweis („Seit 8 Tagen
+          abgelaufen!") die Zaehlung in eine eigene Zeile. */}
+      {/* Absolut daneben: die Punkte bleiben mittig unter der Buehne und
+          springen nicht, wenn die Zaehlung bei der „Neu"-Kachel verschwindet. */}
+      {!addTileActive && stagePeptides.length > 0 && (
+        <span data-vial-counter className="absolute left-full top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap text-[10px] font-semibold leading-none tabular-nums text-slate-500">
+          {activeIndex + 1} / {stagePeptides.length}
+        </span>
+      )}
+      </div>
     </div>
   )
 }

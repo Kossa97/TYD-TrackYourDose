@@ -5,7 +5,8 @@ import { seedPeptide } from './support/myStack'
  * My Stack als Liste: je Substanz eine kompakte Zeile — fuer jede
  * Darreichungsform gleich: Name, aktiv/inaktiv, Zusammensetzung,
  * Haltbarkeit. Ein Tipp oeffnet das Vollbild; Bearbeiten und Loeschen
- * stehen dort, nicht auf der Zeile.
+ * stehen dort — und unter der Zeile, wenn man sie nach links wischt.
+ * Gegliedert nach Dringlichkeit: Ablaufendes zuerst, dann aktiv, inaktiv.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -43,7 +44,7 @@ test('Liste: Name, Zusammensetzung, Haltbarkeit und aktiv/inaktiv — für jede 
   await expect(magnesium).toContainText('400 mg / 1 Tablette')
   await expect(magnesium.locator('[data-haltbarkeit="bald"]')).toHaveText('Haltbar noch 3 Tage')
 
-  // Nur diese vier Angaben: keine Einnahme, kein Vorrat, keine Aktionen.
+  // Nur diese vier Angaben: keine Einnahme, kein Vorrat, keine sichtbaren Aktionen.
   await expect(bpc).not.toContainText('250 mcg')
   await expect(bpc).not.toContainText('Vials')
   await expect(bpc.getByRole('button', { name: 'Löschen' })).toHaveCount(0)
@@ -129,4 +130,84 @@ test('Nasenspray: Einnahme in Sprühstößen, Bestand in Sprays, Knopf „Neues 
   // Zusammensetzung: je Sprühstoß, übersetzt.
   await expect(detail.locator('[data-stack-detail-field="wirkstoff"]')).toContainText('Wirkstoff pro Sprühstoß')
   await expect(detail.locator('[data-stack-detail-field="wirkstoff"]')).toContainText('125 mcg / 1 Sprühstoß')
+})
+
+/** Zieht die Zeile mit dem Zeiger waagerecht um `dx` Pixel. */
+async function wische(page: import('@playwright/test').Page, row: import('@playwright/test').Locator, dx: number) {
+  const box = (await row.boundingBox())!
+  const y = box.y + box.height / 2
+  const x = box.x + box.width * 0.7
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  for (let i = 1; i <= 6; i++) await page.mouse.move(x + (dx * i) / 6, y)
+  await page.mouse.up()
+}
+
+test('Liste: nach links wischen zeigt Bearbeiten und Löschen; Tipp daneben schließt', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+
+  const bpc = zeile(page, 'BPC-157')
+  await expect(bpc.getByRole('button', { name: 'Löschen' })).toHaveCount(0)
+  await wische(page, bpc, -160)
+  await expect(bpc).toHaveAttribute('data-list-open', 'true')
+  await expect(bpc.getByRole('button', { name: 'Bearbeiten' })).toBeVisible()
+  // Gewischt ist nicht getippt: kein Vollbild.
+  await expect(page.getByRole('dialog', { name: 'BPC-157' })).toHaveCount(0)
+
+  // Ein Tipp auf eine andere Zeile schliesst die offene — und oeffnet die andere.
+  await zeile(page, 'TB-500').getByRole('button', { name: 'TB-500 öffnen' }).click()
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+  await expect(page.getByRole('dialog', { name: 'TB-500' })).toBeVisible()
+  await page.goBack()
+
+  // Kurz gezogen rastet zurueck.
+  await wische(page, bpc, -40)
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+
+  // Loeschen fragt wie im Vollbild nach.
+  await wische(page, bpc, -160)
+  await bpc.getByRole('button', { name: 'Löschen' }).click()
+  await expect(page.getByRole('dialog', { name: 'Substanz entfernen' })).toBeVisible()
+})
+
+test('Liste: Bearbeiten aus dem Wischen öffnet das Formular', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  const bpc = zeile(page, 'BPC-157')
+  await wische(page, bpc, -160)
+  await bpc.getByRole('button', { name: 'Bearbeiten' }).click()
+  await expect(page.getByRole('dialog').filter({ hasText: 'BPC-157' }).first()).toBeVisible()
+  await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+})
+
+test('Liste: gegliedert nach Dringlichkeit — Ablaufendes zuerst, dann aktiv, dann inaktiv', async ({ page, mock }) => {
+  seedPeptide(mock, 'Magnesium', {
+    startDate: '2026-09-01',
+    category: 'supplement',
+    plan: false,
+    form: { dosage_form: 'tablet', zutat: { amount_value: 400, amount_unit: 'mg', basis_value: 1, basis_unit: 'tablet' } },
+  })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'BPC-157', {
+    startDate: '2026-09-01',
+    inventory: { package_quantity: 5, package_unit: 'vial', remaining_quantity: 3, reconstitution_ml: 2, expires_at: '2026-09-20' },
+  })
+  await page.goto('/my-stack')
+
+  await expect(page.locator('[data-list-group-title]')).toHaveText(['Braucht Aufmerksamkeit', 'Aktiv', 'Inaktiv'])
+  // Ablaufendes zuerst, dann aktiv, dann inaktiv.
+  await expect(page.getByRole('button', { name: / öffnen$/ })).toHaveText([/BPC-157/, /TB-500/, /Magnesium/])
+  await expect(zeile(page, 'BPC-157')).toHaveAttribute('data-list-group', 'achtung')
+  await expect(zeile(page, 'TB-500')).toHaveAttribute('data-list-group', 'aktiv')
+  await expect(zeile(page, 'Magnesium')).toHaveAttribute('data-list-group', 'inaktiv')
+})
+
+test('Liste: nur eine Gruppe — keine Überschrift', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  await page.goto('/my-stack')
+  await expect(page.locator('[data-list-row]')).toHaveCount(2)
+  await expect(page.locator('[data-list-group-title]')).toHaveCount(0)
 })

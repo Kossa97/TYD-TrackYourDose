@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CyclePlanVersion, CycleTimeline } from '../../../lib/planTimeline'
 import type { StackItemInventory } from '../types'
-import { haltbarkeitFuer, istAktiv } from './listRow'
+import { gruppeVon, haltbarkeitFuer, istAktiv } from './listRow'
 
 const timeZone = 'Europe/Berlin'
 const now = new Date('2026-09-25T08:00:00.000Z')
@@ -86,5 +86,23 @@ describe('istAktiv', () => {
     expect(istAktiv([timeline({}, { ended_at: '2026-09-10T10:00:00.000Z', end_local_date: '2026-09-10' })], now, timeZone)).toBe(false)
     expect(istAktiv([timeline({ pauses: [{ id: 'p1', cycle_id: 'cycle-1', paused_at: '2026-09-20T10:00:00.000Z', ends_at: null }] })], now, timeZone)).toBe(false)
     expect(istAktiv([timeline({}, { started_at: '2026-10-04T22:00:00.000Z', start_local_date: '2026-10-05' })], now, timeZone)).toBe(false)
+  })
+})
+
+describe('gruppeVon', () => {
+  const haltbar = (tage: number) => ({ bis: '2026-10-01', tage, anbruchAbgelaufen: false })
+
+  it('abgelaufen oder binnen 7 Tagen: braucht Aufmerksamkeit — aktiv oder nicht', () => {
+    expect(gruppeVon(true, haltbar(-3))).toBe('achtung')
+    expect(gruppeVon(false, haltbar(7))).toBe('achtung')
+  })
+
+  it('sonst aktiv vor inaktiv', () => {
+    expect(gruppeVon(true, haltbar(8))).toBe('aktiv')
+    expect(gruppeVon(false, null)).toBe('inaktiv')
+  })
+
+  it('solange die Plaene laden: keine Aussage, also aktiv', () => {
+    expect(gruppeVon(null, null)).toBe('aktiv')
   })
 })

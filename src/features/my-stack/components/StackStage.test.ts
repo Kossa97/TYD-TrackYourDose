@@ -260,13 +260,13 @@ describe('StackStage — Nasenspray', () => {
     expect(html).toContain('24 IU / my_stack_stock_unit_spray_single')
   })
 
-  it('reicht keinen Füllstand an das Nasenspray durch', () => {
+  it('reicht den Füllstand aus dem Bestand an das Nasenspray durch', () => {
     const source = readFileSync(new URL('../extensions/nasal-spray/NasalSprayRenderer.tsx', import.meta.url), 'utf8')
 
     expect(source).toContain('NasalSprayVisual')
     expect(source).toContain('SloshProvider')
     expect(source).not.toContain('<svg')
-    expect(source).not.toContain('fillPct')
+    expect(source).toContain('fillPct?: number')
   })
 
   it('gibt dem generischen spray-Schlüssel seine eigene Flasche', () => {

@@ -1626,8 +1626,34 @@ main.flex-1 {
 [data-theme="light"] [data-haltbarkeit="gut"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
 [data-theme="light"] [data-haltbarkeit="bald"] { color: #92400e; background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
 [data-theme="light"] [data-expired-badge] { color: #b91c1c; }
+
+/* Vollbild einer Substanz im hellen Design. (Klassen, keine
+   [class*=…]-Muster: die traefen auch hover:-Varianten und faerbten etwa den
+   Stift dauerhaft ein.) Seine Akzente sind fuer dunklen
+   Grund gemischt: helle Schrift (cyan-/emerald-/amber-100…300) auf
+   getoentem Glas und dunkle, halbdurchsichtige Flaechen. Auf hellem Grund
+   waren Knoepfe wie „Neu rekonstituieren" und „Plan & Verlauf öffnen"
+   kaum lesbar und die Plan-Karte ein graues Feld. Hier dieselben Toene,
+   dunkel gesetzt; die Flaechen werden zu einem Hauch Farbe. */
+[data-theme="light"] [data-stage-detail] :is(.text-cyan-100, .text-cyan-200, .text-cyan-300, .text-sky-100, .text-sky-200, .text-sky-300) { color: #0e7490; }
+[data-theme="light"] [data-stage-detail] :is(.text-emerald-100, .text-emerald-200, .text-emerald-300) { color: #047857; }
+[data-theme="light"] [data-stage-detail] :is(.text-amber-100, .text-amber-200, .text-amber-300, .text-yellow-200, .text-amber-200\/90) { color: #92400e; }
+[data-theme="light"] [data-stage-detail] :is(.text-violet-100, .text-violet-200, .text-violet-300) { color: #6d28d9; }
+[data-theme="light"] [data-stage-detail] :is(.text-red-300, .text-rose-100, .text-rose-200, .text-rose-300) { color: #b91c1c; }
+[data-theme="light"] [data-stage-detail] .text-indigo-300 { color: #4338ca; }
+/* Nur die Klasse selbst, keine hover:/focus:-Variante (Anfang oder nach
+   Leerzeichen), und nicht das Glas-Etikett der Buehne — das sieht ueberall
+   gleich aus. */
+[data-theme="light"] [data-stage-detail] :is([class^="bg-emerald-950/"], [class*=" bg-emerald-950/"]):not([data-stage-label], [data-stage-label] *) { background-color: rgba(16, 185, 129, 0.06); }
+[data-theme="light"] [data-stage-detail] :is([class^="bg-white/"], [class*=" bg-white/"], [class^="bg-black/"], [class*=" bg-black/"]):not([data-stage-label], [data-stage-label] *) { background-color: rgba(15, 23, 42, 0.035); }
+[data-theme="light"] [data-stage-detail] :is([class^="border-white/"], [class*=" border-white/"]):not([data-stage-label], [data-stage-label] *) { border-color: rgba(15, 23, 42, 0.12); }
+/* Etiketten auf Glas: seit Spray und Tropfflasche ihren Pegel zeigen, steht
+   die weisse Aufschrift oft auf leerem Glas — auf hellem Grund kaum lesbar.
+   Ein weicher dunkler Schatten traegt sie. */
+[data-theme="light"] [data-stage-label] { text-shadow: 0 1px 3px rgba(15, 23, 42, 0.8); }
 [data-theme="light"] [data-expired-badge] .tyd-expired-icon { color: #dc2626; }
 [data-theme="light"] [data-list-status="aktiv"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
+[data-theme="light"] [data-list-group-title="achtung"] { color: #b91c1c; }
 
 /* Vial label: restore transparency in light mode.
    The global bg-slate-950/* override replaces rgba(2,6,23,0.82) with a

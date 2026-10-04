@@ -48,8 +48,7 @@ export const NASAL_SPRAY_SPEC: StageFormSpec = {
   // braucht die Geometrie kein Breitenprofil für die Schulter — derselbe
   // Kunstgriff, den Vial und Ampulle schon benutzen.
   chamber: { x: 24, y: 157, width: 72, height: 134, aspect: 72 / 134 },
-  // Die App kennt den Stand der offenen Flasche nicht: getVialFillPct liest
-  // vials_in_stock, ein vial-spezifisches Altfeld. Die Grafik zeigt das
-  // Objekt, eine Prozentzahl wäre eine Behauptung.
-  hasMeaningfulFill: false,
+  // Mit gefuehrtem Bestand sagt der Pegel, wie voll die geoeffnete Flasche
+  // ist (`fuellstandFuer`); ohne steht sie voll da.
+  hasMeaningfulFill: true,
 }

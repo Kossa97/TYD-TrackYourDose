@@ -146,6 +146,12 @@ export function strengthHintKey(
   // als Pulver vor). Der Satz nennt deshalb den Ausweg, statt ihn dem Nutzer
   // zu ueberlassen.
   if (shape === 'per_volume' && key === 'vial') return 'my_stack_strength_hint_vial_solution'
+  // Je Stueck mit einem Beispiel aus der eigenen Form — beim Nasenspray nicht
+  // „500 mg pro 1 Kapsel". Die Kapsel behaelt den allgemeinen Satz.
+  if (shape === 'per_unit') {
+    const stueck = getDosageForm(key).intakeUnit
+    if (stueck === 'spray' || stueck === 'tablet' || stueck === 'patch') return `my_stack_strength_hint_per_unit_${stueck}`
+  }
   return `my_stack_strength_hint_${shape}`
 }
 
