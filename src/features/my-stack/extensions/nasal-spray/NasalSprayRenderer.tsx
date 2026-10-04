@@ -1,4 +1,7 @@
 import type { Ref } from 'react'
+import { useTranslation } from 'react-i18next'
+import { stockUnitSingular } from '../../lib/bestandLabels'
+import type { Translate } from '../../lib/planLabels'
 import { NasalSprayVisual } from './NasalSprayVisual'
 import { SloshProvider } from '../../../../components/SloshContext'
 import type { SloshEngine } from '../../../../components/sloshEngine'
@@ -20,21 +23,24 @@ export interface NasalSprayRendererProps {
 
 // "24 IU / spray" — Wirkstoff je Sprühstoß, wie es auf der Flasche steht.
 // Fehlende Teile bleiben weg statt durch einen Platzhalter ersetzt zu werden.
-function strengthLabel(item: StackItem): string | null {
+function strengthLabel(item: StackItem, t: Translate): string | null {
   const ingredient = item.ingredients[0]
   if (!ingredient?.amount_unit) return null
   return ingredient.basis_unit
-    ? `${ingredient.amount_unit} / ${ingredient.basis_unit}`
+    // Die Bezugseinheit uebersetzt: „Sprühstoß", nicht „spray" — sonst
+    // liest sich „/ Spray" wie „je Flasche".
+    ? `${ingredient.amount_unit} / ${stockUnitSingular(t, ingredient.basis_unit)}`
     : ingredient.amount_unit
 }
 
 export function NasalSprayRenderer({ item, sloshEngine, ...visualProps }: NasalSprayRendererProps) {
+  const { t } = useTranslation()
   const ingredient = item.ingredients[0]
   const spray = (
     <NasalSprayVisual
       name={item.display_name}
       amount={ingredient?.amount_value}
-      unit={strengthLabel(item)}
+      unit={strengthLabel(item, t)}
       color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />

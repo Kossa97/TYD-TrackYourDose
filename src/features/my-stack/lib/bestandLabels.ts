@@ -1,7 +1,7 @@
 import type { Translate } from './planLabels'
 import { formatLocalDay } from './localDays'
 import { getDosageForm } from './dosageForms'
-import { vorratTeile, type AnbruchArt, type Reichweite } from './bestand'
+import { anbruchArt, behaelterArt, behaelterGroesse, vorratTeile, type Reichweite } from './bestand'
 import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
 
 /** Texte zum Bestand — Zahlen mit Einheit, Reichweite. */
@@ -31,6 +31,13 @@ export function stockAmountLabel(t: Translate, value: number, unit: string | nul
 export function stockUnitName(t: Translate, unit: string): string {
   if (!BEKANNTE_EINHEITEN.has(unit)) return unit
   return String(t(`my_stack_stock_unit_${unit}_multiple`, { n: '' })).trim()
+}
+
+/** Nur das Wort der Einheit, in der Einzahl: „Sprühstoß", „Tropfen" — fuer „125 mcg / Sprühstoß". */
+export function stockUnitSingular(t: Translate, unit: string): string {
+  // Einheitenzeichen bleiben Zeichen; uebersetzt werden nur Woerter.
+  if (!BEKANNTE_EINHEITEN.has(unit) || unit === 'ml' || unit === 'g') return unit
+  return String(t(`my_stack_stock_unit_${unit}_single`, { n: '' })).trim()
 }
 
 export function daysLabel(t: Translate, days: number): string {
@@ -66,16 +73,31 @@ export function stockUnitChoices(form: DosageFormKey, ingredients: readonly Stac
   return [...new Set([...ausZutaten, ...getDosageForm(form).basisUnits])]
 }
 
+/** Der Knopf, der einen neuen Behaelter anbricht — je Form ein eigenes Wort. */
+export function neuAnbrechenLabel(t: Translate, form: DosageFormKey | null | undefined): string {
+  const key = {
+    vial: 'my_stack_stock_mix_new',
+    pen: 'my_stack_stock_open_new_pen',
+    spray: 'my_stack_stock_open_new_spray',
+    bottle: 'my_stack_stock_open_new_bottle',
+  }[behaelterArt(form) ?? 'bottle']
+  return String(t(key))
+}
+
 /**
- * Die Zahl oben: was noch da ist, in der Einheit der Packung. Beim Vial und bei
- * geoeffneten Flaschen getrennt nach vollen und dem angebrochenen Behaelter.
+ * Die Zahl oben: was noch da ist. Wo die Form Behaelter anbricht — Vial, Pen,
+ * Spray, Tropfflasche — in Behaeltern: „2 Sprays · + 1 geöffnet · 40 %".
+ * Gezaehlt wird darunter weiter in der Packungseinheit (Spruehstoesse …);
+ * ohne bekannte Behaeltergroesse bleibt es bei ihr.
  */
 export function vorratZeilen(
   t: Translate,
   inventory: StackItemInventory,
-  art: AnbruchArt | null,
+  form: DosageFormKey | null | undefined,
   language: string,
 ): { gross: string; klein: string | null; anteil: number } {
+  const art = anbruchArt(form)
+  const behaelter = behaelterArt(form)
   const teile = vorratTeile(inventory)
   const einheit = inventory.package_unit
   const packung = inventory.package_quantity
@@ -86,6 +108,27 @@ export function vorratZeilen(
       klein: teile.angebrochenAnteil != null
         ? String(t('my_stack_stock_mixed_extra', { percent: Math.round(teile.angebrochenAnteil * 100) }))
         : null,
+      anteil,
+    }
+  }
+  const groesse = behaelterGroesse(inventory)
+  if (behaelter && behaelter !== 'vial' && groesse && einheit) {
+    const behaelterText = (anzahl: number) => String(t(
+      `my_stack_stock_container_${behaelter}_${anzahl === 1 ? 'single' : 'multiple'}`,
+      { n: formatAmount(anzahl, language) },
+    ))
+    const groesseText = String(t('my_stack_stock_container_size', { amount: stockAmountLabel(t, groesse, einheit, language) }))
+    // „Geöffnet" nur, wenn wirklich einer geoeffnet ist — dieselbe Teilung,
+    // nach der der Knopf „Neues Spray öffnen" sperrt. Ohne Oeffnungsdatum
+    // sind es schlicht so viele Behaelter, notfalls mit Komma.
+    if (teile.angebrochenAnteil == null) {
+      return { gross: behaelterText(Math.round(teile.rest / groesse * 10) / 10), klein: groesseText, anteil }
+    }
+    return {
+      gross: behaelterText(teile.voll),
+      klein: String(t(behaelter === 'pen' ? 'my_stack_stock_pen_extra' : 'my_stack_stock_bottle_extra', {
+        percent: Math.max(1, Math.round(teile.angebrochenAnteil * 100)),
+      })),
       anteil,
     }
   }

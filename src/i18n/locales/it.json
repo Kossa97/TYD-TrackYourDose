@@ -1457,5 +1457,17 @@
   "my_stack_list_open": "Open {{name}}",
   "my_stack_expired_full_today": "Expired today!",
   "my_stack_expired_full_day": "Expired 1 day ago!",
-  "my_stack_expired_full_days": "Expired {{n}} days ago!"
+  "my_stack_expired_full_days": "Expired {{n}} days ago!",
+  "my_stack_stock_open_new_spray": "Open a new spray",
+  "my_stack_stock_unopened_spray": "Unopened sprays",
+  "my_stack_stock_opened_spray": "Opened spray",
+  "my_stack_stock_container_pen_single": "{{n}} pen",
+  "my_stack_stock_container_pen_multiple": "{{n}} pens",
+  "my_stack_stock_container_spray_single": "{{n}} spray",
+  "my_stack_stock_container_spray_multiple": "{{n}} sprays",
+  "my_stack_stock_container_bottle_single": "{{n}} bottle",
+  "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
+  "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
+  "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
+  "my_stack_stock_container_size": "{{amount}} each"
 }

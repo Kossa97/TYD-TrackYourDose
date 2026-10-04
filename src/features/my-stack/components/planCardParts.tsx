@@ -2,8 +2,8 @@ import { Moon, Sun, Sunrise } from 'lucide-react'
 import type { ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import { WEEKDAY_KEYS } from '../lib/intakeRhythm'
 import type { PlanCardSlot, PlanStepRow } from '../lib/planCard'
-import { aufzuziehendeEinheiten, type SpritzenRechnung } from '../lib/bestand'
-import { formatAmount } from '../lib/bestandLabels'
+import { aufzuziehendeEinheiten, stueckZahl, type SpritzenRechnung, type StueckRechnung } from '../lib/bestand'
+import { formatAmount, stockAmountLabel } from '../lib/bestandLabels'
 import {
   chipLabels,
   routineLabel,
@@ -49,6 +49,29 @@ function drawUnits(slot: PlanCardSlot, syringe: SpritzenRechnung | null | undefi
 }
 
 /**
+ * Was die Menge einer Einnahme praktisch heisst: beim angemischten Vial die
+ * Einheiten auf der Spritze („= 6 E aufziehen"), bei allem, was man zaehlt,
+ * die Stueckzahl („= 2 Sprühstöße", „= 1 Tablette"). `kurz` fuer die
+ * Stufen-Zeilen: „6 E", „2 Sprühstöße".
+ */
+function einnahmeHinweis(
+  slot: PlanCardSlot,
+  syringe: SpritzenRechnung | null | undefined,
+  stueck: StueckRechnung | null | undefined,
+  t: Translate,
+  language: string,
+  kurz: boolean,
+): string | null {
+  const units = drawUnits(slot, syringe, language)
+  if (units) return String(t(kurz ? 'my_stack_plan_units_short' : 'my_stack_plan_draw_units', { units }))
+  if (!stueck) return null
+  const anzahl = stueckZahl(slot.dose, slot.unit, stueck)
+  if (anzahl == null) return null
+  const text = stockAmountLabel(t, anzahl, stueck.stueck, language)
+  return kurz ? text : `= ${text}`
+}
+
+/**
  * Woraus die Spritzeneinheiten berechnet sind — damit „3 E" nachpruefbar ist:
  * „aus 50 mg auf 1,5 ml (33,3 mg/ml)".
  */
@@ -64,9 +87,9 @@ export function SyringeNote({ syringe, language, t }: { syringe: SpritzenRechnun
   )
 }
 
-export function CurrentSlotRow({ slot, language, t, syringe }: { slot: PlanCardSlot; language: string; t: Translate; syringe?: SpritzenRechnung | null }) {
+export function CurrentSlotRow({ slot, language, t, syringe, stueck }: { slot: PlanCardSlot; language: string; t: Translate; syringe?: SpritzenRechnung | null; stueck?: StueckRechnung | null }) {
   const dose = slotDoseLabel(slot)
-  const units = drawUnits(slot, syringe, language)
+  const hinweis = einnahmeHinweis(slot, syringe, stueck, t, language, false)
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
       <RoutineIcon group={slot.routineGroup} />
@@ -81,7 +104,7 @@ export function CurrentSlotRow({ slot, language, t, syringe }: { slot: PlanCardS
       {dose && (
         <p className="flex flex-col items-end whitespace-nowrap">
           <span className="text-base font-bold text-white">{dose}</span>
-          {units && <span className="text-xs font-semibold text-cyan-300">{String(t('my_stack_plan_draw_units', { units }))}</span>}
+          {hinweis && <span data-einnahme-hinweis className="text-xs font-semibold text-cyan-300">{hinweis}</span>}
         </p>
       )}
       {slot.days.length > 0 && (
@@ -118,9 +141,9 @@ export function ChangeMarker({ change, t }: { change: PlanStepRow['change']; t: 
   )
 }
 
-export function StepSlotRow({ row, language, t, syringe }: { row: PlanStepRow; language: string; t: Translate; syringe?: SpritzenRechnung | null }) {
+export function StepSlotRow({ row, language, t, syringe, stueck }: { row: PlanStepRow; language: string; t: Translate; syringe?: SpritzenRechnung | null; stueck?: StueckRechnung | null }) {
   const { slot, previous, change } = row
-  const units = change === 'removed' ? null : drawUnits(slot, syringe, language)
+  const hinweis = change === 'removed' ? null : einnahmeHinweis(slot, syringe, stueck, t, language, true)
   const quiet = change === 'same' || change === 'removed'
   const dose = slotDoseLabel(slot)
   const previousDose = previous ? slotDoseLabel(previous) : null
@@ -148,7 +171,7 @@ export function StepSlotRow({ row, language, t, syringe }: { row: PlanStepRow; l
           {doseMoved && previousDose && (
             <span className="text-[11px] font-medium text-slate-500">{previousDose} →</span>
           )}
-          <span>{dose}{units && <span className="font-semibold text-cyan-300"> · {String(t('my_stack_plan_units_short', { units }))}</span>}</span>
+          <span>{dose}{hinweis && <span className="font-semibold text-cyan-300"> · {hinweis}</span>}</span>
         </p>
       )}
     </li>

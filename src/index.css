@@ -32,8 +32,17 @@
   75% { opacity: 0.55; transform: scale(1.1); }
 }
 .tyd-expired-icon { animation: tyd-expired-icon 6s ease-in-out infinite; }
+/* Ein Knopf, der hilft (etwa „Neu rekonstituieren"), pulsiert im selben Takt
+   kaum sichtbar mit — kein Rahmen, kein Rot: alarmieren tut das Symbol. */
+@keyframes tyd-alarm-knopf {
+  0%, 11.7%, 23.3%, 35%, 46.7%, 65%, 85%, 100% { transform: scale(1); }
+  5.8%, 17.5%, 29.2%, 40.8% { transform: scale(1.025); }
+  75% { transform: scale(1.012); }
+}
+.tyd-alarm-knopf { animation: tyd-alarm-knopf 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .tyd-expired-icon { animation: none !important; }
+  .tyd-expired-icon,
+  .tyd-alarm-knopf { animation: none !important; }
 }
 
 /* Onboarding overlay — above app modals (z-50) while tour is active */

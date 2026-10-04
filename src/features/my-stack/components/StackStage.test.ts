@@ -256,7 +256,8 @@ describe('StackStage — Nasenspray', () => {
 
     expect(html).toContain('data-nasal-spray-detail="nozzle"')
     expect(html).toContain('Oxytocin')
-    expect(html).toContain('24 IU / spray')
+    // Die Bezugseinheit kommt uebersetzt („Sprühstoß“); der Test-Mock liefert den Schluessel.
+    expect(html).toContain('24 IU / my_stack_stock_unit_spray_single')
   })
 
   it('reicht keinen Füllstand an das Nasenspray durch', () => {

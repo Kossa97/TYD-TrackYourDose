@@ -18,8 +18,8 @@ import {
   type Translate,
 } from '../lib/planLabels'
 import { CurrentSlotRow, SyringeNote } from './planCardParts'
-import { aufzuziehendeEinheiten, type SpritzenRechnung } from '../lib/bestand'
-import { formatAmount } from '../lib/bestandLabels'
+import { aufzuziehendeEinheiten, stueckZahl, type SpritzenRechnung, type StueckRechnung } from '../lib/bestand'
+import { formatAmount, stockAmountLabel } from '../lib/bestandLabels'
 
 export interface PlanSummaryCardProps {
   timelines: CycleTimeline[]
@@ -31,6 +31,8 @@ export interface PlanSummaryCardProps {
   needsReview?: boolean
   /** Angemischtes Vial: je Einnahme die Einheiten auf der Spritze. */
   syringe?: SpritzenRechnung | null
+  /** Was man zaehlt (Spray, Tablette …): je Einnahme die Stueckzahl. */
+  stueck?: StueckRechnung | null
   /** Oeffnet die volle Plan-Uebersicht (Zyklusverwalter). */
   onOpen(): void
   onStartNew(): void
@@ -57,6 +59,7 @@ export function PlanSummaryCard({
   loadState = 'ready',
   needsReview = false,
   syringe = null,
+  stueck = null,
   onOpen,
   onStartNew,
 }: PlanSummaryCardProps) {
@@ -182,13 +185,21 @@ export function PlanSummaryCard({
   const nextStepUnits = syringe && nextStepSlots?.[0] && nextStepDoses?.size === 1
     ? aufzuziehendeEinheiten(nextStepSlots[0].dose, nextStepSlots[0].unit, syringe)
     : null
+  // Bei allem, was man zaehlt, die Stueckzahl: „600 mcg · 2 Sprühstöße".
+  const nextStepStueck = stueck && nextStepSlots?.[0] && nextStepDoses?.size === 1
+    ? stueckZahl(nextStepSlots[0].dose, nextStepSlots[0].unit, stueck)
+    : null
   const period = cyclePeriod(timeline, timeZone)
   const today = localDateTimeKey(now, timeZone).slice(0, 10)
   // Was die naechste Stufe aendert, in einem Wort: die neue Menge, wenn es
   // genau eine ist — sonst die Art der Stufe.
   const nextStepText = nextStep && nextStepDoses
     ? nextStepDoses.size === 1
-      ? [[...nextStepDoses][0], nextStepUnits != null ? String(tr('my_stack_plan_units_short', { units: formatAmount(nextStepUnits, language) })) : null].filter(Boolean).join(' · ')
+      ? [
+        [...nextStepDoses][0],
+        nextStepUnits != null ? String(tr('my_stack_plan_units_short', { units: formatAmount(nextStepUnits, language) })) : null,
+        nextStepStueck != null && stueck ? stockAmountLabel(tr, nextStepStueck, stueck.stueck, language) : null,
+      ].filter(Boolean).join(' · ')
       : stepKindLabel(nextStep.version, tr)
     : null
   const isActive = status === 'active'
@@ -225,7 +236,7 @@ export function PlanSummaryCard({
         </p>
         {slots.length > 0 && (
           <ul className="mt-2 space-y-1.5">
-            {slots.map(slot => <CurrentSlotRow key={slot.id} slot={slot} language={language} t={tr} syringe={syringe} />)}
+            {slots.map(slot => <CurrentSlotRow key={slot.id} slot={slot} language={language} t={tr} syringe={syringe} stueck={stueck} />)}
           </ul>
         )}
         {slots.length > 0 && syringe && <div className="mt-2"><SyringeNote syringe={syringe} language={language} t={tr} /></div>}

@@ -11,6 +11,8 @@ import {
   reichweite,
   spritzenEinheitenProMl,
   spritzenRechnung,
+  stueckRechnung,
+  stueckZahl,
   vialBuchtUeberBestand,
   vorratTeile,
 } from './bestand'
@@ -221,5 +223,34 @@ describe('dosisInPackungseinheit mit Gleitkomma', () => {
   it('treats deltas that are equal in exact arithmetic as equal', () => {
     const blend = [ingredient({ amount_value: 0.3, basis_value: 3 }), ingredient({ amount_value: 0.1, basis_value: 1 })]
     expect(dosisInPackungseinheit(0.2, 'mg', blend, inventory())).toBe(2)
+  })
+})
+
+describe('stueckRechnung / stueckZahl', () => {
+  const spray = ingredient({ amount_value: 300, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray' })
+
+  it('rechnet eine Einnahme in Stueck um — auch ueber mg und mcg', () => {
+    const rechnung = stueckRechnung([spray])!
+    expect(rechnung).toEqual({ proStueck: 300, einheit: 'mcg', stueck: 'spray' })
+    expect(stueckZahl(600, 'mcg', rechnung)).toBe(2)
+    expect(stueckZahl(0.6, 'mg', rechnung)).toBe(2)
+    expect(stueckZahl(250, 'mcg', rechnung)).toBe(0.8)
+  })
+
+  it('halbe Tabletten gibt es', () => {
+    const rechnung = stueckRechnung([ingredient({ amount_value: 500, amount_unit: 'mg', basis_value: 1, basis_unit: 'tablet' })])!
+    expect(stueckZahl(250, 'mg', rechnung)).toBe(0.5)
+  })
+
+  it('nichts, wenn die Menge schon in Stueck steht oder sich nicht umrechnen laesst', () => {
+    const rechnung = stueckRechnung([spray])!
+    expect(stueckZahl(2, 'spray', rechnung)).toBeNull()
+    expect(stueckZahl(5, 'IU', rechnung)).toBeNull()
+  })
+
+  it('nur bei genau einem Wirkstoff je Stueck', () => {
+    expect(stueckRechnung([spray, spray])).toBeNull()
+    expect(stueckRechnung([ingredient()])).toBeNull() // je Vial: dafuer gibt es die Spritze
+    expect(stueckRechnung([ingredient({ basis_unit: 'ml' })])).toBeNull()
   })
 })

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import type { CycleTimeline } from '../../../lib/planTimeline'
 import {
   anbruchArt,
+  behaelterArt,
   bestandAufteilen,
   bestandZusammensetzen,
   gueltigeFluessigkeit,
@@ -12,7 +13,7 @@ import {
   vorratTeile,
   type AnbruchArt,
 } from '../lib/bestand'
-import { reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
+import { neuAnbrechenLabel, reichweiteLabel, stockAmountLabel, stockUnitChoices, stockUnitName, vorratZeilen } from '../lib/bestandLabels'
 import type { InventoryPatch } from '../services/stackInventory'
 import type { DosageFormKey, StackItemIngredient, StackItemInventory } from '../types'
 import { denyProps } from '../../../lib/denyFeedback'
@@ -31,7 +32,7 @@ export interface BestandActions {
 }
 
 /**
- * „Bestand verfolgen", „Bestand aendern" und „Neues Vial anmischen". Die
+ * „Bestand verfolgen", „Bestand aendern" und „Neu rekonstituieren". Die
  * Angaben zur Packung (Charge, Anmischdatum, Haltbarkeit) aendert man ueber
  * „Bearbeiten" (`ProductInventorySection`), nicht hier.
  */
@@ -59,6 +60,7 @@ function BarFill({ fraction }: { fraction: number }) {
 interface EditorProps {
   editor: BestandEditorArt
   art: AnbruchArt | null
+  form: DosageFormKey
   inventory: StackItemInventory | null
   /** Ein ausgeschalteter Bestand: seine Zahlen fuellen „Bestand verfolgen" vor. */
   fallback: StackItemInventory | null
@@ -70,7 +72,7 @@ interface EditorProps {
   actions: BestandActions
 }
 
-function BestandEditor({ editor, art, inventory, fallback, choices, busy, language, onClose, onSubmit, actions }: EditorProps) {
+function BestandEditor({ editor, art, form, inventory, fallback, choices, busy, language, onClose, onSubmit, actions }: EditorProps) {
   const { t } = useTranslation()
   const id = useId()
   const inv = inventory ?? fallback
@@ -102,7 +104,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
   const TITEL: Record<BestandEditorArt, string> = {
     start: String(t('my_stack_stock_start')),
     correct: String(t('my_stack_stock_edit')),
-    open_new: art === 'vial' ? String(t('my_stack_stock_mix_new')) : art === 'pen' ? String(t('my_stack_stock_open_new_pen')) : String(t('my_stack_stock_open_new_bottle')),
+    open_new: neuAnbrechenLabel(t, form),
   }
 
   const zahlWert = zahl(menge)
@@ -165,7 +167,7 @@ function BestandEditor({ editor, art, inventory, fallback, choices, busy, langua
       )
       break
     case 'correct': {
-      const behaelter = art === 'vial' ? 'vial' : art === 'pen' ? 'pen' : 'bottle'
+      const behaelter = behaelterArt(form) ?? 'bottle'
       body = (
         <div className="grid gap-4">
           {aufteilung ? (
@@ -301,6 +303,7 @@ export function BestandEditorHost({ editor, dosageForm, inventory, ingredients, 
     <BestandEditor
       editor={editor}
       art={anbruchArt(dosageForm)}
+      form={dosageForm}
       inventory={inventory?.enabled ? inventory : null}
       fallback={inventory}
       choices={stockUnitChoices(dosageForm, ingredients)}
@@ -334,7 +337,7 @@ export function BestandCard({ dosageForm, inventory, ingredients, timelines, tim
   const range = useMemo(() => (
     aktiv ? reichweite({ inventory: aktiv, ingredients, timelines, now: now ?? new Date(), timeZone }) : null
   ), [aktiv, ingredients, timelines, now, timeZone])
-  const zeilen = aktiv ? vorratZeilen(t, aktiv, anbruchArt(dosageForm), language) : null
+  const zeilen = aktiv ? vorratZeilen(t, aktiv, dosageForm, language) : null
 
   return (
     <div

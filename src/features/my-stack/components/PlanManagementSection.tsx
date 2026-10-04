@@ -13,7 +13,7 @@ import { isOnDemandRhythm } from '../lib/intakeRhythm'
 import { laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import { cyclePeriod, inclusiveDayCount, planStepRows } from '../lib/planCard'
 import { CurrentSlotRow, StepSlotRow, SyringeNote } from './planCardParts'
-import type { SpritzenRechnung } from '../lib/bestand'
+import type { SpritzenRechnung, StueckRechnung } from '../lib/bestand'
 import {
   dateLabel,
   durationLabel,
@@ -49,6 +49,8 @@ export interface PlanManagementSectionProps {
   onResolveConflict?(): Promise<void>
   /** Angemischtes Vial: je Einnahme die Einheiten auf der Spritze. */
   syringe?: SpritzenRechnung | null
+  /** Was man zaehlt (Spray, Tablette …): je Einnahme die Stueckzahl. */
+  stueck?: StueckRechnung | null
 }
 
 type DialogState =
@@ -112,6 +114,7 @@ export function PlanManagementSection({
   needsReview = false,
   onResolveConflict,
   syringe = null,
+  stueck = null,
 }: PlanManagementSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || 'de'
@@ -471,7 +474,7 @@ export function PlanManagementSection({
               {panelSlots.length > 0 && (
                 <ul className="mt-3 space-y-2">
                   {panelSlots.map(slot => (
-                    <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} syringe={syringe} />
+                    <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} syringe={syringe} stueck={stueck} />
                   ))}
                 </ul>
               )}
@@ -596,7 +599,7 @@ export function PlanManagementSection({
                       {rows.length > 0 && (
                         <ul className="mt-2 space-y-1.5">
                           {rows.map(row => (
-                            <StepSlotRow key={`${row.change}-${row.slot.id}`} row={row} language={language} t={t} syringe={syringe} />
+                            <StepSlotRow key={`${row.change}-${row.slot.id}`} row={row} language={language} t={t} syringe={syringe} stueck={stueck} />
                           ))}
                         </ul>
                       )}

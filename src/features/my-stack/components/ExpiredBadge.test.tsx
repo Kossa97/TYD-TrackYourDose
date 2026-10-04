@@ -41,6 +41,6 @@ describe('ExpiredBadge', () => {
   it('das Symbol blinkt endlos, bei weniger Bewegung steht es still', () => {
     expect(block).toMatch(/\.tyd-expired-icon\s*\{\s*animation:[^;]*\b6s\b[^;]*\binfinite\b/)
     const reduziert = block.slice(block.indexOf('@media (prefers-reduced-motion: reduce)'))
-    expect(reduziert).toContain('.tyd-expired-icon { animation: none !important; }')
+    expect(reduziert).toMatch(/\.tyd-expired-icon,\s*\.tyd-alarm-knopf \{ animation: none !important; \}/)
   })
 })

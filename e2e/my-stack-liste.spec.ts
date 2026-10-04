@@ -101,7 +101,7 @@ test('Vollbild: Haltbarkeit oben links; abgelaufen angemischt — der Anmisch-Kn
   await page.getByRole('button', { name: 'BPC-157 öffnen' }).click()
   const detail = page.getByRole('dialog', { name: 'BPC-157' })
   await expect(detail.locator('[data-stage-detail-top-left] [data-expired-badge]')).toHaveText('Seit 11 Tagen abgelaufen!')
-  await expect(detail.getByRole('button', { name: 'Neues Vial anmischen' }).locator('[data-anmischen-alarm]')).toBeVisible()
+  await expect(detail.getByRole('button', { name: 'Neu rekonstituieren' })).toHaveAttribute('data-anmischen-alarm', 'true')
   await page.goBack()
 
   // Nicht abgelaufen: Haltbarkeit oben links, der Knopf bleibt ruhig.
@@ -109,4 +109,24 @@ test('Vollbild: Haltbarkeit oben links; abgelaufen angemischt — der Anmisch-Kn
   const tb = page.getByRole('dialog', { name: 'TB-500' })
   await expect(tb.locator('[data-stage-detail-top-left] [data-haltbarkeit="gut"]')).toBeVisible()
   await expect(tb.locator('[data-anmischen-alarm]')).toHaveCount(0)
+})
+
+test('Nasenspray: Einnahme in Sprühstößen, Bestand in Sprays, Knopf „Neues Spray öffnen"', async ({ page, mock }) => {
+  seedPeptide(mock, 'Semax', {
+    startDate: '2026-09-01',
+    form: { dosage_form: 'nasal_spray', zutat: { amount_value: 125, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray' } },
+    inventory: { package_quantity: 100, package_unit: 'spray', remaining_quantity: 240, opened_at: '2026-09-20', use_within_days: 30 },
+  })
+  await page.goto('/my-stack')
+  await page.getByRole('button', { name: 'Semax öffnen' }).click()
+  const detail = page.getByRole('dialog', { name: 'Semax' })
+
+  // 250 mcg bei 125 mcg je Sprühstoß.
+  await expect(detail.locator('[data-einnahme-hinweis]').first()).toHaveText('= 2 Sprühstöße')
+  await expect(detail.locator('[data-stack-detail="bestand"]')).toContainText('2 Sprays')
+  await expect(detail.locator('[data-stack-detail="bestand"]')).toContainText('+ 1 geöffnet · 40 %')
+  await expect(detail.getByRole('button', { name: 'Neues Spray öffnen' })).toBeVisible()
+  // Zusammensetzung: je Sprühstoß, übersetzt.
+  await expect(detail.locator('[data-stack-detail-field="wirkstoff"]')).toContainText('Wirkstoff pro Sprühstoß')
+  await expect(detail.locator('[data-stack-detail-field="wirkstoff"]')).toContainText('125 mcg / 1 Sprühstoß')
 })

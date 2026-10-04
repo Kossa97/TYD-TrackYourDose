@@ -26,7 +26,7 @@ import {
   type DetailFeld,
 } from './lib/stackDetailSections'
 import { BestandCard, BestandEditorHost, type BestandActions, type BestandEditorArt } from './components/Bestand'
-import { anbruchArt, spritzenRechnung, vialBuchtUeberBestand } from './lib/bestand'
+import { anbruchArt, spritzenRechnung, stueckRechnung, vialBuchtUeberBestand } from './lib/bestand'
 import {
   openInventoryContainer,
   startInventory,
@@ -39,7 +39,7 @@ import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup } from './services/stackItems'
 import type { StackItem, StackItemSetupDraft } from './types'
-import { getDosageForm, isStageRenderable } from './lib/dosageForms'
+import { getDosageForm, intakeUnitLabelKey, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
 import { laterChangeIdentity, type WizardSaveMode } from './lib/wizardState'
 import type { LaterPlanStep } from './lib/planAdoption'
@@ -52,7 +52,7 @@ import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQ
 import { FEATURES } from '../../config/features'
 import { reportError } from '../../lib/monitoring'
 import { formatInstantDay, formatLocalDay, shiftLocalDay } from './lib/localDays'
-import { daysLabel } from './lib/bestandLabels'
+import { daysLabel, stockAmountLabel } from './lib/bestandLabels'
 import { PlanManagementSection } from './components/PlanManagementSection'
 import { PlanSummaryCard } from './components/PlanSummaryCard'
 import { orderTimelines } from './lib/planLabels'
@@ -947,6 +947,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       ? spritzenRechnung(p.ingredients, p.reconstitution_ml, p.syringe_type)
       : null
   )
+  // Was man zaehlt (Spray, Tablette, Tropfen …): je Einnahme die Stueckzahl.
+  const stueckOf = (p: Peptide) => (syringeOf(p) ? null : stueckRechnung(p.ingredients))
 
   const planManagementSection = (p: Peptide, timeline: CycleTimeline) => timeline.cycle.timezone_review_required ? (
     <CourseTimezoneReview key={timeline.cycle.id} timeZone={timeZone} onConfirm={async zone => {
@@ -965,6 +967,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       key={timeline.cycle.id}
       timeline={timeline}
       syringe={syringeOf(p)}
+      stueck={stueckOf(p)}
       timeZone={timeZone}
       onAdjustPlan={() => openEditCycle(p, timeline.cycle.id)}
       onAddStep={(version, dates) => openAddPlanStep(p, timeline, version, dates)}
@@ -1727,7 +1730,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const wirkstoffLabel = {
                     pro_vial: 'Wirkstoff pro Vial',
                     pro_volumen: 'Wirkstoff pro ml',
-                    pro_einheit: `Wirkstoff pro ${String(t(form.labelKey))}`,
+                    // Pro Stueck, nicht pro Packung: „Wirkstoff pro Sprühstoß“.
+                    pro_einheit: `Wirkstoff pro ${String(t(intakeUnitLabelKey(form.key)))}`,
                     pro_masse: 'Wirkstoff pro g',
                     roh: 'Wirkstoff',
                   }[wirkstoffBezug(form)]
@@ -1751,7 +1755,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const zutatText = (z: Zutat, mitNamen: boolean) => [
                     mitNamen ? z.name : null,
                     `${z.wert ?? '-'} ${z.einheit ?? ''}`.trim(),
-                    z.basis != null ? `/ ${z.basis} ${z.basisEinheit ?? ''}`.trim() : null,
+                    // Die Bezugseinheit uebersetzt: „/ 1 Sprühstoß", nicht „/ 1 spray".
+                    z.basis != null
+                      ? `/ ${z.basisEinheit ? stockAmountLabel(t, z.basis, z.basisEinheit, language) : z.basis}`
+                      : null,
                   ].filter(Boolean).join(' ')
                   const angabeText = (feld: DetailFeld, a: Angabe): string => {
                     switch (a.art) {
@@ -1836,6 +1843,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     {FEATURES.planTimelineV2 && (
                       <PlanSummaryCard
                         syringe={syringeOf(eintrag)}
+                        stueck={stueckOf(eintrag)}
                         timelines={timelinesOf(eintrag.id)}
                         timeZone={timeZone}
                         loadState={timelineLoadError ? 'error' : timelineLoading ? 'loading' : 'ready'}

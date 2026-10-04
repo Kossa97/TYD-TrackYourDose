@@ -36,6 +36,25 @@ export function anbruchArt(form: DosageFormKey | null | undefined): AnbruchArt |
 }
 
 /**
+ * Worin der Vorrat kommt — fuer die Texte. Gezaehlt wird weiter in der
+ * Einheit der Packung (Spruehstoesse, Tropfen, Dosen); angezeigt werden die
+ * Behaelter: „2 Sprays · + 1 geöffnet · 40 %" statt „240 Sprühstöße".
+ */
+export type Behaelter = 'vial' | 'pen' | 'spray' | 'bottle'
+
+export function behaelterArt(form: DosageFormKey | null | undefined): Behaelter | null {
+  switch (form) {
+    case 'vial': return 'vial'
+    case 'pen': return 'pen'
+    case 'spray':
+    case 'nasal_spray':
+      return 'spray'
+    case 'drops': return 'bottle'
+    default: return null
+  }
+}
+
+/**
  * Bucht dieses Vial ueber den Bestand? Dieselbe Regel wie
  * `vial_uses_inventory` in der Datenbank: Bestand in Vials und genau ein
  * Wirkstoff pro Vial. Sonst bleibt der alte Weg zustaendig, und der Bestand
@@ -322,4 +341,46 @@ export function aufzuziehendeEinheiten(
   else if (unit === 'mg' && rechnung.einheit === 'mcg') ml = dose * 1000 / rechnung.proMl
   if (ml == null || !Number.isFinite(ml)) return null
   return Math.round(ml * rechnung.einheitenProMl * 10) / 10
+}
+
+/** Einheiten, in denen man eine Einnahme zaehlt: ein Spruehstoss, eine Tablette, ein Tropfen … */
+const STUECK_EINHEITEN = new Set(['spray', 'tablet', 'capsule', 'drop', 'dose', 'patch'])
+
+/** Gewichtseinheiten untereinander, in mg. */
+const IN_MG: Record<string, number> = { mcg: 0.001, mg: 1, g: 1000 }
+
+export interface StueckRechnung {
+  /** Wirkstoff je Stueck, in `einheit` — etwa 300 (mcg) je Spruehstoss. */
+  proStueck: number
+  einheit: string
+  /** Die Zaehleinheit: `spray`, `tablet`, `capsule`, `drop`, `dose`, `patch`. */
+  stueck: string
+}
+
+/**
+ * Woraus sich die Stueckzahl einer Einnahme rechnet — das Gegenstueck zur
+ * Spritzenrechnung beim Vial. Nur bei genau einem Wirkstoff, dessen Staerke
+ * je Stueck angegeben ist („300 mcg / 1 Sprühstoß"); sonst null.
+ */
+export function stueckRechnung(ingredients: readonly StackItemIngredient[]): StueckRechnung | null {
+  if (ingredients.length !== 1) return null
+  const [zutat] = ingredients
+  if (!zutat.basis_unit || !STUECK_EINHEITEN.has(zutat.basis_unit)) return null
+  if (!zutat.amount_value || zutat.amount_value <= 0 || !zutat.amount_unit || !zutat.basis_value || zutat.basis_value <= 0) return null
+  return { proStueck: zutat.amount_value / zutat.basis_value, einheit: zutat.amount_unit, stueck: zutat.basis_unit }
+}
+
+/**
+ * Wie viele Stueck eine Einnahme sind: 600 mcg bei 300 mcg je Spruehstoss
+ * sind 2 Spruehstoesse. Auf eine Nachkommastelle — eine halbe Tablette gibt
+ * es. Null, wenn die Menge schon in Stueck angegeben ist oder sich nicht
+ * umrechnen laesst.
+ */
+export function stueckZahl(dose: number | null, unit: string | null, rechnung: StueckRechnung): number | null {
+  if (dose == null || !unit || dose <= 0 || unit === rechnung.stueck) return null
+  let menge: number | null = null
+  if (unit === rechnung.einheit) menge = dose
+  else if (IN_MG[unit] != null && IN_MG[rechnung.einheit] != null) menge = dose * IN_MG[unit] / IN_MG[rechnung.einheit]
+  if (menge == null || !Number.isFinite(menge)) return null
+  return Math.round(menge / rechnung.proStueck * 10) / 10
 }
