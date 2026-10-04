@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { stockAmountLabel, stockUnitSingular } from '../lib/bestandLabels'
 import { getDosageForm, strengthHintKey, strengthShapeFor } from '../lib/dosageForms'
 import { konzentrationProMl } from '../lib/konzentration'
 import type { IngredientValidationErrors } from '../lib/validation'
@@ -46,6 +48,9 @@ function numericValue(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/** Der Eintrag „Andere Einheit …" in der Auswahl — kein gespeicherter Wert. */
+const EIGENE_EINHEIT = '__eigene__'
+
 export function StrengthEditor({
   dosageForm,
   category,
@@ -55,7 +60,8 @@ export function StrengthEditor({
   errors = {},
   onChange,
 }: StrengthEditorProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'de'
   const form = getDosageForm(dosageForm)
   // Der Schritt fragt ueberall dieselben zwei Zahlen ab. Was sie BEDEUTEN,
   // haengt am Paar aus Substanz und Form: bei einer Kapsel steckt die Staerke
@@ -74,9 +80,16 @@ export function StrengthEditor({
   const amountUnits = ingredient.amount_unit && !form.suggestedUnits.includes(ingredient.amount_unit)
     ? [...form.suggestedUnits, ingredient.amount_unit]
     : form.suggestedUnits
-  const basisUnits = ingredient.basis_unit && !form.basisUnits.includes(ingredient.basis_unit)
-    ? [...form.basisUnits, ingredient.basis_unit]
-    : form.basisUnits
+  // Die Produkteinheit kommt aus einer Auswahl mit Namen („Sprühstoß",
+  // „Tropfen"), nicht als Rohwert („spray"). Was nicht in der Liste steht,
+  // traegt man frei ein — dann bleibt das Feld ein Textfeld.
+  // Ob das Feld frei ist, folgt dem Wert: eine Einheit ausserhalb der Liste
+  // (oder eine nach einem Formwechsel nicht mehr passende) bleibt sichtbar
+  // und aenderbar. `freiGewaehlt` haelt nur den Moment nach „Andere Einheit …"
+  // fest, solange noch nichts eingetippt ist.
+  const [freiGewaehlt, setFreiGewaehlt] = useState(false)
+  const eigeneEinheit = freiGewaehlt
+    || (Boolean(ingredient.basis_unit) && !form.basisUnits.includes(ingredient.basis_unit!))
 
   const amountValueErrorId = `stack-strength-${ingredientIndex}-amount-value-error`
   const amountUnitErrorId = `stack-strength-${ingredientIndex}-amount-unit-error`
@@ -201,20 +214,54 @@ export function StrengthEditor({
               ? t('my_stack_basis_unit_solvent', { defaultValue: 'Einheit' })
               : t('my_stack_basis_unit', { defaultValue: 'Produkteinheit' })}
           </label>
-          <input
-            id={`stack-strength-${ingredientIndex}-basis-unit`}
-            list={`stack-strength-${ingredientIndex}-basis-units`}
-            value={ingredient.basis_unit ?? ''}
-            onChange={event => onChange({ basis_unit: event.target.value || null })}
-            data-field={`ingredients.${ingredientIndex}.basisUnit`}
-            aria-invalid={Boolean(errors.basisUnit) || undefined}
-            aria-describedby={errors.basisUnit ? basisUnitErrorId : undefined}
-            autoComplete="off"
-            className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-          />
-          <datalist id={`stack-strength-${ingredientIndex}-basis-units`}>
-            {basisUnits.map(unit => <option key={unit} value={unit} />)}
-          </datalist>
+          {eigeneEinheit ? (
+            <>
+            <input
+              id={`stack-strength-${ingredientIndex}-basis-unit`}
+              value={ingredient.basis_unit ?? ''}
+              onChange={event => onChange({ basis_unit: event.target.value || null })}
+              data-field={`ingredients.${ingredientIndex}.basisUnit`}
+              aria-invalid={Boolean(errors.basisUnit) || undefined}
+              aria-describedby={errors.basisUnit ? basisUnitErrorId : undefined}
+              autoComplete="off"
+              autoFocus={!ingredient.basis_unit}
+              className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setFreiGewaehlt(false)
+                onChange({ basis_unit: null })
+              }}
+              className="mt-1.5 text-xs font-semibold text-cyan-300 hover:text-cyan-200"
+            >
+              {t('my_stack_basis_unit_from_list', { defaultValue: 'Aus der Liste wählen' })}
+            </button>
+            </>
+          ) : (
+            <select
+              id={`stack-strength-${ingredientIndex}-basis-unit`}
+              value={ingredient.basis_unit ?? ''}
+              onChange={event => {
+                if (event.target.value === EIGENE_EINHEIT) {
+                  setFreiGewaehlt(true)
+                  onChange({ basis_unit: null })
+                  return
+                }
+                onChange({ basis_unit: event.target.value || null })
+              }}
+              data-field={`ingredients.${ingredientIndex}.basisUnit`}
+              aria-invalid={Boolean(errors.basisUnit) || undefined}
+              aria-describedby={errors.basisUnit ? basisUnitErrorId : undefined}
+              className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              {!ingredient.basis_unit && (
+                <option value="">{t('my_stack_basis_unit_choose', { defaultValue: 'Bitte wählen' })}</option>
+              )}
+              {form.basisUnits.map(unit => <option key={unit} value={unit}>{stockUnitSingular(t, unit)}</option>)}
+              <option value={EIGENE_EINHEIT}>{t('my_stack_basis_unit_custom', { defaultValue: 'Andere Einheit …' })}</option>
+            </select>
+          )}
           {errors.basisUnit && (
             <p id={basisUnitErrorId} role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
               <AlertCircle aria-hidden="true" size={16} />
@@ -231,7 +278,7 @@ export function StrengthEditor({
           aria-atomic="true"
           className="mt-4 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-sm text-cyan-100"
         >
-          {displayedIngredientName}: {ingredient.amount_value} {ingredient.amount_unit} {t('my_stack_per', { defaultValue: 'pro' })} {ingredient.basis_value} {ingredient.basis_unit}
+          {displayedIngredientName}: {ingredient.amount_value} {ingredient.amount_unit} {t('my_stack_per', { defaultValue: 'pro' })} {stockAmountLabel(t, ingredient.basis_value!, ingredient.basis_unit!, language)}
           {/* Was in einem Milliliter steckt, ist die Zahl, mit der man
               aufzieht — „10 mg pro 2 ml" allein sagt sie nicht. */}
           {konzentration && (

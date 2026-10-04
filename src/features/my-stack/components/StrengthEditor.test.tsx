@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -20,6 +20,9 @@ const completeIngredient: StackItemIngredient = {
   position: 0,
 }
 
+// Die zuletzt gebaute i18n-Instanz — fuer `rerender` mit neuen Props.
+let letzteInstanz: ReturnType<typeof createInstance> | null = null
+
 async function renderEditor({
   language = 'de',
   dosageForm = 'ampoule',
@@ -36,6 +39,7 @@ async function renderEditor({
   errors?: Parameters<typeof StrengthEditor>[0]['errors']
 } = {}) {
   const i18n = createInstance()
+  letzteInstanz = i18n
   await i18n.init({
     lng: language,
     fallbackLng: 'de',
@@ -274,5 +278,56 @@ describe('StrengthEditor', () => {
       cleanup()
     }
   })
-})
 
+  it('bietet die Produkteinheit mit Namen an, nicht als Rohwert — und laesst eine eigene zu', async () => {
+    await renderEditor({
+      dosageForm: 'nasal_spray',
+      ingredient: { ...completeIngredient, amount_value: 125, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray' },
+    })
+    const auswahl = screen.getByLabelText('Produkteinheit') as HTMLSelectElement
+    expect(auswahl.tagName).toBe('SELECT')
+    expect([...auswahl.options].map(option => option.textContent)).toEqual(['Sprühstoß', 'Andere Einheit …'])
+    expect(auswahl.value).toBe('spray')
+    // Die Vorschau spricht dieselbe Sprache.
+    expect(screen.getByRole('status').textContent).toContain('pro 1 Sprühstoß')
+
+    fireEvent.change(auswahl, { target: { value: '__eigene__' } })
+    expect((screen.getByLabelText('Produkteinheit') as HTMLElement).tagName).toBe('INPUT')
+    // Und wieder zurueck zur Liste.
+    fireEvent.click(screen.getByRole('button', { name: 'Aus der Liste wählen' }))
+    expect((screen.getByLabelText('Produkteinheit') as HTMLElement).tagName).toBe('SELECT')
+  })
+
+  it('passt die Einheit nach einem Formwechsel nicht mehr in die Liste, bleibt sie sichtbar', async () => {
+    const { rerender } = await renderEditor({
+      dosageForm: 'nasal_spray',
+      ingredient: { ...completeIngredient, amount_value: 125, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray' },
+    })
+    expect((screen.getByLabelText('Produkteinheit') as HTMLElement).tagName).toBe('SELECT')
+    rerender(
+      <I18nextProvider i18n={letzteInstanz!}>
+        <StrengthEditor
+          dosageForm="tablet"
+          category="peptide"
+          ingredient={{ ...completeIngredient, amount_value: 125, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray' }}
+          ingredientIndex={0}
+          ingredientName="Testosteron Enantat"
+          onChange={vi.fn()}
+        />
+      </I18nextProvider>,
+    )
+    const feld = screen.getByLabelText('Produkteinheit') as HTMLInputElement
+    expect(feld.tagName).toBe('INPUT')
+    expect(feld.value).toBe('spray')
+  })
+
+  it('eine schon gespeicherte eigene Einheit bleibt ein Textfeld', async () => {
+    await renderEditor({
+      dosageForm: 'powder',
+      ingredient: { ...completeIngredient, amount_value: 5, amount_unit: 'g', basis_value: 1, basis_unit: 'Messlöffel' },
+    })
+    const feld = screen.getByLabelText('Produkteinheit') as HTMLInputElement
+    expect(feld.tagName).toBe('INPUT')
+    expect(feld.value).toBe('Messlöffel')
+  })
+})

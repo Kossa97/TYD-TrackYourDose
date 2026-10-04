@@ -541,6 +541,9 @@ export const MY_STACK_EN = {
   my_stack_stock_pen_extra: '+ 1 in use · {{percent}} %',
   my_stack_stock_bottle_extra: '+ 1 open · {{percent}} %',
   my_stack_stock_container_size: '{{amount}} each',
+  my_stack_basis_unit_choose: 'Please choose',
+  my_stack_basis_unit_custom: 'Other unit …',
+  my_stack_basis_unit_from_list: 'Choose from list',
 }
 
 export const MY_STACK_DE = {
@@ -1085,6 +1088,9 @@ export const MY_STACK_DE = {
   my_stack_stock_pen_extra: '+ 1 angebrochen · {{percent}} %',
   my_stack_stock_bottle_extra: '+ 1 geöffnet · {{percent}} %',
   my_stack_stock_container_size: 'je {{amount}}',
+  my_stack_basis_unit_choose: 'Bitte wählen',
+  my_stack_basis_unit_custom: 'Andere Einheit …',
+  my_stack_basis_unit_from_list: 'Aus der Liste wählen',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

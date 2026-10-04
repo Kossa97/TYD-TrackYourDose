@@ -540,7 +540,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1083,7 +1086,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1626,7 +1632,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2169,7 +2178,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2712,7 +2724,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3255,7 +3270,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3798,7 +3816,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4341,7 +4362,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4884,7 +4908,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5427,7 +5454,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5970,7 +6000,10 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6513,6 +6546,9 @@
     "my_stack_stock_container_bottle_multiple": "{{n}} bottles",
     "my_stack_stock_pen_extra": "+ 1 in use · {{percent}} %",
     "my_stack_stock_bottle_extra": "+ 1 open · {{percent}} %",
-    "my_stack_stock_container_size": "{{amount}} each"
+    "my_stack_stock_container_size": "{{amount}} each",
+    "my_stack_basis_unit_choose": "Please choose",
+    "my_stack_basis_unit_custom": "Other unit …",
+    "my_stack_basis_unit_from_list": "Choose from list"
   }
 }
