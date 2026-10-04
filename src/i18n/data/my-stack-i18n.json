@@ -525,7 +525,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1053,7 +1056,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1581,7 +1587,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2109,7 +2118,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2637,7 +2649,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3165,7 +3180,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3693,7 +3711,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4221,7 +4242,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4749,7 +4773,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5277,7 +5304,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5805,7 +5835,10 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6333,6 +6366,9 @@
     "my_stack_go_to_item": "Go to {{name}}",
     "my_stack_go_to_add_tile": "Go to the “New substance” tile",
     "my_stack_save_item_incomplete": "Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.",
-    "my_stack_list_open": "Open {{name}}"
+    "my_stack_list_open": "Open {{name}}",
+    "my_stack_expired_full_today": "Expired today!",
+    "my_stack_expired_full_day": "Expired 1 day ago!",
+    "my_stack_expired_full_days": "Expired {{n}} days ago!"
   }
 }

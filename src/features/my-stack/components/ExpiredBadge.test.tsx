@@ -18,52 +18,29 @@ vi.mock('react-i18next', () => ({
 afterEach(cleanup)
 
 const css = readFileSync(resolve(__dirname, '../../../index.css'), 'utf8')
+const block = css.slice(css.indexOf('/* ── Abgelaufen-Abzeichen'), css.indexOf('/* Onboarding overlay'))
 
 describe('ExpiredBadge', () => {
-  it('stacks alarm and duration so the badge never jumps, each on its own track of the cycle', () => {
+  it('schreibt den ganzen Satz aus — heute, ein Tag, mehrere Tage', () => {
+    const { rerender } = render(<ExpiredBadge daysSince={3} />)
+    expect(screen.getByText('my_stack_expired_full_days(n=3)')).toBeTruthy()
+    rerender(<ExpiredBadge daysSince={1} />)
+    expect(screen.getByText('my_stack_expired_full_day')).toBeTruthy()
+    rerender(<ExpiredBadge daysSince={0} />)
+    expect(screen.getByText('my_stack_expired_full_today')).toBeTruthy()
+  })
+
+  it('ohne Rahmen und Flaeche: alarmieren tut nur das Symbol', () => {
     render(<ExpiredBadge daysSince={3} />)
-    const alarm = screen.getByText('my_stack_expired')
-    const since = screen.getByText('my_stack_expired_since_days(n=3)')
-    expect(alarm.className).toContain('tyd-expired-text-alarm')
-    expect(since.className).toContain('tyd-expired-text-since')
-    expect(alarm.className).toContain('row-start-1')
-    expect(since.className).toContain('row-start-1')
+    const abzeichen = document.querySelector<HTMLElement>('[data-expired-badge]')!
+    expect(abzeichen.className).not.toMatch(/\bborder\b|\bbg-|rounded/)
     expect(document.querySelector('svg')!.getAttribute('class')).toContain('tyd-expired-icon')
+    expect(block).not.toContain('box-shadow')
   })
 
-  // Die Regeln einer Klasse — tolerant gegen Zeilenumbrueche und Reihenfolge.
-  const regeln = (selektor: string) => {
-    const block = css.slice(css.indexOf('/* ── Abgelaufen-Abzeichen'), css.indexOf('/* Onboarding overlay'))
-    const treffer = block.match(new RegExp(`${selektor.replace(/[.:]/g, m => `\\${m}`)}\\s*\\{([^}]*)\\}`))
-    return treffer?.[1] ?? ''
-  }
-
-  it('runs every part on the same endless 6-second cycle, so they stay in step', () => {
-    for (const teil of ['.tyd-expired-badge::after', '.tyd-expired-icon', '.tyd-expired-text-alarm', '.tyd-expired-text-since']) {
-      expect(regeln(teil), teil).toMatch(/animation:[^;]*\b6s\b[^;]*\binfinite\b/)
-    }
-    // Beide Texte sind derselbe Verlauf, der zweite um einen halben Takt versetzt.
-    expect(regeln('.tyd-expired-text-alarm')).toContain('tyd-expired-text ')
-    expect(regeln('.tyd-expired-text-since')).toMatch(/tyd-expired-text [^;]*-3s/)
-  })
-
-  it('shows the still end state for reduced motion, stronger than the global reset', () => {
-    const block = css.slice(css.indexOf('/* ── Abgelaufen-Abzeichen'), css.indexOf('/* Onboarding overlay'))
+  it('das Symbol blinkt endlos, bei weniger Bewegung steht es still', () => {
+    expect(block).toMatch(/\.tyd-expired-icon\s*\{\s*animation:[^;]*\b6s\b[^;]*\binfinite\b/)
     const reduziert = block.slice(block.indexOf('@media (prefers-reduced-motion: reduce)'))
-    expect(reduziert).toContain('.tyd-expired-text-alarm { display: none !important; }')
-    expect(reduziert).toContain('.tyd-expired-text-since { opacity: 1 !important; transform: none !important; }')
-  })
-
-  it('reads out both at once, whatever is on screen', () => {
-    render(<ExpiredBadge daysSince={3} />)
-    expect(screen.getByText('my_stack_expired_aria(since=my_stack_expired_since_days(n=3))').className).toContain('sr-only')
-  })
-
-  it('says since today and for one day in their own words', () => {
-    const { unmount } = render(<ExpiredBadge daysSince={0} />)
-    expect(screen.getByText('my_stack_expired_since_today')).toBeTruthy()
-    unmount()
-    render(<ExpiredBadge daysSince={1} />)
-    expect(screen.getByText('my_stack_expired_since_day')).toBeTruthy()
+    expect(reduziert).toContain('.tyd-expired-icon { animation: none !important; }')
   })
 })

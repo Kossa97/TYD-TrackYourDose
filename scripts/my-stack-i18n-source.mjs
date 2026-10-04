@@ -526,6 +526,9 @@ export const MY_STACK_EN = {
   my_stack_go_to_add_tile: 'Go to the “New substance” tile',
   my_stack_save_item_incomplete: 'Some details of the substance are missing ({{area}}). Add them via “Edit” and save again.',
   my_stack_list_open: 'Open {{name}}',
+  my_stack_expired_full_today: 'Expired today!',
+  my_stack_expired_full_day: 'Expired 1 day ago!',
+  my_stack_expired_full_days: 'Expired {{n}} days ago!',
 }
 
 export const MY_STACK_DE = {
@@ -1055,6 +1058,9 @@ export const MY_STACK_DE = {
   my_stack_go_to_add_tile: 'Zur Kachel „Neue Substanz“',
   my_stack_save_item_incomplete: 'Bei der Substanz fehlen Angaben ({{area}}). Ergänze sie über „Bearbeiten“ und speichere dann erneut.',
   my_stack_list_open: '{{name}} öffnen',
+  my_stack_expired_full_today: 'Seit heute abgelaufen!',
+  my_stack_expired_full_day: 'Seit 1 Tag abgelaufen!',
+  my_stack_expired_full_days: 'Seit {{n}} Tagen abgelaufen!',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)
