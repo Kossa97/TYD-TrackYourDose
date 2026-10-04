@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1791086330.3404005,
-    "seen": 1791086348.3512466,
-    "ast_hash": "6b51a39669b195f6ba3f81b7c75676f3",
+    "mtime": 1791087929.7129703,
+    "seen": 1791087947.1042593,
+    "ast_hash": "bae3ce60a02037dc1911ac037079ff9d",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1791084316.5397363,
-    "seen": 1791084718.4512596,
-    "ast_hash": "b031d2263d56705c69aa6a7275867d16",
+    "mtime": 1791087475.347754,
+    "seen": 1791087947.1035616,
+    "ast_hash": "3d7b070e33e7783f0d76dce9e45198d2",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3420,9 +3420,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageDetailSheet.tsx": {
-    "mtime": 1790755914.252613,
-    "seen": 1790756141.7440443,
-    "ast_hash": "74935e41fa0ef69b4d07d8825962fb66",
+    "mtime": 1791087462.367526,
+    "seen": 1791087947.1036136,
+    "ast_hash": "28f03aaf25b5cf3de74c08bc94db2113",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791085865.2400446,
-    "seen": 1791086348.3511596,
+    "mtime": 1791087766.23336,
+    "seen": 1791087947.104178,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5460,9 +5460,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ExpiredBadge.tsx": {
-    "mtime": 1791086290.9750235,
-    "seen": 1791086348.3505335,
-    "ast_hash": "ac4e3a937ca2bd9cb691b656cff7bb53",
+    "mtime": 1791087547.4137344,
+    "seen": 1791087947.1035874,
+    "ast_hash": "445d91938f3726d48a2225a615bf8152",
     "semantic_hash": ""
   },
   "src/lib/peptideExpiryDays.test.ts": {
@@ -5652,9 +5652,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/page/StageDetailView.tsx": {
-    "mtime": 1791000719.0928135,
-    "seen": 1791002119.6373377,
-    "ast_hash": "390858a0b1472651fc5ea20d94289167",
+    "mtime": 1791087475.3456538,
+    "seen": 1791087947.1038284,
+    "ast_hash": "06bf7675b9ed79d207db71d0ef5a7be6",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/VialCarousel.tsx": {
@@ -5778,21 +5778,21 @@
     "semantic_hash": ""
   },
   "e2e/my-stack-liste.spec.ts": {
-    "mtime": 1791086290.9750235,
-    "seen": 1791086348.3501046,
-    "ast_hash": "008cf94ff8e68bb27ab2864a0474521a",
+    "mtime": 1791087597.068591,
+    "seen": 1791087947.103233,
+    "ast_hash": "c4e4d0da259ad0f3349b2eca43d0e3a6",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/listRow.test.ts": {
-    "mtime": 1791002566.6473393,
-    "seen": 1791003202.0619876,
-    "ast_hash": "06093c8ed4ed614cb667e4bf35a74bf4",
+    "mtime": 1791087597.0682552,
+    "seen": 1791087947.1037703,
+    "ast_hash": "6c68529ef6cebb55fc21f1551f935c41",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/listRow.ts": {
-    "mtime": 1791002550.3033383,
-    "seen": 1791003202.0619884,
-    "ast_hash": "4aaa880797cd5869b4a77aa32dd5e5c9",
+    "mtime": 1791087475.344556,
+    "seen": 1791087947.1037717,
+    "ast_hash": "c0c0f66aaa384cf29afc45b05eef932f",
     "semantic_hash": ""
   },
   "src/features/my-stack/page/HaltbarkeitChip.tsx": {
