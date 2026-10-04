@@ -21,17 +21,43 @@
 }
 
 /* ── Abgelaufen-Abzeichen (My Stack) ─────────────────────────────────────
-   Alarmieren tut allein das Warnsymbol: endlos im 6-Sekunden-Takt blinkt es
-   viermal kurz und pulsiert dann einmal ruhig. Kein Rahmen, kein Gluehen,
-   kein Textwechsel — der Satz daneben steht still. Animiert werden nur
-   Deckkraft und Groesse (billig fuer den Compositor). Wer weniger Bewegung
-   will, sieht das Symbol still. */
+   Das Warnsymbol blinkt endlos im 6-Sekunden-Takt viermal kurz und pulsiert
+   dann einmal ruhig. In Liste und Vollbild steht der Satz daneben still.
+   Im Karussell wechselt das Abzeichen im selben Takt: 3 s „Abgelaufen!" mit
+   gluehendem Rand, dann 3 s „seit X Tagen" — der zweite Text ist derselbe
+   Verlauf, um einen halben Takt versetzt. Animiert werden nur Deckkraft und
+   Lage (billig fuer den Compositor); das Gluehen ist ein fertiger Schatten,
+   dessen Deckkraft wechselt. Wer weniger Bewegung will, sieht alles still,
+   im Karussell den Endstand „seit X Tagen". */
 @keyframes tyd-expired-icon {
   0%, 11.7%, 23.3%, 35%, 46.7%, 65%, 85%, 100% { opacity: 1; transform: scale(1); }
   5.8%, 17.5%, 29.2%, 40.8% { opacity: 0.3; transform: scale(1.22); }
   75% { opacity: 0.55; transform: scale(1.1); }
 }
 .tyd-expired-icon { animation: tyd-expired-icon 6s ease-in-out infinite; }
+@keyframes tyd-expired-glow {
+  0%, 11.7%, 23.3%, 35%, 46.7%, 100% { opacity: 0; }
+  5.8%, 17.5%, 29.2%, 40.8% { opacity: 1; }
+}
+@keyframes tyd-expired-text {
+  0%, 44% { opacity: 1; transform: translateY(0); }
+  50%, 94% { opacity: 0; transform: translateY(-6px); }
+  94.1% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.tyd-expired-badge { position: relative; }
+.tyd-expired-badge::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 14px 1px rgba(248, 113, 113, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: tyd-expired-glow 6s ease-in-out infinite;
+}
+.tyd-expired-text-alarm { animation: tyd-expired-text 6s ease-in-out infinite; }
+.tyd-expired-text-since { animation: tyd-expired-text 6s ease-in-out -3s infinite; }
 /* Ein Knopf, der hilft (etwa „Neu rekonstituieren"), pulsiert im selben Takt
    kaum sichtbar mit — kein Rahmen, kein Rot: alarmieren tut das Symbol. */
 @keyframes tyd-alarm-knopf {
@@ -42,7 +68,11 @@
 .tyd-alarm-knopf { animation: tyd-alarm-knopf 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .tyd-expired-icon,
-  .tyd-alarm-knopf { animation: none !important; }
+  .tyd-alarm-knopf,
+  .tyd-expired-badge::after,
+  .tyd-expired-text-since { animation: none !important; }
+  .tyd-expired-text-alarm { display: none !important; }
+  .tyd-expired-text-since { opacity: 1 !important; transform: none !important; }
 }
 
 /* Onboarding overlay — above app modals (z-50) while tour is active */
@@ -1626,6 +1656,7 @@ main.flex-1 {
 [data-theme="light"] [data-haltbarkeit="gut"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
 [data-theme="light"] [data-haltbarkeit="bald"] { color: #92400e; background-color: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
 [data-theme="light"] [data-expired-badge] { color: #b91c1c; }
+[data-theme="light"] [data-expired-badge="wechsel"] { background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); }
 
 /* Vollbild einer Substanz im hellen Design. (Klassen, keine
    [class*=…]-Muster: die traefen auch hover:-Varianten und faerbten etwa den

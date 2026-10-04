@@ -42,6 +42,7 @@ Neu in dieser Session (September 2026) — **My Stack stabil, Monitoring, Gerät
 - **Füllstand aus dem Bestand:** Spray, Nasenspray und Tropfflasche zeigen den Pegel der geöffneten Flasche (`fuellstandFuer` in `page/model.ts`; `hasMeaningfulFill` jetzt wahr). Ohne geführten Bestand stehen sie voll da und ohne Prozentzahl; Vials wie bisher. Die Füllstand-Sortierung nutzt dieselbe Funktion.
 - **Kleinkram:** Stärke-Hinweis mit eigenem Beispiel für Spray, Tablette, Pflaster (`strengthHintKey`). Die Zählung „2 / 5" steht im Karussell neben den Punkten statt in der Statuszeile (brach dort um). Abstand der Liste zum „?"-Knopf.
 - **Helles Design im Vollbild:** farbige Texte, Flächen und weiße Ränder im `[data-stage-detail]` dunkel bzw. als Hauch gesetzt (`index.css`); Etiketten auf Glas tragen einen Schatten (`data-stage-label`). Die Attribut-Regeln treffen nur die Klasse selbst, keine `hover:`-Variante, und nie das Glas-Etikett.
+- **Abgelaufen im Karussell wieder mit Wechsel** (Wunsch des Nutzers): rotes Abzeichen mit Rand, 3 s „Abgelaufen!" mit glühendem Rand, 3 s „seit n Tagen" (`ExpiredBadge variante="wechsel"`, über `HaltbarkeitChip`). Liste und Vollbild bleiben beim stillen, ausgeschriebenen Satz.
 - **Offen:** die Onboarding-Tour (8 von 9 Ziele gibt es nicht mehr) — separat.
 
 Neu in Session davor (2. Juli 2026) — **PDF-Generator komplett neu**:

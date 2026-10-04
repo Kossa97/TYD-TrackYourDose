@@ -121,7 +121,7 @@ export function VialCarousel({
 
                 return (
                   <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                    <HaltbarkeitChip tage={days} substanzId={activePeptide.id} />
+                    <HaltbarkeitChip tage={days} substanzId={activePeptide.id} variante="wechsel" />
                     <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
                       {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
                     </span>

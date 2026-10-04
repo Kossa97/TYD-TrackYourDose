@@ -6,15 +6,21 @@ import { expiryText } from './model'
 /**
  * Die Haltbarkeit als Abzeichen — dasselbe im Karussell und in der Liste:
  * gruen „Haltbar noch n Tage", ab sieben Tagen gelb, heute „Läuft heute ab",
- * abgelaufen das wechselnde Alarm-Abzeichen. Ohne Angabe „Nicht gesetzt".
+ * abgelaufen das Alarm-Abzeichen — im Karussell mit Wechsel („Abgelaufen!" /
+ * „seit n Tagen", `variante="wechsel"`), sonst ausgeschrieben. Ohne Angabe
+ * „Nicht gesetzt".
  *
  * `tage` kommt aus `haltbarkeitFuer` (Kalendertage, negativ = abgelaufen).
  * `substanzId` laesst den Alarm-Takt je Substanz neu beginnen.
  * Die Farben fuer das helle Design stehen in index.css (`data-haltbarkeit`).
  */
-export function HaltbarkeitChip({ tage, substanzId }: { tage: number | null; substanzId: string }) {
+export function HaltbarkeitChip({ tage, substanzId, variante = 'still' }: {
+  tage: number | null
+  substanzId: string
+  variante?: 'still' | 'wechsel'
+}) {
   const { t } = useTranslation()
-  if (tage !== null && tage < 0) return <ExpiredBadge key={substanzId} daysSince={-tage} />
+  if (tage !== null && tage < 0) return <ExpiredBadge key={substanzId} daysSince={-tage} variante={variante} />
 
   const ton = tage === null ? 'leer' : tage > ABLAUF_BALD_TAGE ? 'gut' : 'bald'
   const klasse = {
