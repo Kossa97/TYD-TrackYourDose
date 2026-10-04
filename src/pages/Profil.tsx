@@ -25,7 +25,8 @@ const defaultProfile = (): Profile => ({
   height_cm: null, gender: '', notes: '',
   is_public: false, public_bio: '',
   share_peptide: true, share_kalender: false,
-  share_tagebuch: false, share_bewertungen: true,
+  // Bewertungen sind Gesundheitsdaten: Teilen nur, wenn man es einschaltet.
+  share_tagebuch: false, share_bewertungen: false,
 })
 
 interface ShareToggleProps {
@@ -83,7 +84,7 @@ export function Profil() {
         share_peptide: data.share_peptide ?? true,
         share_kalender: data.share_kalender ?? false,
         share_tagebuch: data.share_tagebuch ?? false,
-        share_bewertungen: data.share_bewertungen ?? true,
+        share_bewertungen: data.share_bewertungen ?? false,
       })
     })
   }, [])

@@ -70,7 +70,7 @@ export function PublicProfile() {
           ? supabase.from('stack_items').select('id, display_name, default_method').eq('user_id', uid).order('display_name')
           : Promise.resolve({ data: [] }),
         prof.share_bewertungen
-          ? supabase.from('reviews').select('id, rating, title, body, created_at, stack_items(display_name)').eq('user_id', uid).order('created_at', { ascending: false })
+          ? supabase.from('reviews').select('id, rating, title, body, created_at, stack_items(display_name)').eq('user_id', uid).eq('is_public', true).order('created_at', { ascending: false })
           : Promise.resolve({ data: [] }),
         prof.share_tagebuch
           ? supabase.from('effects').select('id, type, description, severity, status, duration, occurred_at').eq('user_id', uid).order('occurred_at', { ascending: false }).limit(20)

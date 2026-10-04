@@ -1,32 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Star, Pencil, Search, Smile, Meh, Frown, type LucideIcon } from 'lucide-react'
+import { Plus, Trash2, Star, Pencil, Search, Smile, Meh, Frown, Globe, type LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../i18n/dateLocales'
+import type { CycleTimeline } from '../lib/planTimeline'
+import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
+import type { Translate } from '../features/my-stack/lib/planLabels'
+import { useMinuteClock } from '../features/my-stack/lib/useMinuteClock'
+import { ReviewSheet, type ReviewSubstanz } from '../features/reviews/components/ReviewSheet'
+import {
+  entwurfAus,
+  leererEntwurf,
+  vorgeschlagenerZyklus,
+  zyklusKurz,
+  zyklusZumDatum,
+  type Review,
+  type ReviewDraft,
+} from '../features/reviews/lib/reviewModel'
+import { ladeBewertungen, loescheBewertung, speichereBewertung } from '../features/reviews/services/reviews'
 
-interface Review {
-  id: string
-  stack_item_id: string
-  rating: number
-  title: string
-  body: string | null
-  pros: string | null
-  cons: string | null
-  experience: 'gut' | 'mittel' | 'schlecht'
-  created_at: string
-  stack_items: { display_name: string }
-}
-
-interface StackItem { id: string; display_name: string }
-
-type ExperienceCfg = { icon: LucideIcon; color: string; inactive: string }
+type ExperienceCfg = { icon: LucideIcon }
 const EXPERIENCE_CONFIG: { gut: ExperienceCfg; mittel: ExperienceCfg; schlecht: ExperienceCfg } = {
-  gut:     { icon: Smile,  color: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400' },
-  mittel:  { icon: Meh,    color: 'bg-amber-500 text-white',   inactive: 'bg-slate-800 text-slate-400' },
-  schlecht:{ icon: Frown,  color: 'bg-red-500 text-white',     inactive: 'bg-slate-800 text-slate-400' },
+  gut:     { icon: Smile },
+  mittel:  { icon: Meh },
+  schlecht:{ icon: Frown },
 }
 
 const EXPERIENCE_BADGE = {
@@ -57,87 +57,91 @@ const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number)
   </div>
 )
 
-interface Form {
-  stack_item_id: string; rating: number; title: string
-  body: string; pros: string; cons: string
-  experience: 'gut' | 'mittel' | 'schlecht'
-}
-
-const emptyForm = (firstStackItemId = ''): Form => ({
-  stack_item_id: firstStackItemId, rating: 4, title: '',
-  body: '', pros: '', cons: '', experience: 'gut',
-})
-
 export function Bewertungen() {
   const { user } = useAuth()
   const { t } = useTranslation()
   const locale = getDateLocale()
   const [reviews, setReviews]   = useState<Review[]>([])
-  const [stackItems, setStackItems] = useState<StackItem[]>([])
+  const [stackItems, setStackItems] = useState<ReviewSubstanz[]>([])
+  const [timelines, setTimelines] = useState<CycleTimeline[]>([])
   const [search, setSearch]   = useState('')
   const [sortBy, setSortBy]   = useState<'date_new' | 'date_old' | 'rating_high' | 'rating_low'>('date_new')
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<Form>(emptyForm())
+  // Offenes Sheet: neu (id null) oder eine bestehende Bewertung.
+  const [sheet, setSheet] = useState<{ id: string | null; start: ReviewDraft } | null>(null)
   const [saving, setSaving] = useState(false)
+  const now = useMinuteClock()
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  const { i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
 
   const load = async () => {
-    const { data } = await supabase
-      .from('reviews').select('*, stack_items(display_name)')
-      .eq('user_id', user!.id).order('created_at', { ascending: false })
-    if (data) setReviews(data as Review[])
+    try {
+      setReviews(await ladeBewertungen(supabase, user!.id))
+    } catch {
+      toast.error(t('review_load_error'))
+    }
   }
 
-  const loadStackItems = async () => {
-    const { data } = await supabase.from('stack_items').select('id, display_name')
-      .eq('user_id', user!.id).order('display_name')
-    if (data) setStackItems(data)
+  const loadKontext = async () => {
+    const [items, zyklen] = await Promise.allSettled([
+      supabase.from('stack_items').select('id, display_name, archived').eq('user_id', user!.id).order('display_name'),
+      loadCycleTimelines(supabase as never, user!.id, { includeUnavailable: true }),
+    ])
+    if (items.status === 'fulfilled' && items.value.data) setStackItems(items.value.data as ReviewSubstanz[])
+    if (zyklen.status === 'fulfilled') setTimelines(zyklen.value)
   }
 
-  useEffect(() => { load(); loadStackItems() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); void loadKontext() }, [])
+
+  const zyklusVon = useMemo(() => new Map(timelines.map(timeline => [timeline.cycle.id, timeline])), [timelines])
+  /** Zyklen mit Bewertung — ohne die gerade bearbeitete. */
+  const bewertet = useMemo(() => new Set(
+    reviews.filter(r => r.cycle_id && r.id !== sheet?.id).map(r => r.cycle_id!),
+  ), [reviews, sheet?.id])
 
   const openNew = () => {
-    if (stackItems.length === 0) return toast.error(t('zuerst_peptid'))
-    setEditingId(null)
-    setForm(emptyForm(stackItems[0].id))
-    setShowForm(true)
+    const erste = stackItems.find(item => !item.archived)
+    if (!erste) return toast.error(t('zuerst_peptid'))
+    const belegt = new Set(reviews.filter(r => r.cycle_id).map(r => r.cycle_id!))
+    setSheet({ id: null, start: leererEntwurf(erste.id, vorgeschlagenerZyklus(timelines, erste.id, belegt)) })
   }
 
   const openEdit = (r: Review) => {
-    setEditingId(r.id)
-    setForm({
-      stack_item_id: r.stack_item_id, rating: r.rating, title: r.title,
-      body: r.body ?? '', pros: r.pros ?? '', cons: r.cons ?? '',
-      experience: r.experience ?? 'gut',
-    })
-    setShowForm(true)
+    const start = entwurfAus(r)
+    // Alte Bewertung ohne Zyklus: den passenden vorschlagen (nach Datum).
+    if (!start.cycle_id) {
+      const vorschlag = zyklusZumDatum(timelines, r.stack_item_id, r.created_at, timeZone)
+      const belegt = reviews.some(other => other.id !== r.id && other.cycle_id === vorschlag)
+      if (vorschlag && !belegt) start.cycle_id = vorschlag
+    }
+    setSheet({ id: r.id, start })
   }
 
-  const save = async () => {
-    if (!form.title.trim()) return toast.error(t('titel_erforderlich'))
+  const save = async (draft: ReviewDraft) => {
+    if (!sheet) return
     setSaving(true)
-    const payload = {
-      user_id: user!.id,
-      stack_item_id: form.stack_item_id,
-      rating: form.rating,
-      title: form.title,
-      body: form.body || null,
-      pros: form.pros || null,
-      cons: form.cons || null,
-      experience: form.experience,
+    try {
+      await speichereBewertung(supabase, draft, user!.id, reviews.find(r => r.id === sheet.id) ?? null)
+      toast.success(sheet.id ? t('bewertung_aktualisiert') : t('bewertung_gespeichert'))
+      setSheet(null)
+      await load()
+    } catch {
+      toast.error(t('error'))
+    } finally {
+      setSaving(false)
     }
-    const { error } = editingId
-      ? await supabase.from('reviews').update(payload).eq('id', editingId)
-      : await supabase.from('reviews').insert(payload)
-    if (error) toast.error(t('error'))
-    else { toast.success(editingId ? t('bewertung_aktualisiert') : t('bewertung_gespeichert')); setShowForm(false); load() }
-    setSaving(false)
   }
 
   const remove = async (id: string) => {
     if (!confirm(t('bewertung_loeschen'))) return
-    await supabase.from('reviews').delete().eq('id', id)
-    toast.success(t('deleted')); load()
+    try {
+      await loescheBewertung(supabase, id)
+      toast.success(t('deleted'))
+      await load()
+    } catch {
+      toast.error(t('error'))
+    }
   }
 
   return (
@@ -177,7 +181,7 @@ export function Bewertungen() {
       {(() => {
         const displayed = reviews
           .filter(r => !search
-            || r.title.toLowerCase().includes(search.toLowerCase())
+            || (r.title ?? '').toLowerCase().includes(search.toLowerCase())
             || (r.stack_items?.display_name ?? '').toLowerCase().includes(search.toLowerCase()))
           .sort((a, b) => {
             if (sortBy === 'date_new')    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -200,18 +204,35 @@ export function Bewertungen() {
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sky-400 text-sm font-medium">{r.stack_items?.display_name}</p>
-                  <p className="font-semibold text-white">{r.title}</p>
+                  {r.title && <p className="font-semibold text-white">{r.title}</p>}
                   <StarRating value={r.rating} />
+                  {r.cycle_id && zyklusVon.get(r.cycle_id) && (
+                    <p data-review-cycle className="mt-1 text-xs text-slate-400">
+                      {zyklusKurz(zyklusVon.get(r.cycle_id)!, timeZone, language, t as Translate)}
+                    </p>
+                  )}
+                  {(r.wirkung || r.vertraeglichkeit || r.wieder_nehmen) && (
+                    <p data-review-criteria className="mt-1 text-xs text-slate-400">
+                      {[
+                        r.wirkung ? `${t('review_effect')} ${r.wirkung}/5` : null,
+                        r.vertraeglichkeit ? `${t('review_tolerability')} ${r.vertraeglichkeit}/5` : null,
+                        r.wieder_nehmen ? `${t('review_again')} ${t(`review_again_${r.wieder_nehmen}`)}` : null,
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {r.is_public && <Globe size={14} className="text-slate-400" aria-label={String(t('review_public'))} />}
                   <span className={`badge ${EXPERIENCE_BADGE[r.experience ?? 'gut']}`}>
                     <exp.icon size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} /> {t(r.experience ?? 'gut')}
                   </span>
                   <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
+                    aria-label={String(t('bewertung_bearbeiten'))}
                     onClick={() => openEdit(r)}>
                     <Pencil size={15} />
                   </button>
                   <button className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+                    aria-label={String(t('loeschen'))}
                     onClick={() => remove(r.id)}>
                     <Trash2 size={15} />
                   </button>
@@ -262,83 +283,20 @@ export function Bewertungen() {
         )
       })()}
 
-      {/* ══ FORMULAR ══════════════════════════════════════════════════════════ */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal data-app-back-dirty-on-interaction
-          onClick={() => setShowForm(false)}>
-          <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
-            overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
-
-            <h2 className="text-lg font-bold">
-              {editingId ? t('bewertung_bearbeiten') : t('neue_bewertung')}
-            </h2>
-
-            <div>
-              <label className="label">{t('peptide_form_group_substance')}</label>
-              <select className="select" value={form.stack_item_id}
-                onChange={e => setForm(f => ({ ...f, stack_item_id: e.target.value }))}>
-                {stackItems.map(item => <option key={item.id} value={item.id}>{item.display_name}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="label">{t('sterne_bewertung')}</label>
-              <StarRating value={form.rating} onChange={v => setForm(f => ({ ...f, rating: v }))} />
-            </div>
-
-            {/* Erfahrung */}
-            <div>
-              <label className="label">{t('erfahrung_frage')}</label>
-              <div className="flex gap-2">
-                {(Object.entries(EXPERIENCE_CONFIG) as [keyof typeof EXPERIENCE_CONFIG, typeof EXPERIENCE_CONFIG[keyof typeof EXPERIENCE_CONFIG]][]).map(([key, cfg]) => (
-                  <button key={key}
-                    onClick={() => setForm(f => ({ ...f, experience: key }))}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex flex-col items-center gap-1 ${
-                      form.experience === key ? cfg.color : cfg.inactive
-                    }`}>
-                    <cfg.icon size={20} />
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="label">{t('titel_required')}</label>
-              <input className="input" placeholder={t('titel_placeholder')}
-                value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-            </div>
-
-            <div>
-              <label className="label">{t('bericht_optional')}</label>
-              <textarea className="input resize-none" rows={3}
-                placeholder={t('bericht_placeholder')} value={form.body}
-                onChange={e => setForm(f => ({ ...f, body: e.target.value }))} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">{t('vorteile')}</label>
-                <textarea className="input resize-none" rows={2}
-                  placeholder={t('pros_placeholder')} value={form.pros}
-                  onChange={e => setForm(f => ({ ...f, pros: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">{t('nachteile')}</label>
-                <textarea className="input resize-none" rows={2}
-                  placeholder={t('cons_placeholder')} value={form.cons}
-                  onChange={e => setForm(f => ({ ...f, cons: e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowForm(false)}>{t('cancel')}</button>
-              <button className="btn-primary flex-1" onClick={save} disabled={saving}>
-                {saving ? t('saving') : t('save')}
-              </button>
-            </div>
-          </div>
-        </div>
+      {sheet && (
+        <ReviewSheet
+          key={sheet.id ?? 'neu'}
+          titel={String(sheet.id ? t('bewertung_bearbeiten') : t('neue_bewertung'))}
+          start={sheet.start}
+          substanzen={stackItems}
+          timelines={timelines}
+          bewertet={bewertet}
+          now={now}
+          timeZone={timeZone}
+          busy={saving}
+          onClose={() => setSheet(null)}
+          onSave={save}
+        />
       )}
     </div>
   )

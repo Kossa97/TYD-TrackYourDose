@@ -1685,6 +1685,11 @@ main.flex-1 {
 [data-theme="light"] [data-expired-badge] .tyd-expired-icon { color: #dc2626; }
 [data-theme="light"] [data-list-status="aktiv"] { color: #047857; background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
 [data-theme="light"] [data-list-group-title="achtung"] { color: #b91c1c; }
+/* Bewerten-Sheet: gewaehlte Chips und Stufen — hell gesetzt waeren
+   cyan-100/200 auf hellem Grund unlesbar. */
+[data-theme="light"] [data-review-sheet] [role="radio"][aria-checked="true"] { color: #0e7490; background-color: rgba(8, 145, 178, 0.12); border-color: rgba(8, 145, 178, 0.55); }
+[data-theme="light"] [data-review-sheet] [data-stufe-darunter] { color: #0e7490; background-color: rgba(8, 145, 178, 0.05); border-color: rgba(8, 145, 178, 0.25); }
+[data-theme="light"] [data-review-sheet] [data-review-stars] [role="radio"] { background-color: transparent; }
 
 /* Vial label: restore transparency in light mode.
    The global bg-slate-950/* override replaces rgba(2,6,23,0.82) with a
