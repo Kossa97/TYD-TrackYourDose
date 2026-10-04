@@ -161,7 +161,11 @@ test('Liste: nach links wischen zeigt Bearbeiten und Löschen; Tipp daneben schl
 
   const bpc = zeile(page, 'BPC-157')
   await expect(bpc.getByRole('button', { name: 'Löschen' })).toHaveCount(0)
+  // In Ruhe ist von den Aktionen nichts zu sehen — auch kein roter Rand an
+  // der runden Ecke (Safari schnitt ihn nicht sauber ab).
+  await expect(bpc.locator('[data-list-actions]')).toBeHidden()
   await wische(page, bpc, -160)
+  await expect(bpc.locator('[data-list-actions]')).toBeVisible()
   await expect(bpc).toHaveAttribute('data-list-open', 'true')
   await expect(bpc.getByRole('button', { name: 'Bearbeiten' })).toBeVisible()
   // Gewischt ist nicht getippt: kein Vollbild.
@@ -176,6 +180,7 @@ test('Liste: nach links wischen zeigt Bearbeiten und Löschen; Tipp daneben schl
   // Kurz und ruhig gezogen rastet zurueck.
   await wische(page, bpc, -40, true)
   await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
+  await expect(bpc.locator('[data-list-actions]')).toBeHidden()
 
   // Loeschen fragt wie im Vollbild nach.
   await wische(page, bpc, -160)

@@ -118,9 +118,14 @@ export function useWischZeile({ offen, onOffen, onVoll }: {
     lage.current = x
     const vorne = vorneRef.current
     const aktionen = aktionenRef.current
-    if (vorne) vorne.style.transform = `translate3d(${x}px,0,0)`
+    // In Ruhe: keine eigene Grafikebene und die Aktionen ganz weg. Safari
+    // schneidet Ebenen nicht sauber an den runden Ecken der Zeile ab — dort
+    // blitzte sonst rechts ein roter Rand vom Loeschen-Knopf durch.
+    if (vorne) vorne.style.transform = Math.abs(x) < 0.5 ? '' : `translate3d(${x}px,0,0)`
     if (aktionen) {
-      aktionen.style.width = `${Math.max(0, -x)}px`
+      const zu = x > -0.5
+      aktionen.style.visibility = zu ? 'hidden' : 'visible'
+      aktionen.style.width = zu ? '0px' : `${-x}px`
       aktionen.style.setProperty('--wisch-fortschritt', String(Math.min(1, Math.max(0, -x / OFFEN_BREITE))))
       const istVoll = geste.current?.richtung === 'h' && -x > breite() * VOLL_ANTEIL
       if (istVoll !== voll.current) {

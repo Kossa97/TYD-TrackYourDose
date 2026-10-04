@@ -304,8 +304,9 @@ function StackListRow({
           steht — sonst ist das Vollbild der Weg dorthin. */}
       <div
         ref={aktionenRef}
+        data-list-actions
         aria-hidden={!offen || undefined}
-        className="group/aktionen absolute inset-y-0 right-0 flex w-0 overflow-hidden"
+        className="group/aktionen invisible absolute inset-y-0 right-0 flex w-0 overflow-hidden"
       >
         <button
           type="button"
