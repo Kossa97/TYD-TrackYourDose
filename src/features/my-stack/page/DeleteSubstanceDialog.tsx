@@ -1,11 +1,14 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../../lib/supabase'
 import { Trash2, Archive, AlertTriangle } from 'lucide-react'
 import { type Peptide } from './model'
 
 
 /**
  * Substanz entfernen: archivieren (alle Daten bleiben) oder endgueltig loeschen.
+ * Endgueltig nimmt die Bewertungen mit (die Datenbank loescht sie mit der
+ * Substanz) — das steht dabei, mit Anzahl, statt still zu passieren.
  */
 export function DeleteSubstanceDialog({
   deletePromptPeptide,
@@ -27,6 +30,7 @@ export function DeleteSubstanceDialog({
   hardDeletePeptide: (p: Peptide) => Promise<void>
 }) {
   const { t } = useTranslation()
+  const bewertungen = useBewertungsZahl(deletePromptPeptide?.id ?? null)
   return (
     <>
       {deletePromptPeptide && (
@@ -72,6 +76,13 @@ export function DeleteSubstanceDialog({
                   <Trash2 size={15} /> {t('endgueltig_loeschen')}
                 </p>
                 <p className="mt-1 text-xs text-slate-400">{t('endgueltig_loeschen_desc')}</p>
+                {bewertungen !== null && bewertungen > 0 && (
+                  <p data-delete-reviews className="mt-1 text-xs font-semibold text-red-300">
+                    {bewertungen === 1
+                      ? t('review_substance_delete_one')
+                      : t('review_substance_delete_many', { n: bewertungen })}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -110,4 +121,18 @@ export function DeleteSubstanceDialog({
       )}
     </>
   )
+}
+
+/** Wie viele Bewertungen an der Substanz haengen; null, solange unbekannt. */
+function useBewertungsZahl(stackItemId: string | null): number | null {
+  const [zahl, setZahl] = useState<{ id: string; n: number } | null>(null)
+  useEffect(() => {
+    if (!stackItemId) return
+    let aktuell = true
+    void supabase.from('reviews').select('id').eq('stack_item_id', stackItemId).then(({ data, error }) => {
+      if (aktuell && !error) setZahl({ id: stackItemId, n: data?.length ?? 0 })
+    })
+    return () => { aktuell = false }
+  }, [stackItemId])
+  return zahl && zahl.id === stackItemId ? zahl.n : null
 }

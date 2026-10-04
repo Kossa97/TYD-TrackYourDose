@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { CyclePlanVersion, CycleTimeline } from '../../../lib/planTimeline'
 import {
   entwurfAus,
+  gruppiereBewertungen,
+  passtZurSuche,
   entwurfGueltig,
   erfahrungAusSternen,
   leererEntwurf,
@@ -151,5 +153,38 @@ describe('Entwurf und Speichern', () => {
     expect(zeileAus(entwurfAus(review), 'u1')).toMatchObject({
       rating: 5, title: 'Gut', body: 'Text', pros: null, cons: 'teuer', wirkung: 4, vertraeglichkeit: 5, wieder_nehmen: 'ja', is_public: true,
     })
+  })
+})
+
+describe('Uebersicht', () => {
+  const review = (id: string, stackItemId: string, name: string, rating: number, cycleId: string | null, created: string, archived = false): Review => ({
+    id, stack_item_id: stackItemId, cycle_id: cycleId, rating, title: null, body: null, pros: null, cons: null,
+    experience: null, wirkung: null, vertraeglichkeit: null, wieder_nehmen: null, is_public: false,
+    created_at: created, updated_at: null, stack_items: { display_name: name, archived },
+  })
+  const liste = [
+    review('a1', 'bpc', 'BPC-157', 4, 'alt', '2026-04-15T10:00:00.000Z'),
+    review('a2', 'bpc', 'BPC-157', 2, null, '2026-01-10T10:00:00.000Z'),
+    review('a3', 'bpc', 'BPC-157', 5, 'neu', '2026-09-30T10:00:00.000Z'),
+    review('b1', 'tb', 'TB-500', 5, 'anders', '2026-09-02T10:00:00.000Z', true),
+  ]
+
+  it('je Substanz, Zyklen neueste zuerst, ohne Zyklus dahinter', () => {
+    const gruppen = gruppiereBewertungen(liste, zyklen, 'neueste')
+    expect(gruppen.map(g => g.name)).toEqual(['BPC-157', 'TB-500'])
+    expect(gruppen[0].bewertungen.map(r => r.id)).toEqual(['a3', 'a1', 'a2'])
+    expect(gruppen[0].schnitt).toBe(3.7)
+    expect(gruppen[1].archiviert).toBe(true)
+  })
+
+  it('nach Schnitt: beste Substanz zuerst', () => {
+    expect(gruppiereBewertungen(liste, zyklen, 'beste').map(g => g.name)).toEqual(['TB-500', 'BPC-157'])
+  })
+
+  it('Suche in Name und Texten', () => {
+    expect(passtZurSuche({ ...liste[0], cons: 'Teuer' }, 'teu')).toBe(true)
+    expect(passtZurSuche(liste[0], 'bpc')).toBe(true)
+    expect(passtZurSuche(liste[0], 'xyz')).toBe(false)
+    expect(passtZurSuche(liste[0], '  ')).toBe(true)
   })
 })

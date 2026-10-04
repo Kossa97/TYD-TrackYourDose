@@ -1507,5 +1507,18 @@
   "review_duration_day": "1 day",
   "review_duration_days": "{{n}} days",
   "review_period_since": "since {{date}}",
-  "review_load_error": "Reviews could not be loaded. Please try again."
+  "review_load_error": "Reviews could not be loaded. Please try again.",
+  "review_retry": "Try again",
+  "review_order": "Order",
+  "review_order_best": "Best first",
+  "review_empty_hint": "Rate a cycle once it ends — over time you see which substance really worked for you.",
+  "review_archived": "archived",
+  "review_count_one": "1 review",
+  "review_count_many": "{{n}} reviews",
+  "review_open": "Edit review: {{name}}, {{cycle}}",
+  "review_delete_title": "Delete review?",
+  "review_delete_desc": "The review and its notes are removed. The cycle and your intake log stay.",
+  "review_deleting": "Deleting …",
+  "review_substance_delete_one": "1 review of this substance is deleted too.",
+  "review_substance_delete_many": "{{n}} reviews of this substance are deleted too."
 }

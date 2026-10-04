@@ -247,3 +247,67 @@ export function zyklusKurz(timeline: CycleTimeline, timeZone: string, language: 
   if (first.slice(0, 7) === last.slice(0, 7)) return monat(first, true)
   return `${monat(first, first.slice(0, 4) !== last.slice(0, 4))} – ${monat(last, true)}`
 }
+
+export type Reihenfolge = 'neueste' | 'beste'
+
+export interface BewertungsGruppe {
+  stackItemId: string
+  name: string
+  archiviert: boolean
+  /** Mittel der Sterne, auf eine Stelle. */
+  schnitt: number
+  bewertungen: Review[]
+}
+
+/** Wann eine Bewertung zuletzt angefasst wurde. */
+const zuletzt = (review: Review) => review.updated_at ?? review.created_at
+
+/**
+ * Die Uebersicht: je Substanz eine Gruppe, darin die Zyklen neueste zuerst
+ * (ohne Zyklus nach Datum dahinter) — so stehen Zyklen derselben Substanz
+ * nebeneinander. Gruppen nach der zuletzt bearbeiteten Bewertung oder nach
+ * dem besten Schnitt.
+ */
+export function gruppiereBewertungen(
+  reviews: readonly Review[],
+  timelines: readonly CycleTimeline[],
+  reihenfolge: Reihenfolge,
+): BewertungsGruppe[] {
+  const start = new Map(timelines.map(timeline => [timeline.cycle.id, timeline.cycle.started_at]))
+  const gruppen = new Map<string, Review[]>()
+  for (const review of reviews) {
+    const liste = gruppen.get(review.stack_item_id) ?? []
+    liste.push(review)
+    gruppen.set(review.stack_item_id, liste)
+  }
+  const ergebnis = [...gruppen.entries()].map(([stackItemId, liste]) => {
+    const sortiert = [...liste].sort((a, b) => {
+      const sa = a.cycle_id ? start.get(a.cycle_id) : undefined
+      const sb = b.cycle_id ? start.get(b.cycle_id) : undefined
+      if (sa && sb) return sb.localeCompare(sa)
+      if (sa) return -1
+      if (sb) return 1
+      return b.created_at.localeCompare(a.created_at)
+    })
+    const summe = liste.reduce((acc, review) => acc + review.rating, 0)
+    return {
+      stackItemId,
+      name: liste[0].stack_items?.display_name ?? '',
+      archiviert: liste[0].stack_items?.archived === true,
+      schnitt: Math.round((summe / liste.length) * 10) / 10,
+      bewertungen: sortiert,
+    }
+  })
+  const neueste = (gruppe: BewertungsGruppe) => gruppe.bewertungen.map(zuletzt).sort().at(-1) ?? ''
+  return ergebnis.sort((a, b) => reihenfolge === 'beste'
+    ? b.schnitt - a.schnitt || a.name.localeCompare(b.name)
+    : neueste(b).localeCompare(neueste(a)))
+}
+
+/** Suche in Name, Titel und Texten — Gross/klein egal. */
+export function passtZurSuche(review: Review, suche: string): boolean {
+  const s = suche.trim().toLowerCase()
+  if (!s) return true
+  return [review.stack_items?.display_name, review.title, review.body, review.pros, review.cons]
+    .some(text => (text ?? '').toLowerCase().includes(s))
+}
