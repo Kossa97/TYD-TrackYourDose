@@ -10,6 +10,7 @@ import { DURATION_KEYS, durationKeyOf, durationLabel } from './tagebuch/duration
 import { ORDER, PAGE_SIZE, searchFilter, type SortBy } from './tagebuch/query'
 import { INTAKE_OPTIONS, intakeDose, intakeGap, type IntakeOption } from './tagebuch/intake'
 import { Sheet } from '../features/compliance/components/Sheet'
+import { Auswertung } from './tagebuch/Auswertung'
 
 interface Effect {
   id: string
@@ -52,6 +53,7 @@ export function Tagebuch() {
   const [deleting, setDeleting] = useState<Effect | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [intakeOptions, setIntakeOptions] = useState<IntakeOption[]>([])
+  const [view, setView] = useState<'liste' | 'auswertung'>('liste')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState(false)
@@ -227,6 +229,25 @@ export function Tagebuch() {
         </button>
       </div>
 
+      <div className="flex border-b border-slate-800 mb-4" role="tablist" aria-label={t('tagebuch_title')}>
+        {(['liste', 'auswertung'] as const).map(key => (
+          <button key={key} type="button" role="tab" id={`tagebuch-tab-${key}`}
+            aria-selected={view === key} aria-controls={`tagebuch-panel-${key}`}
+            onClick={() => setView(key)}
+            className={`flex-1 -mb-px border-b-2 py-2 text-sm font-medium transition-colors ${
+              view === key ? 'border-sky-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}>
+            {t(key === 'liste' ? 'tagebuch_tab_liste' : 'tagebuch_tab_auswertung')}
+          </button>
+        ))}
+      </div>
+
+      {view === 'auswertung' ? (
+        <div role="tabpanel" id="tagebuch-panel-auswertung" aria-labelledby="tagebuch-tab-auswertung">
+          <Auswertung userId={userId} refreshKey={reloadToken} />
+        </div>
+      ) : (
+      <div role="tabpanel" id="tagebuch-panel-liste" aria-labelledby="tagebuch-tab-liste">
       {/* Filter */}
       <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-1 mb-4 gap-1">
         {([['all', t('alle')], ['effect', t('wirkungen')], ['side_effect', t('nebenwirkungen')]] as const).map(([val, label]) => (
@@ -335,6 +356,8 @@ export function Tagebuch() {
         <button type="button" className="btn-secondary w-full mt-4" onClick={() => setLimit(n => n + PAGE_SIZE)}>
           {t('tagebuch_mehr_laden')}
         </button>
+      )}
+      </div>
       )}
 
       {/* ══ FORMULAR ══════════════════════════════════════════════════════════ */}

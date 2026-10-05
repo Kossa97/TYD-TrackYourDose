@@ -256,3 +256,75 @@ test('Einnahme: beim Bearbeiten bleibt eine aeltere Verknuepfung gewaehlt', asyn
   await expect(auswahl).toHaveValue(String(alt.id))
   await expect(auswahl.locator('option')).toHaveCount(7)
 })
+
+function auswertungsDaten(mock: MockSupabase) {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  const tb = mock.table('stack_items').find(row => row.display_name === 'TB-500')!
+  const tage = ['2026-09-02', '2026-09-03', '2026-09-09', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-23', '2026-09-27']
+  tage.forEach((tag, i) => {
+    const log = einnahme(mock, i % 3 === 0 ? tb.id : bpc.id, `${tag}T06:00:00.000Z`)
+    eintrag(mock, {
+      description: i % 2 ? 'Rötung' : 'Besserer Schlaf', type: i % 2 ? 'side_effect' : 'effect', severity: 1 + (i % 5),
+      stack_item_id: log.stack_item_id, dose_log_id: log.id,
+      occurred_at: new Date(Date.parse(`${tag}T06:00:00.000Z`) + [0.5, 2, 6, 18, 30][i % 5] * 3_600_000).toISOString(),
+    })
+  })
+  eintrag(mock, { description: 'Müdigkeit', occurred_at: '2026-09-25T12:00:00.000Z' })
+  eintrag(mock, { description: 'Rötung', type: 'side_effect', stack_item_id: bpc.id, occurred_at: '2026-09-26T12:00:00.000Z' })
+}
+
+test('Auswertung: Reiter, Verlauf, Abstand zur Einnahme, Tabelle pro Substanz', async ({ page, mock }, info) => {
+  auswertungsDaten(mock)
+  await page.goto('/tagebuch')
+  await page.getByRole('tab', { name: 'Auswertung' }).click()
+  await expect(page.getByRole('tab', { name: 'Auswertung' })).toHaveAttribute('aria-selected', 'true')
+  const panel = page.locator('[data-tagebuch-auswertung]')
+  await expect(panel.getByText('Zeigt Häufungen in deinen Einträgen', { exact: false })).toBeVisible()
+
+  // 4 Wochen: KW 37–40 (07.09.–04.10.), die Einträge vom 2./3.9. liegen davor.
+  const verlauf = panel.locator('table.sr-only').first()
+  await expect(verlauf.locator('tbody tr')).toHaveCount(4)
+  await expect(verlauf.locator('tbody tr').first()).toContainText('KW 37')
+
+  await expect(panel.getByText('Nur Einträge mit Bezug zu einer Einnahme (6)')).toBeVisible()
+
+  const tabelle = panel.locator('[data-tagebuch-substanzen] tbody tr')
+  await expect(tabelle).toHaveCount(3)
+  await expect(tabelle.first()).toContainText('BPC-157')
+  await expect(tabelle.last()).toContainText('Ohne Substanz')
+
+  await panel.getByRole('button', { name: 'Alles' }).click()
+  await expect(panel.getByText('Nur Einträge mit Bezug zu einer Einnahme (8)')).toBeVisible()
+
+  if (info.project.name === 'iphone-13') {
+    // Balken wachsen animiert ein — erst nach der Animation fotografieren.
+    await page.waitForTimeout(1600)
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'))
+    await page.screenshot({ path: info.outputPath('auswertung-dunkel.png'), fullPage: true })
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'))
+    await page.screenshot({ path: info.outputPath('auswertung-hell.png'), fullPage: true })
+    await panel.locator('.recharts-bar-rectangle').nth(3).hover()
+    await page.screenshot({ path: info.outputPath('auswertung-tooltip.png') })
+  }
+})
+
+test('Auswertung: ein neuer Eintrag erscheint sofort, ohne den Reiter zu wechseln', async ({ page, mock }) => {
+  void mock
+  await page.goto('/tagebuch')
+  await page.getByRole('tab', { name: 'Auswertung' }).click()
+  await expect(page.getByText('Keine Einträge in diesem Zeitraum.')).toBeVisible()
+  await page.getByRole('button', { name: 'Neu' }).click()
+  await page.getByRole('dialog').getByLabel('Beschreibung *').fill('Mehr Energie')
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()
+  await expect(page.locator('[data-tagebuch-substanzen] tbody tr')).toHaveCount(1)
+  await expect(page.locator('[data-tagebuch-substanzen] tbody tr')).toContainText('Ohne Substanz')
+})
+
+test('Auswertung: ohne Eintraege ein Hinweis statt leerer Diagramme', async ({ page, mock }) => {
+  void mock
+  await page.goto('/tagebuch')
+  await page.getByRole('tab', { name: 'Auswertung' }).click()
+  await expect(page.getByText('Keine Einträge in diesem Zeitraum.')).toBeVisible()
+})
