@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../i18n/dateLocales'
 import { DURATION_KEYS, durationKeyOf, durationLabel } from './tagebuch/duration'
 import { ORDER, PAGE_SIZE, searchFilter, type SortBy } from './tagebuch/query'
+import { INTAKE_OPTIONS, intakeDose, intakeGap, type IntakeOption } from './tagebuch/intake'
 import { Sheet } from '../features/compliance/components/Sheet'
 
 interface Effect {
@@ -20,6 +21,8 @@ interface Effect {
   notes: string | null
   stack_item_id: string | null
   stack_items: { display_name: string } | null
+  dose_log_id: string | null
+  dose_logs: Omit<IntakeOption, 'id'> | null
 }
 
 interface StackItem { id: string; display_name: string }
@@ -31,7 +34,7 @@ const SEVERITY_COLORS: Record<number, string> = {
 
 export function Tagebuch() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const locale = getDateLocale()
 
   const severityLabel = (n: number) =>
@@ -48,6 +51,7 @@ export function Tagebuch() {
   const [reloadToken, setReloadToken] = useState(0)
   const [deleting, setDeleting] = useState<Effect | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [intakeOptions, setIntakeOptions] = useState<IntakeOption[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState(false)
@@ -59,6 +63,7 @@ export function Tagebuch() {
     duration: '',
     occurred_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     stack_item_id: '',
+    dose_log_id: '',
     notes: '',
   })
   const [saving, setSaving] = useState(false)
@@ -91,7 +96,7 @@ export function Tagebuch() {
     let cancelled = false
     let query = supabase
       .from('effects')
-      .select('*, stack_items(display_name)')
+      .select('*, stack_items(display_name), dose_logs(dose, unit, logged_at)')
       .eq('user_id', userId)
     if (filter !== 'all') query = query.eq('type', filter)
     if (orFilter) query = query.or(orFilter)
@@ -109,11 +114,42 @@ export function Tagebuch() {
     return () => { cancelled = true }
   }, [userId, filter, orFilter, sortBy, limit, reloadToken, t])
 
+  // Einnahmen zur Auswahl: bestätigte der gewählten Substanz vor dem Zeitpunkt.
+  // Beim Bearbeiten bleibt die schon verknüpfte wählbar, auch wenn sie älter ist.
+  const linkedAtOpen = formAtOpen.dose_log_id
+  useEffect(() => {
+    const at = new Date(form.occurred_at)
+    if (!showForm || !form.stack_item_id || Number.isNaN(at.getTime())) { setIntakeOptions([]); return }
+    let cancelled = false
+    // Das Formular kennt nur Minuten — eine Einnahme aus derselben Minute (mit Sekunden) zählt mit.
+    const atIso = new Date(at.getTime() + 59_999).toISOString()
+    const recent = supabase.from('dose_logs').select('id, dose, unit, logged_at')
+      .eq('user_id', userId).eq('stack_item_id', form.stack_item_id).eq('taken', true)
+      .lte('logged_at', atIso).order('logged_at', { ascending: false }).limit(INTAKE_OPTIONS)
+    const linked = linkedAtOpen
+      ? supabase.from('dose_logs').select('id, dose, unit, logged_at')
+        .eq('user_id', userId).eq('id', linkedAtOpen).eq('stack_item_id', form.stack_item_id).lte('logged_at', atIso)
+      : null
+    Promise.all([recent, linked]).then(([recentRes, linkedRes]) => {
+      if (cancelled) return
+      const options = [...((recentRes.data ?? []) as IntakeOption[])]
+      for (const row of (linkedRes?.data ?? []) as IntakeOption[]) {
+        if (!options.some(option => option.id === row.id)) options.push(row)
+      }
+      setIntakeOptions(options)
+      // Eine Wahl, die nicht mehr passt (Zeitpunkt davor), fällt weg.
+      if (!recentRes.error && !linkedRes?.error) {
+        setForm(f => (f.dose_log_id && !options.some(option => option.id === f.dose_log_id) ? { ...f, dose_log_id: '' } : f))
+      }
+    })
+    return () => { cancelled = true }
+  }, [showForm, form.stack_item_id, form.occurred_at, linkedAtOpen, userId])
+
   const resetForm = () => {
     const empty = {
       type: 'effect' as const, description: '', severity: 3,
       duration: '', occurred_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      stack_item_id: '', notes: '',
+      stack_item_id: '', dose_log_id: '', notes: '',
     }
     setForm(empty)
     setFormAtOpen(empty)
@@ -127,7 +163,7 @@ export function Tagebuch() {
       type: e.type, description: e.description, severity: e.severity,
       duration: durationKey ?? e.duration ?? '',
       occurred_at: format(new Date(e.occurred_at), "yyyy-MM-dd'T'HH:mm"),
-      stack_item_id: e.stack_item_id ?? '', notes: e.notes ?? '',
+      stack_item_id: e.stack_item_id ?? '', dose_log_id: e.dose_log_id ?? '', notes: e.notes ?? '',
     }
     setForm(current)
     setFormAtOpen(current)
@@ -146,13 +182,16 @@ export function Tagebuch() {
       duration:    form.duration || null,
       occurred_at: new Date(form.occurred_at).toISOString(),
       stack_item_id: form.stack_item_id || null,
+      // Ohne Substanz bleibt ein bestehender Verweis (Substanz gelöscht → set null); der Wechsel der Substanz leert ihn.
+      dose_log_id: form.dose_log_id || null,
       notes:       form.notes || null,
     }
     // .select() liefert die geänderte Zeile – leer heißt: Eintrag existiert nicht mehr
     const { data, error } = editingId
       ? await supabase.from('effects').update(fields).eq('id', editingId).eq('user_id', userId).select('id')
       : await supabase.from('effects').insert({ ...fields, user_id: userId, status: 'eingetreten' }).select('id')
-    if (error || !data?.length) toast.error(t('fehler_speichern'))
+    if (error?.message?.includes('effect_dose_log_other_substance')) toast.error(t('tagebuch_einnahme_fremd'))
+    else if (error || !data?.length) toast.error(t('fehler_speichern'))
     else {
       toast.success(t(editingId ? 'eintrag_aktualisiert' : 'eintrag_gespeichert'))
       setShowForm(false); resetForm(); reload()
@@ -257,6 +296,13 @@ export function Tagebuch() {
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-slate-500 text-xs">
                   <span>{format(new Date(e.occurred_at), 'dd.MM.yyyy HH:mm', { locale })}</span>
                   {e.stack_items && <span className="text-sky-400">{e.stack_items.display_name}</span>}
+                  {e.dose_logs && (() => {
+                    const gap = intakeGap(e.dose_logs.logged_at, e.occurred_at, t)
+                    const dose = intakeDose(e.dose_logs, i18n.language)
+                    return gap && (
+                      <span data-tagebuch-intake>{[t('tagebuch_nach_einnahme', { abstand: gap }), dose].filter(Boolean).join(' · ')}</span>
+                    )
+                  })()}
                   {e.duration && (
                     <span className="flex items-center gap-1">
                       <Clock size={11} aria-hidden="true" />
@@ -332,7 +378,7 @@ export function Tagebuch() {
             <div>
               <label className="label" htmlFor="tagebuch-substanz">{t('peptide_form_group_substance')}</label>
               <select id="tagebuch-substanz" className="select" value={form.stack_item_id}
-                onChange={e => setForm(f => ({ ...f, stack_item_id: e.target.value }))}>
+                onChange={e => setForm(f => ({ ...f, stack_item_id: e.target.value, dose_log_id: '' }))}>
                 <option value="">{t('kein_peptid')}</option>
                 {stackItems.map(item => <option key={item.id} value={item.id}>{item.display_name}</option>)}
               </select>
@@ -355,6 +401,26 @@ export function Tagebuch() {
               <input id="tagebuch-zeitpunkt" className="input" type="datetime-local" value={form.occurred_at}
                 onChange={e => setForm(f => ({ ...f, occurred_at: e.target.value }))} />
             </div>
+
+            {/* 5b. Bezug zur Einnahme — freiwillig, nur mit Substanz */}
+            {form.stack_item_id && (
+              <div>
+                <label className="label" htmlFor="tagebuch-einnahme">{t('tagebuch_einnahme_label')}</label>
+                {intakeOptions.length > 0 ? (
+                  <select id="tagebuch-einnahme" className="select" value={form.dose_log_id}
+                    onChange={e => setForm(f => ({ ...f, dose_log_id: e.target.value }))}>
+                    <option value="">{t('tagebuch_einnahme_keine')}</option>
+                    {intakeOptions.map(option => (
+                      <option key={option.id} value={option.id}>
+                        {[format(new Date(option.logged_at), 'dd.MM. HH:mm', { locale }), intakeDose(option, i18n.language)].filter(Boolean).join(' · ')}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p id="tagebuch-einnahme" className="text-xs text-slate-500">{t('tagebuch_einnahme_leer')}</p>
+                )}
+              </div>
+            )}
 
             {/* 6. Dauer */}
             <div>

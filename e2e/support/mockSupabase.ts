@@ -67,6 +67,7 @@ const RELATIONS: Record<string, Record<string, Relation>> = {
   },
   effects: {
     stack_items: { table: 'stack_items', kind: 'one', local: 'stack_item_id', foreign: 'id' },
+    dose_logs: { table: 'dose_logs', kind: 'one', local: 'dose_log_id', foreign: 'id' },
   },
   cycles: {
     stack_items: { table: 'stack_items', kind: 'one', local: 'stack_item_id', foreign: 'id' },

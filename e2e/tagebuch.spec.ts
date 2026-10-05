@@ -161,3 +161,98 @@ test('Escape nach einer Eingabe fragt nach; „Nein" laesst das Formular offen',
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
 })
+
+function einnahme(mock: MockSupabase, stackItemId: unknown, logged_at: string, felder: Record<string, unknown> = {}) {
+  return mock.insert('dose_logs', {
+    user_id: TEST_USER.id, stack_item_id: stackItemId, dose: 250, unit: 'mcg', taken: true, logged_at, ...felder,
+  })
+}
+
+test('Einnahme: freiwillig, nur bestaetigte der Substanz vor dem Zeitpunkt, wird gespeichert und angezeigt', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  const tb = mock.table('stack_items').find(row => row.display_name === 'TB-500')!
+  const passend = einnahme(mock, bpc.id, '2026-09-28T06:00:00.000Z')
+  einnahme(mock, bpc.id, '2026-09-27T06:00:00.000Z')
+  einnahme(mock, bpc.id, '2026-09-28T05:00:00.000Z', { taken: false })
+  einnahme(mock, bpc.id, '2026-09-28T09:00:00.000Z')
+  einnahme(mock, tb.id, '2026-09-28T07:00:00.000Z')
+  await page.goto('/tagebuch')
+
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByLabel('Bezug zur Einnahme (optional)')).toHaveCount(0)
+  await dialog.getByLabel('Beschreibung *').fill('Wärme an der Einstichstelle')
+  await dialog.getByLabel('Substanz').selectOption({ label: 'BPC-157' })
+
+  const auswahl = dialog.getByLabel('Bezug zur Einnahme (optional)')
+  await expect(auswahl).toHaveValue('')
+  await expect(auswahl.locator('option')).toHaveCount(3)
+  await auswahl.selectOption(String(passend.id))
+  await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await expect(dialog).toBeHidden()
+
+  expect(mock.table('effects')[0]).toMatchObject({ stack_item_id: bpc.id, dose_log_id: passend.id })
+  await expect(page.locator('[data-tagebuch-intake]')).toHaveText('2 h nach Einnahme · 250 mcg')
+})
+
+test('Einnahme: ohne Wahl wird nichts verknuepft; Substanzwechsel leert die Wahl', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  seedPeptide(mock, 'TB-500', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  const log = einnahme(mock, bpc.id, '2026-09-28T06:00:00.000Z')
+  await page.goto('/tagebuch')
+
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Beschreibung *').fill('Ohne Bezug')
+  await dialog.getByLabel('Substanz').selectOption({ label: 'BPC-157' })
+  await dialog.getByLabel('Bezug zur Einnahme (optional)').selectOption(String(log.id))
+  await dialog.getByLabel('Substanz').selectOption({ label: 'TB-500' })
+  await expect(dialog.getByText('Keine bestätigte Einnahme vor diesem Zeitpunkt.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await expect(dialog).toBeHidden()
+  expect(mock.table('effects')[0]).toMatchObject({ dose_log_id: null })
+  await expect(page.locator('[data-tagebuch-intake]')).toHaveCount(0)
+})
+
+test('Einnahme: ohne Substanz bleibt ein bestehender Verweis beim Speichern erhalten', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  const log = einnahme(mock, bpc.id, '2026-09-28T06:00:00.000Z')
+  // So hinterlaesst es die Datenbank, wenn die Substanz geloescht wurde.
+  eintrag(mock, { stack_item_id: null, dose_log_id: log.id, occurred_at: '2026-09-28T07:00:00.000Z' })
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Eintrag bearbeiten' }).click()
+  await page.getByRole('dialog').getByLabel('Beschreibung *').fill('Kopfschmerz, leicht')
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  expect(mock.table('effects')[0]).toMatchObject({ description: 'Kopfschmerz, leicht', dose_log_id: log.id })
+})
+
+test('Einnahme: eine Einnahme aus derselben Minute ist waehlbar', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  // NOW ist 10:00:00 Berlin; die Einnahme 10:00:40 — dieselbe Minute wie der vorbelegte Zeitpunkt.
+  const log = einnahme(mock, bpc.id, '2026-09-28T08:00:40.000Z')
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Neu' }).click()
+  await page.getByRole('dialog').getByLabel('Substanz').selectOption({ label: 'BPC-157' })
+  await expect(page.getByRole('dialog').getByLabel('Bezug zur Einnahme (optional)').locator(`option[value="${log.id}"]`)).toHaveCount(1)
+})
+
+test('Einnahme: beim Bearbeiten bleibt eine aeltere Verknuepfung gewaehlt', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  const alt = einnahme(mock, bpc.id, '2026-09-20T06:00:00.000Z')
+  for (let tag = 21; tag <= 27; tag++) einnahme(mock, bpc.id, `2026-09-${tag}T06:00:00.000Z`)
+  eintrag(mock, { stack_item_id: bpc.id, dose_log_id: alt.id, occurred_at: '2026-09-27T12:00:00.000Z' })
+  await page.goto('/tagebuch')
+  await expect(page.locator('[data-tagebuch-intake]')).toHaveText('7 Tage nach Einnahme · 250 mcg')
+
+  await page.getByRole('button', { name: 'Eintrag bearbeiten' }).click()
+  const auswahl = page.getByRole('dialog').getByLabel('Bezug zur Einnahme (optional)')
+  await expect(auswahl).toHaveValue(String(alt.id))
+  await expect(auswahl.locator('option')).toHaveCount(7)
+})
