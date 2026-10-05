@@ -10,6 +10,8 @@ This repository uses trunk-based development. Commit and push future changes dir
 
 Run `npm test -- --maxWorkers=2`, `npm run lint`, `npm run build`, `npm run test:e2e:typecheck` and `npm run test:e2e` before releasing changes. Browser setup, coverage and evidence limits are documented in [e2e/README.md](e2e/README.md). GitHub Actions runs these checks on pushes and manual runs.
 
+Vitest starts its workers in `Europe/Berlin` so local-date fixtures behave identically on developer machines and UTC CI runners. Tests for other time zones set their own explicit zone.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

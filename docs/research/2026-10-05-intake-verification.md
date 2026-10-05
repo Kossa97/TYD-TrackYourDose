@@ -53,4 +53,6 @@ Die vorgeschriebene Aktualisierung mit `graphify update .` wurde auch nach Integ
 
 Der Workflow `Gerätetests` führt bei Push und manuellem Start Unit-Tests, Lint, den vollständigen Produktionsbuild, Browser-TypeScript und Chromium/WebKit aus. Browserfehler behalten Screenshots und Traces; die CI lädt Berichte als Artefakte hoch. Diese Workflow-Konfiguration allein richtet keine Vercel-Deployment-Sperre ein.
 
+Der erste vollständige GitHub-Lauf deckte fünf bestehende Tests mit einer bislang unausgesprochenen Berliner Zeitzonenannahme auf. Unter UTC wurden dieselben fünf Fehler lokal reproduziert. `vitest.config.ts` setzt jetzt vor dem Start der Worker `Europe/Berlin`; die Zeitpunkte und Assertions bleiben unverändert. Tests mit anderen Zeitzonen wählen diese weiterhin ausdrücklich. Die Korrektur betrifft ausschließlich die Testumgebung. Danach bestanden alle 2.748 Tests auch beim Start aus einer UTC-Umgebung; Lint blieb bei null Fehlern und 27 vorhandenen Warnungen.
+
 Die Browserprüfungen ersetzen keine echten Datenbank-, RLS-, Transaktions- oder Gerätetests. Auth und Onboarding sind vorbereitet; Service Worker sind für die HTTP-Nachbildung blockiert. Offline-PWA, Push-Zustellung und beide Vorkommen der doppelt auftretenden Herbststunde sind nicht Teil dieses Nachweises. Produktive Nutzerdaten wurden für die Prüfungen nicht verwendet.
