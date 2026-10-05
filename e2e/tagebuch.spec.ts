@@ -58,8 +58,8 @@ test('Neu nach Bearbeiten: das Formular ist leer und legt einen neuen Eintrag an
 test('Loeschen: der Eintrag ist weg', async ({ page, mock }) => {
   eintrag(mock, {})
   await page.goto('/tagebuch')
-  page.once('dialog', dialog => dialog.accept())
   await page.getByRole('button', { name: 'Eintrag löschen?' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen' }).click()
   await expect(page.getByText('Kopfschmerz')).toHaveCount(0)
   expect(mock.table('effects')).toHaveLength(0)
 })
@@ -67,7 +67,7 @@ test('Loeschen: der Eintrag ist weg', async ({ page, mock }) => {
 test('Neu: eine vorgegebene Dauer wird als Schluessel gespeichert und uebersetzt angezeigt', async ({ page, mock }) => {
   await page.goto('/tagebuch')
   await page.getByRole('button', { name: 'Neu' }).click()
-  await page.getByPlaceholder(/Besserer Schlaf/).fill('Mehr Energie')
+  await page.getByLabel('Beschreibung *').fill('Mehr Energie')
   await page.getByRole('button', { name: '4 Std', exact: true }).click()
   await page.getByRole('button', { name: 'Speichern' }).click()
   await expect(page.getByText('Eintrag gespeichert')).toBeVisible()
@@ -84,4 +84,80 @@ test('Anzeige: ein schon umgestellter Eintrag zeigt die Uebersetzung, Freitext b
   await expect(page.getByText('1 Woche')).toBeVisible()
   await expect(page.getByText('mal so, mal so')).toBeVisible()
   await expect(page.getByText('woche_1')).toHaveCount(0)
+})
+
+test('Seitenweise: zuerst 50 Eintraege, „Weitere Eintraege laden" holt den Rest', async ({ page, mock }) => {
+  for (let i = 0; i < 60; i++) {
+    eintrag(mock, { description: `Eintrag ${String(i).padStart(2, '0')}`, occurred_at: new Date(Date.UTC(2026, 8, 1, 0, i)).toISOString() })
+  }
+  await page.goto('/tagebuch')
+  const liste = page.locator('ul > li')
+  await expect(liste).toHaveCount(50)
+  await expect(liste.first()).toContainText('Eintrag 59')
+  await page.getByRole('button', { name: 'Weitere Einträge laden' }).click()
+  await expect(liste).toHaveCount(60)
+  await expect(liste.last()).toContainText('Eintrag 00')
+  await expect(page.getByRole('button', { name: 'Weitere Einträge laden' })).toHaveCount(0)
+})
+
+test('Suche und Filter laufen in der Datenbank: Beschreibung oder Substanzname', async ({ page, mock }) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  const item = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  eintrag(mock, { description: 'Besserer Schlaf', type: 'effect' })
+  eintrag(mock, { description: 'Rötung', stack_item_id: item.id })
+  eintrag(mock, { description: 'Müdigkeit' })
+  await page.goto('/tagebuch')
+  await expect(page.locator('ul > li')).toHaveCount(3)
+
+  await page.getByRole('searchbox').fill('bpc')
+  await expect(page.locator('ul > li')).toHaveCount(1)
+  await expect(page.locator('ul > li')).toContainText('Rötung')
+
+  await page.getByRole('searchbox').fill('')
+  await page.getByRole('button', { name: 'Wirkungen', exact: true }).click()
+  await expect(page.locator('ul > li')).toHaveCount(1)
+  await expect(page.locator('ul > li')).toContainText('Besserer Schlaf')
+})
+
+test('Barrierefreiheit: Formular ist ein Dialog, Escape schliesst, Felder sind beschriftet', async ({ page, mock }) => {
+  void mock
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Tagebuch-Eintrag' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Beschreibung *')).toBeFocused()
+  await expect(dialog.getByRole('button', { name: 'Wirkung', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+})
+
+test('Loeschen-Sheet: Abbrechen behaelt den Eintrag', async ({ page, mock }) => {
+  eintrag(mock, {})
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Eintrag löschen?' }).click()
+  const sheet = page.getByRole('alertdialog', { name: 'Eintrag löschen?' })
+  await expect(sheet).toContainText('Kopfschmerz')
+  await expect(sheet.getByRole('button', { name: 'Abbrechen' })).toBeFocused()
+  await sheet.getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(sheet).toBeHidden()
+  expect(mock.table('effects')).toHaveLength(1)
+})
+
+test('Escape nach einer Eingabe fragt nach; „Nein" laesst das Formular offen', async ({ page, mock }) => {
+  void mock
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Neuer Tagebuch-Eintrag' })
+  await dialog.getByLabel('Beschreibung *').fill('Halb getippt')
+
+  let frage = ''
+  page.once('dialog', d => { frage = d.message(); void d.dismiss() })
+  await page.keyboard.press('Escape')
+  await expect.poll(() => frage).toBe('Ungespeicherte Änderungen verwerfen?')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Beschreibung *')).toHaveValue('Halb getippt')
+
+  page.once('dialog', d => void d.accept())
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
 })

@@ -117,6 +117,40 @@ function toNumberish(value: string): unknown {
   return value
 }
 
+/**
+ * `or=(a.eq.1,b.ilike."%x,y%")` in `[spalte, filter]`-Paare zerlegen — Kommas
+ * in Klammern (`in.(…)`) und in Anfuehrungszeichen trennen nicht. Werte in
+ * Anfuehrungszeichen kommen ohne sie und unmaskiert zurueck.
+ */
+function splitLogic(filter: string): Array<[string, string]> {
+  const inner = filter.replace(/^\(|\)$/g, '')
+  const parts: string[] = []
+  let depth = 0
+  let quoted = false
+  let current = ''
+  for (let i = 0; i < inner.length; i++) {
+    const char = inner[i]
+    if (quoted && char === '\\') { current += char + inner[++i]; continue }
+    if (char === '"') quoted = !quoted
+    else if (!quoted && char === '(') depth++
+    else if (!quoted && char === ')') depth--
+    else if (!quoted && depth === 0 && char === ',') { parts.push(current); current = ''; continue }
+    current += char
+  }
+  parts.push(current)
+  return parts.map(part => {
+    const dot = part.indexOf('.')
+    const column = part.slice(0, dot)
+    const rest = part.slice(dot + 1)
+    const opDot = rest.indexOf('.')
+    const value = rest.slice(opDot + 1)
+    const plain = value.startsWith('"') && value.endsWith('"')
+      ? value.slice(1, -1).replace(/\\(.)/g, '$1')
+      : value
+    return [column, `${rest.slice(0, opDot)}.${plain}`]
+  })
+}
+
 function matches(row: Row, column: string, filter: string): boolean {
   const dot = filter.indexOf('.')
   let op = filter.slice(0, dot)
@@ -369,7 +403,8 @@ export class MockSupabase {
     const filters = [...url.searchParams.entries()].filter(([key]) => !RESERVED_PARAMS.has(key))
     const rows = this.table(tableName)
     const selected = () => rows.filter(row => filters.every(([column, filter]) => {
-      if (column === 'or' || column === 'and') throw new Error(`${column}-Filter nicht nachgebildet`)
+      if (column === 'or') return splitLogic(filter).some(([inner, innerFilter]) => matches(row, inner, innerFilter))
+      if (column === 'and') throw new Error(`${column}-Filter nicht nachgebildet`)
       if (column.includes('.')) throw new Error(`Filter auf eingebettete Spalte ${column} nicht nachgebildet`)
       return matches(row, column, filter)
     }))
@@ -397,8 +432,9 @@ export class MockSupabase {
       let result = selected()
       const order = url.searchParams.get('order')
       if (order) result = sortRows(result, order)
+      const offset = Number(url.searchParams.get('offset') ?? 0)
       const limit = url.searchParams.get('limit')
-      if (limit) result = result.slice(0, Number(limit))
+      if (offset || limit) result = result.slice(offset, limit ? offset + Number(limit) : undefined)
       return respond(result)
     }
 
