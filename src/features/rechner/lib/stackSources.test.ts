@@ -33,6 +33,12 @@ function inventory(overrides: Partial<StackItemInventory> = {}): StackItemInvent
 }
 
 describe('getCalculatorSources', () => {
+  it('imports solvent saved for a canonical powder vial before inventory tracking is enabled', () => {
+    expect(getCalculatorSources([item({ ingredients: [ingredient({ amount_value: 5 })],
+      inventory: inventory({ enabled: false, package_unit: null, reconstitution_ml: 2 }) })]))
+      .toEqual([{ id: 'item-1', label: 'Product', amount: 5, unit: 'mg', diluentMl: 2 }])
+  })
+
   it('accepts database catalog ingredients with a null custom name', () => {
     // save_stack_item stores SQL NULL for the custom name of catalog entries.
     const catalogIngredient = JSON.parse(JSON.stringify({
@@ -122,7 +128,11 @@ describe('getCalculatorSources', () => {
     })])).toEqual([{ id: 'item-1', label: 'Product', amount: 250, unit: 'mg', diluentMl: 1, isReference: true }])
   })
 
-  it.each([{ enabled: false }, { package_unit: 'ml' }])('ignores inapplicable inventory dilution %j', overrides => {
+  it('keeps the saved vial dilution available when stock tracking is disabled', () => {
+    expect(getCalculatorSources([item({ inventory: inventory({ enabled: false }), reconstitution_ml: 2 })])[0].diluentMl).toBe(1.5)
+  })
+
+  it.each([{ package_unit: 'ml' }])('ignores inapplicable inventory dilution %j', overrides => {
     expect(getCalculatorSources([item({ inventory: inventory(overrides), reconstitution_ml: 2 })])[0].diluentMl).toBe(2)
   })
 

@@ -15,6 +15,7 @@ import type {
 import type { PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
+import { powderVialIngredientsForEdit } from './vialStrength'
 import {
   defaultIntakeUnitFor,
   defaultMethodFor,
@@ -426,7 +427,7 @@ function draftFromStackItem(
     brand: existing.brand ?? '',
     colorHex: existing.color_hex ?? '',
     notes: existing.notes ?? '',
-    ingredients: existing.ingredients.map(ingredient => ({ ...ingredient })),
+    ingredients: powderVialIngredientsForEdit(existing),
     plan: existingPlan
       ? geladenerPlan(existingPlan)
       : emptyPlan(existing.display_name, existing.dosage_form),
@@ -498,6 +499,8 @@ export function initialWizardState(
 }
 
 export function wizardReducer(state: WizardState, action: WizardAction): WizardState {
+  const powderVial = state.draft.category === 'peptide' && state.draft.dosageForm === 'vial'
+    && state.draft.ingredients.length === 1 && state.draft.ingredients[0].basis_unit === 'ml'
   switch (action.type) {
     case 'step_selected':
       return { ...state, step: action.step }
@@ -645,6 +648,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           ingredients: state.draft.ingredients.map((ingredient, index) => (
             index === action.index ? { ...ingredient, ...action.changes } : ingredient
           )),
+          ...(powderVial && 'basis_value' in action.changes ? {
+            inventory: { ...state.draft.inventory, reconstitutionMl: action.changes.basis_value },
+          } : {}),
         },
       }
     case 'ingredient_removed':
@@ -710,6 +716,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         draft: {
           ...state.draft,
           inventory: { ...state.draft.inventory, ...action.changes },
+          ...(powderVial && 'reconstitutionMl' in action.changes ? {
+            ingredients: state.draft.ingredients.map(ingredient => ({ ...ingredient, basis_value: action.changes.reconstitutionMl ?? null })),
+          } : {}),
         },
       }
     case 'plan_replaced':

@@ -41,7 +41,7 @@ test('Anlegen: BPC-157 aus dem Katalog, mit Plan, steht danach auf der Bühne', 
   const save = mock.rpcCalls.find(call => call.name === 'save_stack_item_with_plan')
   expect(save?.params).toMatchObject({
     p_item: { display_name: 'BPC-157', category: 'peptide', dosage_form: 'vial' },
-    p_ingredients: [{ catalog_substance_id: mock.catalogId('BPC-157'), amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' }],
+    p_ingredients: [{ catalog_substance_id: mock.catalogId('BPC-157'), amount_value: 5, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial' }],
     p_plan: { dose: 250, unit: 'mcg', method: 'Subkutan', frequency: 'Täglich', intake_time: 'morgens', start_date: '2026-09-28' },
   })
 

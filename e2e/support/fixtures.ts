@@ -12,13 +12,18 @@ export const NOW = new Date('2026-09-28T10:00:00+02:00')
  * Nach jedem Test: keine Anfrage, die der Mock nicht kennt, und kein
  * unbehandelter Fehler in der Seite.
  */
-export const test = base.extend<{ mock: MockSupabase }>({
-  mock: async ({ page }, provide) => {
-    const mock = new MockSupabase({ now: NOW })
+export const test = base.extend<{ mock: MockSupabase; language: 'de' | 'en'; now: Date }>({
+  language: ['de', { option: true }],
+  now: [NOW, { option: true }],
+  locale: async ({ language }, provide) => {
+    await provide(language === 'de' ? 'de-DE' : 'en-GB')
+  },
+  mock: async ({ page, language, now }, provide) => {
+    const mock = new MockSupabase({ now })
     const pageErrors: string[] = []
     page.on('pageerror', error => pageErrors.push(error.message))
-    await page.clock.install({ time: NOW })
-    await mock.install(page)
+    await page.clock.install({ time: now })
+    await mock.install(page, { language })
     await provide(mock)
     expect(mock.unhandled, 'Anfragen ohne Nachbildung').toEqual([])
     expect(pageErrors, 'unbehandelte Fehler in der Seite').toEqual([])

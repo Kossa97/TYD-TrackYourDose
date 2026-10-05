@@ -30,6 +30,8 @@ import {
   stackItemSetupProblems,
 } from './stackItems'
 import type { PlanRpcClient } from './planLifecycle'
+import { powderVialForSave } from '../lib/vialStrength'
+import { inventoryDetailsPatch } from './stackInventory'
 
 const ingredient: StackItemIngredient = {
   catalog_substance_id: 'vitamin-d3',
@@ -189,6 +191,35 @@ const planSnapshot: PlanScheduleSnapshot = {
 }
 
 describe('stack item service', () => {
+  it('stores a single powder vial per vial while preserving the wizard concentration draft', async () => {
+    const draft = {
+      ...completeSetupDraft, category: 'peptide' as const, dosageForm: 'vial' as const,
+      ingredients: [{ ...ingredient, amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' }],
+    }
+    const client = setupRpcClient()
+    await saveStackItemSetup(client.client, draft, 'vial-create')
+    expect(client.rpc.mock.calls[0][1].p_ingredients).toMatchObject([{ amount_value: 5, basis_value: 1, basis_unit: 'vial' }])
+    expect(inventoryDetailsPatch(powderVialForSave(draft).inventory).reconstitution_ml).toBe(2)
+    expect(draft.ingredients[0]).toMatchObject({ amount_value: 5, basis_value: 2, basis_unit: 'ml' })
+    const edited = rpcClient()
+    await saveStackItem(edited.client, { ...draft, id: 'saved-vial' })
+    expect(edited.rpc.mock.calls[0][1].p_ingredients).toMatchObject([{ amount_value: 5, basis_value: 1, basis_unit: 'vial' }])
+    expect(findDuplicate([{ ...savedItem, category: 'peptide', dosage_form: 'vial', ingredients: [{ ...draft.ingredients[0], basis_value: 1, basis_unit: 'vial' }] }], draft)?.id).toBe('stack-item-1')
+    expect(findDuplicate([{ ...savedItem, category: 'peptide', dosage_form: 'vial', ingredients: draft.ingredients }], draft)?.id).toBe('stack-item-1')
+  })
+
+  it('keeps solution, combination, and bare item concentration contracts unchanged', () => {
+    const powder = { ...completeSetupDraft, category: 'peptide' as const, dosageForm: 'vial' as const,
+      ingredients: [{ ...ingredient, amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' }] }
+    const solution = { ...powder, category: 'hormone' as const }
+    const combination = { ...powder, ingredients: [...powder.ingredients, { ...powder.ingredients[0], position: 1 }] }
+    const bare = { ...validDraft, category: powder.category, dosageForm: powder.dosageForm, ingredients: powder.ingredients }
+    expect(powderVialForSave(solution)).toBe(solution)
+    expect(powderVialForSave(combination)).toBe(combination)
+    expect(powderVialForSave(bare)).toBe(bare)
+    expect(powderVialForSave({ ...powder, ingredients: [{ ...powder.ingredients[0], basis_value: 1001 }] }).ingredients[0].basis_unit).toBe('ml')
+  })
+
   it('rejects new changes on an already-started local day in the caller timezone', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-19T22:30:00Z'))

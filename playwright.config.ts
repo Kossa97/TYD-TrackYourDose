@@ -6,18 +6,20 @@ import { defineConfig, devices } from '@playwright/test'
  *
  *   npm run test:e2e
  *
- * Chromium mit den Massen und der Touch-Eingabe der Geraete — WebKit
- * (echtes Safari) ist hier nicht installiert.
+ * Drei Chromium-Profile und ein WebKit-Profil mit iPhone-Emulation.
+ * Die Profile ersetzen keinen Test auf einem physischen iPhone.
  */
 const PORT = 5197
 const chromium = process.env.PLAYWRIGHT_CHROMIUM_PATH
   ?? (process.env.PLAYWRIGHT_BROWSERS_PATH === '/opt/pw-browsers' ? '/opt/pw-browsers/chromium' : undefined)
+const chromiumLaunchOptions = chromium ? { executablePath: chromium } : {}
 
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
+  workers: process.env.CI ? 1 : undefined,
   // In CI: Anmerkungen am Commit plus HTML-Bericht (Trace, Screenshot) als Artefakt.
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   timeout: 45_000,
@@ -28,13 +30,13 @@ export default defineConfig({
     timezoneId: 'Europe/Berlin',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: chromium ? { executablePath: chromium } : {},
     serviceWorkers: 'block',
   },
   projects: [
-    { name: 'iphone-13', use: { ...devices['iPhone 13'], browserName: 'chromium', defaultBrowserType: 'chromium' } },
-    { name: 'pixel-7', use: { ...devices['Pixel 7'] } },
-    { name: 'iphone-se', use: { ...devices['iPhone SE'], browserName: 'chromium', defaultBrowserType: 'chromium' } },
+    { name: 'iphone-13', use: { ...devices['iPhone 13'], browserName: 'chromium', defaultBrowserType: 'chromium', launchOptions: chromiumLaunchOptions } },
+    { name: 'pixel-7', use: { ...devices['Pixel 7'], launchOptions: chromiumLaunchOptions } },
+    { name: 'iphone-se', use: { ...devices['iPhone SE'], browserName: 'chromium', defaultBrowserType: 'chromium', launchOptions: chromiumLaunchOptions } },
+    { name: 'iphone-13-webkit', use: { ...devices['iPhone 13'], browserName: 'webkit' } },
   ],
   webServer: {
     command: `npx vite build --outDir e2e/.dist --emptyOutDir && npx vite preview --outDir e2e/.dist --port ${PORT} --strictPort`,
@@ -42,7 +44,7 @@ export default defineConfig({
     // Immer neu bauen: ein noch laufender Server hielte einen alten Stand.
     reuseExistingServer: false,
     timeout: 240_000,
-    // Ohne DSN: kein Sentry in den Tests.
-    env: { VITE_SENTRY_DSN: '' },
+    // Keine Sentry-Berichte oder Source-Map-Uploads, auch mit lokaler .env.
+    env: { VITE_SENTRY_DSN: '', SENTRY_AUTH_TOKEN: '' },
   },
 })

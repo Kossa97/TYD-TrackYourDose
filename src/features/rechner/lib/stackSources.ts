@@ -40,7 +40,9 @@ export function getCalculatorSources(items: LoadedStackItem[]): CalculatorSource
     const legacyAmount = calculatorAmount(legacy.vial_amount_mg, legacy.vial_amount_unit ?? 'mg')
     const legacyMl = positive(legacy.reconstitution_ml) ? legacy.reconstitution_ml : null
     const inventory = item.inventory
-    const mixedMl = inventory?.enabled && inventory.package_unit === 'vial' && positive(inventory.reconstitution_ml)
+    const powderMetadata = item.category === 'peptide' && item.dosage_form === 'vial'
+      && item.ingredients.length === 1 && item.ingredients[0].basis_unit === 'vial' && inventory?.package_unit == null
+    const mixedMl = (inventory?.package_unit === 'vial' || powderMetadata) && positive(inventory?.reconstitution_ml)
       ? inventory.reconstitution_ml : legacyMl
     if (item.ingredients.length === 0) {
       return item.dosage_form !== 'vial' || legacyAmount === null ? [] : [{

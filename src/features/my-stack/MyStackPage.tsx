@@ -38,6 +38,7 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, reconstituteStackItem, removePlanSegment, restoreStackItem, planScheduleSnapshot, savePlanChange, saveStackItem, saveStackItemSetup } from './services/stackItems'
+import { powderVialForSave } from './lib/vialStrength'
 import type { StackItem, StackItemSetupDraft } from './types'
 import { getDosageForm, intakeUnitLabelKey, isStageRenderable } from './lib/dosageForms'
 import { methodLabel } from '../../lib/intakeMethods'
@@ -505,7 +506,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // Ein neu gewaehltes Analyse-Dokument erst jetzt hochladen: wer abbricht,
     // hinterlaesst nichts. Schlaegt es fehl, ist noch nichts gespeichert.
     const editedFrom = editingPeptideId ? peptides.find(item => item.id === editingPeptideId) ?? null : null
-    let inventoryDraft = draft.inventory
+    let inventoryDraft = powderVialForSave(draft).inventory
     if (editedFrom && inventoryDraft.batchFile && user) {
       try {
         inventoryDraft = { ...inventoryDraft, batchFileUrl: await uploadBatchDocument(supabase as never, user.id, inventoryDraft.batchFile), batchFile: null }
@@ -522,12 +523,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     // fuer eine neue Variante, die aus einem bestehenden Eintrag entsteht.
     // Der Eintrag selbst steht dann schon; scheitert nur das, sagt es eine
     // eigene Meldung, statt „Speichern fehlgeschlagen" fuer alles.
-    if (editedFrom && user) {
+    if ((editedFrom || inventoryDraft.reconstitutionMl != null) && user) {
       try {
         await saveInventoryDetails(stackDataClient as never, {
           userId: user.id,
           stackItemId: savedRow.id,
-          before: draft.id === editedFrom.id ? editedFrom.inventory ?? null : null,
+          before: draft.id === editedFrom?.id ? editedFrom?.inventory ?? null : null,
           draft: inventoryDraft,
         })
       } catch {

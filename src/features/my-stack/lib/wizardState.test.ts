@@ -92,6 +92,36 @@ const activePlan: IntakePlanDraft = {
 afterEach(() => vi.useRealTimers())
 
 describe('wizard state', () => {
+  it('opens a canonical powder vial with its saved solvent volume for editing', () => {
+    const item = {
+      ...existingVitaminD, category: 'peptide' as const, dosage_form: 'vial' as const,
+      ingredients: [{ ...existingVitaminD.ingredients[0], amount_value: 10, amount_unit: 'mg', basis_value: 2, basis_unit: 'vial' }],
+      inventory: { enabled: true, package_quantity: 2, package_unit: 'vial', remaining_quantity: 1.95, batch_number: null, expires_at: null, reconstitution_ml: 2 },
+    }
+    expect(initialWizardState(item).draft.ingredients[0]).toMatchObject({ amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' })
+    expect(item.ingredients[0]).toMatchObject({ amount_value: 10, basis_value: 2, basis_unit: 'vial' })
+    const initial = initialWizardState(item)
+    expect(didIdentityChange(item, { ...initial.draft, notes: 'New note' })).toBe(false)
+    const changedSolvent = wizardReducer(initial, { type: 'inventory_changed', changes: { reconstitutionMl: 3 } })
+    expect(changedSolvent.draft.ingredients[0].basis_value).toBe(3)
+    const changedStrength = wizardReducer(initial, { type: 'ingredient_changed', index: 0, changes: { basis_value: 4 } })
+    expect(changedStrength.draft.inventory.reconstitutionMl).toBe(4)
+  })
+
+  it('keeps canonical powder strength editable without a known solvent volume', () => {
+    const item = { ...existingVitaminD, category: 'peptide' as const, dosage_form: 'vial' as const,
+      ingredients: [{ ...existingVitaminD.ingredients[0], amount_value: 5, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial' }] }
+    const initial = initialWizardState(item)
+    expect(initial.draft.ingredients[0]).toMatchObject({ amount_value: 5, basis_value: 1, basis_unit: 'vial' })
+    expect(didIdentityChange(item, { ...initial.draft, notes: 'New note' })).toBe(false)
+  })
+
+  it('uses the legacy solvent volume to hydrate canonical powder strength', () => {
+    const item = { ...existingVitaminD, category: 'peptide' as const, dosage_form: 'vial' as const, reconstitution_ml: 2,
+      ingredients: [{ ...existingVitaminD.ingredients[0], amount_value: 5, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial' }] }
+    expect(initialWizardState(item).draft.ingredients[0]).toMatchObject({ amount_value: 5, basis_value: 2, basis_unit: 'ml' })
+  })
+
   it('defaults a new plan start/effective date to the local current date', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 7, 16, 12, 0, 0))

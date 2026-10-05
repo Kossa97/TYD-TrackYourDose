@@ -10,7 +10,7 @@ import { TERMS_VERSION } from '../../src/features/compliance/lib/consent'
  * `/rest/v1/rpc/<name>`) und Auth (`/auth/v1/...`). Hier liegt dafuer ein
  * kleiner Speicher im Testprozess: Tabellen als Zeilenlisten, dazu die
  * Beziehungen, die die App einbettet (`ingredients:stack_item_ingredients(...)`),
- * und die RPCs, die My Stack zum Speichern ruft — so weit nachgebaut, wie die
+ * und die RPCs fuer My Stack und Einnahmen — so weit nachgebaut, wie die
  * App ihr Ergebnis liest. Keine echte Datenbank, keine echten Daten.
  *
  * Was die App anfragt und der Speicher nicht kennt, landet in `unhandled` —
@@ -73,6 +73,9 @@ const RELATIONS: Record<string, Record<string, Relation>> = {
     stack_items: { table: 'stack_items', kind: 'one', local: 'stack_item_id', foreign: 'id' },
     cycle_plan_versions: { table: 'cycle_plan_versions', kind: 'many', local: 'id', foreign: 'cycle_id' },
     cycle_pause_periods: { table: 'cycle_pause_periods', kind: 'many', local: 'id', foreign: 'cycle_id' },
+  },
+  dose_logs: {
+    stack_items: { table: 'stack_items', kind: 'one', local: 'stack_item_id', foreign: 'id' },
   },
 }
 
@@ -193,6 +196,8 @@ function compare(left: unknown, right: unknown): number {
   if (left == null && right == null) return 0
   if (left == null) return 1
   if (right == null) return -1
+  const isInstant = (value: unknown) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+  if (isInstant(left) && isInstant(right)) return new Date(String(left)).getTime() - new Date(String(right)).getTime()
   const a = Number(left)
   const b = Number(right)
   if (typeof left !== 'boolean' && left !== '' && right !== '' && Number.isFinite(a) && Number.isFinite(b)) return a - b
@@ -201,6 +206,35 @@ function compare(left: unknown, right: unknown): number {
 
 const RESERVED_PARAMS = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns'])
 
+/** Nested calendar ranges and flat diary searches share quoted leaf parsing. */
+function logicalMatch(row: Row, kind: string, expression: string): boolean {
+  const parts: string[] = []
+  let depth = 0
+  let quoted = false
+  let start = 0
+  const text = expression.startsWith('(') ? expression.slice(1, -1) : expression
+  for (let i = 0; i < text.length; i++) {
+    if (quoted && text[i] === '\\') { i++; continue }
+    if (text[i] === '"') quoted = !quoted
+    if (!quoted && text[i] === '(') depth++
+    if (!quoted && text[i] === ')') depth--
+    if (!quoted && depth === 0 && text[i] === ',') {
+      parts.push(text.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(text.slice(start))
+  const evaluate = (part: string): boolean => {
+    const nested = /^(and|or)\((.*)\)$/.exec(part)
+    if (nested) return logicalMatch(row, nested[1], nested[2])
+    const dot = part.indexOf('.')
+    if (dot < 1) throw new Error(`Logischer Filter ${part} nicht nachgebildet`)
+    const [[column, filter]] = splitLogic(`(${part})`)
+    return matches(row, column, filter)
+  }
+  return kind === 'or' ? parts.some(evaluate) : parts.every(evaluate)
+}
+
 export class MockSupabase {
   readonly tables = new Map<string, Row[]>()
   readonly rpcCalls: Array<{ name: string; params: Record<string, unknown> }> = []
@@ -208,6 +242,7 @@ export class MockSupabase {
   /** Zaehlt jede Anfrage je `METHODE pfad`. */
   readonly log: string[] = []
   private readonly rpcHandlers = new Map<string, (params: Record<string, unknown>) => unknown>()
+  private readonly rpcFailures = new Map<string, string>()
   /** Die Uhr der Zeilen (`created_at`, `updated_at`) — dieselbe, die der Test dem Browser gibt. */
   private readonly now: () => Date
 
@@ -216,6 +251,7 @@ export class MockSupabase {
     this.now = fixed ? () => new Date(fixed) : () => new Date()
     this.registerMyStackRpcs()
     this.registerComplianceRpcs()
+    this.registerIntakeRpcs()
     this.seedCatalog()
     this.seedOwnProfile()
   }
@@ -282,7 +318,18 @@ export class MockSupabase {
   callRpc(name: string, params: Record<string, unknown>): unknown {
     const handler = this.rpcHandlers.get(name)
     if (!handler) throw new Error(`rpc ${name} not mocked`)
+    const failure = this.rpcFailures.get(name)
+    if (failure !== undefined) {
+      this.rpcFailures.delete(name)
+      throw new RpcError(failure)
+    }
     return handler(params)
+  }
+
+  /** One expected server error before mutation, followed by the normal handler. */
+  failNextRpc(name: string, message: string): void {
+    if (!this.rpcHandlers.has(name)) throw new Error(`rpc ${name} not mocked`)
+    this.rpcFailures.set(name, message)
   }
 
   onRpc(name: string, handler: (params: Record<string, unknown>) => unknown): void {
@@ -290,7 +337,7 @@ export class MockSupabase {
   }
 
   async install(page: Page, options: { language?: string } = {}): Promise<void> {
-    const session = fakeSession()
+    const session = fakeSession(this.now())
     const language = options.language ?? 'de'
     await page.addInitScript(({ key, value, userId, lang }) => {
       // Nur beim ersten Laden: ein Neuladen im Test soll den Zustand behalten.
@@ -364,13 +411,13 @@ export class MockSupabase {
 
   private async handleAuth(route: Route, url: URL): Promise<void> {
     if (url.pathname === '/auth/v1/user') {
-      return route.fulfill({ headers: corsHeaders(), json: fakeSession().user })
+      return route.fulfill({ headers: corsHeaders(), json: fakeSession(this.now()).user })
     }
     if (url.pathname === '/auth/v1/logout') {
       return route.fulfill({ status: 204, headers: corsHeaders() })
     }
     if (url.pathname === '/auth/v1/token') {
-      return route.fulfill({ headers: corsHeaders(), json: fakeSession() })
+      return route.fulfill({ headers: corsHeaders(), json: fakeSession(this.now()) })
     }
     this.unhandled.push(`AUTH ${url.pathname}`)
     return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
@@ -386,7 +433,7 @@ export class MockSupabase {
       return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: `rpc ${name} not mocked` } })
     }
     try {
-      const result = handler(params)
+      const result = this.callRpc(name, params)
       return await route.fulfill({ headers: corsHeaders(), json: result ?? null })
     } catch (error) {
       if (!(error instanceof RpcError)) throw error
@@ -404,8 +451,7 @@ export class MockSupabase {
     const filters = [...url.searchParams.entries()].filter(([key]) => !RESERVED_PARAMS.has(key))
     const rows = this.table(tableName)
     const selected = () => rows.filter(row => filters.every(([column, filter]) => {
-      if (column === 'or') return splitLogic(filter).some(([inner, innerFilter]) => matches(row, inner, innerFilter))
-      if (column === 'and') throw new Error(`${column}-Filter nicht nachgebildet`)
+      if (column === 'or' || column === 'and') return logicalMatch(row, column, filter)
       if (column.includes('.')) throw new Error(`Filter auf eingebettete Spalte ${column} nicht nachgebildet`)
       return matches(row, column, filter)
     }))
@@ -739,6 +785,151 @@ export class MockSupabase {
       return version
     })
   }
+
+  /** Bounded journey substitute, derived from perf-timezone-check and bestand SQL.
+   * It models slot identity and inventory ledgers; it does not prove SQL, RLS,
+   * concurrent transactions, or every historical inventory migration path.
+   */
+  private registerIntakeRpcs(): void {
+    const owned = (table: string, id: unknown) => this.table(table).find(row => row.id === id && row.user_id === TEST_USER.id)
+    const localTime = (instant: unknown, timezone: string): string => {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+      }).formatToParts(new Date(String(instant)))
+      const part = (kind: string) => parts.find(value => value.type === kind)!.value
+      return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}:${part('second')}`
+    }
+
+    this.onRpc('confirm_intake_group', params => {
+      const entries = params.p_entries as Row[]
+      if (!Array.isArray(entries) || !entries.length) throw new RpcError('At least one intake entry is required')
+      if (new Set(entries.map(entry => entry.slot_key)).size !== entries.length) throw new RpcError('Duplicate routine slot key in intake group')
+      if (new Set(entries.map(entry => `${entry.cycle_id}@${new Date(String(entry.logged_at)).getTime()}`)).size !== entries.length) throw new RpcError('Duplicate cycle and logged_at in intake group')
+      // Validation is separate from mutation so a rejected group writes no rows.
+      const validated = entries.map(entry => {
+        const cycle = owned('cycles', entry.cycle_id)
+        const item = owned('stack_items', entry.stack_item_id)
+        if (!cycle || !item || cycle.stack_item_id !== item.id) throw new RpcError('Intake cycle not found')
+        const time = new Date(String(entry.logged_at)).getTime()
+        if (!cycle.started_at || time < new Date(String(cycle.started_at)).getTime() || (cycle.ended_at && time >= new Date(String(cycle.ended_at)).getTime())) throw new RpcError('Intake falls outside cycle lifecycle')
+        if (item.tracking_level === 'intake_only' && entry.dose != null) throw new RpcError('Intake-only entries cannot store a quantity')
+        if (item.tracking_level !== 'intake_only' && entry.dose == null) throw new RpcError('Tracked entries require dose and unit')
+        if ((entry.dose == null) !== (entry.unit == null)) throw new RpcError('Dose and unit must both be supplied or both be null')
+        if (entry.dose != null && (typeof entry.dose !== 'number' || !(entry.dose > 0 && entry.dose <= 1e9))) throw new RpcError('Dose must be positive')
+        const taken = entry.taken ?? true
+        if (typeof taken !== 'boolean') throw new RpcError('Taken must be a boolean')
+        const timezone = String(entry.timezone ?? '')
+        let target: string
+        try { target = localTime(entry.logged_at, timezone) } catch { throw new RpcError('Invalid timezone') }
+        const versions = this.table('cycle_plan_versions').filter(version => version.cycle_id === cycle.id)
+          .map(version => ({ version, effective: version.effective_kind === 'instant' ? localTime(version.effective_at, timezone) : `${version.effective_local_date}T00:00:00` }))
+          .filter(version => version.effective <= target)
+          .sort((a, b) => compare(b.effective, a.effective) || compare(b.version.created_at, a.version.created_at) || compare(b.version.id, a.version.id))
+        const versionId = versions[0]?.version.id
+        if (!versionId) throw new RpcError('Plan version not found')
+        if (entry.plan_version_id && entry.plan_version_id !== versionId) throw new RpcError('Plan version does not match scheduled intake')
+        if (this.table('cycle_pause_periods').some(pause => pause.cycle_id === cycle.id && new Date(String(pause.paused_at)).getTime() <= time && (!pause.ends_at || time < new Date(String(pause.ends_at)).getTime()))) throw new RpcError('Intake falls within a paused cycle')
+        let saved = this.table('dose_logs').find(log => log.user_id === TEST_USER.id && log.routine_slot_key === entry.slot_key)
+        if (saved) {
+          if (saved.stack_item_id !== item.id || (saved.cycle_id != null && saved.cycle_id !== cycle.id) || (saved.taken != null && (saved.taken !== taken || new Date(String(saved.logged_at)).getTime() !== time || saved.cycle_id !== cycle.id || saved.plan_version_id !== versionId)) || (entry.dose_log_id && saved.id !== entry.dose_log_id)) throw new RpcError('Routine slot key belongs to another intake')
+        } else if (entry.dose_log_id) {
+          saved = owned('dose_logs', entry.dose_log_id)
+          if (!saved || saved.stack_item_id !== item.id || saved.taken != null || (saved.cycle_id != null && saved.cycle_id !== cycle.id) || (saved.routine_slot_key != null && saved.routine_slot_key !== entry.slot_key)) throw new RpcError('Pending dose log not found')
+        }
+        return { saved, fields: { user_id: TEST_USER.id, stack_item_id: item.id, cycle_id: cycle.id, plan_version_id: versionId, routine_slot_key: entry.slot_key, dose: entry.dose ?? null, unit: entry.unit ?? null, method: entry.method ?? '', logged_at: entry.logged_at, taken, notes: null } }
+      })
+      return validated.map(({ saved, fields }) => saved ? saved.taken == null ? Object.assign(saved, fields) : saved : this.insert('dose_logs', fields))
+    })
+
+    const ingredientsFor = (item: Row) => this.table('stack_item_ingredients').filter(row => row.stack_item_id === item.id)
+    const vialUsesInventory = (item: Row, inventory: Row | undefined) => {
+      const ingredients = ingredientsFor(item)
+      return item.dosage_form === 'vial' && inventory?.package_unit === 'vial' && ingredients.length === 1 && ingredients[0].basis_unit === 'vial' && Number(ingredients[0].amount_value) > 0 && Number(ingredients[0].basis_value) > 0
+    }
+    const roundVial = (quantity: number) => Math.round(quantity * 1e4) / 1e4
+
+    this.onRpc('apply_inventory_confirmation', params => {
+      const log = owned('dose_logs', params.p_dose_log_id)
+      if (!log || log.taken !== true) throw new RpcError('Confirmed dose log not found')
+      const item = owned('stack_items', log.stack_item_id)
+      if (!item) throw new RpcError('Stack item not found')
+      const inventory = this.table('stack_item_inventory').find(row => row.stack_item_id === item.id && row.user_id === TEST_USER.id)
+      const vialInventory = vialUsesInventory(item, inventory)
+      const legacyVial = item.dosage_form === 'vial' && !vialInventory
+      if (!legacyVial && !vialInventory && item.tracking_level !== 'complete') return null
+      if (!legacyVial && !inventory) return null
+      if (!legacyVial && !inventory!.enabled) return inventory!.remaining_quantity
+      const ledger = legacyVial ? 'vial_stock_movements' : 'stack_item_inventory_movements'
+      const target = legacyVial ? item : inventory!
+      const column = legacyVial ? 'vials_in_stock' : 'remaining_quantity'
+      const deltaColumn = legacyVial ? 'delta_vials' : 'delta_quantity'
+      const movement = this.table(ledger).find(row => row.source_dose_log_id === log.id && row.user_id === TEST_USER.id)
+      const remaining = Number(target[column] ?? 0)
+      if (movement?.applied) return remaining
+      let delta = Number(movement?.[deltaColumn])
+      if (!movement) {
+        const dose = Number(log.dose)
+        if (!(dose > 0 && dose <= 1e9) || !log.unit) throw new RpcError('Inventory conversion is ambiguous or unsupported')
+        if (legacyVial) {
+          const unit = String(log.unit).toLowerCase()
+          delta = unit === 'ml' ? dose / Number(item.reconstitution_ml) : unit === 'mg' || unit === 'mcg' ? (unit === 'mcg' ? dose / 1000 : dose) / Number(item.vial_amount_mg) : NaN
+        } else {
+          const deltas = ingredientsFor(item).map(ingredient => {
+            if (ingredient.basis_unit !== inventory!.package_unit) return NaN
+            if (log.unit === ingredient.basis_unit) return dose
+            if (inventory!.package_unit === 'vial' && String(log.unit).toLowerCase() === 'ml') return dose / Number(inventory!.reconstitution_ml)
+            const converted = log.unit === ingredient.amount_unit ? dose : log.unit === 'mg' && ingredient.amount_unit === 'mcg' ? dose * 1000 : log.unit === 'mcg' && ingredient.amount_unit === 'mg' ? dose / 1000 : NaN
+            return converted / Number(ingredient.amount_value) * Number(ingredient.basis_value)
+          })
+          delta = deltas.length && deltas.every(value => value === deltas[0]) ? deltas[0] : NaN
+        }
+      }
+      if (!(delta > 0 && delta <= 1e9)) throw new RpcError('Inventory conversion is ambiguous or unsupported')
+      if (movement && !legacyVial && !vialInventory && remaining < delta) throw new RpcError('Insufficient inventory for confirmation')
+      const actual = Math.min(remaining, legacyVial || vialInventory ? roundVial(delta) : delta)
+      if (actual <= 0 && !legacyVial) {
+        if (vialInventory) return remaining
+        throw new RpcError('Insufficient inventory for confirmation')
+      }
+      target[column] = legacyVial ? roundVial(remaining - actual) : remaining - actual
+      const fields = { dose_log_id: log.id, [deltaColumn]: actual, applied: true }
+      if (movement) Object.assign(movement, fields)
+      else this.insert(ledger, { user_id: TEST_USER.id, ...(legacyVial ? { stack_item_id: item.id } : { inventory_id: inventory!.id }), source_dose_log_id: log.id, reversal_count: 0, last_reversed_at: null, last_reversal_action: null, ...fields })
+      return target[column]
+    })
+
+    this.onRpc('reverse_inventory_confirmation', params => {
+      const action = params.p_action
+      if (!['undo', 'skip', 'delete'].includes(String(action))) throw new RpcError('Invalid inventory reversal action')
+      const log = owned('dose_logs', params.p_dose_log_id)
+      const movement = this.table('stack_item_inventory_movements').find(row => row.source_dose_log_id === params.p_dose_log_id && row.user_id === TEST_USER.id)
+      const vialMovement = this.table('vial_stock_movements').find(row => row.source_dose_log_id === params.p_dose_log_id && row.user_id === TEST_USER.id)
+      if (movement && vialMovement) throw new RpcError('Dose log has multiple inventory ledgers')
+      if (!log && ((!movement && !vialMovement) || action !== 'delete')) throw new RpcError('Dose log not found')
+      const ledger = movement ?? vialMovement
+      let remaining: number | null = null
+      if (ledger) {
+        const item = vialMovement ? owned('stack_items', ledger.stack_item_id) : undefined
+        const inventory = vialMovement ? this.table('stack_item_inventory').find(row => row.stack_item_id === item?.id && row.user_id === TEST_USER.id) : owned('stack_item_inventory', ledger.inventory_id)
+        const toInventory = !vialMovement || (!!item && vialUsesInventory(item, inventory))
+        const target = toInventory ? inventory : item
+        if (!target) throw new RpcError(toInventory ? 'Inventory not found' : 'Stack item not found')
+        const column = toInventory ? 'remaining_quantity' : 'vials_in_stock'
+        remaining = Number(target[column] ?? 0)
+        if (ledger.applied) {
+          remaining += Number(ledger[vialMovement ? 'delta_vials' : 'delta_quantity'])
+          target[column] = vialMovement ? roundVial(remaining) : remaining
+          Object.assign(ledger, { applied: false, reversal_count: Number(ledger.reversal_count) + 1, last_reversed_at: this.now().toISOString(), last_reversal_action: action })
+        }
+      }
+      if (log) {
+        if (action === 'delete') this.tables.set('dose_logs', this.table('dose_logs').filter(row => row !== log))
+        else log.taken = action === 'skip' ? false : null
+      }
+      return remaining
+    })
+  }
 }
 
 const SCHEDULE_COLUMNS = [
@@ -781,8 +972,8 @@ function base64url(value: object): string {
   return Buffer.from(JSON.stringify(value)).toString('base64url')
 }
 
-function fakeSession() {
-  const expiresAt = Math.floor(Date.now() / 1000) + 24 * 3600
+function fakeSession(now: Date) {
+  const expiresAt = Math.floor(now.getTime() / 1000) + 24 * 3600
   const user = {
     id: TEST_USER.id,
     aud: 'authenticated',

@@ -1,4 +1,5 @@
 import { buildDuplicateFingerprint } from '../lib/duplicateFingerprint'
+import { powderVialForSave } from '../lib/vialStrength'
 import { fuehrendeMenge, rhythmToStorage } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import {
@@ -543,7 +544,7 @@ export async function saveStackItem(
   const params: SaveStackItemRpcParams = {
     p_item: itemParams(draft, 'pkProfileMethod' in draft ? draft.pkProfileMethod : null,
       inventoryForSave(draft)),
-    p_ingredients: draft.ingredients.map(ingredientForSave),
+    p_ingredients: powderVialForSave(draft).ingredients.map(ingredientForSave),
   }
 
   const { data, error } = await client.rpc('save_stack_item', params)
@@ -569,7 +570,7 @@ export async function saveStackItemSetup(
 
   const params: SaveStackItemSetupRpcParams = {
     p_item: itemParams(draft, draft.pkProfileMethod, inventoryForSave(draft)),
-    p_ingredients: draft.ingredients.map(ingredientForSave),
+    p_ingredients: powderVialForSave(draft).ingredients.map(ingredientForSave),
     p_plan: { ...planParams(draft.plan, draft.trackingLevel), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
     p_idempotency_key: idempotencyKey,
   }
@@ -652,9 +653,9 @@ export function findDuplicate(
   items: StackItem[],
   draft: StackItemDraft,
 ): StackItem | undefined {
-  const fingerprint = buildDuplicateFingerprint(draft)
+  const fingerprints = [buildDuplicateFingerprint(draft), buildDuplicateFingerprint(powderVialForSave(draft))]
   return items.find(item => (
     item.id !== draft.id
-    && buildDuplicateFingerprint(stackItemAsDraft(item)) === fingerprint
+    && fingerprints.includes(buildDuplicateFingerprint(stackItemAsDraft(item)))
   ))
 }
