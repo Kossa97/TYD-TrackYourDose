@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } fr
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../i18n/dateLocales'
+import { DURATION_KEYS, durationKeyOf, durationLabel } from './tagebuch/duration'
 
 interface Effect {
   id: string
@@ -24,26 +25,6 @@ interface StackItem { id: string; display_name: string }
 const SEVERITY_COLORS: Record<number, string> = {
   1: 'text-emerald-400', 2: 'text-lime-400', 3: 'text-amber-400',
   4: 'text-orange-400', 5: 'text-red-400',
-}
-
-const DURATION_KEYS = [
-  'min_15', 'min_30', 'std_1', 'std_2', 'std_4', 'std_8', 'std_12',
-  'tag_1', 'tage_2', 'woche_1', 'noch_anhaltend',
-]
-
-// Rück-Mapping: ältere DB-Werte auf deutschen Strings → Übersetzungs-Keys
-const DURATION_DE_TO_KEY: Record<string, string> = {
-  '15 Min': 'min_15', '30 Min': 'min_30',
-  '1 Std': 'std_1', '2 Std': 'std_2', '4 Std': 'std_4',
-  '8 Std': 'std_8', '12 Std': 'std_12',
-  '1 Tag': 'tag_1', '2 Tage': 'tage_2', '1 Woche': 'woche_1',
-  'Noch anhaltend': 'noch_anhaltend', 'Individuell': 'individuell',
-  // English variants (stored if app was in EN)
-  '15 min': 'min_15', '30 min': 'min_30',
-  '1 hr': 'std_1', '2 hrs': 'std_2', '4 hrs': 'std_4',
-  '8 hrs': 'std_8', '12 hrs': 'std_12',
-  '1 day': 'tag_1', '2 days': 'tage_2', '1 week': 'woche_1',
-  'Still ongoing': 'noch_anhaltend', 'Custom': 'individuell',
 }
 
 export function Tagebuch() {
@@ -102,15 +83,14 @@ export function Tagebuch() {
   }
 
   const openEdit = (e: Effect) => {
-    const durationKey = e.duration ? DURATION_DE_TO_KEY[e.duration] : undefined
-    const isPreset = !!durationKey && DURATION_KEYS.includes(durationKey)
+    const durationKey = durationKeyOf(e.duration)
     setForm({
       type: e.type, description: e.description, severity: e.severity,
-      duration: isPreset ? t(durationKey) : (e.duration ?? ''),
+      duration: durationKey ?? e.duration ?? '',
       occurred_at: format(new Date(e.occurred_at), "yyyy-MM-dd'T'HH:mm"),
       stack_item_id: e.stack_item_id ?? '', notes: e.notes ?? '',
     })
-    setCustomDuration(!!e.duration && !isPreset)
+    setCustomDuration(!!e.duration && !durationKey)
     setEditingId(e.id)
     setShowForm(true)
   }
@@ -239,7 +219,7 @@ export function Tagebuch() {
                   {e.duration && (
                     <span className="flex items-center gap-1">
                       <Clock size={11} />
-                      {DURATION_DE_TO_KEY[e.duration] ? t(DURATION_DE_TO_KEY[e.duration]) : e.duration}
+                      {durationLabel(e.duration, t)}
                     </span>
                   )}
                 </div>
@@ -333,9 +313,9 @@ export function Tagebuch() {
               <div className="flex flex-wrap gap-2 mb-2">
                 {DURATION_KEYS.map(key => (
                   <button key={key}
-                    onClick={() => { setForm(f => ({ ...f, duration: t(key) })); setCustomDuration(false) }}
+                    onClick={() => { setForm(f => ({ ...f, duration: key })); setCustomDuration(false) }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      form.duration === t(key) && !customDuration
+                      form.duration === key && !customDuration
                         ? 'bg-sky-500 text-white'
                         : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                     }`}>

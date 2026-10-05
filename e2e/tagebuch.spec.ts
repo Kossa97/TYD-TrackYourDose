@@ -12,7 +12,7 @@ function eintrag(mock: MockSupabase, felder: Record<string, unknown>) {
   })
 }
 
-test('Bearbeiten: Formular ist vorbefuellt, Speichern aendert den Eintrag statt einen neuen anzulegen', async ({ page, mock }) => {
+test('Bearbeiten: Formular ist vorbefuellt (auch alte Dauer-Texte), Speichern aendert den Eintrag statt einen neuen anzulegen', async ({ page, mock }) => {
   seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
   const item = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
   eintrag(mock, { stack_item_id: item.id })
@@ -32,7 +32,7 @@ test('Bearbeiten: Formular ist vorbefuellt, Speichern aendert den Eintrag statt 
 
   expect(mock.table('effects')).toHaveLength(1)
   expect(mock.table('effects')[0]).toMatchObject({
-    description: 'Leichter Kopfschmerz', severity: 2, duration: '2 Std', stack_item_id: item.id, status: 'eingetreten',
+    description: 'Leichter Kopfschmerz', severity: 2, duration: 'std_2', stack_item_id: item.id, status: 'eingetreten',
   })
   await expect(page.getByText('Leichter Kopfschmerz')).toBeVisible()
 })
@@ -62,4 +62,26 @@ test('Loeschen: der Eintrag ist weg', async ({ page, mock }) => {
   await page.getByRole('button', { name: 'Eintrag löschen?' }).click()
   await expect(page.getByText('Kopfschmerz')).toHaveCount(0)
   expect(mock.table('effects')).toHaveLength(0)
+})
+
+test('Neu: eine vorgegebene Dauer wird als Schluessel gespeichert und uebersetzt angezeigt', async ({ page, mock }) => {
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Neu' }).click()
+  await page.getByPlaceholder(/Besserer Schlaf/).fill('Mehr Energie')
+  await page.getByRole('button', { name: '4 Std', exact: true }).click()
+  await page.getByRole('button', { name: 'Speichern' }).click()
+  await expect(page.getByText('Eintrag gespeichert')).toBeVisible()
+
+  expect(mock.table('effects')).toHaveLength(1)
+  expect(mock.table('effects')[0]).toMatchObject({ description: 'Mehr Energie', duration: 'std_4' })
+  await expect(page.getByText('4 Std')).toBeVisible()
+})
+
+test('Anzeige: ein schon umgestellter Eintrag zeigt die Uebersetzung, Freitext bleibt Freitext', async ({ page, mock }) => {
+  eintrag(mock, { description: 'A', duration: 'woche_1', occurred_at: '2026-09-27T08:00:00.000Z' })
+  eintrag(mock, { description: 'B', duration: 'mal so, mal so', occurred_at: '2026-09-26T08:00:00.000Z' })
+  await page.goto('/tagebuch')
+  await expect(page.getByText('1 Woche')).toBeVisible()
+  await expect(page.getByText('mal so, mal so')).toBeVisible()
+  await expect(page.getByText('woche_1')).toHaveCount(0)
 })
