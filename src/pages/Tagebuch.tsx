@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../i18n/dateLocales'
@@ -59,6 +59,8 @@ export function Tagebuch() {
   const [search, setSearch]     = useState('')
   const [sortBy, setSortBy]     = useState<'date_new' | 'date_old' | 'sev_high' | 'sev_low'>('date_new')
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState(false)
   const [customDuration, setCustomDuration] = useState(false)
   const [form, setForm] = useState({
     type: 'effect' as 'effect' | 'side_effect',
@@ -72,12 +74,14 @@ export function Tagebuch() {
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('effects')
       .select('*, stack_items(display_name)')
       .eq('user_id', user!.id)
       .order('occurred_at', { ascending: false })
-    if (data) setEffects(data as Effect[])
+    if (error) { setLoadError(true); setEffects([]); toast.error(t('tagebuch_load_error')); return }
+    setLoadError(false)
+    setEffects((data ?? []) as Effect[])
   }
 
   const loadStackItems = async () => {
@@ -94,30 +98,51 @@ export function Tagebuch() {
       stack_item_id: '', notes: '',
     })
     setCustomDuration(false)
+    setEditingId(null)
+  }
+
+  const openEdit = (e: Effect) => {
+    const durationKey = e.duration ? DURATION_DE_TO_KEY[e.duration] : undefined
+    const isPreset = !!durationKey && DURATION_KEYS.includes(durationKey)
+    setForm({
+      type: e.type, description: e.description, severity: e.severity,
+      duration: isPreset ? t(durationKey) : (e.duration ?? ''),
+      occurred_at: format(new Date(e.occurred_at), "yyyy-MM-dd'T'HH:mm"),
+      stack_item_id: e.stack_item_id ?? '', notes: e.notes ?? '',
+    })
+    setCustomDuration(!!e.duration && !isPreset)
+    setEditingId(e.id)
+    setShowForm(true)
   }
 
   const save = async () => {
     if (!form.description.trim()) return toast.error(t('beschreibung_erforderlich'))
     setSaving(true)
-    const { error } = await supabase.from('effects').insert({
-      user_id:     user!.id,
+    const fields = {
       type:        form.type,
       description: form.description,
       severity:    form.severity,
-      status:      'eingetreten',
       duration:    form.duration || null,
       occurred_at: new Date(form.occurred_at).toISOString(),
       stack_item_id: form.stack_item_id || null,
       notes:       form.notes || null,
-    })
-    if (error) toast.error(t('fehler_speichern'))
-    else { toast.success(t('eintrag_gespeichert')); setShowForm(false); resetForm(); load() }
+    }
+    // .select() liefert die geänderte Zeile – leer heißt: Eintrag existiert nicht mehr
+    const { data, error } = editingId
+      ? await supabase.from('effects').update(fields).eq('id', editingId).eq('user_id', user!.id).select('id')
+      : await supabase.from('effects').insert({ ...fields, user_id: user!.id, status: 'eingetreten' }).select('id')
+    if (error || !data?.length) toast.error(t('fehler_speichern'))
+    else {
+      toast.success(t(editingId ? 'eintrag_aktualisiert' : 'eintrag_gespeichert'))
+      setShowForm(false); resetForm(); load()
+    }
     setSaving(false)
   }
 
   const remove = async (id: string) => {
     if (!confirm(t('eintrag_loeschen'))) return
-    await supabase.from('effects').delete().eq('id', id)
+    const { error } = await supabase.from('effects').delete().eq('id', id).eq('user_id', user!.id)
+    if (error) return toast.error(t('tagebuch_delete_error'))
     toast.success(t('deleted')); load()
   }
 
@@ -171,7 +196,13 @@ export function Tagebuch() {
         </select>
       </div>
 
-      {filtered.length === 0 && (
+      {loadError ? (
+        <div className="card text-center py-10 text-slate-500" role="alert">
+          <AlertTriangle size={32} className="mx-auto mb-2 text-amber-400 opacity-70" />
+          <p>{t('tagebuch_load_error')}</p>
+          <button className="btn-secondary mt-4" onClick={load}>{t('lab_retry')}</button>
+        </div>
+      ) : filtered.length === 0 && (
         <div className="card text-center py-10 text-slate-500">
           <BookHeart size={32} className="mx-auto mb-2 opacity-40" />
           <p>{search ? t('nichts_gefunden', { search }) : t('noch_keine_eintraege')}</p>
@@ -216,10 +247,18 @@ export function Tagebuch() {
                 {e.notes && <p className="text-slate-500 text-xs mt-1">{e.notes}</p>}
               </div>
 
-              <button className="p-1.5 text-slate-500 hover:text-red-400 transition-colors shrink-0"
-                onClick={() => remove(e.id)}>
-                <Trash2 size={15} />
-              </button>
+              <div className="flex shrink-0">
+                <button aria-label={t('tagebuch_eintrag_bearbeiten')}
+                  className="p-1.5 text-slate-500 hover:text-sky-400 transition-colors"
+                  onClick={() => openEdit(e)}>
+                  <Pencil size={15} />
+                </button>
+                <button aria-label={t('eintrag_loeschen')}
+                  className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+                  onClick={() => remove(e.id)}>
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -231,7 +270,7 @@ export function Tagebuch() {
           onClick={() => setShowForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
             overflow-y-auto max-h-[92vh]" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold">{t('neuer_tagebuch_eintrag')}</h2>
+            <h2 className="text-lg font-bold">{t(editingId ? 'tagebuch_eintrag_bearbeiten' : 'neuer_tagebuch_eintrag')}</h2>
 
             {/* 1. Wirkung / Nebenwirkung */}
             <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
