@@ -192,7 +192,9 @@ test('Neue Version ausgeliefert: fehlender Programmteil lädt neu statt abzustü
     aktuelleChunkAnfragen++
     return route.continue()
   })
-  await page.goto('/')
+  // Erst die Ausgangsseite fertig laden, dann den Versionswechsel ausloesen.
+  await page.goto('/my-stack')
+  await expect(stageObject(page, 'BPC-157')).toBeVisible()
   const neuGeladen = page.waitForEvent('load')
   await page.getByRole('link', { name: 'Kalender' }).click()
   await neuGeladen

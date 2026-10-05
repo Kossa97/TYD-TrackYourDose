@@ -65,8 +65,11 @@ test('Neues Pulver-Vial bearbeiten erhält Stärke, Lösungsmittel und angebroch
   expect(mock.table('stack_item_inventory')).toMatchObject([{ remaining_quantity: 1.95, reconstitution_ml: 2 }])
   await page.reload()
   await stageObject(page, 'BPC-157').click()
+  await expect(detail.locator('[data-stage-detail-body]')).toHaveCSS('opacity', '1')
   await expect(detail.getByText('Notiz nach der ersten Einnahme', { exact: true })).toBeVisible()
   await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 rekonstituiert · 95 %')
+  await detail.getByRole('button', { name: 'Schließen', exact: true }).click()
+  await expect(detail).toBeHidden()
   await expectCalendarTaken(page)
 })
 

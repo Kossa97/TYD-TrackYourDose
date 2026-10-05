@@ -1689,6 +1689,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     navigate(
       { pathname: location.pathname, search: location.search, hash: location.hash },
       {
+        replace: detailHistoryPeptideId === peptide.id,
         state: {
           ...historyStateRecord(location.state),
           [MY_STACK_DETAIL_HISTORY_KEY]: peptide.id,

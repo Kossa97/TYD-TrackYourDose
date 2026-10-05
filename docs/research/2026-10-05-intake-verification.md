@@ -2,7 +2,7 @@
 
 Stand: 5. Oktober 2026. Geprüft wurde der Ablauf Plan → Einnahme → Kalender → Bestand in der gebauten App mit isolierten Testdaten. Vor der abschließenden Prüfung wurden die Änderungen auf den aktuellen `main` (`670badb0`) übertragen; dessen Node-24-, Sentry-11-, App- und Teständerungen bleiben erhalten.
 
-## Gefundener und behobener Produktfehler
+## Gefundene und behobene Produktfehler
 
 Der Assistent zum Anlegen eines einzelnen Pulver-Vials speicherte beispielsweise `5 mg / 2 ml`. Die Bestandsbuchung zählt dagegen Vials und benötigt die Wirkstoffmenge je Vial. Dadurch konnte die Einnahme gespeichert werden, während die Bestandsbuchung fehlschlug.
 
@@ -11,6 +11,10 @@ Beim Speichern werden jetzt `5 mg / 1 Vial` und die `2 ml` Lösungsmittel getren
 Der Browserfall reproduzierte den Bestandsfehler vor der Korrektur. Anschließend bestanden sowohl dieser Ablauf als auch Anlegen → Bestätigen → Notiz bearbeiten → Neuladen.
 
 Die zusätzliche WebKit-Prüfung deckte einen zweiten Produktfehler auf: Wenn weitere Sichtbarkeitsmeldungen ausbleiben, aktivierte die Ersatzprüfung ein sichtbares Vial, stoppte es nach dem Herausscrollen aber nicht wieder. Die vorhandene Geometrieprüfung arbeitet jetzt in beiden Richtungen, weiterhin höchstens alle 0,3 Sekunden und ohne zusätzlichen Timer. Der zuvor fehlgeschlagene Karusselltest besteht damit in allen vier Profilen.
+
+Die anschließende Prüfung des Schließen-Knopfs nach Neuladen deckte einen dritten Fehler auf: Die Detail-ID bleibt im Browserverlauf erhalten, der lokale Animationsursprung dagegen nicht. Das erneute Öffnen derselben Substanz legte nochmals dieselbe Detail-ID ab; einmaliges Schließen führte deshalb zurück auf eine weiterhin offene Detailansicht. Beim erneuten Öffnen wird jetzt der vorhandene Eintrag ersetzt. Normales Öffnen erzeugt weiterhin einen neuen Verlaufseintrag. Die neue Schließen-Assertion reproduzierte den Fehler wiederholt vor der Korrektur.
+
+Nach dieser Korrektur bestand der Bearbeitungsablauf zwölfmal (dreimal je Browserprofil); zusätzlich bestanden alle 45 My-Stack-Komponententests. Der angepasste Deployment-Test bestand in allen vier Profilen. TypeScript und Lint der betroffenen Dateien sind erfolgreich; die unabhängige Prüfung hatte keine offenen Befunde.
 
 ## Abdeckung
 
@@ -54,5 +58,7 @@ Die vorgeschriebene Aktualisierung mit `graphify update .` wurde auch nach Integ
 Der Workflow `Gerätetests` führt bei Push und manuellem Start Unit-Tests, Lint, den vollständigen Produktionsbuild, Browser-TypeScript und Chromium/WebKit aus. Browserfehler behalten Screenshots und Traces; die CI lädt Berichte als Artefakte hoch. Diese Workflow-Konfiguration allein richtet keine Vercel-Deployment-Sperre ein.
 
 Der erste vollständige GitHub-Lauf deckte fünf bestehende Tests mit einer bislang unausgesprochenen Berliner Zeitzonenannahme auf. Unter UTC wurden dieselben fünf Fehler lokal reproduziert. `vitest.config.ts` setzt jetzt vor dem Start der Worker `Europe/Berlin`; die Zeitpunkte und Assertions bleiben unverändert. Tests mit anderen Zeitzonen wählen diese weiterhin ausdrücklich. Die Korrektur betrifft ausschließlich die Testumgebung. Danach bestanden alle 2.748 Tests auch beim Start aus einer UTC-Umgebung; Lint blieb bei null Fehlern und 27 vorhandenen Warnungen.
+
+Der anschließende Linux-Lauf bestand alle vorherigen CI-Schritte sowie 275 Browserfälle, zeigte aber zwei WebKit-Navigationsfehler. Beim Bearbeiten waren gespeicherte Daten und Bestand bereits erfolgreich nach Neuladen geprüft; der nächste Dokumentwechsel begann noch während der Detailanimation und blieb hängen. Der Test wartet jetzt auf die sichtbare Detailansicht und schließt sie über die Oberfläche. Dabei wurde der oben beschriebene Verlaufseintrag-Fehler entdeckt und separat korrigiert. Der Deployment-Test startet von geladenem My Stack und prüft weiterhin denselben entfernten Chunk, echten Reload und geladenen Kalender. Er enthält damit keine gleichzeitigen Home-Preload-Abbrüche mehr. Beide Testanpassungen erhalten sämtliche fachlichen Assertions und sind kein Nachweis einer behobenen WebKit-Engineursache.
 
 Die Browserprüfungen ersetzen keine echten Datenbank-, RLS-, Transaktions- oder Gerätetests. Auth und Onboarding sind vorbereitet; Service Worker sind für die HTTP-Nachbildung blockiert. Offline-PWA, Push-Zustellung und beide Vorkommen der doppelt auftretenden Herbststunde sind nicht Teil dieses Nachweises. Produktive Nutzerdaten wurden für die Prüfungen nicht verwendet.
