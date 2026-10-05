@@ -70,7 +70,12 @@ test('Neues Pulver-Vial bearbeiten erhält Stärke, Lösungsmittel und angebroch
   await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 rekonstituiert · 95 %')
   await detail.getByRole('button', { name: 'Schließen', exact: true }).click()
   await expect(detail).toBeHidden()
-  await expectCalendarTaken(page)
+  await page.getByRole('link', { name: 'Kalender', exact: true }).click()
+  const completed = page.getByRole('button', { name: /^Bereits protokolliert/ })
+  await expect(completed).toContainText('1')
+  await expect(page.locator('[data-due-row]')).toHaveCount(0)
+  await completed.click()
+  await expect(page.getByText('250 mcg', { exact: true })).toBeVisible()
 })
 
 test('Rückgängig bucht Bestand zurück; erneutes Bestätigen zieht genau einmal ab', async ({ page, mock }) => {
