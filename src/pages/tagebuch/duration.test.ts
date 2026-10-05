@@ -36,7 +36,7 @@ describe('Tagebuch-Dauer', () => {
   })
 
   it('Migration und App-Tabelle sind aktuell (npm run effects:duration:sql)', () => {
-    expect(readFileSync(resolve('supabase-effects-duration-keys.sql'), 'utf8')).toBe(generator.buildSql())
-    expect(readFileSync(resolve('src/pages/tagebuch/legacyDurationTexts.ts'), 'utf8')).toBe(generator.buildAppTable())
+    expect(readFileSync(resolve('supabase-effects-duration-keys.sql'), 'utf8').replace(/\r\n/g, '\n')).toBe(generator.buildSql())
+    expect(readFileSync(resolve('src/pages/tagebuch/legacyDurationTexts.ts'), 'utf8').replace(/\r\n/g, '\n')).toBe(generator.buildAppTable())
   })
 })

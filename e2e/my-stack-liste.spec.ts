@@ -178,6 +178,7 @@ test('Liste: nach links wischen zeigt Bearbeiten und Löschen; Tipp daneben schl
   await page.goBack()
 
   // Kurz und ruhig gezogen rastet zurueck.
+  await expect(bpc.locator('[data-list-actions]')).toBeHidden()
   await wische(page, bpc, -40, true)
   await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
   await expect(bpc.locator('[data-list-actions]')).toBeHidden()
@@ -211,7 +212,8 @@ async function fingerWisch(
   await cdp.detach()
 }
 
-test('Liste, Finger: Wischen öffnet und schließt, die Seite scrollt dabei nicht mit', async ({ page, mock }, info) => {
+test('Liste, Finger: Wischen öffnet und schließt, die Seite scrollt dabei nicht mit', async ({ page, mock, browserName }, info) => {
+  test.skip(browserName !== 'chromium', 'echte Touch-Ereignisse brauchen Chromium-CDP')
   test.skip(info.project.name === 'pixel-7' ? false : !info.project.use.hasTouch, 'braucht Touch')
   for (const name of ['BPC-157', 'TB-500', 'GHK-Cu', 'Ipamorelin', 'CJC-1295', 'Semax', 'Selank', 'MOTS-c']) {
     seedPeptide(mock, name, { startDate: '2026-09-01' })
@@ -237,7 +239,8 @@ test('Liste, Finger: Wischen öffnet und schließt, die Seite scrollt dabei nich
   await expect(bpc).not.toHaveAttribute('data-list-open', 'true')
 })
 
-test('Liste, Finger: ganz durchgewischt fragt sofort nach dem Löschen', async ({ page, mock }, info) => {
+test('Liste, Finger: ganz durchgewischt fragt sofort nach dem Löschen', async ({ page, mock, browserName }, info) => {
+  test.skip(browserName !== 'chromium', 'echte Touch-Ereignisse brauchen Chromium-CDP')
   test.skip(info.project.name === 'pixel-7' ? false : !info.project.use.hasTouch, 'braucht Touch')
   seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
   await page.goto('/my-stack')

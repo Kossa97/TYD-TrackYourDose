@@ -20,7 +20,7 @@ test('Plan anlegen → Home bestätigen → Kalender → Bestand bleibt nach Neu
   await expectStockVisible(page)
   await page.reload()
   await stageObject(page, 'BPC-157').click()
-  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 angemischt · 95 %')
+  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 rekonstituiert · 95 %')
   expect(mock.table('dose_logs')).toHaveLength(1)
   expect(remainingStock(mock)).toBeCloseTo(1.95)
 })
@@ -66,7 +66,7 @@ test('Neues Pulver-Vial bearbeiten erhält Stärke, Lösungsmittel und angebroch
   await page.reload()
   await stageObject(page, 'BPC-157').click()
   await expect(detail.getByText('Notiz nach der ersten Einnahme', { exact: true })).toBeVisible()
-  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 angemischt · 95 %')
+  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 rekonstituiert · 95 %')
   await expectCalendarTaken(page)
 })
 

@@ -69,5 +69,5 @@ export async function expectCalendarTaken(page: Page): Promise<void> {
 export async function expectStockVisible(page: Page): Promise<void> {
   await page.goto('/my-stack')
   await stageObject(page, 'BPC-157').click()
-  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 angemischt · 95 %')
+  await expect(page.locator('[data-stack-detail="bestand"]')).toContainText('1 Vial · + 1 rekonstituiert · 95 %')
 }

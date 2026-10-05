@@ -14,13 +14,17 @@ Run a single journey while developing:
 npm run test:e2e -- e2e/intake-journey.spec.ts --project=iphone-13 --workers=2
 ```
 
-The projects cover Chromium with iPhone 13, iPhone SE and Pixel 7 settings, plus WebKit with iPhone 13 settings. These are browser/device emulations, not physical device tests. `PLAYWRIGHT_CHROMIUM_PATH` overrides Chromium only. Local runs can restrict worker count for limited memory; CI uses one worker.
+The projects cover Chromium with iPhone 13, iPhone SE and Pixel 7 settings, plus WebKit with iPhone 13 settings. These are browser/device emulations, not physical device tests. Two native touch-injection tests and one safe-area override test require Chromium's CDP interface and are explicitly skipped on WebKit; ordinary swipe tests and all intake journeys still run there. `PLAYWRIGHT_CHROMIUM_PATH` overrides Chromium only. Local runs can restrict worker count for limited memory; CI uses one worker.
 
 ## What is covered
 
 | File | User behavior |
 | --- | --- |
 | `my-stack.spec.ts` | Create, edit, change plan, archive, switch categories, failed save |
+| `my-stack-liste.spec.ts` | List view, stock presentation, category/group navigation and swipe actions |
+| `bewertungen.spec.ts` | Review creation, overview, public sharing and deletion |
+| `store-compliance.spec.ts` | Consent and age gate, reporting/blocking, account deletion |
+| `tagebuch.spec.ts` | Diary editing, search/pagination, intake links and analysis |
 | `intake-journey.spec.ts` | Create plan and stock, confirm on Home, edit without losing strength/solvent/stock, calendar and stock after reload, skip/reopen, undo/reconfirm, failed request, lost response after commit, stock-only retry, double tap, English |
 | `intake-timeline.spec.ts` | A future quantity change preserves the old receipt; local midnight on a DST day preserves the intended calendar day and slot |
 

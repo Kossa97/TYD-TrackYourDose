@@ -11,11 +11,11 @@
 ## Tasks and verification
 
 - [x] 1. Record baseline for unit tests, lint, TypeScript/build and installed browsers. Inspect existing RPC contracts and calendar/home UI before writing scenarios.
-- [ ] 2. Extend `e2e/support/mockSupabase.ts` with only the intake/inventory RPCs, relations and query operators required by the journeys. Add focused tests for the substitute's contract (retry identity, rollback, filters) where behavior is introduced.
-- [ ] 3. Add browser journeys under `e2e/`: plan creation through calendar confirmation and inventory; skip and undo; repeated input; failed confirmation and stock-only retry; date boundary and plan adjustment; EN smoke. Assert state after navigation/reload and no unhandled requests/errors.
-- [x] 4. Extend `playwright.config.ts`, `e2e/support/fixtures.ts`, package scripts and `.github/workflows/e2e.yml` for Chromium/WebKit and complete CI checks. Keep browser executable overrides scoped to Chromium. Use isolated test credentials/build configuration.
-- [ ] 5. Fix only failures established by the new checks. Run focused regression tests first, then complete unit/lint/type/build/browser checks.
-- [ ] 6. Independently review changed files; resolve significant findings; update graph and write final verification results, remaining limits and commands.
+- [x] 2. Extend `e2e/support/mockSupabase.ts` with only the intake/inventory RPCs, relations and query operators required by the journeys. Add focused tests for the substitute's contract (retry identity, rollback, filters) where behavior is introduced.
+- [x] 3. Add browser journeys under `e2e/`: plan creation through calendar confirmation and inventory; skip and undo; repeated input; failed confirmation and stock-only retry; date boundary and plan adjustment; EN smoke. Assert state after navigation/reload and no unhandled requests/errors.
+- [x] 4. Extend `playwright.config.ts`, `e2e/support/fixtures.ts`, package scripts and `.github/workflows/e2e.yml` for Chromium/WebKit and complete CI checks. Keep browser executable overrides scoped to Chromium. Use isolated test sessions/build configuration.
+- [x] 5. Fix only failures established by the new checks. Run focused regression tests first, then complete unit/lint/type/build/browser checks.
+- [x] 6. Independently review changed files; resolve significant findings; run graph update and document its result; write final verification results, remaining limits and commands.
 
 ## Ownership / interfaces
 
@@ -37,3 +37,8 @@
 - Initial new journeys exposed a real powder-vial mismatch: the wizard sends `5 mg / 2 ml`, but inventory counts vials and expects strength per vial. Retain the failing creation journey while correcting serialization and edit roundtrip; no mock-only normalization.
 - Nine new non-creation scenarios pass in Chromium, including commit-response loss, DE/EN, stock retry, undo and local date/plan boundaries. Full final verification follows the product fix.
 - Independent review requested. Two assertion gaps found (absence check before loaded Home; partial stock display assertion) corrected with positive loaded state and complete stock presentation.
+- Before publication, fetching exposed a stale local tracking ref. Rebased the task onto current `origin/main` (`670badb0`), preserving upstream Node 24/Sentry 11, UI and all existing tests. Combined escaped search filters with nested calendar filters and retained upstream consent/storage/compliance behavior; added a regression test for the combined parser.
+- Upstream already contained the clock and timing-test fixes found on the old baseline; retained those without duplication. Corrected a newly reproduced Windows CRLF-only generator assertion using the repository's existing normalization convention. Full integrated unit suite: 2,748/2,748; lint: zero errors and 27 existing warnings; full build and E2E TypeScript pass.
+- Independent review of the rebased diff and CRLF correction: no open blockers. Graphify update on the current baseline refused a 6,610 → 5,983 node rebuild. All current graph/cache files restored byte-for-byte, including all 92 semantic nodes; graph refresh remains a documented tool limitation.
+- The complete new WebKit coverage exposed a second product bug: the existing geometry fallback activated visible vials but never stopped them when the observer missed later updates. The same throttled check now handles both directions. The failing carousel case passes without weaker assertions. Existing mouse-swipe tests now wait for the closing animation; the deployment case models changed chunk URLs after a real reload. Three CDP-only cases are explicitly Chromium-only.
+- Final integrated verification: 2,748 unit/component tests in 228 files pass; 277 browser checks pass, 3 expected WebKit/CDP skips, zero failures. Lint has zero errors and 27 existing warnings; E2E TypeScript and full production build with 134 prerendered pages pass. Final independent review: no findings. See [verification report](../../research/2026-10-05-intake-verification.md).

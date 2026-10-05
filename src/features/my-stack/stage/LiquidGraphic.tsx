@@ -27,7 +27,7 @@ function scrollContainer(element: Element): Element | null {
   return null
 }
 
-/** Wie oft ein ruhendes Vial selbst nachsieht, ob es inzwischen im Bild steht (s). */
+/** Wie oft ein Vial selbst nachsieht, ob es im Bild steht (s). */
 const LAGE_PRUEFEN_ALLE_S = 0.3
 
 function easeOutCubic(value: number): number {
@@ -119,7 +119,7 @@ export function LiquidGraphic({
   // verborgener Tab) und ihr Zuruecksetzen verpasst wurde.
   const lastStateRef = useRef<SloshState | null>(null)
   // Der Rahmen des Beobachters (Karussell-Streifen, sonst der Bildschirm) und
-  // wann ein ruhendes Vial zuletzt selbst nachgesehen hat.
+  // wann ein Vial zuletzt selbst nachgesehen hat.
   const rahmenRef = useRef<Element | null>(null)
   const lageGeprueftRef = useRef(-Infinity)
   const bodyRef = useRef<SVGPathElement | null>(null)
@@ -138,18 +138,18 @@ export function LiquidGraphic({
   const draw = useCallback(
     (s: SloshState) => {
       lastStateRef.current = s
-      if (!visibleRef.current) {
-        // Nicht allein auf den Beobachter warten. Beim Oeffnen steht das
-        // Karussell erst auf der „Neu"-Kachel und springt ein Bild spaeter
-        // zur Substanz; die erste Meldung lautet daher „draussen". Die
-        // naechste liess auf dem iPhone sichtbar auf sich warten — so lange
-        // stand die Oberflaeche nach dem Auffuellen still.
-        if (s.time - lageGeprueftRef.current < LAGE_PRUEFEN_ALLE_S) return
+      // Der Beobachter kann auf dem iPhone nach der ersten Meldung still
+      // bleiben. Beide Richtungen pruefen: hereingerollte Vials aufwecken
+      // und herausgerollte wieder anhalten.
+      if (typeof IntersectionObserver !== 'undefined' && s.time - lageGeprueftRef.current >= LAGE_PRUEFEN_ALLE_S) {
         lageGeprueftRef.current = s.time
-        if (!imRahmen(svgRef.current, rahmenRef.current)) return
-        visibleRef.current = true
-        setVisible(true)
+        const sichtbar = imRahmen(svgRef.current, rahmenRef.current)
+        if (sichtbar !== visibleRef.current) {
+          visibleRef.current = sichtbar
+          setVisible(sichtbar)
+        }
       }
+      if (!visibleRef.current) return
       const stage = stageRef.current
       const stageFocus = stage.focus
       const stageShift = stage.lightOffset * 10

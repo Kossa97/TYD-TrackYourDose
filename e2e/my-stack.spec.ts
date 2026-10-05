@@ -170,18 +170,38 @@ test('Neue Version ausgeliefert: fehlender Programmteil lädt neu statt abzustü
   // So sah JAVASCRIPT-REACT-2 aus: die installierte App lief mit dem alten
   // Stand, der Kalender-Teil war nach einem Deployment nicht mehr da.
   seedBpc157(mock, { startDate: '2026-09-01' })
-  await page.goto('/')
-  let verweigert = 0
+  // Der alte Entry verweist auf einen entfernten Chunk. Nach dem Reload
+  // liefert der Server den aktuellen Entry samt neuem Chunk-Namen.
+  let entryAnfragen = 0
+  let alteChunkAnfragen = 0
+  let aktuelleChunkAnfragen = 0
+  await page.route(/\/assets\/index-[\w-]+\.js$/, async route => {
+    const response = await route.fetch()
+    const body = await response.text()
+    const ersterStand = entryAnfragen++ === 0
+    await route.fulfill({
+      response,
+      body: ersterStand ? body.replaceAll(/Dashboard-[\w-]+\.js/g, 'Dashboard-entfernte-version.js') : body,
+    })
+  })
   await page.route(/\/assets\/Dashboard-[\w-]+\.js$/, async route => {
-    if (verweigert++ === 0) return route.fulfill({ status: 404, body: 'gone' })
+    if (route.request().url().endsWith('/Dashboard-entfernte-version.js')) {
+      alteChunkAnfragen++
+      return route.fulfill({ status: 404, body: 'gone' })
+    }
+    aktuelleChunkAnfragen++
     return route.continue()
   })
+  await page.goto('/')
   const neuGeladen = page.waitForEvent('load')
   await page.getByRole('link', { name: 'Kalender' }).click()
   await neuGeladen
-  // Nach dem Neuladen holt die App den Kalender-Teil erneut — jetzt da.
-  await expect.poll(() => verweigert).toBe(2)
   await expect(page).toHaveURL(/\/kalender$/)
+  await expect(page.locator('#due-intakes')).toBeVisible()
+  await expect(page.locator('#due-intakes')).toContainText('BPC-157')
+  expect(entryAnfragen).toBe(2)
+  expect(alteChunkAnfragen).toBe(1)
+  expect(aktuelleChunkAnfragen).toBe(1)
   await expect(page.getByRole('navigation', { name: 'Navigation' })).toBeVisible()
 })
 
@@ -267,7 +287,8 @@ test('Bühne und Reiter reichen bis an den Bildschirmrand', async ({ page, mock 
   expect(engsterRahmen.engster).toBe(engsterRahmen.bildschirm)
 })
 
-test('Vollbild der Substanz: der Schließen-Knopf liegt unter der Statuszeile', async ({ page, mock }) => {
+test('Vollbild der Substanz: der Schließen-Knopf liegt unter der Statuszeile', async ({ page, mock, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Safe-Area-Emulation benötigt eine Chromium-CDP-Sitzung.')
   seedBpc157(mock, { startDate: '2026-09-01' })
   // Wie ein iPhone mit Notch: 47 px oben gehoeren der Uhr und dem Akku.
   const cdp = await page.context().newCDPSession(page)
