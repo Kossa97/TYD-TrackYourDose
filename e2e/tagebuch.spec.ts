@@ -328,3 +328,20 @@ test('Auswertung: ohne Eintraege ein Hinweis statt leerer Diagramme', async ({ p
   await page.getByRole('tab', { name: 'Auswertung' }).click()
   await expect(page.getByText('Keine Einträge in diesem Zeitraum.')).toBeVisible()
 })
+
+test('Liste: Bearbeiten und Loeschen sitzen vertikal mittig in der Karte', async ({ page, mock }, info) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  const bpc = mock.table('stack_items').find(row => row.display_name === 'BPC-157')!
+  eintrag(mock, { stack_item_id: bpc.id, notes: 'Eine längere Notiz, die über mehrere Zeilen läuft, damit die Karte deutlich höher wird als die Knöpfe.', duration: 'std_2' })
+  eintrag(mock, { description: 'Kurz', occurred_at: '2026-09-26T08:00:00.000Z' })
+  await page.goto('/tagebuch')
+  await expect(page.locator('ul > li')).toHaveCount(2)
+  for (const karte of await page.locator('ul > li').all()) {
+    const box = (await karte.boundingBox())!
+    const knopf = (await karte.getByRole('button', { name: 'Eintrag löschen?' }).boundingBox())!
+    const mitteKarte = box.y + box.height / 2
+    const mitteKnopf = knopf.y + knopf.height / 2
+    expect(Math.abs(mitteKarte - mitteKnopf)).toBeLessThan(2)
+  }
+  if (info.project.name === 'iphone-13') await page.screenshot({ path: info.outputPath('liste.png') })
+})

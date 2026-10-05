@@ -296,7 +296,7 @@ export function Tagebuch() {
           <li key={e.id} className={`card border ${
             e.type === 'effect' ? 'border-emerald-500/20' : 'border-amber-500/20'
           }`}>
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 {/* Typ + Intensität */}
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
