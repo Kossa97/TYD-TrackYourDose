@@ -46,7 +46,7 @@ er auf die Aufgabe, wird er benutzt, auch wenn er hier fehlt.
   ist, dann `graphify-out` in einem eigenen Commit. Erinnert wird zweifach:
   `PostToolUse` auf `Write|Edit` meldet sich direkt nach einer geschriebenen
   Quelldatei; der `Stop`-Hook blockt am Ende der Runde, wenn eine Datei unter
-  `src/` oder `scripts/` jünger ist als `graphify-out/graph.json` — der fängt
+  `src/` oder `scripts/` jünger ist als `graphify-out/manifest.json` (das schreibt jeder `graphify update`-Lauf neu, auch ohne Änderung am Graphen) — der fängt
   auch Änderungen über die Shell (sed, heredoc, Skript).
 - Alles in `.claude/settings.json`. Die Regel gilt auch für Subagenten — sie
   gehört in jeden Subagenten-Prompt, der Code erkundet.
