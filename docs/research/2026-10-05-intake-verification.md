@@ -55,6 +55,8 @@ Die vorgeschriebene Aktualisierung mit `graphify update .` wurde auch nach Integ
 
 ## CI und Grenzen
 
+Der [abschließende GitHub-Lauf 37382227598](https://github.com/Kossa97/TYD-TrackYourDose/actions/runs/37382227598) für Code-Commit `4545d871` ist erfolgreich: 2.748 Tests in 228 Dateien, Lint, vollständiger Produktionsbuild mit 134 vorgerenderten Seiten, Browser-TypeScript sowie 277 Browserprüfungen bestanden. Drei dokumentierte CDP-Fälle sind auf WebKit übersprungen; Wiederholungen sind nicht aktiviert. Der Browserlauf dauerte 13,3 Minuten. Vercel meldet für denselben Commit ein erfolgreiches Deployment.
+
 Der Workflow `Gerätetests` führt bei Push und manuellem Start Unit-Tests, Lint, den vollständigen Produktionsbuild, Browser-TypeScript und Chromium/WebKit aus. Browserfehler behalten Screenshots und Traces; die CI lädt Berichte als Artefakte hoch. Diese Workflow-Konfiguration allein richtet keine Vercel-Deployment-Sperre ein.
 
 Der erste vollständige GitHub-Lauf deckte fünf bestehende Tests mit einer bislang unausgesprochenen Berliner Zeitzonenannahme auf. Unter UTC wurden dieselben fünf Fehler lokal reproduziert. `vitest.config.ts` setzt jetzt vor dem Start der Worker `Europe/Berlin`; die Zeitpunkte und Assertions bleiben unverändert. Tests mit anderen Zeitzonen wählen diese weiterhin ausdrücklich. Die Korrektur betrifft ausschließlich die Testumgebung. Danach bestanden alle 2.748 Tests auch beim Start aus einer UTC-Umgebung; Lint blieb bei null Fehlern und 27 vorhandenen Warnungen.
