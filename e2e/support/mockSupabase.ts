@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Page, Route } from '@playwright/test'
 import { SUBSTANCE_CATALOG } from '../../scripts/substance-catalog-source.mjs'
+import { TERMS_VERSION } from '../../src/features/compliance/lib/consent'
 
 /**
  * Nachgebildetes Supabase fuer die Geraetetests.
@@ -176,8 +177,30 @@ export class MockSupabase {
     const fixed = options.now
     this.now = fixed ? () => new Date(fixed) : () => new Date()
     this.registerMyStackRpcs()
+    this.registerComplianceRpcs()
     this.seedCatalog()
+    this.seedOwnProfile()
   }
+
+  /**
+   * Das Profil des Testnutzers — mit erteilter Zustimmung, sonst stuende vor
+   * jeder Seite die Zustimmungsseite. Tests, die sie sehen wollen, leeren
+   * die Felder.
+   */
+  private seedOwnProfile(): void {
+    this.insert('profiles', {
+      id: TEST_USER.id,
+      username: 'e2e',
+      is_public: false,
+      is_admin: false,
+      age_confirmed_at: '2026-01-01T00:00:00.000Z',
+      terms_accepted_at: '2026-01-01T00:00:00.000Z',
+      terms_version: TERMS_VERSION,
+    })
+  }
+
+  /** Dateien im Speicher je Bucket (`<user-id>/<name>`). */
+  readonly storage = new Map<string, string[]>()
 
   /** Der echte Katalog aus der Quelldatei — dieselbe, aus der die SQL entsteht. */
   private seedCatalog(): void {
@@ -264,6 +287,7 @@ export class MockSupabase {
       if (url.pathname.startsWith('/auth/v1/')) return await this.handleAuth(route, url)
       if (url.pathname.startsWith('/rest/v1/rpc/')) return await this.handleRpc(route, url)
       if (url.pathname.startsWith('/rest/v1/')) return await this.handleRest(route, url)
+      if (url.pathname.startsWith('/storage/v1/object/')) return await this.handleStorage(route, url)
       if (url.pathname.startsWith('/functions/v1/') || url.pathname.startsWith('/storage/v1/')) {
         this.unhandled.push(`${method} ${url.pathname}`)
         return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
@@ -274,6 +298,29 @@ export class MockSupabase {
       return route.fulfill({ status: 400, headers: corsHeaders(), json: { message, code: 'E2E' } })
     }
     this.unhandled.push(`${method} ${url.pathname}`)
+    return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
+  }
+
+  /** Nur Auflisten und Loeschen — genug fuer „Konto loeschen". */
+  private async handleStorage(route: Route, url: URL): Promise<void> {
+    const method = route.request().method()
+    const rest = url.pathname.slice('/storage/v1/object/'.length)
+    if (method === 'POST' && rest.startsWith('list/')) {
+      const bucket = rest.slice('list/'.length)
+      const { prefix = '', limit = 100, offset = 0 } = (route.request().postDataJSON() ?? {}) as { prefix?: string; limit?: number; offset?: number }
+      const names = (this.storage.get(bucket) ?? [])
+        .filter(path => path.startsWith(`${prefix}/`))
+        .map(path => path.slice(prefix.length + 1))
+        .slice(offset, offset + limit)
+      return route.fulfill({ headers: corsHeaders(), json: names.map(name => ({ name, id: name, metadata: {} })) })
+    }
+    if (method === 'DELETE') {
+      const bucket = rest
+      const { prefixes = [] } = (route.request().postDataJSON() ?? {}) as { prefixes?: string[] }
+      this.storage.set(bucket, (this.storage.get(bucket) ?? []).filter(path => !prefixes.includes(path)))
+      return route.fulfill({ headers: corsHeaders(), json: prefixes.map(name => ({ name })) })
+    }
+    this.unhandled.push(`STORAGE ${method} ${url.pathname}`)
     return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
   }
 
@@ -355,6 +402,16 @@ export class MockSupabase {
     const returnRows = prefer.includes('return=representation')
     const body = request.postDataJSON() as Row | Row[] | null
 
+    // Nachbild des Triggers reviews_check_public_text (nur der Link-Teil).
+    if (tableName === 'reviews' && (method === 'POST' || method === 'PATCH')) {
+      for (const row of Array.isArray(body) ? body : [body ?? {}]) {
+        const text = [row.title, row.body, row.pros, row.cons].filter(Boolean).join(' ').toLowerCase()
+        if (row.is_public === true && /(https?:\/\/|www\.)/.test(text)) {
+          return route.fulfill({ status: 400, headers: corsHeaders(), json: { code: 'P0001', message: 'oeffentlicher_text_link', details: null, hint: null } })
+        }
+      }
+    }
+
     if (method === 'POST') {
       const incoming = Array.isArray(body) ? body : [body ?? {}]
       const saved = incoming.map(row => {
@@ -415,6 +472,84 @@ export class MockSupabase {
   // My Stack: die RPCs, mit denen Anlegen, Bearbeiten und Planaenderung
   // speichern. Nachgebaut ist, was die App danach liest — die Pruefungen der
   // echten Funktionen (supabase-my-stack-*.sql) nicht.
+
+  // ---------------------------------------------------------------------------
+  // Store-Konformitaet (supabase-store-compliance.sql): Melden, Blockieren,
+  // Moderation, Konto loeschen. Der Testnutzer ist immer der Aufrufer.
+
+  private registerComplianceRpcs(): void {
+    const profilVon = (name: unknown) => this.table('profiles')
+      .find(row => String(row.username ?? '').toLowerCase() === String(name ?? '').trim().toLowerCase())
+    const istAdmin = () => this.table('profiles').some(row => row.id === TEST_USER.id && row.is_admin === true)
+
+    this.onRpc('report_public_review', params => {
+      const review = this.table('reviews').find(row => row.id === params.p_review_id)
+      const besitzer = review && this.table('profiles').find(row => row.id === review.user_id)
+      if (!review || review.is_public !== true || review.hidden_by_moderation === true || besitzer?.is_public !== true) {
+        throw new RpcError('meldung_nicht_moeglich')
+      }
+      if (this.table('content_reports').some(row => row.review_id === review.id && row.reporter_id === TEST_USER.id)) return null
+      this.insert('content_reports', {
+        review_id: review.id, reported_user_id: review.user_id, reporter_id: TEST_USER.id,
+        reason: params.p_reason, details: params.p_details ?? null, status: 'offen',
+      })
+      return null
+    })
+
+    this.onRpc('set_profile_block', params => {
+      const ziel = profilVon(params.p_username)
+      if (!ziel || ziel.id === TEST_USER.id) return null
+      const rest = this.table('user_blocks').filter(row => !(row.blocker_id === TEST_USER.id && row.blocked_id === ziel.id))
+      this.tables.set('user_blocks', rest)
+      if (params.p_blocked) this.insert('user_blocks', { blocker_id: TEST_USER.id, blocked_id: ziel.id })
+      return null
+    })
+
+    this.onRpc('my_blocked_profiles', () => this.table('user_blocks')
+      .filter(row => row.blocker_id === TEST_USER.id)
+      .map(row => ({ username: this.table('profiles').find(p => p.id === row.blocked_id)?.username ?? null, created_at: row.created_at })))
+
+    this.onRpc('open_content_reports', () => {
+      if (!istAdmin()) throw new RpcError('nur_admins')
+      return this.table('content_reports').filter(row => row.status === 'offen').map(row => {
+        const review = this.table('reviews').find(r => r.id === row.review_id)
+        return {
+          report_id: row.id, reason: row.reason, details: row.details ?? null, created_at: row.created_at,
+          review_id: review?.id ?? null,
+          username: this.table('profiles').find(p => p.id === row.reported_user_id)?.username ?? null,
+          substanz: this.table('stack_items').find(s => s.id === review?.stack_item_id)?.display_name ?? null,
+          title: review?.title ?? null, body: review?.body ?? null, pros: review?.pros ?? null, cons: review?.cons ?? null,
+        }
+      })
+    })
+
+    this.onRpc('resolve_content_report', params => {
+      if (!istAdmin()) throw new RpcError('nur_admins')
+      const meldung = this.table('content_reports').find(row => row.id === params.p_report_id)
+      if (!meldung) throw new RpcError('meldung_unbekannt')
+      if (params.p_action === 'ausblenden') {
+        const review = this.table('reviews').find(row => row.id === meldung.review_id)
+        if (review) review.hidden_by_moderation = true
+        for (const row of this.table('content_reports')) {
+          if (row.review_id === meldung.review_id && row.status === 'offen') row.status = 'erledigt'
+        }
+      } else if (params.p_action === 'ablehnen') {
+        meldung.status = 'abgelehnt'
+      } else {
+        throw new RpcError('aktion_unbekannt')
+      }
+      return null
+    })
+
+    // Die echte Funktion loescht auth.users; alles haengt per Kaskade daran.
+    this.onRpc('delete_my_account', () => {
+      for (const [name, rows] of this.tables) {
+        this.tables.set(name, rows.filter(row => row.user_id !== TEST_USER.id && row.id !== TEST_USER.id))
+      }
+      this.log.push('ACCOUNT DELETED')
+      return null
+    })
+  }
 
   private registerMyStackRpcs(): void {
     const saveItem = (item: Row, ingredients: Row[]): Row => {
@@ -497,11 +632,14 @@ export class MockSupabase {
       const name = String(params.p_username ?? '').trim().toLowerCase()
       const profil = this.table('profiles').find(row => String(row.username ?? '').toLowerCase() === name && row.is_public === true)
       if (!profil) return null
+      if (this.table('user_blocks').some(row => row.blocker_id === TEST_USER.id && row.blocked_id === profil.id)) {
+        return { username: profil.username, blocked: true }
+      }
       const substanz = (id: unknown) => this.table('stack_items').find(row => row.id === id)?.display_name ?? null
       return {
-        username: profil.username, display_name: profil.display_name ?? null, public_bio: profil.public_bio ?? null,
+        username: profil.username, display_name: profil.display_name ?? null, public_bio: profil.public_bio ?? null, blocked: false,
         reviews: this.table('reviews')
-          .filter(row => row.user_id === profil.id && row.is_public === true)
+          .filter(row => row.user_id === profil.id && row.is_public === true && row.hidden_by_moderation !== true)
           .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
           .map(row => ({
             id: row.id, substanz: substanz(row.stack_item_id), rating: row.rating, title: row.title || null,

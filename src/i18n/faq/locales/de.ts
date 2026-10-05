@@ -7,7 +7,7 @@ export default {
     subtitle: '{{count}} Fragen & Antworten zu allen Funktionen',
     searchPlaceholder: 'Frage suchen…',
     emptySearch: 'Keine Antwort gefunden für „{{query}}“',
-    footer: 'Peptid Tracker · Nur für Forschungszwecke',
+    footer: 'Peptid Tracker · Kein Medizinprodukt',
   },
   categories: deCategories,
 } satisfies FaqBundle

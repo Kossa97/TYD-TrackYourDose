@@ -65,7 +65,7 @@ export const deCategories: FaqCategory[] = [
         ],
       },
       {
-        q: 'Warum steht in der App häufig "Nur für Forschungszwecke"?',
+        q: 'Warum steht in der App häufig "Kein Medizinprodukt"?',
         a: 'Weil die App Daten dokumentiert und berechnet, aber keine Diagnose, Dosierungsempfehlung oder Therapieentscheidung trifft. Dosis, Substanz, Frequenz und Anwendung bleiben deine Verantwortung beziehungsweise gehören in fachliche Beratung.',
       },
     ],

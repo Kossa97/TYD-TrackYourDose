@@ -12,6 +12,7 @@ vi.mock('./context/AuthContext', () => ({
 }))
 vi.mock('./context/OnboardingContext', () => ({ OnboardingProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 vi.mock('./components/Layout', () => ({ Layout: () => <Outlet /> }))
+vi.mock('./features/compliance/components/ConsentGate', () => ({ ConsentGate: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 vi.mock('./pages/Auth', () => ({ Auth: () => <h1>Sign in</h1> }))
 vi.mock('./pages/__VialPreview', () => ({ VialPreview: () => null }))
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: state.language }, t: (key: string) => key }) }))

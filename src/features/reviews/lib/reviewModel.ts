@@ -26,6 +26,8 @@ export interface Review {
   vertraeglichkeit: number | null
   wieder_nehmen: WiederNehmen | null
   is_public: boolean
+  /** Von der Moderation ausgeblendet: nur noch fuer den Eigentuemer sichtbar. */
+  hidden_by_moderation?: boolean
   created_at: string
   updated_at: string | null
   stack_items: { display_name: string; archived?: boolean | null } | null

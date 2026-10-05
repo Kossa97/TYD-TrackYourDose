@@ -65,7 +65,7 @@ export const enCategories: FaqCategory[] = [
         ],
       },
       {
-        q: 'Why does the app often say "For research use only"?',
+        q: 'Why does the app often say "Not a medical device"?',
         a: 'Because the app documents and calculates data, but it does not diagnose, prescribe, recommend dosing, or make treatment decisions. Substance, dose, route, and frequency remain your responsibility and may require qualified guidance.',
       },
     ],

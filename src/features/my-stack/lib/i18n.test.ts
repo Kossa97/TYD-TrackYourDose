@@ -620,6 +620,60 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_strength_hint_per_unit_spray',
   'my_stack_strength_hint_per_unit_tablet',
   'my_stack_strength_hint_per_unit_patch',
+  'consent_age',
+  'consent_terms',
+  'consent_health',
+  'consent_title',
+  'consent_desc',
+  'consent_continue',
+  'consent_required',
+  'legal_privacy',
+  'legal_terms',
+  'legal_imprint',
+  'legal_links_label',
+  'legal_draft',
+  'medical_notice',
+  'report_action',
+  'report_title',
+  'report_desc',
+  'report_reason_gefaehrlich',
+  'report_reason_werbung',
+  'report_reason_beleidigung',
+  'report_reason_spam',
+  'report_reason_sonstiges',
+  'report_details',
+  'report_send',
+  'report_sending',
+  'report_sent',
+  'block_action',
+  'block_title',
+  'block_desc',
+  'block_done',
+  'blocked_profile_title',
+  'unblock_action',
+  'unblock_done',
+  'blocked_list_title',
+  'blocked_list_empty',
+  'moderation_text_link',
+  'moderation_text_trade',
+  'moderation_text_abuse',
+  'review_public_rules',
+  'review_hidden_by_moderation',
+  'account_delete_title',
+  'account_delete_desc',
+  'account_delete_confirm_label',
+  'account_delete_word',
+  'account_delete_action',
+  'account_deleting',
+  'account_deleted',
+  'account_delete_error',
+  'moderation_title',
+  'moderation_empty',
+  'moderation_hide',
+  'moderation_dismiss',
+  'moderation_hidden',
+  'moderation_dismissed',
+  'moderation_deleted_review',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit
@@ -635,9 +689,13 @@ const EXPECTED_MY_STACK_KEYS = [
 // und die getrennten Kalendertexte fuer bestaetigte und nicht bestaetigte Einnahmen.
 // Bewusst geaendert (Oktober 2026): „Bewertungen" heisst jetzt „Erfahrungen"
 // (bewertungen_title, tile_bewertungen, neue_bewertung, … — nur de/en).
+// Bewusst geaendert (Oktober 2026, Store-Richtlinien): „Nur fuer
+// Forschungszwecke" ist die Formel von Graumarkt-Shops und faellt in der
+// Pruefung auf — jetzt „Kein Medizinprodukt" bzw. „Persoenliches
+// Tracking-Werkzeug" (research_only, safety_banner_* — nur de/en).
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '1d3db03025122dad17d4fa6b14288810d4068aceeef94179f26dc581082b8da0',
-  en: '47b6dfef280eaeb5dfe353cf255c4a8afa19389e5b4bcd29f3d48acdae7b086f',
+  de: '96b5761a6d3d7e386f775693e9810982cf6a9796dd1c02293a8a2ac437c742a2',
+  en: '2f867a4c71477fe4723a4871355538717b17351e926da126ecd8dccc91bccfe9',
 } as const
 // Die zwoelf weiteren Sprachen erhalten fuer die neuen Kalendertexte
 // englische Platzhalter (Regel in CLAUDE.md).

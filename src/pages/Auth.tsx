@@ -5,6 +5,10 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { FlaskConical } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { ConsentChecks } from '../features/compliance/components/ConsentChecks'
+import { MedicalNotice } from '../features/compliance/components/MedicalNotice'
+import { LegalLinks } from '../features/compliance/components/LegalLinks'
+import { KEINE_ZUSTIMMUNG, vollstaendig, zustimmungsZeile } from '../features/compliance/lib/consent'
 
 export function Auth() {
   const { session } = useAuth()
@@ -14,6 +18,7 @@ export function Auth() {
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
+  const [zustimmung, setZustimmung] = useState(KEINE_ZUSTIMMUNG)
 
   if (session) return <Navigate to="/" replace />
 
@@ -22,11 +27,19 @@ export function Auth() {
     setLoading(true)
 
     if (mode === 'register') {
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (!vollstaendig(zustimmung)) {
+        setLoading(false)
+        return toast.error(t('consent_required'))
+      }
+      // Die Zustimmung steht auch in den Konto-Metadaten: muss die E-Mail
+      // erst bestaetigt werden, darf das Profil noch nicht geschrieben werden
+      // — dann uebernimmt die Zustimmungsseite sie beim ersten Start.
+      const felder = zustimmungsZeile(new Date())
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { username, ...felder } } })
       if (error) {
         toast.error(error.message)
       } else if (data.user) {
-        await supabase.from('profiles').upsert({ id: data.user.id, username })
+        await supabase.from('profiles').upsert({ id: data.user.id, username, ...felder })
         toast.success(t('account_created'))
       }
     } else {
@@ -79,7 +92,8 @@ export function Auth() {
               <label className="label">{t('password')}</label>
               <input className="input" type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
             </div>
-            <button className="btn-primary w-full mt-2" type="submit" disabled={loading}>
+            {mode === 'register' && <ConsentChecks value={zustimmung} onChange={setZustimmung} />}
+            <button className="btn-primary w-full mt-2" type="submit" disabled={loading} data-auth-submit>
               {loading ? t('loading') : mode === 'login' ? t('auth_tab_login') : t('create_account')}
             </button>
           </form>
@@ -88,6 +102,8 @@ export function Auth() {
         <p className="text-center text-slate-500 text-xs mt-6">
           {t('research_only')}
         </p>
+        <MedicalNotice className="mt-4" />
+        <LegalLinks className="mt-4" />
       </div>
     </div>
   )

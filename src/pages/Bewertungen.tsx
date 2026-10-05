@@ -26,6 +26,7 @@ import {
   type ReviewDraft,
 } from '../features/reviews/lib/reviewModel'
 import { ladeBewertungen, loescheBewertung, speichereBewertung } from '../features/reviews/services/reviews'
+import { filterFehlerSchluessel } from '../features/compliance/lib/moderation'
 
 /**
  * Bewertungen: je Substanz eine Gruppe, darin je Zyklus eine Karte — so
@@ -148,8 +149,11 @@ export function Bewertungen() {
       toast.success(sheet.id ? t('bewertung_aktualisiert') : t('bewertung_gespeichert'))
       setSheet(null)
       await load()
-    } catch {
-      toast.error(t('error'))
+    } catch (fehler) {
+      // Der Filter fuer oeffentliche Texte sagt, was nicht geht — das Sheet
+      // bleibt offen, damit man es aendern oder privat lassen kann.
+      const schluessel = filterFehlerSchluessel(fehler instanceof Error ? fehler.message : null)
+      toast.error(schluessel ? t(schluessel) : t('error'), { duration: schluessel ? 6000 : undefined })
     } finally {
       setSaving(false)
     }
@@ -388,7 +392,9 @@ function ReviewRow({ review: r, zyklus, datum, offen, onOffen, onEdit, onRemove 
         <span className="flex items-center justify-between gap-3">
           <span data-review-cycle className="min-w-0 truncate text-xs font-semibold text-slate-400">{zyklus}</span>
           <span className="flex shrink-0 items-center gap-2">
-            {r.is_public && <Globe size={13} className="text-slate-500" aria-label={String(t('review_public'))} />}
+            {r.hidden_by_moderation
+              ? <span data-review-hidden className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">{t('review_hidden_by_moderation')}</span>
+              : r.is_public && <Globe size={13} className="text-slate-500" aria-label={String(t('review_public'))} />}
             <Sterne wert={r.rating} />
           </span>
         </span>

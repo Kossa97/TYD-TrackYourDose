@@ -10,6 +10,7 @@ import { OnboardingRestartButton } from '../components/Onboarding'
 import { LANGUAGES, applyDirection } from '../i18n'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { useTheme, type ThemeMode } from '../lib/theme'
+import { AccountSection } from '../features/compliance/components/AccountSection'
 
 interface Profile {
   username: string; display_name: string; age: number | null
@@ -230,6 +231,9 @@ export function Profil() {
       <div className="mt-3">
         <OnboardingRestartButton />
       </div>
+
+      {/* ── Blockierte Profile, Rechtstexte, Konto löschen ── */}
+      <AccountSection />
     </div>
   )
 }

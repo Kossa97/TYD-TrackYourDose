@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getAllPeptides, STATUS_LABEL_KEYS, CATEGORY_LABEL_KEYS } from '../../services/peptideLibrary'
 import type { PeptideEntry } from '../../services/peptideLibrary'
 import { denyProps } from '../../lib/denyFeedback'
+import { ModerationQueue } from '../../features/compliance/components/ModerationQueue'
 
 type Tab   = 'update' | 'create' | 'pk'
 type Status = 'idle' | 'loading' | 'preview' | 'saving' | 'done' | 'error'
@@ -363,6 +364,9 @@ export function AdminPanel() {
           KI-Funktionen laufen über Vercel. Lokal: <code className="text-blue-300/70">vercel dev</code> statt <code className="text-blue-300/70">npm run dev</code>.
         </p>
       </div>
+
+      {/* Meldungen zu öffentlichen Erfahrungen */}
+      <ModerationQueue />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#0B1220] border border-white/[0.07] rounded-xl p-1 mb-6">

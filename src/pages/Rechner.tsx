@@ -5,6 +5,7 @@ import { PageHero, PageShell } from '../components/ui/DesignSystem'
 import { useAuth } from '../context/AuthContext'
 import { DoseCalculator } from '../features/rechner/components/DoseCalculator'
 import { UnitConverter } from '../features/rechner/components/UnitConverter'
+import { MedicalNotice } from '../features/compliance/components/MedicalNotice'
 import '../features/rechner/rechner.css'
 
 export function Rechner() {
@@ -22,6 +23,7 @@ export function Rechner() {
         <Icon size={18} aria-hidden="true" />{label}
       </button>)}
     </div>
+    <MedicalNotice />
     <div id="rechner-dose" className="rechner-dose-pane" hidden={mode !== 'dose'}><DoseCalculator key={user?.id ?? 'anonymous'} /></div>
     <div id="rechner-units" className="rechner-units-pane" hidden={mode !== 'units'}><UnitConverter />
       <p className="rechner-muted rechner-disclaimer">{t('info_disclaimer')}</p>

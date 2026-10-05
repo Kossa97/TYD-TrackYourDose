@@ -38,6 +38,7 @@ import {
 import type { TrackingLevel } from '../features/my-stack/types'
 import type { EscalationRow } from '../lib/intakeSchedule'
 import { denyProps } from '../lib/denyFeedback'
+import { MedicalNotice } from '../features/compliance/components/MedicalNotice'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -1079,6 +1080,7 @@ export function BlutspiegelSimulation() {
           </p>
         </div>
       </div>
+      <MedicalNotice />
 
       {incompleteProtocolCycles.map(cycle => {
         const readiness = readinessForCycle(

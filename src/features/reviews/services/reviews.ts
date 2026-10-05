@@ -13,7 +13,7 @@ export interface ReviewClient {
   from(table: string): any // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-const SELECT = 'id, stack_item_id, cycle_id, rating, title, body, pros, cons, experience, wirkung, vertraeglichkeit, wieder_nehmen, is_public, created_at, updated_at, stack_items(display_name, archived)'
+const SELECT = 'id, stack_item_id, cycle_id, rating, title, body, pros, cons, experience, wirkung, vertraeglichkeit, wieder_nehmen, is_public, hidden_by_moderation, created_at, updated_at, stack_items(display_name, archived)'
 
 function pruefen<T>(result: QueryResult<T>): T {
   if (result.error) throw new Error(result.error.message)

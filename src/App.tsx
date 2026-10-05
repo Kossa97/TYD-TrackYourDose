@@ -7,12 +7,9 @@ import { OnboardingProvider } from './context/OnboardingContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
-import { VialPreview } from './pages/__VialPreview'
 import { publicPeptipediaRoutes } from './features/peptipedia/publicRoutes'
 import { PeptipediaAppPage } from './features/peptipedia/PeptipediaAppPage'
-import { PdfPreview } from './pages/__PdfPreview'
-import { BefundPreview } from './pages/__BefundPreview'
-import { PdfThemesPreview } from './pages/__PdfThemesPreview'
+import { ConsentGate } from './features/compliance/components/ConsentGate'
 import { AppBackNavigation } from './components/navigation/AppBackNavigation'
 
 const Home = lazyPage(() => import('./pages/Home'), 'Home')
@@ -34,6 +31,9 @@ const Progress = lazyPage(() => import('./pages/Progress'), 'Progress')
 const PdfProtokoll = lazyPage(() => import('./pages/PdfProtokoll'), 'PdfProtokoll')
 const Protokoll = lazyPage(() => import('./pages/Protokoll'), 'Protokoll')
 const BlutspiegelSimulation = lazyPage(() => import('./pages/BlutspiegelSimulation'), 'BlutspiegelSimulation')
+const Legal = lazyPage(() => import('./pages/Legal'), 'Legal')
+// Vorschau-Seiten nur in der Entwicklung — im fertigen Build fehlen Route und Code.
+const DevPreviews = import.meta.env.DEV ? lazyPage(() => import('./pages/__DevPreviews'), 'DevPreviews') : null
 
 function RouteFallback() {
   return (
@@ -59,12 +59,14 @@ function PersonalApp() {
         />
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route path="/__vialpreview" element={<VialPreview />} />
-          <Route path="/__pdfpreview" element={<PdfPreview />} />
-          <Route path="/__befundpreview" element={<BefundPreview />} />
-          <Route path="/__pdfthemes" element={<PdfThemesPreview />} />
+          {DevPreviews && ['vialpreview', 'pdfpreview', 'befundpreview', 'pdfthemes'].map(preview => (
+            <Route key={preview} path={`/__${preview}`} element={<LazyPage><DevPreviews /></LazyPage>} />
+          ))}
+          <Route path="/datenschutz" element={<LazyPage><Legal /></LazyPage>} />
+          <Route path="/impressum" element={<LazyPage><Legal /></LazyPage>} />
+          <Route path="/nutzungsbedingungen" element={<LazyPage><Legal /></LazyPage>} />
           <Route path="/u/:username" element={<LazyPage><PublicProfile /></LazyPage>} />
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/" element={<ProtectedRoute><ConsentGate><Layout /></ConsentGate></ProtectedRoute>}>
             <Route index element={<LazyPage><Home /></LazyPage>} />
             <Route path="kalender" element={<LazyPage><Dashboard /></LazyPage>} />
             <Route path="my-stack" element={<LazyPage><MyStackPage /></LazyPage>} />

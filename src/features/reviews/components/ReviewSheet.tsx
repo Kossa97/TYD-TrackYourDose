@@ -202,6 +202,7 @@ export function ReviewSheet({
                 {t('review_public')}
               </span>
               <span className="mt-0.5 block text-xs text-slate-400">{t('review_public_hint')}</span>
+              {draft.is_public && <span data-review-public-rules className="mt-1 block text-xs text-amber-300/90">{t('review_public_rules')}</span>}
             </span>
           </label>
         </div>

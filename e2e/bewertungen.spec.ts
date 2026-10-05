@@ -225,7 +225,7 @@ test('Plan beenden in My Stack fragt einmal „Wie war\'s?" — Bewerten führt 
 
 test('Öffentliches Profil: nur freigegebene Bewertungen, ohne Alter und Dosis; privat sieht aus wie unbekannt', async ({ page, mock }) => {
   seedPeptide(mock, 'BPC-157', { startDate: '2026-08-12' })
-  mock.insert('profiles', { id: TEST_USER.id, username: 'anna', display_name: 'Anna', public_bio: 'Ich teste.', is_public: true, age: 33 })
+  Object.assign(mock.table('profiles')[0], { username: 'anna', display_name: 'Anna', public_bio: 'Ich teste.', is_public: true, age: 33 })
   bewertung(mock, 'BPC-157', { title: 'Geteilt', rating: 5, wirkung: 4, is_public: true, created_at: '2026-09-21T10:00:00.000Z' })
   bewertung(mock, 'BPC-157', { title: 'Privat', rating: 1, is_public: false })
 
