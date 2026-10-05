@@ -30,6 +30,8 @@ describe('Textfilter-Fehler', () => {
     expect(filterFehlerSchluessel('oeffentlicher_text_link')).toBe('moderation_text_link')
     expect(filterFehlerSchluessel('ERROR: oeffentlicher_text_handel')).toBe('moderation_text_trade')
     expect(filterFehlerSchluessel('oeffentlicher_text_beleidigung')).toBe('moderation_text_abuse')
+    expect(filterFehlerSchluessel('oeffentliches_profil_link')).toBe('moderation_profile_link')
+    expect(filterFehlerSchluessel('oeffentliches_profil_handel')).toBe('moderation_profile_trade')
   })
 
   it('laesst andere Fehler durch', () => {

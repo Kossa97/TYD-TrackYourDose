@@ -665,6 +665,13 @@ export const MY_STACK_EN = {
   moderation_hidden: 'Hidden.',
   moderation_dismissed: 'Report dismissed.',
   moderation_deleted_review: 'This experience no longer exists.',
+  report_profile_action: 'Report profile',
+  report_profile_title: 'Report profile',
+  report_too_many: 'You have sent many reports in a short time. Please try again later.',
+  moderation_profile_report: 'Profile (name and bio)',
+  moderation_profile_link: 'A public profile may not contain links, web addresses or @handles — in the username, display name or bio.',
+  moderation_profile_trade: 'A public profile may not mention selling, sources or messengers.',
+  moderation_profile_abuse: 'Your public profile contains words that are not allowed. Please rephrase.',
 }
 
 export const MY_STACK_DE = {
@@ -1333,6 +1340,13 @@ export const MY_STACK_DE = {
   moderation_hidden: 'Ausgeblendet.',
   moderation_dismissed: 'Meldung abgelehnt.',
   moderation_deleted_review: 'Diese Erfahrung gibt es nicht mehr.',
+  report_profile_action: 'Profil melden',
+  report_profile_title: 'Profil melden',
+  report_too_many: 'Du hast in kurzer Zeit viele Meldungen geschickt. Bitte versuch es später noch einmal.',
+  moderation_profile_report: 'Profil (Name und Bio)',
+  moderation_profile_link: 'Ein öffentliches Profil darf keine Links, Webadressen oder @-Namen enthalten — weder im Nutzernamen noch im Anzeigenamen oder in der Bio.',
+  moderation_profile_trade: 'Ein öffentliches Profil darf keinen Verkauf, keine Bezugsquellen und keine Messenger nennen.',
+  moderation_profile_abuse: 'Dein öffentliches Profil enthält Wörter, die nicht erlaubt sind. Bitte formuliere sie um.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

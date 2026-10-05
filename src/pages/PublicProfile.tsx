@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Ban, Flag, FlaskConical, Lock, Star } from 'lucide-react'
@@ -43,6 +43,8 @@ interface OeffentlichesProfil {
   public_bio: string | null
   /** Vom Besucher blockiert: dann fehlen Name, Bio und Erfahrungen. */
   blocked?: boolean
+  /** Der Besucher sieht sein eigenes Profil. */
+  own?: boolean
   reviews?: OeffentlicheBewertung[]
 }
 
@@ -50,21 +52,13 @@ export function PublicProfile() {
   const { username } = useParams<{ username: string }>()
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const language = i18n.resolvedLanguage ?? i18n.language
   const [neuLaden, setNeuLaden] = useState(0)
-  const [meldet, setMeldet] = useState<OeffentlicheBewertung | null>(null)
+  // Gemeldet wird eine Erfahrung oder das ganze Profil (Name, Bio).
+  const [meldet, setMeldet] = useState<{ art: 'erfahrung'; review: OeffentlicheBewertung } | { art: 'profil' } | null>(null)
   const [blockt, setBlockt] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [eigenerName, setEigenerName] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    let aktuell = true
-    void supabase.from('profiles').select('username').eq('id', user.id).maybeSingle().then(({ data }) => {
-      if (aktuell) setEigenerName((data as { username?: string } | null)?.username ?? null)
-    })
-    return () => { aktuell = false }
-  }, [user])
   // Das Ergebnis merkt sich, fuer wen es geladen wurde: wechselt die
   // Adresse, gilt es nicht mehr — das alte Profil steht nie unter dem neuen Namen.
   const [ergebnis, setErgebnis] = useState<{
@@ -107,14 +101,22 @@ export function PublicProfile() {
     </div>
   )
 
-  const istEigenes = Boolean(eigenerName && eigenerName.toLowerCase() === profil.username.toLowerCase())
+  const istEigenes = profil.own === true
+
+  // Melden geht nur angemeldet — sonst liesse sich die Moderation fluten.
+  const meldenOeffnen = (ziel: NonNullable<typeof meldet>) => {
+    if (!user) return navigate('/auth')
+    setMeldet(ziel)
+  }
 
   const melden = async (grund: Meldegrund, details: string) => {
     if (!meldet) return
     setBusy(true)
-    const { error } = await supabase.rpc('report_public_review', { p_review_id: meldet.id, p_reason: grund, p_details: details || null })
+    const { error } = meldet.art === 'erfahrung'
+      ? await supabase.rpc('report_public_review', { p_review_id: meldet.review.id, p_reason: grund, p_details: details || null })
+      : await supabase.rpc('report_public_profile', { p_username: profil.username, p_reason: grund, p_details: details || null })
     setBusy(false)
-    if (error) return toast.error(t('error'))
+    if (error) return toast.error(t(error.message?.includes('zu_viele_meldungen') ? 'report_too_many' : 'error'))
     setMeldet(null)
     toast.success(t('report_sent'))
   }
@@ -156,10 +158,17 @@ export function PublicProfile() {
           <p className="mt-4 flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-500">
             <FlaskConical size={11} aria-hidden="true" /> {t('public_profile_badge')}
           </p>
-          {user && !istEigenes && (
-            <button type="button" data-block-open onClick={() => setBlockt(true)} className="mt-3 inline-flex min-h-11 items-center gap-1.5 px-2 text-xs text-slate-500 hover:text-red-300">
-              <Ban size={12} aria-hidden="true" /> {t('block_action')}
-            </button>
+          {!istEigenes && (
+            <div className="mt-3 flex items-center gap-2">
+              <button type="button" data-report-profile onClick={() => meldenOeffnen({ art: 'profil' })} className="inline-flex min-h-11 items-center gap-1.5 px-2 text-xs text-slate-500 hover:text-amber-300">
+                <Flag size={12} aria-hidden="true" /> {t('report_profile_action')}
+              </button>
+              {user && (
+                <button type="button" data-block-open onClick={() => setBlockt(true)} className="inline-flex min-h-11 items-center gap-1.5 px-2 text-xs text-slate-500 hover:text-red-300">
+                  <Ban size={12} aria-hidden="true" /> {t('block_action')}
+                </button>
+              )}
+            </div>
           )}
         </header>
 
@@ -198,7 +207,7 @@ export function PublicProfile() {
                     <div className="mt-1 flex items-center justify-between gap-3">
                       <p className="text-[11px] text-slate-600">{monat(r.monat)}</p>
                       {!istEigenes && (
-                        <button type="button" data-report-open onClick={() => setMeldet(r)} className="-mr-2 inline-flex min-h-11 items-center gap-1 px-2 text-[11px] text-slate-500 hover:text-amber-300">
+                        <button type="button" data-report-open onClick={() => meldenOeffnen({ art: 'erfahrung', review: r })} className="-mr-2 inline-flex min-h-11 items-center gap-1 px-2 text-[11px] text-slate-500 hover:text-amber-300">
                           <Flag size={11} aria-hidden="true" /> {t('report_action')}
                         </button>
                       )}
@@ -212,7 +221,10 @@ export function PublicProfile() {
 
         <p className="mt-8 text-center text-xs text-slate-600">{t('public_profile_footer')}</p>
         <LegalLinks className="mt-3 pb-4" />
-        {meldet && <ReportSheet substanz={meldet.substanz} busy={busy} onCancel={() => setMeldet(null)} onSend={(grund, details) => void melden(grund, details)} />}
+        {meldet && <ReportSheet
+          titel={t(meldet.art === 'erfahrung' ? 'report_title' : 'report_profile_title')}
+          betreff={meldet.art === 'erfahrung' ? meldet.review.substanz : `@${profil.username}`}
+          busy={busy} onCancel={() => setMeldet(null)} onSend={(grund, details) => void melden(grund, details)} />}
         {blockt && <BlockSheet username={profil.username} busy={busy} onCancel={() => setBlockt(false)} onConfirm={() => void setzeBlock(true)} />}
       </div>
     </div>

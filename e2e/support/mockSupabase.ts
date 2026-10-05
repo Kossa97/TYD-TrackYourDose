@@ -485,13 +485,26 @@ export class MockSupabase {
     this.onRpc('report_public_review', params => {
       const review = this.table('reviews').find(row => row.id === params.p_review_id)
       const besitzer = review && this.table('profiles').find(row => row.id === review.user_id)
-      if (!review || review.is_public !== true || review.hidden_by_moderation === true || besitzer?.is_public !== true) {
+      if (!review || review.is_public !== true || review.hidden_by_moderation === true || besitzer?.is_public !== true || review.user_id === TEST_USER.id) {
         throw new RpcError('meldung_nicht_moeglich')
       }
       if (this.table('content_reports').some(row => row.review_id === review.id && row.reporter_id === TEST_USER.id)) return null
+      const substanz = this.table('stack_items').find(row => row.id === review.stack_item_id)?.display_name ?? null
       this.insert('content_reports', {
         review_id: review.id, reported_user_id: review.user_id, reporter_id: TEST_USER.id,
         reason: params.p_reason, details: params.p_details ?? null, status: 'offen',
+        snapshot: { art: 'erfahrung', username: besitzer?.username, substanz, title: review.title, body: review.body, pros: review.pros, cons: review.cons },
+      })
+      return null
+    })
+
+    this.onRpc('report_public_profile', params => {
+      const ziel = profilVon(params.p_username)
+      if (!ziel || ziel.is_public !== true || ziel.hidden_by_moderation === true || ziel.id === TEST_USER.id) throw new RpcError('meldung_nicht_moeglich')
+      this.insert('content_reports', {
+        review_id: null, reported_user_id: ziel.id, reporter_id: TEST_USER.id,
+        reason: params.p_reason, details: params.p_details ?? null, status: 'offen',
+        snapshot: { art: 'profil', username: ziel.username, display_name: ziel.display_name ?? null, public_bio: ziel.public_bio ?? null },
       })
       return null
     })
@@ -509,16 +522,17 @@ export class MockSupabase {
       .filter(row => row.blocker_id === TEST_USER.id)
       .map(row => ({ username: this.table('profiles').find(p => p.id === row.blocked_id)?.username ?? null, created_at: row.created_at })))
 
-    this.onRpc('open_content_reports', () => {
+    this.onRpc('moderation_queue', () => {
       if (!istAdmin()) throw new RpcError('nur_admins')
       return this.table('content_reports').filter(row => row.status === 'offen').map(row => {
         const review = this.table('reviews').find(r => r.id === row.review_id)
+        const snapshot = row.snapshot as Row | undefined
         return {
           report_id: row.id, reason: row.reason, details: row.details ?? null, created_at: row.created_at,
-          review_id: review?.id ?? null,
-          username: this.table('profiles').find(p => p.id === row.reported_user_id)?.username ?? null,
-          substanz: this.table('stack_items').find(s => s.id === review?.stack_item_id)?.display_name ?? null,
-          title: review?.title ?? null, body: review?.body ?? null, pros: review?.pros ?? null, cons: review?.cons ?? null,
+          art: snapshot?.art ?? (row.review_id ? 'erfahrung' : 'profil'),
+          review_id: row.review_id ?? null, review_exists: Boolean(review),
+          username: this.table('profiles').find(p => p.id === row.reported_user_id)?.username ?? snapshot?.username ?? null,
+          snapshot: snapshot ?? null,
         }
       })
     })
@@ -528,13 +542,19 @@ export class MockSupabase {
       const meldung = this.table('content_reports').find(row => row.id === params.p_report_id)
       if (!meldung) throw new RpcError('meldung_unbekannt')
       if (params.p_action === 'ausblenden') {
-        const review = this.table('reviews').find(row => row.id === meldung.review_id)
-        if (review) review.hidden_by_moderation = true
-        for (const row of this.table('content_reports')) {
-          if (row.review_id === meldung.review_id && row.status === 'offen') row.status = 'erledigt'
+        if (meldung.review_id) {
+          const review = this.table('reviews').find(row => row.id === meldung.review_id)
+          if (review) review.hidden_by_moderation = true
+          for (const row of this.table('content_reports')) {
+            if (row.review_id === meldung.review_id && row.status === 'offen') row.status = 'erledigt'
+          }
+        } else {
+          const profil = this.table('profiles').find(row => row.id === meldung.reported_user_id)
+          if (profil) profil.hidden_by_moderation = true
+          meldung.status = 'erledigt'
         }
       } else if (params.p_action === 'ablehnen') {
-        meldung.status = 'abgelehnt'
+        if (meldung.status === 'offen') meldung.status = 'abgelehnt'
       } else {
         throw new RpcError('aktion_unbekannt')
       }
@@ -542,12 +562,13 @@ export class MockSupabase {
     })
 
     // Die echte Funktion loescht auth.users; alles haengt per Kaskade daran.
-    this.onRpc('delete_my_account', () => {
+    this.onRpc('delete_my_account', params => {
+      if (params.p_nur_pruefen) return true
       for (const [name, rows] of this.tables) {
         this.tables.set(name, rows.filter(row => row.user_id !== TEST_USER.id && row.id !== TEST_USER.id))
       }
       this.log.push('ACCOUNT DELETED')
-      return null
+      return true
     })
   }
 
@@ -632,12 +653,14 @@ export class MockSupabase {
       const name = String(params.p_username ?? '').trim().toLowerCase()
       const profil = this.table('profiles').find(row => String(row.username ?? '').toLowerCase() === name && row.is_public === true)
       if (!profil) return null
+      if (profil.hidden_by_moderation === true) return null
       if (this.table('user_blocks').some(row => row.blocker_id === TEST_USER.id && row.blocked_id === profil.id)) {
-        return { username: profil.username, blocked: true }
+        return { username: profil.username, blocked: true, own: false }
       }
       const substanz = (id: unknown) => this.table('stack_items').find(row => row.id === id)?.display_name ?? null
       return {
         username: profil.username, display_name: profil.display_name ?? null, public_bio: profil.public_bio ?? null, blocked: false,
+        own: profil.id === TEST_USER.id,
         reviews: this.table('reviews')
           .filter(row => row.user_id === profil.id && row.is_public === true && row.hidden_by_moderation !== true)
           .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))

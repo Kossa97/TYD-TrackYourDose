@@ -11,6 +11,7 @@ import { LANGUAGES, applyDirection } from '../i18n'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { useTheme, type ThemeMode } from '../lib/theme'
 import { AccountSection } from '../features/compliance/components/AccountSection'
+import { filterFehlerSchluessel } from '../features/compliance/lib/moderation'
 
 interface Profile {
   username: string; display_name: string; age: number | null
@@ -68,7 +69,9 @@ export function Profil() {
       share_tagebuch: profile.share_tagebuch,
       share_bewertungen: profile.share_bewertungen,
     })
-    if (error) toast.error(t('fehler_speichern'))
+    // Oeffentliche Profile laufen durch den Textfilter — dann sagen, warum.
+    const filter = error ? filterFehlerSchluessel(error.message) : null
+    if (error) toast.error(filter ? t(filter) : t('fehler_speichern'), { duration: filter ? 6000 : undefined })
     else toast.success(t('profil_gespeichert'))
     setSaving(false)
   }

@@ -68,6 +68,14 @@ test('Fremdes Profil: Erfahrung melden, Profil blockieren, im eigenen Profil wie
     expect.objectContaining({ review_id: review.id, reporter_id: TEST_USER.id, reason: 'werbung', details: 'Nennt einen Shop.', status: 'offen' }),
   ])
 
+  // Auch das ganze Profil (Name, Bio) laesst sich melden.
+  await page.locator('[data-report-profile]').click()
+  await expect(page.getByRole('heading', { name: 'Profil melden' })).toBeVisible()
+  await page.locator('[data-report-reason="beleidigung"]').check()
+  await page.locator('[data-report-send]').click()
+  await expect(page.locator('[data-report-sheet]')).toBeHidden()
+  expect(mock.table('content_reports').filter(row => row.review_id === null)).toHaveLength(1)
+
   await page.locator('[data-block-open]').click()
   await page.locator('[data-block-confirm]').click()
   await expect(page.locator('[data-profile-blocked]')).toBeVisible()
@@ -93,6 +101,7 @@ test('Eigenes öffentliches Profil: weder Melden noch Blockieren', async ({ page
   await page.goto('/u/anna')
   await expect(page.locator('[data-public-review]')).toContainText('Meins')
   await expect(page.locator('[data-report-open]')).toHaveCount(0)
+  await expect(page.locator('[data-report-profile]')).toHaveCount(0)
   await expect(page.locator('[data-block-open]')).toHaveCount(0)
 })
 
@@ -115,7 +124,10 @@ test('Öffentliche Erfahrung mit Link: Filter sagt warum, das Sheet bleibt offen
 test('Admin: Meldung sehen und Erfahrung ausblenden', async ({ page, mock }) => {
   mock.table('profiles')[0].is_admin = true
   const review = fremdesProfil(mock)
-  mock.insert('content_reports', { review_id: review.id, reported_user_id: FREMD_ID, reporter_id: null, reason: 'gefaehrlich', details: 'Dosis für andere', status: 'offen' })
+  mock.insert('content_reports', {
+    review_id: review.id, reported_user_id: FREMD_ID, reporter_id: null, reason: 'gefaehrlich', details: 'Dosis für andere', status: 'offen',
+    snapshot: { art: 'erfahrung', username: 'max', substanz: 'TB-500', title: 'Geteilt von Max', body: 'Lief gut.' },
+  })
 
   await page.goto('/lab/admin')
   const meldung = page.locator('[data-moderation-report]')
@@ -129,9 +141,28 @@ test('Admin: Meldung sehen und Erfahrung ausblenden', async ({ page, mock }) => 
   await expect(page.locator('[data-public-review]')).toHaveCount(0)
 })
 
+test('Admin: gemeldetes Profil ausblenden — danach ist es nicht mehr erreichbar', async ({ page, mock }) => {
+  mock.table('profiles')[0].is_admin = true
+  fremdesProfil(mock)
+  Object.assign(mock.table('profiles').find(row => row.id === FREMD_ID)!, { public_bio: 'Schreib mir privat' })
+  mock.insert('content_reports', {
+    review_id: null, reported_user_id: FREMD_ID, reporter_id: null, reason: 'werbung', details: null, status: 'offen',
+    snapshot: { art: 'profil', username: 'max', display_name: 'Max', public_bio: 'Schreib mir privat' },
+  })
+  await page.goto('/lab/admin')
+  const meldung = page.locator('[data-moderation-report]')
+  await expect(meldung).toContainText('Profil (Name und Bio)')
+  await expect(meldung).toContainText('Schreib mir privat')
+  await meldung.locator('[data-moderation-hide]').click()
+  await expect(page.getByText('Keine offenen Meldungen.')).toBeVisible()
+
+  await page.goto('/u/max')
+  await expect(page.getByText('Profil nicht verfügbar')).toBeVisible()
+})
+
 test('Konto löschen: erst das Wort, dann Dateien, Konto und Abmeldung', async ({ page, mock }) => {
   mock.storage.set('progress-photos', [`${TEST_USER.id}/1.jpg`, `${TEST_USER.id}/2.jpg`, 'jemand-anders/3.jpg'])
-  mock.storage.set('batch-files', [`${TEST_USER.id}/analyse.pdf`])
+  mock.storage.set('batch-files', [`${TEST_USER.id}/analyse.pdf`, `progress/${TEST_USER.id}/alt.jpg`, 'progress/jemand-anders/x.jpg'])
   await page.goto('/profil')
 
   await page.locator('[data-account-delete-open]').click()
@@ -144,7 +175,7 @@ test('Konto löschen: erst das Wort, dann Dateien, Konto und Abmeldung', async (
 
   await expect(page).toHaveURL(/\/auth$/)
   expect(mock.storage.get('progress-photos')).toEqual(['jemand-anders/3.jpg'])
-  expect(mock.storage.get('batch-files')).toEqual([])
+  expect(mock.storage.get('batch-files')).toEqual(['progress/jemand-anders/x.jpg'])
   expect(mock.log).toContain('ACCOUNT DELETED')
   expect(mock.table('profiles').some(row => row.id === TEST_USER.id)).toBe(false)
 })

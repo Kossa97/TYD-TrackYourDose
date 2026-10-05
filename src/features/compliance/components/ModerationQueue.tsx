@@ -9,19 +9,22 @@ interface Meldung {
   reason: string
   details: string | null
   created_at: string
+  art: 'erfahrung' | 'profil'
   review_id: string | null
+  review_exists: boolean
   username: string | null
-  substanz: string | null
-  title: string | null
-  body: string | null
-  pros: string | null
-  cons: string | null
+  /** Was gemeldet wurde, festgehalten beim Melden. */
+  snapshot: {
+    substanz?: string | null; title?: string | null; body?: string | null; pros?: string | null; cons?: string | null
+    display_name?: string | null; public_bio?: string | null
+  } | null
 }
 
 /**
- * Offene Meldungen fuer Admins (`open_content_reports`). Ausblenden nimmt die
- * Erfahrung aus dem oeffentlichen Profil und erledigt alle Meldungen dazu;
- * Ablehnen schliesst nur diese Meldung. Die Datenbank prueft das Admin-Recht
+ * Offene Meldungen fuer Admins (`moderation_queue`). Ausblenden nimmt die
+ * Erfahrung bzw. das ganze Profil aus der Oeffentlichkeit und erledigt alle
+ * Meldungen dazu; Ablehnen schliesst nur diese Meldung. Gezeigt wird, was
+ * beim Melden zu sehen war — auch wenn es inzwischen geloescht ist. Die Datenbank prueft das Admin-Recht
  * selbst — diese Ansicht ist nur die Oberflaeche dafuer.
  */
 export function ModerationQueue() {
@@ -32,7 +35,7 @@ export function ModerationQueue() {
 
   useEffect(() => {
     let aktuell = true
-    void supabase.rpc('open_content_reports').then(({ data, error }) => {
+    void supabase.rpc('moderation_queue').then(({ data, error }) => {
       if (!aktuell) return
       if (error) toast.error(t('error'))
       setMeldungen(error ? [] : (data as Meldung[] | null) ?? [])
@@ -68,22 +71,29 @@ export function ModerationQueue() {
                 {m.username && <> · @{m.username}</>}
               </p>
               {m.details && <p className="mt-1 text-xs italic text-slate-400">„{m.details}"</p>}
-              {m.review_id ? (
-                <div className="mt-2 rounded-lg bg-slate-900 p-2 text-slate-300">
-                  {m.substanz && <p className="text-xs font-semibold text-sky-400">{m.substanz}</p>}
-                  {m.title && <p className="font-semibold text-white">{m.title}</p>}
-                  {m.body && <p className="mt-1 whitespace-pre-wrap">{m.body}</p>}
-                  {m.pros && <p className="mt-1 text-xs">+ {m.pros}</p>}
-                  {m.cons && <p className="mt-1 text-xs">− {m.cons}</p>}
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-slate-500">{t('moderation_deleted_review')}</p>
-              )}
+              <div className="mt-2 rounded-lg bg-slate-900 p-2 text-slate-300">
+                {m.art === 'profil' ? (
+                  <>
+                    <p className="text-xs font-semibold text-sky-400">{t('moderation_profile_report')}</p>
+                    {m.snapshot?.display_name && <p className="font-semibold text-white">{m.snapshot.display_name}</p>}
+                    {m.snapshot?.public_bio && <p className="mt-1 whitespace-pre-wrap">{m.snapshot.public_bio}</p>}
+                  </>
+                ) : (
+                  <>
+                    {m.snapshot?.substanz && <p className="text-xs font-semibold text-sky-400">{m.snapshot.substanz}</p>}
+                    {m.snapshot?.title && <p className="font-semibold text-white">{m.snapshot.title}</p>}
+                    {m.snapshot?.body && <p className="mt-1 whitespace-pre-wrap">{m.snapshot.body}</p>}
+                    {m.snapshot?.pros && <p className="mt-1 text-xs">+ {m.snapshot.pros}</p>}
+                    {m.snapshot?.cons && <p className="mt-1 text-xs">− {m.snapshot.cons}</p>}
+                    {!m.review_exists && <p className="mt-1 text-xs text-slate-500">{t('moderation_deleted_review')}</p>}
+                  </>
+                )}
+              </div>
               <div className="mt-3 flex gap-2">
                 <button type="button" data-moderation-dismiss disabled={busy !== null} onClick={() => void entscheiden(m, 'ablehnen')} className="min-h-11 flex-1 rounded-xl border border-slate-700 bg-slate-900 text-xs font-semibold text-slate-300 disabled:opacity-50">
                   {t('moderation_dismiss')}
                 </button>
-                <button type="button" data-moderation-hide disabled={busy !== null || !m.review_id} onClick={() => void entscheiden(m, 'ausblenden')} className="min-h-11 flex-1 rounded-xl bg-amber-500 text-xs font-bold text-slate-950 disabled:opacity-50">
+                <button type="button" data-moderation-hide disabled={busy !== null || (m.art === 'erfahrung' && !m.review_exists)} onClick={() => void entscheiden(m, 'ausblenden')} className="min-h-11 flex-1 rounded-xl bg-amber-500 text-xs font-bold text-slate-950 disabled:opacity-50">
                   {t('moderation_hide')}
                 </button>
               </div>

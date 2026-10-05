@@ -4,9 +4,10 @@ import { Flag } from 'lucide-react'
 import { MELDEGRUENDE, type Meldegrund } from '../lib/moderation'
 import { Sheet } from './Sheet'
 
-/** Eine oeffentliche Erfahrung melden: Grund waehlen, optional Details. */
-export function ReportSheet({ substanz, busy, onCancel, onSend }: {
-  substanz: string
+/** Eine oeffentliche Erfahrung oder ein Profil melden: Grund waehlen, optional Details. */
+export function ReportSheet({ titel, betreff, busy, onCancel, onSend }: {
+  titel: string
+  betreff: string
   busy: boolean
   onCancel: () => void
   onSend: (grund: Meldegrund, details: string) => void
@@ -22,13 +23,13 @@ export function ReportSheet({ substanz, busy, onCancel, onSend }: {
             <Flag size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 id="report-title" className="text-lg font-bold text-white">{t('report_title')}</h2>
-            <p className="mt-0.5 truncate text-sm text-slate-400">{substanz}</p>
+            <h2 id="report-title" className="text-lg font-bold text-white">{titel}</h2>
+            <p className="mt-0.5 truncate text-sm text-slate-400">{betreff}</p>
           </div>
         </div>
         <p className="mt-3 text-sm text-slate-400">{t('report_desc')}</p>
         <fieldset className="mt-4 flex flex-col gap-2">
-          <legend className="sr-only">{t('report_title')}</legend>
+          <legend className="sr-only">{titel}</legend>
           {MELDEGRUENDE.map(key => (
             <label
               key={key}

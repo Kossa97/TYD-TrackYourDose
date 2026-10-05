@@ -393,8 +393,12 @@ for each row execute function public.check_public_review_text();
 -- an auth.users; Blutwerte und Gewicht nicht — die gehen vorher. Dateien im
 -- Speicher (Fortschrittsfotos, Chargen) loescht die App vorher selbst; SQL
 -- darf sie nicht anfassen.
-create or replace function public.delete_my_account()
-returns void
+--
+-- `p_nur_pruefen = true` loescht nichts und sagt nur „geht". Die App fragt
+-- so zuerst, bevor sie Dateien entfernt — fehlt die Funktion oder das
+-- Recht, bleibt alles, wie es ist.
+create or replace function public.delete_my_account(p_nur_pruefen boolean default false)
+returns boolean
 language plpgsql
 security definer
 set search_path = ''
@@ -405,13 +409,17 @@ begin
   if ich is null then
     raise exception 'anmeldung_noetig' using errcode = '42501';
   end if;
+  if p_nur_pruefen then
+    return true;
+  end if;
   delete from public.bloodwork where user_id = ich;
   delete from public.weight_logs where user_id = ich;
   delete from auth.users where id = ich;
+  return true;
 end;
 $$;
 
-revoke all on function public.delete_my_account() from public, anon;
-grant execute on function public.delete_my_account() to authenticated;
+revoke all on function public.delete_my_account(boolean) from public, anon;
+grant execute on function public.delete_my_account(boolean) to authenticated;
 
 commit;

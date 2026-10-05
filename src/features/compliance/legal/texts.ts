@@ -74,7 +74,7 @@ const DATENSCHUTZ_DE: LegalDoc = {
       heading: '6. Öffentliches Profil',
       paragraphs: [
         'Dein Profil ist privat. Schaltest du es öffentlich, sind unter /u/<Nutzername> nur dein Nutzername, dein Anzeigename, dein Profiltext und die Erfahrungen zu sehen, die du einzeln freigegeben hast — mit Substanzname und Monat, nie mit Dosis, Zyklus, genauem Datum, Alter oder Geschlecht.',
-        'Öffentliche Erfahrungen können von anderen gemeldet werden. Gemeldete Inhalte sieht nur die Moderation.',
+        'Öffentliche Erfahrungen und Profile können von angemeldeten Nutzern gemeldet werden. Gemeldete Inhalte sieht nur die Moderation.',
       ],
     },
     {
@@ -144,7 +144,7 @@ const DATENSCHUTZ_EN: LegalDoc = {
       heading: '6. Public profile',
       paragraphs: [
         'Your profile is private. If you make it public, /u/<username> shows only your username, display name, bio and the experiences you have shared one by one — with substance name and month, never with dose, cycle, exact date, age or gender.',
-        'Public experiences can be reported by others. Reported content is visible to moderators only.',
+        'Public experiences and profiles can be reported by signed-in users. Reported content is visible to moderators only.',
       ],
     },
     {

@@ -1827,5 +1827,12 @@
   "moderation_dismiss": "Ablehnen",
   "moderation_hidden": "Ausgeblendet.",
   "moderation_dismissed": "Meldung abgelehnt.",
-  "moderation_deleted_review": "Diese Erfahrung gibt es nicht mehr."
+  "moderation_deleted_review": "Diese Erfahrung gibt es nicht mehr.",
+  "report_profile_action": "Profil melden",
+  "report_profile_title": "Profil melden",
+  "report_too_many": "Du hast in kurzer Zeit viele Meldungen geschickt. Bitte versuch es später noch einmal.",
+  "moderation_profile_report": "Profil (Name und Bio)",
+  "moderation_profile_link": "Ein öffentliches Profil darf keine Links, Webadressen oder @-Namen enthalten — weder im Nutzernamen noch im Anzeigenamen oder in der Bio.",
+  "moderation_profile_trade": "Ein öffentliches Profil darf keinen Verkauf, keine Bezugsquellen und keine Messenger nennen.",
+  "moderation_profile_abuse": "Dein öffentliches Profil enthält Wörter, die nicht erlaubt sind. Bitte formuliere sie um."
 }

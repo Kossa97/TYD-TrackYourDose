@@ -24,9 +24,13 @@ async function speichereZustimmung(
     const { error } = await supabase.from('profiles').update(zustimmung).eq('id', userId)
     return !error
   }
-  const name = typeof meta?.username === 'string' && meta.username.trim() ? meta.username.trim() : `user_${userId.slice(0, 8)}`
-  const { error } = await supabase.from('profiles').insert({ id: userId, username: name, ...zustimmung })
-  return !error
+  const ersatz = `user_${userId.slice(0, 8)}`
+  const gewuenscht = typeof meta?.username === 'string' && meta.username.trim() ? meta.username.trim() : ersatz
+  const { error } = await supabase.from('profiles').insert({ id: userId, username: gewuenscht, ...zustimmung })
+  if (!error || gewuenscht === ersatz) return !error
+  // Name inzwischen vergeben: mit Ersatznamen anlegen — aendern geht im Profil.
+  const { error: zweiterFehler } = await supabase.from('profiles').insert({ id: userId, username: ersatz, ...zustimmung })
+  return !zweiterFehler
 }
 
 /**

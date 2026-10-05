@@ -674,6 +674,13 @@ const EXPECTED_MY_STACK_KEYS = [
   'moderation_hidden',
   'moderation_dismissed',
   'moderation_deleted_review',
+  'report_profile_action',
+  'report_profile_title',
+  'report_too_many',
+  'moderation_profile_report',
+  'moderation_profile_link',
+  'moderation_profile_trade',
+  'moderation_profile_abuse',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit
