@@ -645,6 +645,10 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   --cat-emerald:     #10b981;
   --cat-amber:       #f59e0b;
   --cat-rose:        #f43f5e;
+  /* Tagebuch-Auswertung: Wirkung / Nebenwirkung. Mit dem dataviz-Validator
+     geprueft (Helligkeitsband, Farbsehschwaeche, Kontrast) — hell wie dunkel. */
+  --chart-effect:      #0d9488;
+  --chart-side-effect: #d97706;
   --glow-accent:     0 0 28px rgba(0,204,245,0.24);
 
   --c-bg:          var(--app-bg);
