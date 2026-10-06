@@ -1,6 +1,7 @@
 import { expect, test } from './support/fixtures'
 import { TEST_USER, type MockSupabase } from './support/mockSupabase'
 import { seedPeptide } from './support/myStack'
+import { confirmHomeRoutine, expectCalendarTaken, seedTrackedIntake } from './support/intake'
 
 /** Tagebuch: Eintraege anlegen, bearbeiten, loeschen — und Fehler sichtbar machen. */
 
@@ -394,4 +395,53 @@ test('Auswertung: Tabellenkopf nennt Wirkung und Nebenwirkung in Worten', async 
     await page.locator('[data-tagebuch-substanzen]').scrollIntoViewIfNeeded()
     await page.screenshot({ path: info.outputPath('tabelle.png') })
   }
+})
+
+test('Aus dem Kalender: Tagebuch-Knopf an einer Einnahme oeffnet das Formular mit Substanz und Einnahme', async ({ page, mock }) => {
+  seedTrackedIntake(mock)
+  await page.goto('/')
+  await confirmHomeRoutine(page)
+  await expect.poll(() => mock.table('dose_logs').length).toBe(1)
+  const log = mock.table('dose_logs')[0]
+  await expectCalendarTaken(page)
+
+  await page.getByRole('button', { name: 'Tagebuch-Eintrag zu dieser Einnahme' }).click()
+  await expect(page).toHaveURL(/\/tagebuch$/)
+  const dialog = page.getByRole('dialog', { name: 'Neuer Tagebuch-Eintrag' })
+  await expect(dialog.getByLabel('Substanz')).toHaveValue(String(log.stack_item_id))
+  await expect(dialog.getByLabel('Bezug zur Einnahme (optional)')).toHaveValue(String(log.id))
+
+  await dialog.getByLabel('Beschreibung *').fill('Leichte Rötung')
+  await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await expect(dialog).toBeHidden()
+  expect(mock.table('effects')[0]).toMatchObject({ description: 'Leichte Rötung', dose_log_id: log.id, stack_item_id: log.stack_item_id })
+})
+
+test('Ohne Netz: neuer Eintrag wird gemerkt und beim Zurueckkommen gesendet – genau einmal', async ({ page, mock }) => {
+  await page.goto('/tagebuch')
+  await expect(page.getByText('Noch keine Einträge', { exact: false })).toBeVisible()
+  // Nur das Speichern scheitert am Netz, wie bei einem Funkloch.
+  await page.route('**/rest/v1/effects*', route => route.request().method() === 'POST' ? route.abort('internetdisconnected') : route.fallback())
+
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Beschreibung *').fill('Im Funkloch notiert')
+  await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('[data-tagebuch-offline]')).toHaveText('1 Eintrag wartet auf Verbindung.')
+  expect(mock.table('effects')).toHaveLength(0)
+
+  // Neu laden haelt den Eintrag – er liegt im Geraet.
+  await page.reload()
+  await expect(page.locator('[data-tagebuch-offline]')).toBeVisible()
+
+  await page.unroute('**/rest/v1/effects*')
+  await page.evaluate(() => window.dispatchEvent(new Event('online')))
+  await expect(page.locator('[data-tagebuch-offline]')).toHaveCount(0)
+  await expect(page.locator('ul > li')).toContainText('Im Funkloch notiert')
+  expect(mock.table('effects')).toHaveLength(1)
+
+  // Die Warteschlange im Geraet ist leer — ein weiteres Online-Ereignis hat nichts mehr zu senden.
+  expect(await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('tyd_tagebuch_offline_')))).toEqual([])
+  expect(mock.log.filter(line => line === 'POST /rest/v1/effects')).toHaveLength(1)
 })

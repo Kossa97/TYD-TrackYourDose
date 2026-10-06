@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { clearAllQueues } from '../pages/tagebuch/offlineQueue'
 
 interface AuthContextType {
   session: Session | null
@@ -26,7 +27,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Abmelden (auch nach „Konto löschen“): keine gemerkten Gesundheitsdaten im Gerät lassen.
+      if (event === 'SIGNED_OUT') clearAllQueues()
       setSession(session)
     })
 
