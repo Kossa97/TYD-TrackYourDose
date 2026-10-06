@@ -687,6 +687,9 @@ export const MY_STACK_EN = {
   ai_consent_profile_off: 'Not allowed — you will be asked before the next import.',
   ai_consent_withdraw: 'Withdraw consent',
   ai_consent_withdrawn: 'Consent withdrawn.',
+  ai_consent_required: 'Your consent to AI reading is missing — please confirm it again.',
+  ai_consent_load_error: 'Your consent status could not be loaded.',
+  ai_consent_retry: 'Try again',
 }
 
 export const MY_STACK_DE = {
@@ -1377,6 +1380,9 @@ export const MY_STACK_DE = {
   ai_consent_profile_off: 'Nicht erlaubt — vor dem nächsten Import wirst du gefragt.',
   ai_consent_withdraw: 'Einwilligung widerrufen',
   ai_consent_withdrawn: 'Einwilligung widerrufen.',
+  ai_consent_required: 'Die Einwilligung in die KI-Auswertung fehlt — bitte erneut bestätigen.',
+  ai_consent_load_error: 'Der Stand deiner Einwilligung konnte nicht geladen werden.',
+  ai_consent_retry: 'Erneut versuchen',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

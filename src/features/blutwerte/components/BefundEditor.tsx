@@ -13,6 +13,7 @@ import { MUTED, TEXT } from '../styles'
 import { ReviewTable, type ReviewRow } from './import/ReviewTable'
 import { ConflictResolver } from './import/ConflictResolver'
 import { EINWILLIGUNG_FEHLT } from '../lib/aiConsent'
+import { beschreibeExtraktionsFehler } from '../lib/extractError'
 import { KiEinwilligung } from './KiEinwilligung'
 import { useKiEinwilligung } from './useKiEinwilligung'
 import { Sheet } from '../../compliance/components/Sheet'
@@ -47,41 +48,6 @@ const toReviewRow = (item: MergeItem): ReviewRow => ({
   selected: true,
 })
 
-/** Ermittelt eine verständliche deutsche Fehlermeldung aus der Edge-Function-Antwort. */
-async function describeExtractError(response: Response | undefined): Promise<string> {
-  if (!response) {
-    return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
-  }
-  if (response.status === 429) {
-    return 'Import-Limit erreicht (10 pro Monat). Bitte später erneut versuchen.'
-  }
-  if (response.status === 413) {
-    return 'Datei ist zu groß (max. 10 MB).'
-  }
-
-  let code: string | undefined
-  try {
-    const body = await response.json()
-    code = typeof body?.error === 'string' ? body.error : undefined
-  } catch {
-    code = undefined
-  }
-
-  if (code === 'rate_limit') {
-    return 'Import-Limit erreicht (10 pro Monat). Bitte später erneut versuchen.'
-  }
-  if (code === 'file_too_large') {
-    return 'Datei ist zu groß (max. 10 MB).'
-  }
-  if (code === 'no_bloodwork_found') {
-    return 'Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.'
-  }
-  if (code === EINWILLIGUNG_FEHLT) {
-    return 'Bitte zuerst der KI-Auswertung zustimmen.'
-  }
-  return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
-}
-
 export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
   const { user } = useAuth()
   const [pending, setPending] = useState<ReviewRow[]>([])
@@ -92,7 +58,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   // Vor dem ersten Scan: ausdrueckliche Einwilligung in die KI-Auswertung.
-  const { einwilligung, setze: setzeEinwilligung } = useKiEinwilligung()
+  const { einwilligung, fehler: einwilligungFehler, setze: setzeEinwilligung, vergessen: vergessenEinwilligung, neuLaden: einwilligungNeuLaden } = useKiEinwilligung()
   const [einwilligungOffen, setEinwilligungOffen] = useState(false)
 
   const savedKeyToEntry = new Map<string, BloodworkEntry>()
@@ -110,7 +76,14 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
     })
 
     if (error) {
-      toast.error(await describeExtractError(response))
+      const fehler = await beschreibeExtraktionsFehler(response)
+      if (fehler.code === EINWILLIGUNG_FEHLT) {
+        // Inzwischen widerrufen: neu fragen statt ins Leere scannen.
+        vergessenEinwilligung()
+        setEinwilligungOffen(true)
+      } else {
+        toast.error(fehler.text)
+      }
       return null
     }
 
@@ -306,8 +279,12 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
           <button
             className="btn-secondary flex-1"
             data-befund-scan
-            onClick={() => (einwilligung ? fileInputRef.current?.click() : setEinwilligungOffen(true))}
-            disabled={saving || rescanning || einwilligung === undefined}
+            onClick={() => {
+              if (einwilligungFehler) return einwilligungNeuLaden()
+              if (einwilligung) fileInputRef.current?.click()
+              else setEinwilligungOffen(true)
+            }}
+            disabled={saving || rescanning || (einwilligung === undefined && !einwilligungFehler)}
           >
             {rescanning ? 'Wird ausgelesen...' : 'Datei scannen'}
           </button>
@@ -324,7 +301,13 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
       {einwilligungOffen && (
         <Sheet labelledBy="ai-consent-title" onClose={() => setEinwilligungOffen(false)} tall data-ai-consent-sheet>
           <KiEinwilligung
-            onErteilt={async () => { await setzeEinwilligung(true); setEinwilligungOffen(false) }}
+            onErteilt={async () => {
+              await setzeEinwilligung(true)
+              setEinwilligungOffen(false)
+              // „Einwilligen und weiter": gleich die Dateiauswahl oeffnen. Blockt
+              // der Browser das (keine Nutzergeste mehr), reicht ein zweiter Tipp.
+              fileInputRef.current?.click()
+            }}
             onAbbrechen={() => setEinwilligungOffen(false)}
           />
         </Sheet>

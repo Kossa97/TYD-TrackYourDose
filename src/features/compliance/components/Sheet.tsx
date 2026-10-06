@@ -17,7 +17,12 @@ export function Sheet({ labelledBy, busy = false, onClose, children, role = 'dia
     <div
       data-app-modal
       className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
-      onClick={() => { if (!busy) onClose() }}
+      onClick={event => {
+        // Nicht nach oben durchreichen: liegt das Sheet in einem anderen
+        // Dialog, schloesse der Klick sonst auch den.
+        event.stopPropagation()
+        if (!busy) onClose()
+      }}
     >
       <div
         role={role}

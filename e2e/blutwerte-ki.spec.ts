@@ -57,3 +57,18 @@ test('Widerruf im Profil: danach fragt der Import wieder', async ({ page, mock }
   await page.getByRole('button', { name: 'Import' }).click()
   await expect(page.locator('[data-ai-consent]')).toBeVisible()
 })
+
+test('Inzwischen widerrufen: der Server lehnt ab, der Import fragt neu statt ins Leere zu laufen', async ({ page, mock }) => {
+  const profil = mock.table('profiles').find(row => row.id === TEST_USER.id)!
+  Object.assign(profil, { ai_import_consent_at: '2026-10-01T08:00:00.000Z' })
+  await page.goto('/blutwerte')
+  await page.getByRole('button', { name: 'Import' }).click()
+  await expect(page.locator('[data-ai-consent-note]')).toBeVisible()
+
+  // Widerruf auf einem anderen Geraet.
+  profil.ai_import_consent_at = null
+  await page.locator('input[type="file"][accept*="application/pdf"]').first().setInputFiles(BEFUND)
+  await expect(page.getByText('Die Einwilligung in die KI-Auswertung fehlt')).toBeVisible()
+  await expect(page.locator('[data-ai-consent]')).toBeVisible()
+  expect(mock.extractCalls).toHaveLength(0)
+})

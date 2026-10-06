@@ -5,24 +5,31 @@ import { ladeKiEinwilligung, setzeKiEinwilligung, type ConsentClient } from '../
 
 const client = supabase as unknown as ConsentClient
 
+type Stand = { fuer: string; wert: string | null } | { fuer: string; fehler: true }
+
 /**
- * Stand der KI-Einwilligung: `undefined` solange geladen wird, sonst der
- * Zeitpunkt oder null. Bei einem Lesefehler gilt sie als nicht erteilt —
- * lieber einmal zu oft fragen als ohne Einwilligung senden.
+ * Stand der KI-Einwilligung:
+ *   `einwilligung` — undefined solange geladen wird, sonst Zeitpunkt oder null
+ *   `fehler`       — Lesen fehlgeschlagen: weder fragen noch senden, sondern
+ *                    „erneut versuchen" anbieten; sonst ueberschriebe eine
+ *                    zweite Einwilligung den Zeitpunkt der ersten
+ * `vergessen()` setzt sie lokal auf null — wenn der Server sagt, dass sie
+ * fehlt (etwa nach Widerruf auf einem anderen Geraet).
  */
 export function useKiEinwilligung() {
   const { user } = useAuth()
   const userId = user?.id ?? null
-  const [stand, setStand] = useState<{ fuer: string; wert: string | null } | null>(null)
+  const [stand, setStand] = useState<Stand | null>(null)
+  const [runde, setRunde] = useState(0)
 
   useEffect(() => {
     if (!userId) return
     let aktuell = true
     ladeKiEinwilligung(client, userId)
       .then(wert => { if (aktuell) setStand({ fuer: userId, wert }) })
-      .catch(() => { if (aktuell) setStand({ fuer: userId, wert: null }) })
+      .catch(() => { if (aktuell) setStand({ fuer: userId, fehler: true }) })
     return () => { aktuell = false }
-  }, [userId])
+  }, [userId, runde])
 
   const setze = useCallback(async (erteilt: boolean) => {
     if (!userId) return
@@ -30,6 +37,21 @@ export function useKiEinwilligung() {
     setStand({ fuer: userId, wert })
   }, [userId])
 
-  const gilt = stand && stand.fuer === userId ? stand.wert : undefined
-  return { einwilligung: gilt, setze }
+  const vergessen = useCallback(() => {
+    if (userId) setStand({ fuer: userId, wert: null })
+  }, [userId])
+
+  const neuLaden = useCallback(() => {
+    if (userId) setStand(null)
+    setRunde(n => n + 1)
+  }, [userId])
+
+  const gilt = stand && stand.fuer === userId ? stand : null
+  return {
+    einwilligung: gilt && !('fehler' in gilt) ? gilt.wert : undefined,
+    fehler: Boolean(gilt && 'fehler' in gilt),
+    setze,
+    vergessen,
+    neuLaden,
+  }
 }

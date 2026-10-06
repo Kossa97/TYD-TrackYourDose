@@ -1894,5 +1894,8 @@
   "ai_consent_profile_on": "Allowed since {{date}}. Imported files are sent to Anthropic (USA) for reading.",
   "ai_consent_profile_off": "Not allowed — you will be asked before the next import.",
   "ai_consent_withdraw": "Withdraw consent",
-  "ai_consent_withdrawn": "Consent withdrawn."
+  "ai_consent_withdrawn": "Consent withdrawn.",
+  "ai_consent_required": "Your consent to AI reading is missing — please confirm it again.",
+  "ai_consent_load_error": "Your consent status could not be loaded.",
+  "ai_consent_retry": "Try again"
 }

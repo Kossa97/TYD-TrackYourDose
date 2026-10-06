@@ -696,6 +696,9 @@ const EXPECTED_MY_STACK_KEYS = [
   'ai_consent_profile_off',
   'ai_consent_withdraw',
   'ai_consent_withdrawn',
+  'ai_consent_required',
+  'ai_consent_load_error',
+  'ai_consent_retry',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

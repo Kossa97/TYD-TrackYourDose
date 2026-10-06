@@ -18,7 +18,9 @@ export interface ConsentClient {
       }
     }
     update(values: { ai_import_consent_at: string | null }): {
-      eq(column: string, value: string): PromiseLike<{ error: QueryError | null }>
+      eq(column: string, value: string): {
+        select(columns: 'ai_import_consent_at'): PromiseLike<{ data: { ai_import_consent_at: string | null }[] | null; error: QueryError | null }>
+      }
     }
   }
 }
@@ -30,12 +32,18 @@ export async function ladeKiEinwilligung(client: ConsentClient, userId: string):
   return data?.ai_import_consent_at ?? null
 }
 
-/** Einwilligung erteilen (Zeitpunkt) oder widerrufen (null). */
+/**
+ * Einwilligung erteilen oder widerrufen (null). Den Zeitpunkt setzt die
+ * Datenbank (Trigger `profiles_stamp_ai_import_consent`); zurueck kommt der
+ * gespeicherte Wert. Wird keine Zeile getroffen (kein Profil), ist nichts
+ * gespeichert — das ist ein Fehler, kein Erfolg.
+ */
 export async function setzeKiEinwilligung(client: ConsentClient, userId: string, zeitpunkt: Date | null): Promise<string | null> {
   const wert = zeitpunkt ? zeitpunkt.toISOString() : null
-  const { error } = await client.from('profiles').update({ ai_import_consent_at: wert }).eq('id', userId)
+  const { data, error } = await client.from('profiles').update({ ai_import_consent_at: wert }).eq('id', userId).select('ai_import_consent_at')
   if (error) throw new Error(error.message)
-  return wert
+  if (!data || data.length === 0) throw new Error('profil_fehlt')
+  return data[0].ai_import_consent_at
 }
 
 /** Der Fehlercode der Edge Function, wenn die Einwilligung fehlt. */

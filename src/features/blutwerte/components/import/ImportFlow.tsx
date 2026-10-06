@@ -12,6 +12,7 @@ import { CYAN, MUTED, TEXT } from '../../styles'
 import { ReviewTable, type ReviewRow } from './ReviewTable'
 import { ConflictResolver } from './ConflictResolver'
 import { EINWILLIGUNG_FEHLT } from '../../lib/aiConsent'
+import { beschreibeExtraktionsFehler } from '../../lib/extractError'
 import { KiEinwilligung } from '../KiEinwilligung'
 import { useKiEinwilligung } from '../useKiEinwilligung'
 
@@ -36,41 +37,6 @@ const toReviewRow = (item: MergeItem): ReviewRow => ({
   selected: true,
 })
 
-/** Ermittelt eine verständliche deutsche Fehlermeldung aus der Edge-Function-Antwort. */
-async function describeExtractError(response: Response | undefined): Promise<string> {
-  if (!response) {
-    return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
-  }
-  if (response.status === 429) {
-    return 'Import-Limit erreicht (10 pro Monat). Bitte später erneut versuchen.'
-  }
-  if (response.status === 413) {
-    return 'Datei ist zu groß (max. 10 MB).'
-  }
-
-  let code: string | undefined
-  try {
-    const body = await response.json()
-    code = typeof body?.error === 'string' ? body.error : undefined
-  } catch {
-    code = undefined
-  }
-
-  if (code === 'rate_limit') {
-    return 'Import-Limit erreicht (10 pro Monat). Bitte später erneut versuchen.'
-  }
-  if (code === 'file_too_large') {
-    return 'Datei ist zu groß (max. 10 MB).'
-  }
-  if (code === 'no_bloodwork_found') {
-    return 'Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.'
-  }
-  if (code === EINWILLIGUNG_FEHLT) {
-    return 'Bitte zuerst der KI-Auswertung zustimmen.'
-  }
-  return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
-}
-
 export function ImportFlow({ onClose, onSaved }: Props) {
   const { user } = useAuth()
   const { t } = useTranslation()
@@ -85,7 +51,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const rescanInputRef = useRef<HTMLInputElement>(null)
   // Ohne ausdrueckliche Einwilligung geht keine Datei an den KI-Dienst.
-  const { einwilligung, setze: setzeEinwilligung } = useKiEinwilligung()
+  const { einwilligung, fehler: einwilligungFehler, setze: setzeEinwilligung, vergessen: vergessenEinwilligung, neuLaden: einwilligungNeuLaden } = useKiEinwilligung()
 
   /** Ruft die Extraktion auf und gibt das validierte Ergebnis zurück (oder null bei Fehler). */
   const runExtraction = async (file: File): Promise<ExtractResult | null> => {
@@ -99,7 +65,14 @@ export function ImportFlow({ onClose, onSaved }: Props) {
     })
 
     if (error) {
-      toast.error(await describeExtractError(response))
+      const fehler = await beschreibeExtraktionsFehler(response)
+      if (fehler.code === EINWILLIGUNG_FEHLT) {
+        // Inzwischen widerrufen (etwa auf einem anderen Geraet): neu fragen.
+        vergessenEinwilligung()
+        toast.error(t('ai_consent_required'))
+      } else {
+        toast.error(fehler.text)
+      }
       return null
     }
 
@@ -260,8 +233,15 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       >
         <h2 className="text-lg font-bold" style={{ color: TEXT }}>Befund importieren</h2>
 
-        {phase === 'idle' && einwilligung === undefined && (
+        {phase === 'idle' && einwilligung === undefined && !einwilligungFehler && (
           <div className="py-10 text-center text-sm" style={{ color: MUTED }}>…</div>
+        )}
+
+        {phase === 'idle' && einwilligungFehler && (
+          <div data-ai-consent-error className="flex flex-col items-center gap-3 py-6 text-center text-sm" style={{ color: MUTED }}>
+            <p>{t('ai_consent_load_error')}</p>
+            <button type="button" className="btn-secondary" onClick={einwilligungNeuLaden}>{t('ai_consent_retry')}</button>
+          </div>
         )}
 
         {phase === 'idle' && einwilligung === null && (
