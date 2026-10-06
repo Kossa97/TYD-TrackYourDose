@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from './support/fixtures'
 import { TEST_USER, type MockSupabase } from './support/mockSupabase'
 import { seedPeptide } from './support/myStack'
@@ -8,6 +9,12 @@ import { seedPeptide } from './support/myStack'
  * eigenes Sheet statt des Browser-Fensters. In der Datenbank bleibt der
  * deutsche Markername der Schluessel.
  */
+
+/** Uebersicht oeffnen und in den Tab „Marker" wechseln (vorausgewaehlt ist „Auffällig"). */
+async function markerAnsicht(page: Page) {
+  await page.goto('/blutwerte')
+  await page.getByRole('button', { name: 'Marker', exact: true }).click()
+}
 
 function wert(mock: MockSupabase, marker: string, felder: Record<string, unknown> = {}) {
   return mock.insert('bloodwork', {
@@ -24,7 +31,9 @@ test.describe('auf Englisch', () => {
     await page.goto('/blutwerte')
 
     await expect(page.getByRole('heading', { name: 'Blood values' })).toBeVisible()
-    await expect(page.getByText('Out-of-range values (1)')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Out of range 1' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('[data-bw-flagged]')).toContainText('Cortisol')
+    await page.getByRole('button', { name: 'Markers', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Hormones' })).toBeVisible()
     await expect(page.getByText('Kortisol')).toHaveCount(0)
 
@@ -36,12 +45,50 @@ test.describe('auf Englisch', () => {
   })
 })
 
+test('Uebersicht: „Auffällig" ist vorausgewaehlt, mit Anzahl; Tippen fuehrt zum Marker', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 30, ref_min: 5, ref_max: 25 })
+  wert(mock, 'Ferritin', { value: 80, unit: 'ng/mL', ref_min: 30, ref_max: 400 })
+  await page.goto('/blutwerte')
+
+  const tab = page.getByRole('button', { name: 'Auffällig 1' })
+  await expect(tab).toHaveAttribute('aria-pressed', 'true')
+  const liste = page.locator('[data-bw-flagged]')
+  await expect(liste).toContainText('Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.')
+  await expect(liste).toContainText('Kortisol')
+  await expect(liste).not.toContainText('Ferritin')
+  if (process.env.SCREENSHOT_DIR) {
+    for (const thema of ['dark', 'light']) {
+      await page.evaluate(wert => document.documentElement.setAttribute('data-theme', wert), thema)
+      await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/auffaellig-${thema}.png` })
+    }
+  }
+  // Der Marker-Tab zeigt den Block nicht mehr oben
+  await page.getByRole('button', { name: 'Marker', exact: true }).click()
+  await expect(page.locator('[data-bw-flagged]')).toHaveCount(0)
+  await page.getByRole('button', { name: /Auffällig/ }).click()
+  await liste.getByRole('button', { name: /Kortisol/ }).click()
+  await expect(page.getByRole('heading', { name: 'Kortisol' })).toBeVisible()
+})
+
+test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne Werte ein Einstieg', async ({ page, mock }) => {
+  await page.goto('/blutwerte')
+  await expect(page.locator('[data-bw-flagged-empty]')).toContainText('Noch keine Blutwerte.')
+  await expect(page.locator('[data-bw-flagged-count]')).toHaveCount(0)
+
+  wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
+  await page.reload()
+  const leer = page.locator('[data-bw-flagged-empty]')
+  await expect(leer).toContainText('Alle zuletzt gemessenen Werte liegen im Referenzbereich.')
+  await leer.getByRole('button', { name: 'Alle Marker ansehen' }).click()
+  await expect(page.getByRole('button', { name: 'Marker', exact: true })).toHaveAttribute('aria-pressed', 'true')
+})
+
 test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert stehen', async ({ page, mock }) => {
   wert(mock, 'Kortisol', { value: 14 })
   let browserFenster = false
   page.on('dialog', dialog => { browserFenster = true; void dialog.dismiss() })
 
-  await page.goto('/blutwerte')
+  await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 löschen' }).click()
 
@@ -60,7 +107,7 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
 
 test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mock }) => {
   const eintrag = wert(mock, 'Kortisol', { value: 14, notes: 'nuechtern' })
-  await page.goto('/blutwerte')
+  await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
 
@@ -82,7 +129,7 @@ test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mo
 test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz bleibt', async ({ page, mock }) => {
   const befund = mock.insert('bloodwork_reports', { user_id: TEST_USER.id, tested_at: '2026-09-15', lab_name: null, source: 'import' })
   wert(mock, 'Kortisol', { value: 14, report_id: befund.id, ref_min: 5, ref_max: 25 })
-  await page.goto('/blutwerte')
+  await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/liste.png`, fullPage: true })
   await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
@@ -100,7 +147,7 @@ test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz b
 
 test('Bearbeiten: andere Einheit — Laborreferenz faellt weg, mit Hinweis', async ({ page, mock }) => {
   wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
-  await page.goto('/blutwerte')
+  await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
 
@@ -124,7 +171,7 @@ test('Verlauf: Zyklen aus My Stack als Zeilen unter dem Diagramm', async ({ page
   wert(mock, 'Kortisol', { tested_at: '2026-05-15', value: 18 })
   wert(mock, 'Kortisol', { tested_at: '2026-09-15', value: 12 })
 
-  await page.goto('/blutwerte')
+  await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   const streifen = page.locator('[data-cycle-strip]')
   await expect(streifen).toContainText('Deine Zyklen in diesem Zeitraum')

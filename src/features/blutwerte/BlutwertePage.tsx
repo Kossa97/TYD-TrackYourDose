@@ -9,7 +9,7 @@ import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummarie
 import { formatDisplayDate, formatEingabe } from './lib/format'
 import type { KategorieFilter } from './lib/markerCatalog'
 import { SONSTIGE } from './lib/markerCatalog'
-import { CYAN, PANEL_STYLE, TEXT, MUTED } from './styles'
+import { CYAN, PANEL_STYLE, RED, TEXT, MUTED } from './styles'
 import { markerName } from './lib/markerCatalog.en'
 import { Sheet } from '../compliance/components/Sheet'
 import { MarkerGrid } from './components/MarkerGrid'
@@ -35,7 +35,8 @@ export function BlutwertePage() {
   const [loescht, setLoescht] = useState(false)
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
   const [reports, setReports] = useState<BloodworkReport[]>([])
-  const [view, setView] = useState<'marker' | 'befunde'>('marker')
+  // Vorausgewaehlt: was Aufmerksamkeit braucht.
+  const [view, setView] = useState<'auffaellig' | 'marker' | 'befunde'>('auffaellig')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
@@ -243,7 +244,7 @@ export function BlutwertePage() {
   // ---------- View 1: Marker grid ----------
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h1 className="text-xl font-bold" style={{ color: TEXT }}>{t('bw_title')}</h1>
         <div className="flex gap-2">
           <button className="btn-secondary flex items-center gap-1.5 text-sm" onClick={() => setShowImport(true)}>
@@ -274,12 +275,13 @@ export function BlutwertePage() {
       </div>
 
       {/* Ansicht: Marker / Befunde */}
-      <div className="flex gap-2 mb-4">
-        {([['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
+      <div className="flex gap-1.5 mb-4">
+        {([['auffaellig', t('bw_view_flagged')], ['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setView(key)}
-            className="flex-1 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
+            aria-pressed={view === key}
+            className="flex-auto inline-flex min-h-9 items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
             style={
               view === key
                 ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
@@ -287,6 +289,15 @@ export function BlutwertePage() {
             }
           >
             {label}
+            {key === 'auffaellig' && !loading && auffaellig.length > 0 && (
+              <span
+                className="min-w-5 rounded-full px-1.5 text-xs font-bold leading-5 tabular-nums"
+                style={{ background: 'rgba(239,68,68,0.18)', color: RED }}
+                data-bw-flagged-count
+              >
+                {auffaellig.length}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -301,10 +312,20 @@ export function BlutwertePage() {
         <BefundListe reports={reports} entries={entries} onChanged={load} />
       )}
 
+      {!loading && view === 'auffaellig' && (
+        <>
+          <AuffaelligeWerte
+            summaries={auffaellig}
+            hatWerte={entries.length > 0}
+            onSelect={setSelectedMarker}
+            onAlleMarker={() => setView('marker')}
+          />
+          <p className="text-xs text-center mt-5" style={{ color: MUTED }}>{t('bw_disclaimer')}</p>
+        </>
+      )}
+
       {!loading && view === 'marker' && (
         <>
-          <AuffaelligeWerte summaries={auffaellig} onSelect={setSelectedMarker} />
-
           <GridControls
             kategorie={kategorie}
             sortMode={sortMode}

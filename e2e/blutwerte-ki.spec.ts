@@ -27,7 +27,8 @@ test('Import fragt zuerst nach der Einwilligung; erst danach geht eine Datei rau
   expect(mock.extractCalls).toHaveLength(0)
 
   await page.locator('input[type="file"][accept*="application/pdf"]').first().setInputFiles(BEFUND)
-  await expect(page.getByText('Ferritin')).toBeVisible()
+  // erkannter Wert in der Pruefliste des Imports (als Eingabefeld, nicht als Text)
+  await expect(page.getByRole('textbox', { name: 'Marker' })).toHaveValue('Ferritin')
   expect(mock.extractCalls).toEqual([{ mimeType: 'application/pdf' }])
 
   await page.getByRole('button', { name: '1 übernehmen' }).click()

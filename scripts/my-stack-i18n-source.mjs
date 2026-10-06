@@ -827,6 +827,11 @@ export const MY_STACK_EN = {
   bw_update_error: 'The value could not be changed.',
   bw_date_from_report: 'The date belongs to the lab report this value comes from.',
   bw_unit_drops_range: 'The lab reference applies to {{unit}}. With a different unit it is removed.',
+  bw_view_flagged: 'Out of range',
+  bw_flagged_hint: 'Your latest measurements outside the reference range.',
+  bw_flagged_none: 'All latest measurements are within the reference range.',
+  bw_flagged_no_data: 'No blood values yet. Add a value or import a lab report.',
+  bw_flagged_show_all: 'Show all markers',
 }
 
 export const MY_STACK_DE = {
@@ -1657,6 +1662,11 @@ export const MY_STACK_DE = {
   bw_update_error: 'Der Wert konnte nicht geändert werden.',
   bw_date_from_report: 'Das Datum gehört zum Befund, aus dem der Wert stammt.',
   bw_unit_drops_range: 'Die Laborreferenz gilt für {{unit}}. Mit einer anderen Einheit fällt sie weg.',
+  bw_view_flagged: 'Auffällig',
+  bw_flagged_hint: 'Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.',
+  bw_flagged_none: 'Alle zuletzt gemessenen Werte liegen im Referenzbereich.',
+  bw_flagged_no_data: 'Noch keine Blutwerte. Trag einen Wert ein oder importiere einen Befund.',
+  bw_flagged_show_all: 'Alle Marker ansehen',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

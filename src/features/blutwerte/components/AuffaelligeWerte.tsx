@@ -1,28 +1,45 @@
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatNumber, formatRange } from '../lib/format'
-import { MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
 
 interface Props {
   summaries: MarkerSummary[]
+  /** Gibt es ueberhaupt Messwerte? Sonst ein Einstiegshinweis statt „alles im Bereich". */
+  hatWerte: boolean
   onSelect: (name: string) => void
+  onAlleMarker: () => void
 }
 
-export function AuffaelligeWerte({ summaries, onSelect }: Props) {
+/** Tab „Auffällig": die zuletzt gemessenen Werte ausserhalb des Referenzbereichs. */
+export function AuffaelligeWerte({ summaries, hatWerte, onSelect, onAlleMarker }: Props) {
   const { t, i18n } = useTranslation()
-  if (summaries.length === 0) return null
+
+  if (summaries.length === 0) {
+    return (
+      <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-flagged-empty>
+        {hatWerte && <CheckCircle2 size={22} className="mx-auto mb-2" style={{ color: GREEN }} aria-hidden="true" />}
+        <p className="text-sm" style={{ color: hatWerte ? TEXT : MUTED }}>
+          {t(hatWerte ? 'bw_flagged_none' : 'bw_flagged_no_data')}
+        </p>
+        {hatWerte && (
+          <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={onAlleMarker}>
+            {t('bw_flagged_show_all')}
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
-    <div className="mb-4" style={{ ...PANEL_STYLE, border: '1px solid rgba(239,68,68,0.35)' }}>
+    <div className="mb-4" style={{ ...PANEL_STYLE, border: '1px solid rgba(239,68,68,0.35)' }} data-bw-flagged>
       <div className="flex items-center gap-2 px-5 pt-4 pb-2">
-        <AlertTriangle size={15} style={{ color: RED }} />
-        <p className="text-sm font-bold" style={{ color: TEXT }}>
-          {t('bw_out_of_range_title', { count: summaries.length })}
-        </p>
+        <AlertTriangle size={15} style={{ color: RED }} aria-hidden="true" />
+        <p className="text-xs" style={{ color: MUTED }}>{t('bw_flagged_hint')}</p>
       </div>
-      {summaries.map((summary, i) => {
+      {summaries.map(summary => {
         const latest = summary.latest!
         const shownValue = summary.displayValue ?? latest.value
         const shownUnit = summary.displayValue != null ? summary.displayUnit : latest.unit
@@ -32,7 +49,7 @@ export function AuffaelligeWerte({ summaries, onSelect }: Props) {
             key={summary.name}
             onClick={() => onSelect(summary.name)}
             className="w-full flex items-center justify-between px-5 py-3 text-left"
-            style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
+            style={{ borderTop: '1px solid var(--border)' }}
           >
             <div>
               <p className="text-sm font-semibold" style={{ color: TEXT }}>{markerName(summary.name, i18n.resolvedLanguage ?? i18n.language)}</p>
