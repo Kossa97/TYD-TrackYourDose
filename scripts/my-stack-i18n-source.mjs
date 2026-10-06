@@ -672,6 +672,21 @@ export const MY_STACK_EN = {
   moderation_profile_link: 'A public profile may not contain links, web addresses or @handles — in the username, display name or bio.',
   moderation_profile_trade: 'A public profile may not mention selling, sources or messengers.',
   moderation_profile_abuse: 'Your public profile contains words that are not allowed. Please rephrase.',
+  ai_consent_title: 'Read lab report with AI?',
+  ai_consent_intro: 'To recognise the values automatically, the photo or PDF is sent to Anthropic (Claude), a service provider in the USA.',
+  ai_consent_point_purpose: 'Only to read the values. TYD does not store the file.',
+  ai_consent_point_redact: 'Tip: cover or crop out your name, date of birth and address first.',
+  ai_consent_point_check: 'AI can make mistakes — you check every value before saving.',
+  ai_consent_point_alternative: 'Prefer not to? You can enter values by hand at any time.',
+  ai_consent_checkbox: 'I explicitly consent to my lab reports being sent to Anthropic for this purpose. I can withdraw this in my profile at any time.',
+  ai_consent_accept: 'Consent and continue',
+  ai_consent_saved: 'Consent saved.',
+  ai_consent_note: 'The file is sent to Anthropic (USA) for reading. You can withdraw your consent in your profile.',
+  ai_consent_profile_title: 'AI reading of lab reports',
+  ai_consent_profile_on: 'Allowed since {{date}}. Imported files are sent to Anthropic (USA) for reading.',
+  ai_consent_profile_off: 'Not allowed — you will be asked before the next import.',
+  ai_consent_withdraw: 'Withdraw consent',
+  ai_consent_withdrawn: 'Consent withdrawn.',
 }
 
 export const MY_STACK_DE = {
@@ -1347,6 +1362,21 @@ export const MY_STACK_DE = {
   moderation_profile_link: 'Ein öffentliches Profil darf keine Links, Webadressen oder @-Namen enthalten — weder im Nutzernamen noch im Anzeigenamen oder in der Bio.',
   moderation_profile_trade: 'Ein öffentliches Profil darf keinen Verkauf, keine Bezugsquellen und keine Messenger nennen.',
   moderation_profile_abuse: 'Dein öffentliches Profil enthält Wörter, die nicht erlaubt sind. Bitte formuliere sie um.',
+  ai_consent_title: 'Befund mit KI auslesen?',
+  ai_consent_intro: 'Damit die Werte automatisch erkannt werden, wird das Foto bzw. PDF an Anthropic (Claude) übertragen, einen Dienstleister in den USA.',
+  ai_consent_point_purpose: 'Nur zum Auslesen der Werte. TYD speichert die Datei nicht.',
+  ai_consent_point_redact: 'Tipp: Name, Geburtsdatum und Adresse vorher abdecken oder wegschneiden.',
+  ai_consent_point_check: 'KI kann sich irren — du prüfst jeden Wert vor dem Speichern.',
+  ai_consent_point_alternative: 'Lieber nicht? Du kannst Werte jederzeit von Hand eintragen.',
+  ai_consent_checkbox: 'Ich willige ausdrücklich ein, dass meine Befunde dafür an Anthropic übertragen werden. Ich kann das jederzeit im Profil widerrufen.',
+  ai_consent_accept: 'Einwilligen und weiter',
+  ai_consent_saved: 'Einwilligung gespeichert.',
+  ai_consent_note: 'Die Datei wird zum Auslesen an Anthropic (USA) übertragen. Widerrufen kannst du im Profil.',
+  ai_consent_profile_title: 'KI-Auswertung von Befunden',
+  ai_consent_profile_on: 'Erlaubt seit {{date}}. Importierte Dateien werden zum Auslesen an Anthropic (USA) übertragen.',
+  ai_consent_profile_off: 'Nicht erlaubt — vor dem nächsten Import wirst du gefragt.',
+  ai_consent_withdraw: 'Einwilligung widerrufen',
+  ai_consent_withdrawn: 'Einwilligung widerrufen.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

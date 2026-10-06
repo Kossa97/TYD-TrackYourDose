@@ -373,6 +373,7 @@ export class MockSupabase {
       if (url.pathname.startsWith('/rest/v1/rpc/')) return await this.handleRpc(route, url)
       if (url.pathname.startsWith('/rest/v1/')) return await this.handleRest(route, url)
       if (url.pathname.startsWith('/storage/v1/object/')) return await this.handleStorage(route, url)
+      if (url.pathname === '/functions/v1/bloodwork-extract') return await this.handleBloodworkExtract(route)
       if (url.pathname.startsWith('/functions/v1/') || url.pathname.startsWith('/storage/v1/')) {
         this.unhandled.push(`${method} ${url.pathname}`)
         return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
@@ -384,6 +385,30 @@ export class MockSupabase {
     }
     this.unhandled.push(`${method} ${url.pathname}`)
     return route.fulfill({ status: 404, headers: corsHeaders(), json: { message: 'not mocked' } })
+  }
+
+  /** Aufrufe der Befund-Auswertung (die echte Funktion sendet an Anthropic). */
+  readonly extractCalls: { mimeType: string }[] = []
+
+  /**
+   * Nachbild von supabase/functions/bloodwork-extract: ohne Einwilligung im
+   * Profil 403 `consent_required`, sonst ein fester Beispielbefund.
+   */
+  private async handleBloodworkExtract(route: Route): Promise<void> {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: corsHeaders() })
+    const profil = this.table('profiles').find(row => row.id === TEST_USER.id)
+    if (!profil?.ai_import_consent_at) {
+      return route.fulfill({ status: 403, headers: corsHeaders(), json: { error: 'consent_required' } })
+    }
+    const body = (route.request().postDataJSON() ?? {}) as { mimeType?: string }
+    this.extractCalls.push({ mimeType: String(body.mimeType ?? '') })
+    return route.fulfill({
+      headers: corsHeaders(),
+      json: {
+        tested_at: '2026-09-15', lab_name: 'Testlabor',
+        values: [{ marker: 'Ferritin', value: 85, unit: 'ng/ml', ref_min: 30, ref_max: 400, matched: true }],
+      },
+    })
   }
 
   /** Nur Auflisten und Loeschen — genug fuer „Konto loeschen". */

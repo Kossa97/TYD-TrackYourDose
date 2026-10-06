@@ -681,6 +681,21 @@ const EXPECTED_MY_STACK_KEYS = [
   'moderation_profile_link',
   'moderation_profile_trade',
   'moderation_profile_abuse',
+  'ai_consent_title',
+  'ai_consent_intro',
+  'ai_consent_point_purpose',
+  'ai_consent_point_redact',
+  'ai_consent_point_check',
+  'ai_consent_point_alternative',
+  'ai_consent_checkbox',
+  'ai_consent_accept',
+  'ai_consent_saved',
+  'ai_consent_note',
+  'ai_consent_profile_title',
+  'ai_consent_profile_on',
+  'ai_consent_profile_off',
+  'ai_consent_withdraw',
+  'ai_consent_withdrawn',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

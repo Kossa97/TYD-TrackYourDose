@@ -12,6 +12,10 @@ import { formatDisplayDate, formatNumber } from '../lib/format'
 import { MUTED, TEXT } from '../styles'
 import { ReviewTable, type ReviewRow } from './import/ReviewTable'
 import { ConflictResolver } from './import/ConflictResolver'
+import { EINWILLIGUNG_FEHLT } from '../lib/aiConsent'
+import { KiEinwilligung } from './KiEinwilligung'
+import { useKiEinwilligung } from './useKiEinwilligung'
+import { Sheet } from '../../compliance/components/Sheet'
 
 interface Props {
   report: BloodworkReport
@@ -72,6 +76,9 @@ async function describeExtractError(response: Response | undefined): Promise<str
   if (code === 'no_bloodwork_found') {
     return 'Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.'
   }
+  if (code === EINWILLIGUNG_FEHLT) {
+    return 'Bitte zuerst der KI-Auswertung zustimmen.'
+  }
   return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
 }
 
@@ -84,6 +91,9 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // Vor dem ersten Scan: ausdrueckliche Einwilligung in die KI-Auswertung.
+  const { einwilligung, setze: setzeEinwilligung } = useKiEinwilligung()
+  const [einwilligungOffen, setEinwilligungOffen] = useState(false)
 
   const savedKeyToEntry = new Map<string, BloodworkEntry>()
   entries.forEach(entry => savedKeyToEntry.set(markerKey(entry.marker), entry))
@@ -295,8 +305,9 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
           </button>
           <button
             className="btn-secondary flex-1"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={saving || rescanning}
+            data-befund-scan
+            onClick={() => (einwilligung ? fileInputRef.current?.click() : setEinwilligungOffen(true))}
+            disabled={saving || rescanning || einwilligung === undefined}
           >
             {rescanning ? 'Wird ausgelesen...' : 'Datei scannen'}
           </button>
@@ -309,6 +320,15 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
           </button>
         </div>
       </div>
+
+      {einwilligungOffen && (
+        <Sheet labelledBy="ai-consent-title" onClose={() => setEinwilligungOffen(false)} tall data-ai-consent-sheet>
+          <KiEinwilligung
+            onErteilt={async () => { await setzeEinwilligung(true); setEinwilligungOffen(false) }}
+            onAbbrechen={() => setEinwilligungOffen(false)}
+          />
+        </Sheet>
+      )}
 
       {conflicts.length > 0 && (
         <ConflictResolver

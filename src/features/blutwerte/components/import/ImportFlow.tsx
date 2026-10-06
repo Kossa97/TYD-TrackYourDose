@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
@@ -10,6 +11,9 @@ import { formatDisplayDate } from '../../lib/format'
 import { CYAN, MUTED, TEXT } from '../../styles'
 import { ReviewTable, type ReviewRow } from './ReviewTable'
 import { ConflictResolver } from './ConflictResolver'
+import { EINWILLIGUNG_FEHLT } from '../../lib/aiConsent'
+import { KiEinwilligung } from '../KiEinwilligung'
+import { useKiEinwilligung } from '../useKiEinwilligung'
 
 type Phase = 'idle' | 'extracting' | 'review' | 'saving'
 
@@ -61,11 +65,15 @@ async function describeExtractError(response: Response | undefined): Promise<str
   if (code === 'no_bloodwork_found') {
     return 'Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.'
   }
+  if (code === EINWILLIGUNG_FEHLT) {
+    return 'Bitte zuerst der KI-Auswertung zustimmen.'
+  }
   return 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eintragen.'
 }
 
 export function ImportFlow({ onClose, onSaved }: Props) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [phase, setPhase] = useState<Phase>('idle')
   const [rescanning, setRescanning] = useState(false)
   const [testedAt, setTestedAt] = useState('')
@@ -76,6 +84,8 @@ export function ImportFlow({ onClose, onSaved }: Props) {
   const photoInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const rescanInputRef = useRef<HTMLInputElement>(null)
+  // Ohne ausdrueckliche Einwilligung geht keine Datei an den KI-Dienst.
+  const { einwilligung, setze: setzeEinwilligung } = useKiEinwilligung()
 
   /** Ruft die Extraktion auf und gibt das validierte Ergebnis zurück (oder null bei Fehler). */
   const runExtraction = async (file: File): Promise<ExtractResult | null> => {
@@ -250,7 +260,15 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       >
         <h2 className="text-lg font-bold" style={{ color: TEXT }}>Befund importieren</h2>
 
-        {phase === 'idle' && (
+        {phase === 'idle' && einwilligung === undefined && (
+          <div className="py-10 text-center text-sm" style={{ color: MUTED }}>…</div>
+        )}
+
+        {phase === 'idle' && einwilligung === null && (
+          <KiEinwilligung onErteilt={() => setzeEinwilligung(true)} onAbbrechen={onClose} />
+        )}
+
+        {phase === 'idle' && einwilligung && (
           <>
             <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
               Fotografiere einen Laborbefund oder lade eine Datei hoch. Die Werte werden automatisch
@@ -272,6 +290,8 @@ export function ImportFlow({ onClose, onSaved }: Props) {
               className="hidden"
               onChange={onInitialInputChange}
             />
+
+            <p data-ai-consent-note className="text-xs leading-relaxed" style={{ color: MUTED }}>{t('ai_consent_note')}</p>
 
             <div className="flex gap-3">
               <button className="btn-secondary flex-1" onClick={() => fileInputRef.current?.click()}>Datei</button>

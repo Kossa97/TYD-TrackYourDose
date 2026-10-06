@@ -17,6 +17,7 @@ Alles darunter musst du in den Konsolen eintragen oder selbst entscheiden.
 | Apple 5.1.1(v) / Google „Account deletion" | Profil → Konto löschen (sobald `supabase-store-compliance-sql-editor.sql` ausgeführt ist) |
 | Apple 5.1.1 / Google User Data: Datenschutzerklärung | `/datenschutz`, `/impressum`, `/nutzungsbedingungen`, ohne Anmeldung erreichbar |
 | Alter 18+ | Pflicht-Häkchen bei der Registrierung |
+| Apple 5.1.2(i): Daten an Drittanbieter-KI nur mit Zustimmung | Befund-Import fragt vorher ausdrücklich (Anthropic, USA); gespeichert in `profiles.ai_import_consent_at`, Widerruf im Profil; die Edge Function `bloodwork-extract` sendet ohne Einwilligung nichts |
 | Apple 2.3.1: keine versteckten Funktionen | Vorschau-Routen nur noch in der Entwicklung |
 
 ## Vor dem Einreichen — von dir
@@ -27,7 +28,7 @@ Alles darunter musst du in den Konsolen eintragen oder selbst entscheiden.
 - [ ] Prüfen, ob das eine Admin-Konto deins ist.
 
 ### Rechtstexte
-- [ ] Alle gelb markierten Platzhalter in `src/features/compliance/legal/texts.ts` füllen (Name, Anschrift, E-Mail, Aufsichtsbehörde, Vercel-Region, Sentry-Aufbewahrung, AV-Verträge).
+- [ ] Alle gelb markierten Platzhalter in `src/features/compliance/legal/texts.ts` füllen (Name, Anschrift, E-Mail, Aufsichtsbehörde, Vercel-Region, Sentry-Aufbewahrung, AV-Verträge, Anthropic: Aufbewahrung und Übermittlungsgrundlage).
 - [ ] Haftungsklausel und Gerichtsstand rechtlich prüfen lassen.
 - [ ] Solange Platzhalter drin sind, zeigt jede Seite „Entwurf" — so nicht einreichen.
 
@@ -35,15 +36,15 @@ Alles darunter musst du in den Konsolen eintragen oder selbst entscheiden.
 - [ ] **Datenschutz-URL:** `https://<deine-domain>/datenschutz`
 - [ ] **Support-URL** mit erreichbarer Kontaktmöglichkeit (Apple 1.2 verlangt veröffentlichte Kontaktdaten für UGC-Apps).
 - [ ] **Altersfreigabe:** Fragebogen ehrlich ausfüllen — Medizin-/Behandlungsinfos „häufig", nutzergenerierte Inhalte „ja" → ergibt 17+/18+.
-- [ ] **App Privacy (Nutrition Label):** Gesundheit & Fitness, Kontaktinfo (E-Mail), Nutzerinhalte (Fotos, Erfahrungen), Diagnose (Absturzberichte) — „mit Identität verknüpft", „nicht zum Tracking".
+- [ ] **App Privacy (Nutrition Label):** Gesundheit & Fitness, Kontaktinfo (E-Mail), Nutzerinhalte (Fotos, Erfahrungen), Diagnose (Absturzberichte) — „mit Identität verknüpft", „nicht zum Tracking". Zusätzlich: Gesundheitsdaten (Laborbefunde) werden für die App-Funktion an einen Dritten (Anthropic) übertragen.
 - [ ] **HealthKit:** Begründungstexte in `Info.plist` (`NSHealthShareUsageDescription`), nur Lesen; in der Beschreibung nennen.
 - [ ] **Demo-Konto** für die Prüfung (mit Beispieldaten, ohne echte Gesundheitsdaten).
-- [ ] **Review-Notizen:** Rechner und Simulation rechnen nur mit Nutzereingaben bzw. Literatur-Durchschnittswerten, keine Empfehlung; Moderation mit Melden/Blockieren/Filter/24-h-Prüfung; KI nur im Admin-Panel für Bibliothekstexte, keine Nutzerdaten.
+- [ ] **Review-Notizen:** Rechner und Simulation rechnen nur mit Nutzereingaben bzw. Literatur-Durchschnittswerten, keine Empfehlung; Moderation mit Melden/Blockieren/Filter/24-h-Prüfung; KI: Befund-Import (optional, nur nach ausdrücklicher Einwilligung, Anthropic) und Bibliothekstexte im Admin-Panel.
 - [ ] **Beschreibung:** „Kein Medizinprodukt, ersetzt keinen ärztlichen Rat", keine Heilversprechen, keine Substanzwerbung.
 
 ### Google Play Console
 - [ ] **Datenschutzerklärung-URL** wie oben.
-- [ ] **Data Safety:** Gesundheitsdaten, E-Mail, Fotos, Absturzberichte; verschlüsselt übertragen; Löschen in der App möglich.
+- [ ] **Data Safety:** Gesundheitsdaten, E-Mail, Fotos, Absturzberichte; verschlüsselt übertragen; Löschen in der App möglich. „Geteilt": Laborbefunde an Anthropic (optional, nach Einwilligung).
 - [ ] **Health-Apps-Erklärung** ausfüllen; Health Connect: nur Lesen von Gewicht, Schritten, Herzfrequenz, Begründung je Datentyp.
 - [ ] **Account-Löschung:** zusätzlich eine Web-Möglichkeit nennen (z. B. Anleitung auf der Support-Seite oder Löschanfrage per E-Mail) — Google verlangt einen Weg außerhalb der App.
 - [ ] **Zielgruppe:** nur 18+; Inhaltsbewertung (IARC) ausfüllen.

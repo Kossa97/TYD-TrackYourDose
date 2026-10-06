@@ -1647,5 +1647,20 @@
   "moderation_profile_report": "Profile (name and bio)",
   "moderation_profile_link": "A public profile may not contain links, web addresses or @handles — in the username, display name or bio.",
   "moderation_profile_trade": "A public profile may not mention selling, sources or messengers.",
-  "moderation_profile_abuse": "Your public profile contains words that are not allowed. Please rephrase."
+  "moderation_profile_abuse": "Your public profile contains words that are not allowed. Please rephrase.",
+  "ai_consent_title": "Read lab report with AI?",
+  "ai_consent_intro": "To recognise the values automatically, the photo or PDF is sent to Anthropic (Claude), a service provider in the USA.",
+  "ai_consent_point_purpose": "Only to read the values. TYD does not store the file.",
+  "ai_consent_point_redact": "Tip: cover or crop out your name, date of birth and address first.",
+  "ai_consent_point_check": "AI can make mistakes — you check every value before saving.",
+  "ai_consent_point_alternative": "Prefer not to? You can enter values by hand at any time.",
+  "ai_consent_checkbox": "I explicitly consent to my lab reports being sent to Anthropic for this purpose. I can withdraw this in my profile at any time.",
+  "ai_consent_accept": "Consent and continue",
+  "ai_consent_saved": "Consent saved.",
+  "ai_consent_note": "The file is sent to Anthropic (USA) for reading. You can withdraw your consent in your profile.",
+  "ai_consent_profile_title": "AI reading of lab reports",
+  "ai_consent_profile_on": "Allowed since {{date}}. Imported files are sent to Anthropic (USA) for reading.",
+  "ai_consent_profile_off": "Not allowed — you will be asked before the next import.",
+  "ai_consent_withdraw": "Withdraw consent",
+  "ai_consent_withdrawn": "Consent withdrawn."
 }

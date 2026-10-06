@@ -50,7 +50,7 @@ const DATENSCHUTZ_DE: LegalDoc = {
       paragraphs: [
         'Wir verarbeiten deine Daten nur, um dir die Funktionen der App bereitzustellen: Tracking, Erinnerungen, Auswertungen, Export und — wenn du es einschaltest — dein öffentliches Profil.',
         'Rechtsgrundlage für Kontodaten ist die Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Gesundheitsdaten verarbeiten wir auf Grundlage deiner ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), die du bei der Registrierung erteilst. Du kannst sie jederzeit widerrufen, indem du dein Konto löschst; die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt unberührt.',
-        'Keine Werbung, kein Tracking, kein Verkauf von Daten. Wir senden keine Nutzerdaten an KI-Dienste.',
+        'Keine Werbung, kein Tracking, kein Verkauf von Daten. An einen KI-Dienst geht nur dann etwas, wenn du den Befund-Import nutzt und dem vorher gesondert zustimmst (Art. 9 Abs. 2 lit. a DSGVO, siehe Abschnitt 5). Die Einwilligung kannst du im Profil jederzeit widerrufen.',
       ],
     },
     {
@@ -66,6 +66,7 @@ const DATENSCHUTZ_DE: LegalDoc = {
         'Supabase (Datenbank, Anmeldung, Dateispeicher) — Supabase Inc., Rechenzentrum in der EU (Irland). Hier liegen dein Konto und alle deine Einträge.',
         'Vercel (Auslieferung der App und Server-Funktionen für Erinnerungen) — Vercel Inc., USA. [[Region der Server-Funktionen eintragen]]. Datenübermittlung auf Grundlage des EU-US Data Privacy Framework bzw. von Standardvertragsklauseln.',
         'Sentry (Fehlerberichte) — Functional Software Inc., Speicherort EU (Deutschland). Vor dem Senden werden alle Nutzerinhalte entfernt; die IP-Adresse wird nicht gespeichert.',
+        'Anthropic (KI-Auswertung von Laborbefunden, optional) — Anthropic, PBC, USA. Nur wenn du einen Befund importierst und eingewilligt hast: Das Foto bzw. PDF wird zur Auswertung übertragen, zurück kommen nur die erkannten Laborwerte. Auf dem Befund können auch Name, Geburtsdatum und Anschrift stehen — die App empfiehlt, sie vorher abzudecken. TYD speichert die Datei nicht. [[Speicherdauer und Nutzung bei Anthropic laut Vertrag eintragen; Grundlage der Übermittlung in die USA (EU-US Data Privacy Framework oder Standardvertragsklauseln) prüfen]]',
         'Push-Dienste — wenn du Erinnerungen einschaltest, stellt der Push-Dienst deines Betriebssystems bzw. Browsers (Apple, Google oder Mozilla) die Benachrichtigung zu. Die Nachricht enthält den Namen der Substanz, die Menge und den Zeitpunkt — sie kann auf dem Sperrbildschirm sichtbar sein.',
         'Mit allen Dienstleistern bestehen Verträge zur Auftragsverarbeitung (Art. 28 DSGVO). [[Prüfen und bestätigen]]',
       ],
@@ -120,7 +121,7 @@ const DATENSCHUTZ_EN: LegalDoc = {
       paragraphs: [
         'We process your data only to provide the app\'s features: tracking, reminders, insights, export and — if you turn it on — your public profile.',
         'The legal basis for account data is performance of the user agreement (Art. 6(1)(b) GDPR). We process health data based on your explicit consent (Art. 9(2)(a) GDPR), which you give when you register. You can withdraw it at any time by deleting your account; this does not affect the lawfulness of processing before withdrawal.',
-        'No advertising, no tracking, no sale of data. We do not send user data to AI services.',
+        'No advertising, no tracking, no sale of data. Data goes to an AI service only if you use the lab report import and give separate consent beforehand (Art. 9(2)(a) GDPR, see section 5). You can withdraw this consent in your profile at any time.',
       ],
     },
     {
@@ -136,6 +137,7 @@ const DATENSCHUTZ_EN: LegalDoc = {
         'Supabase (database, sign-in, file storage) — Supabase Inc., data centre in the EU (Ireland). Your account and all your entries are stored here.',
         'Vercel (app delivery and server functions for reminders) — Vercel Inc., USA. [[enter region of server functions]]. Transfers are based on the EU-US Data Privacy Framework or standard contractual clauses.',
         'Sentry (crash reports) — Functional Software Inc., storage in the EU (Germany). All user content is removed before sending; IP addresses are not stored.',
+        'Anthropic (AI reading of lab reports, optional) — Anthropic, PBC, USA. Only if you import a lab report and have consented: the photo or PDF is sent for reading, and only the recognised lab values come back. A lab report may also show your name, date of birth and address — the app recommends covering them first. TYD does not store the file. [[enter retention and use at Anthropic according to the contract; check the basis for the transfer to the USA (EU-US Data Privacy Framework or standard contractual clauses)]]',
         'Push services — if you turn on reminders, your operating system\'s or browser\'s push service (Apple, Google or Mozilla) delivers the notification. It contains the substance name, amount and time — it may be visible on your lock screen.',
         'Data processing agreements (Art. 28 GDPR) are in place with all providers. [[check and confirm]]',
       ],

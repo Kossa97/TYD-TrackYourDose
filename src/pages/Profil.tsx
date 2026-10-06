@@ -11,6 +11,7 @@ import { LANGUAGES, applyDirection } from '../i18n'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { useTheme, type ThemeMode } from '../lib/theme'
 import { AccountSection } from '../features/compliance/components/AccountSection'
+import { KiEinwilligungProfil } from '../features/blutwerte/components/KiEinwilligung'
 import { filterFehlerSchluessel } from '../features/compliance/lib/moderation'
 
 interface Profile {
@@ -233,6 +234,11 @@ export function Profil() {
       {/* App-Anleitung */}
       <div className="mt-3">
         <OnboardingRestartButton />
+      </div>
+
+      {/* ── Einwilligung KI-Auswertung von Befunden (Widerruf) ── */}
+      <div className="mt-6">
+        <KiEinwilligungProfil />
       </div>
 
       {/* ── Blockierte Profile, Rechtstexte, Konto löschen ── */}
