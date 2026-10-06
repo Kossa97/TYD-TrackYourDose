@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatNumber, formatRange } from '../lib/format'
-import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, RED_BORDER, TEXT } from '../styles'
 
 interface Props {
   summaries: MarkerSummary[]
+  /** Gemessen, aber ohne Referenzbereich — nicht geprueft, also nie „im Bereich". */
+  ungeprueft: number
   /** Gibt es ueberhaupt Messwerte? Sonst ein Einstiegshinweis statt „alles im Bereich". */
   hatWerte: boolean
   onSelect: (name: string) => void
@@ -14,16 +16,23 @@ interface Props {
 }
 
 /** Tab „Auffällig": die zuletzt gemessenen Werte ausserhalb des Referenzbereichs. */
-export function AuffaelligeWerte({ summaries, hatWerte, onSelect, onAlleMarker }: Props) {
+export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, onAlleMarker }: Props) {
   const { t, i18n } = useTranslation()
 
+  const ungeprueftHinweis = ungeprueft > 0 && (
+    <p className="text-xs mt-2" style={{ color: MUTED }} data-bw-unchecked>{t('bw_flagged_unchecked', { count: ungeprueft })}</p>
+  )
+
   if (summaries.length === 0) {
+    // Gruen nur, wenn wirklich alles geprueft ist und im Bereich liegt.
+    const allesGeprueft = hatWerte && ungeprueft === 0
     return (
       <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-flagged-empty>
-        {hatWerte && <CheckCircle2 size={22} className="mx-auto mb-2" style={{ color: GREEN }} aria-hidden="true" />}
+        {allesGeprueft && <CheckCircle2 size={22} className="mx-auto mb-2" style={{ color: GREEN }} aria-hidden="true" />}
         <p className="text-sm" style={{ color: hatWerte ? TEXT : MUTED }}>
-          {t(hatWerte ? 'bw_flagged_none' : 'bw_flagged_no_data')}
+          {t(!hatWerte ? 'bw_flagged_no_data' : allesGeprueft ? 'bw_flagged_none' : 'bw_flagged_none_checked')}
         </p>
+        {hatWerte && ungeprueftHinweis}
         {hatWerte && (
           <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={onAlleMarker}>
             {t('bw_flagged_show_all')}
@@ -34,7 +43,8 @@ export function AuffaelligeWerte({ summaries, hatWerte, onSelect, onAlleMarker }
   }
 
   return (
-    <div className="mb-4" style={{ ...PANEL_STYLE, border: '1px solid rgba(239,68,68,0.35)' }} data-bw-flagged>
+    <div className="mb-4">
+    <div style={{ ...PANEL_STYLE, border: `1px solid ${RED_BORDER}` }} data-bw-flagged>
       <div className="flex items-center gap-2 px-5 pt-4 pb-2">
         <AlertTriangle size={15} style={{ color: RED }} aria-hidden="true" />
         <p className="text-xs" style={{ color: MUTED }}>{t('bw_flagged_hint')}</p>
@@ -64,6 +74,8 @@ export function AuffaelligeWerte({ summaries, hatWerte, onSelect, onAlleMarker }
           </button>
         )
       })}
+    </div>
+    {ungeprueftHinweis && <div className="px-5">{ungeprueftHinweis}</div>}
     </div>
   )
 }

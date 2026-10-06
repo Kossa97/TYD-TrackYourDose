@@ -1804,5 +1804,7 @@
   "bw_flagged_hint": "Your latest measurements outside the reference range.",
   "bw_flagged_none": "All latest measurements are within the reference range.",
   "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-  "bw_flagged_show_all": "Show all markers"
+  "bw_flagged_show_all": "Show all markers",
+  "bw_flagged_none_checked": "No value is outside its reference range.",
+  "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
 }

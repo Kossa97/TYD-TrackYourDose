@@ -841,6 +841,8 @@ const EXPECTED_MY_STACK_KEYS = [
   'bw_flagged_none',
   'bw_flagged_no_data',
   'bw_flagged_show_all',
+  'bw_flagged_none_checked',
+  'bw_flagged_unchecked',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

@@ -832,6 +832,8 @@ export const MY_STACK_EN = {
   bw_flagged_none: 'All latest measurements are within the reference range.',
   bw_flagged_no_data: 'No blood values yet. Add a value or import a lab report.',
   bw_flagged_show_all: 'Show all markers',
+  bw_flagged_none_checked: 'No value is outside its reference range.',
+  bw_flagged_unchecked: 'Not checked, no reference range: {{count}}',
 }
 
 export const MY_STACK_DE = {
@@ -1667,6 +1669,8 @@ export const MY_STACK_DE = {
   bw_flagged_none: 'Alle zuletzt gemessenen Werte liegen im Referenzbereich.',
   bw_flagged_no_data: 'Noch keine Blutwerte. Trag einen Wert ein oder importiere einen Befund.',
   bw_flagged_show_all: 'Alle Marker ansehen',
+  bw_flagged_none_checked: 'Kein Wert liegt außerhalb seines Referenzbereichs.',
+  bw_flagged_unchecked: 'Ohne Referenzbereich, nicht geprüft: {{count}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

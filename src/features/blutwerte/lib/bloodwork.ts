@@ -225,3 +225,8 @@ export function sortSummaries(summaries: MarkerSummary[], mode: SortMode): Marke
 export function auffaelligeWerte(summaries: MarkerSummary[]): MarkerSummary[] {
   return summaries.filter(s => s.inRange === false)
 }
+
+/** Gemessen, aber ohne nutzbaren Referenzbereich — also weder auffaellig noch im Bereich. */
+export function ungepruefteWerte(summaries: MarkerSummary[]): MarkerSummary[] {
+  return summaries.filter(s => s.latest !== null && s.inRange === null)
+}

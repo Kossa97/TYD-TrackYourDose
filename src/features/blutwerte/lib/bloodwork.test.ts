@@ -10,6 +10,7 @@ import {
   isInRange,
   sortSummaries,
   toNumber,
+  ungepruefteWerte,
 } from './bloodwork'
 
 const entry = (over: Partial<BloodworkEntry> = {}): BloodworkEntry => ({
@@ -231,6 +232,14 @@ describe('auffaelligeWerte', () => {
   it('ignoriert Marker ohne Referenzbereich', () => {
     const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert', value: 999 })])
     expect(auffaelligeWerte(summaries)).toEqual([])
+  })
+
+  it('zaehlt Gemessenes ohne Referenzbereich als ungeprueft — nicht als „im Bereich"', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'frei', marker: 'Phantasiewert', value: 999 }),
+      entry({ id: 'ok', marker: 'Ferritin', value: 100, unit: 'ng/mL' }),
+    ])
+    expect(ungepruefteWerte(summaries).map(s => s.name)).toEqual(['Phantasiewert'])
   })
 
   it('ignoriert ungetestete Marker', () => {

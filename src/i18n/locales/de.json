@@ -2039,5 +2039,7 @@
   "bw_flagged_hint": "Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.",
   "bw_flagged_none": "Alle zuletzt gemessenen Werte liegen im Referenzbereich.",
   "bw_flagged_no_data": "Noch keine Blutwerte. Trag einen Wert ein oder importiere einen Befund.",
-  "bw_flagged_show_all": "Alle Marker ansehen"
+  "bw_flagged_show_all": "Alle Marker ansehen",
+  "bw_flagged_none_checked": "Kein Wert liegt außerhalb seines Referenzbereichs.",
+  "bw_flagged_unchecked": "Ohne Referenzbereich, nicht geprüft: {{count}}"
 }

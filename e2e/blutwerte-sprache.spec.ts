@@ -31,7 +31,7 @@ test.describe('auf Englisch', () => {
     await page.goto('/blutwerte')
 
     await expect(page.getByRole('heading', { name: 'Blood values' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Out of range 1' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Out-of-range values (1)' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('[data-bw-flagged]')).toContainText('Cortisol')
     await page.getByRole('button', { name: 'Markers', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Hormones' })).toBeVisible()
@@ -50,7 +50,7 @@ test('Uebersicht: „Auffällig" ist vorausgewaehlt, mit Anzahl; Tippen fuehrt z
   wert(mock, 'Ferritin', { value: 80, unit: 'ng/mL', ref_min: 30, ref_max: 400 })
   await page.goto('/blutwerte')
 
-  const tab = page.getByRole('button', { name: 'Auffällig 1' })
+  const tab = page.getByRole('button', { name: 'Auffällige Werte (1)' })
   await expect(tab).toHaveAttribute('aria-pressed', 'true')
   const liste = page.locator('[data-bw-flagged]')
   await expect(liste).toContainText('Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.')
@@ -65,7 +65,7 @@ test('Uebersicht: „Auffällig" ist vorausgewaehlt, mit Anzahl; Tippen fuehrt z
   // Der Marker-Tab zeigt den Block nicht mehr oben
   await page.getByRole('button', { name: 'Marker', exact: true }).click()
   await expect(page.locator('[data-bw-flagged]')).toHaveCount(0)
-  await page.getByRole('button', { name: /Auffällig/ }).click()
+  await tab.click()
   await liste.getByRole('button', { name: /Kortisol/ }).click()
   await expect(page.getByRole('heading', { name: 'Kortisol' })).toBeVisible()
 })
@@ -79,8 +79,37 @@ test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne W
   await page.reload()
   const leer = page.locator('[data-bw-flagged-empty]')
   await expect(leer).toContainText('Alle zuletzt gemessenen Werte liegen im Referenzbereich.')
+  await expect(leer.locator('[data-bw-unchecked]')).toHaveCount(0)
   await leer.getByRole('button', { name: 'Alle Marker ansehen' }).click()
   await expect(page.getByRole('button', { name: 'Marker', exact: true })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('Uebersicht: Werte ohne Referenzbereich gelten als ungeprueft, nicht als „im Bereich"', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
+  wert(mock, 'Mein Laborwert', { value: 3, unit: 'U/L' })
+  await page.goto('/blutwerte')
+  const leer = page.locator('[data-bw-flagged-empty]')
+  await expect(leer).toContainText('Kein Wert liegt außerhalb seines Referenzbereichs.')
+  await expect(leer).not.toContainText('Alle zuletzt gemessenen Werte')
+  await expect(leer.locator('[data-bw-unchecked]')).toHaveText('Ohne Referenzbereich, nicht geprüft: 1')
+})
+
+test('Uebersicht: Ladefehler sagt nicht „keine Blutwerte", sondern bietet Erneut versuchen', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 30, ref_min: 5, ref_max: 25 })
+  let einmal = true
+  await page.route('**/rest/v1/bloodwork?*', async route => {
+    if (einmal && route.request().method() === 'GET') {
+      einmal = false
+      return route.fulfill({ status: 500, json: { message: 'kaputt' } })
+    }
+    return route.fallback()
+  })
+  await page.goto('/blutwerte')
+  const fehler = page.locator('[data-bw-load-error]')
+  await expect(fehler).toContainText('Blutwerte konnten nicht geladen werden.')
+  await expect(page.getByText('Noch keine Blutwerte.')).toHaveCount(0)
+  await fehler.getByRole('button', { name: 'Erneut versuchen' }).click()
+  await expect(page.locator('[data-bw-flagged]')).toContainText('Kortisol')
 })
 
 test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert stehen', async ({ page, mock }) => {

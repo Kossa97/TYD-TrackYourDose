@@ -17,7 +17,7 @@ import type { MarkerSummary } from '../lib/bloodwork'
 import { toNumber } from '../lib/bloodwork'
 import type { BloodworkEntry } from '../types'
 import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
-import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, RED_WEAK, TEXT } from '../styles'
 import { TrendIcon, trendColor } from './MarkerGrid'
 import { ReferenceBar } from './ReferenceBar'
 import { PLOT_LINKS, PLOT_RECHTS, ZyklusStreifen } from './ZyklusStreifen'
@@ -135,7 +135,7 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
                 <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>{t('bw_in_range')}</span>
               )}
               {inRange === false && (
-                <span className="badge" style={{ background: 'rgba(239,68,68,0.12)', color: RED }}>{t('bw_out_range')}</span>
+                <span className="badge" style={{ background: RED_WEAK, color: RED }}>{t('bw_out_range')}</span>
               )}
               {inRange === null && (
                 <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>{t('bw_no_reference')}</span>

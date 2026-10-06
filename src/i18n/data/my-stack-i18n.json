@@ -831,7 +831,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1665,7 +1667,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2499,7 +2503,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3333,7 +3339,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4167,7 +4175,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5001,7 +5011,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5835,7 +5847,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6669,7 +6683,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7503,7 +7519,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8337,7 +8355,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9171,7 +9191,9 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -10005,6 +10027,8 @@
     "bw_flagged_hint": "Your latest measurements outside the reference range.",
     "bw_flagged_none": "All latest measurements are within the reference range.",
     "bw_flagged_no_data": "No blood values yet. Add a value or import a lab report.",
-    "bw_flagged_show_all": "Show all markers"
+    "bw_flagged_show_all": "Show all markers",
+    "bw_flagged_none_checked": "No value is outside its reference range.",
+    "bw_flagged_unchecked": "Not checked, no reference range: {{count}}"
   }
 }
