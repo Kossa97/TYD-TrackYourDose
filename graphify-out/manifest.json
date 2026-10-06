@@ -702,87 +702,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1791305954.5345433,
-    "seen": 1791306605.2476742,
-    "ast_hash": "859389c762f3ffbe72fdc3fe3d5b1935",
+    "mtime": 1791327636.8780992,
+    "seen": 1791328352.1587958,
+    "ast_hash": "893998bc6a9fba3902640c1f7a458a3d",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1791305954.5265431,
-    "seen": 1791306605.2476761,
-    "ast_hash": "b96cc6aa86139fe80893d499684e69dd",
+    "mtime": 1791327636.8740993,
+    "seen": 1791328352.158797,
+    "ast_hash": "79f23271ada30dcddd20f10cb6e4d518",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1791305954.5305433,
-    "seen": 1791306605.2476778,
-    "ast_hash": "8cfb7fefd9517b3210ac1879465831b7",
+    "mtime": 1791327636.8780992,
+    "seen": 1791328352.158798,
+    "ast_hash": "47b17a2c2bd526de7bcfdaca9cb2d9aa",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1791305954.5345433,
-    "seen": 1791306605.2476792,
-    "ast_hash": "b415fe71c739af7c307013cd106812b8",
+    "mtime": 1791327636.8780992,
+    "seen": 1791328352.1587992,
+    "ast_hash": "7b757d118174f8f89978d157a0e6bf8d",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1791305954.5345433,
-    "seen": 1791306605.2476802,
-    "ast_hash": "2da6d8a1a4647931a44f720b746c53bc",
+    "mtime": 1791327636.8820994,
+    "seen": 1791328352.1588001,
+    "ast_hash": "ba5072035a9535dd4a3127345530a464",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1791305954.5385432,
-    "seen": 1791306605.2476814,
-    "ast_hash": "4a246929afe6abd1f60af322caf2011f",
+    "mtime": 1791327636.8820994,
+    "seen": 1791328352.1588008,
+    "ast_hash": "377804ee3537bc89a87727dea9d10d63",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1791305954.5385432,
-    "seen": 1791306605.2476828,
-    "ast_hash": "0fbb5558416c4a8a1e6fffea39e164f8",
+    "mtime": 1791327636.8860993,
+    "seen": 1791328352.1588025,
+    "ast_hash": "375d2bbe19482cd6cbf74d23c11dbe0c",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1791305954.5385432,
-    "seen": 1791306605.2476847,
-    "ast_hash": "e450a7789a41d31aa8ec166f0dec6604",
+    "mtime": 1791327636.8860993,
+    "seen": 1791328352.158804,
+    "ast_hash": "69a7d9109ecf2ce8f235480de0e57adb",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1791305954.5425432,
-    "seen": 1791306605.247686,
-    "ast_hash": "118bde4a20e140e32b8fe44f9680989f",
+    "mtime": 1791327636.8860993,
+    "seen": 1791328352.1588051,
+    "ast_hash": "ee2b765a097efa3bfa1f49f52aeba711",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1791305954.5425432,
-    "seen": 1791306605.2476869,
-    "ast_hash": "3de814a30dcac9f74fc93594d4b61d80",
+    "mtime": 1791327636.8900993,
+    "seen": 1791328352.1588063,
+    "ast_hash": "98ed926989dedf3874e234aa3403d187",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1791305954.5465431,
-    "seen": 1791306605.247688,
-    "ast_hash": "20dd63dbe1945e5a973e642f5d2783ee",
+    "mtime": 1791327636.8900993,
+    "seen": 1791328352.1588073,
+    "ast_hash": "24f62d6bb3f30e7af72393a4fdf9da7b",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1791305954.5465431,
-    "seen": 1791306605.2476895,
-    "ast_hash": "6e78b6988e0d35622a0e1b8b78e5190d",
+    "mtime": 1791327636.8940992,
+    "seen": 1791328352.1588085,
+    "ast_hash": "303c5e91e96ee01313a763cb6c807d25",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1791305954.5505433,
-    "seen": 1791306605.2476907,
-    "ast_hash": "89e0e6c67fd172f6a6629ea2dd8a16f9",
+    "mtime": 1791327636.8940992,
+    "seen": 1791328352.1588097,
+    "ast_hash": "c103a4b84c0f764c9e08d62803fc8243",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1791305954.5505433,
-    "seen": 1791306605.2476919,
-    "ast_hash": "f366179c58a05ffee7f2743655cd09c0",
+    "mtime": 1791327636.8940992,
+    "seen": 1791328352.1588106,
+    "ast_hash": "9d864304dc6b45ca1e646dc372cbc3b2",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1791318693.535454,
-    "seen": 1791320864.5382755,
-    "ast_hash": "14b7d3a5355f6939756d53356f1f65d3",
+    "mtime": 1791328334.5098646,
+    "seen": 1791328352.1650527,
+    "ast_hash": "4280d1ca1be547149c80593a1f32fdee",
     "semantic_hash": ""
   },
   "README.md": {
@@ -2328,15 +2328,15 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/BlutwertePage.tsx": {
-    "mtime": 1791305911.7457438,
-    "seen": 1791306605.2315748,
-    "ast_hash": "d2b1e783f26fbec16467115efe350b7b",
+    "mtime": 1791327663.3059244,
+    "seen": 1791328352.1424417,
+    "ast_hash": "1888274704aa6681dfa7af18b23cf1f2",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/AuffaelligeWerte.tsx": {
-    "mtime": 1791290044.516038,
-    "seen": 1791291682.3253462,
-    "ast_hash": "e97217370717c48767eb9011fceb6111",
+    "mtime": 1791327636.916832,
+    "seen": 1791328352.1424444,
+    "ast_hash": "ebddb67b371c5cde9fea9c6dd6bdd3df",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/EntryModal.tsx": {
@@ -2352,9 +2352,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerDetail.tsx": {
-    "mtime": 1791305911.7476103,
-    "seen": 1791306605.23174,
-    "ast_hash": "82a001a4e2d6f2d181e0e708a37e4c5c",
+    "mtime": 1791327641.7996662,
+    "seen": 1791328352.1426067,
+    "ast_hash": "84b6a4fe4619570e9df104e0bd472719",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerGrid.tsx": {
@@ -2370,15 +2370,15 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/bloodwork.test.ts": {
-    "mtime": 1790828474.1883821,
-    "seen": 1791278682.5265656,
-    "ast_hash": "a04f0d43a1d3287c0acd289a34c48f24",
+    "mtime": 1791327713.6902094,
+    "seen": 1791328352.143022,
+    "ast_hash": "a860c2a858c36452c0313b99141411e8",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/bloodwork.ts": {
-    "mtime": 1791291439.8507469,
-    "seen": 1791291682.3255482,
-    "ast_hash": "5bcbff689ad5cbf9dbac90359143eb60",
+    "mtime": 1791327636.91579,
+    "seen": 1791328352.1430247,
+    "ast_hash": "f1ba78d636f4e166b9e8641e4a524789",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/format.ts": {
@@ -2412,9 +2412,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/styles.ts": {
-    "mtime": 1791290252.1439672,
-    "seen": 1791291682.326047,
-    "ast_hash": "f10a21e66ae2220d5caa3737e6be9b35",
+    "mtime": 1791327636.9161382,
+    "seen": 1791328352.1437433,
+    "ast_hash": "f198840b3e901776b3dc748b3f558f88",
     "semantic_hash": ""
   },
   "src/features/blutwerte/types.ts": {
@@ -3078,9 +3078,9 @@
     "semantic_hash": ""
   },
   "scripts/my-stack-i18n-source.mjs": {
-    "mtime": 1791305954.4009159,
-    "seen": 1791306605.229326,
-    "ast_hash": "a9589ac7b23d5de4210051bf38e39afb",
+    "mtime": 1791327636.7476342,
+    "seen": 1791328352.13988,
+    "ast_hash": "3f1fe59d7ac321eac355a63a6f1a1887",
     "semantic_hash": ""
   },
   "scripts/pk-profile-source.mjs": {
@@ -3942,9 +3942,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1791305911.831127,
-    "seen": 1791306605.2406635,
-    "ast_hash": "85e9b58c7cf00a8d3f6110160d87c5da",
+    "mtime": 1791327636.7647707,
+    "seen": 1791328352.1517982,
+    "ast_hash": "f4dd4e6e06fdff3af5a45573caaab21d",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4650,9 +4650,9 @@
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
-    "mtime": 1791305954.4095483,
-    "seen": 1791306605.246585,
-    "ast_hash": "a1f91c68533cab66fbbfd6f43b62b87d",
+    "mtime": 1791327636.7580993,
+    "seen": 1791328352.1576955,
+    "ast_hash": "f2b8f3912940162b47f2434db98f9d8a",
     "semantic_hash": ""
   },
   "src/i18n/planDataErrors.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791320388.4720163,
-    "seen": 1791320864.537095,
+    "mtime": 1791327878.6181138,
+    "seen": 1791328352.163784,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -6162,9 +6162,9 @@
     "semantic_hash": ""
   },
   "e2e/blutwerte-ki.spec.ts": {
-    "mtime": 1791287603.4837625,
-    "seen": 1791287929.0558612,
-    "ast_hash": "cbd6760d53a64975a3bec60f9d3fed43",
+    "mtime": 1791326833.0700529,
+    "seen": 1791328352.1387336,
+    "ast_hash": "5e2084828ae1e99fa6b722cbba86fef6",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/KiEinwilligung.tsx": {
@@ -6204,9 +6204,9 @@
     "semantic_hash": ""
   },
   "e2e/blutwerte-sprache.spec.ts": {
-    "mtime": 1791305954.4106832,
-    "seen": 1791306605.2281017,
-    "ast_hash": "35f66ebd161d383069af3f71910caeda",
+    "mtime": 1791327713.690746,
+    "seen": 1791328352.1387367,
+    "ast_hash": "19ebf970fc820f41dcf4f01c5da90fda",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerCatalog.en.test.ts": {

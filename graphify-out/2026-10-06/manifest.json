@@ -1334,7 +1334,7 @@
   "supabase-inventory.sql": {
     "mtime": 1790828474.2419548,
     "seen": 1791278682.5274308,
-    "ast_hash": "6f81aa370a5513dcb5026f1bfcf09910",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "supabase-peptide-library-patch.sql": {
@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1791306587.1745977,
-    "seen": 1791306605.253989,
-    "ast_hash": "acd67ccd946bcf0a88fc084360ebfe77",
+    "mtime": 1791318693.535454,
+    "seen": 1791320864.5382755,
+    "ast_hash": "14b7d3a5355f6939756d53356f1f65d3",
     "semantic_hash": ""
   },
   "README.md": {
@@ -1698,9 +1698,9 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/fotos/FotosTab.tsx": {
-    "mtime": 1790828474.189779,
-    "seen": 1791278682.526646,
-    "ast_hash": "ec6a54c92b80a399a59bfcc0c10a860a",
+    "mtime": 1791319043.1890583,
+    "seen": 1791320864.5179236,
+    "ast_hash": "b37d628ed6ee13635c5e9a480c912ebd",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/overview/ActiveSubstancesSection.tsx": {
@@ -1746,9 +1746,9 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/hooks/useFortschrittData.ts": {
-    "mtime": 1790828474.1912923,
-    "seen": 1791278682.5266929,
-    "ast_hash": "e45119daacc4c40c29cfedb86fb651f5",
+    "mtime": 1791320091.9109356,
+    "seen": 1791320864.5190003,
+    "ast_hash": "e45c743c4df5b7247b7c06f5b9364f63",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.test.ts": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1791267504.291201,
-    "seen": 1791278682.5267506,
-    "ast_hash": "5c641c515f5896c8f20be31d74092600",
+    "mtime": 1791319043.1919372,
+    "seen": 1791320864.5202503,
+    "ast_hash": "a1ad158b54ec9d3754613cea58d31a8f",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -4200,15 +4200,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackInventory.test.ts": {
-    "mtime": 1790828474.209698,
-    "seen": 1791278682.5270524,
-    "ast_hash": "1e1ce29f6dd1537e6a172c6ec1bd16ae",
+    "mtime": 1791319214.0540223,
+    "seen": 1791320864.5271637,
+    "ast_hash": "18384703a7d12f79f01f69bb6e9ec9c5",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackInventory.ts": {
-    "mtime": 1790828474.209698,
-    "seen": 1791278682.5270534,
-    "ast_hash": "e62befc6fcfe0baffcaa31cc7664f15d",
+    "mtime": 1791319038.3104362,
+    "seen": 1791320864.5271652,
+    "ast_hash": "d1cee1d3902f8f7864ecd35859c156d3",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791306125.4945533,
-    "seen": 1791306605.25272,
+    "mtime": 1791320388.4720163,
+    "seen": 1791320864.537095,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5724,9 +5724,9 @@
     "semantic_hash": ""
   },
   "e2e/support/mockSupabase.ts": {
-    "mtime": 1791280072.3739452,
-    "seen": 1791287929.056107,
-    "ast_hash": "9d30b9e05a201d78d3488fc505ac806a",
+    "mtime": 1791319185.8036387,
+    "seen": 1791320864.5115442,
+    "ast_hash": "204cb8fa32db59bb0e0594316b0a1e95",
     "semantic_hash": ""
   },
   "e2e/support/myStack.ts": {
@@ -6249,6 +6249,36 @@
     "mtime": 1791305954.4111202,
     "seen": 1791306605.2323117,
     "ast_hash": "eab752ef6dd2ec9e5bfeb9e4a5392d5f",
+    "semantic_hash": ""
+  },
+  "e2e/batch-dateien.spec.ts": {
+    "mtime": 1791319185.8083513,
+    "seen": 1791320864.511282,
+    "ast_hash": "bf93832fcb01b6c8f3c93154331f3b2b",
+    "semantic_hash": ""
+  },
+  "src/components/BatchDateiLink.test.tsx": {
+    "mtime": 1791320246.4649982,
+    "seen": 1791320864.513476,
+    "ast_hash": "c8e424b286e26f5052023958df7c7eea",
+    "semantic_hash": ""
+  },
+  "src/components/BatchDateiLink.tsx": {
+    "mtime": 1791320183.399391,
+    "seen": 1791320864.5134776,
+    "ast_hash": "b08ba0dca80cf4a6b5c7e3646cf99daf",
+    "semantic_hash": ""
+  },
+  "src/lib/batchFiles.test.ts": {
+    "mtime": 1791320246.460008,
+    "seen": 1791320864.5321865,
+    "ast_hash": "0554252d95d5f332b31ebf9334273b75",
+    "semantic_hash": ""
+  },
+  "src/lib/batchFiles.ts": {
+    "mtime": 1791320027.2282135,
+    "seen": 1791320864.5321887,
+    "ast_hash": "5478f4373eb220bb4ecfed810d951399",
     "semantic_hash": ""
   }
 }
