@@ -125,6 +125,8 @@ export function BlutwertePage() {
     setDraft({
       id: entry.id,
       reportId: entry.report_id,
+      originalUnit: entry.unit,
+      hasLabRange: entry.ref_min != null || entry.ref_max != null,
       tested_at: entry.tested_at,
       marker: entry.marker,
       value: formatEingabe(entry.value),
@@ -133,48 +135,39 @@ export function BlutwertePage() {
     setShowForm(true)
   }
 
-  // Bearbeiten aendert nur Datum, Wert und Einheit — Marker, Notiz und
-  // Referenzbereich des Labors bleiben. Bei Werten aus einem Befund gehoert
-  // das Datum dem Befund und wird nicht mitgeschickt.
-  const update = async (id: string, parsed: { tested_at: string; value: number; unit: string }) => {
-    if (!user) return
-    setSaving(true)
-    const changes = draft.reportId
-      ? { value: parsed.value, unit: parsed.unit }
-      : { tested_at: parsed.tested_at, value: parsed.value, unit: parsed.unit }
-    const { error } = await supabase.from('bloodwork').update(changes).eq('id', id).eq('user_id', user.id)
-    setSaving(false)
-    if (error) return toast.error(t('bw_update_error'))
-    toast.success(t('bw_updated'))
+  const closeForm = () => {
     setShowForm(false)
     setDraft(emptyDraft())
-    void load()
   }
 
+  // Neu: ganze Zeile. Bearbeiten: nur Datum, Wert und Einheit — Marker und
+  // Notiz bleiben. Bei Werten aus einem Befund gehoert das Datum dem Befund
+  // und wird nicht mitgeschickt. Die Laborreferenz gilt fuer ihre Einheit:
+  // aendert sich die Einheit, faellt sie weg (dann gilt der Katalogbereich).
   const save = async (parsed: { tested_at: string; marker: string; value: number; unit: string }) => {
     if (!user) return
-    if (draft.id) return update(draft.id, parsed)
-
     setSaving(true)
-    const payload = {
-      user_id: user.id,
-      tested_at: parsed.tested_at,
-      marker: parsed.marker,
-      value: parsed.value,
-      unit: parsed.unit,
-      notes: null,
-    }
-
-    const { error } = await supabase.from('bloodwork').insert(payload)
-
-    if (error) toast.error(t('bw_save_error'))
-    else {
-      toast.success(t('bw_saved'))
-      setShowForm(false)
-      setDraft(emptyDraft())
-      load()
-    }
+    const { id, reportId, originalUnit, hasLabRange } = draft
+    const { error } = id
+      ? await supabase.from('bloodwork').update({
+        ...(reportId ? {} : { tested_at: parsed.tested_at }),
+        value: parsed.value,
+        unit: parsed.unit,
+        ...(hasLabRange && parsed.unit !== originalUnit ? { ref_min: null, ref_max: null } : {}),
+      }).eq('id', id).eq('user_id', user.id)
+      : await supabase.from('bloodwork').insert({
+        user_id: user.id,
+        tested_at: parsed.tested_at,
+        marker: parsed.marker,
+        value: parsed.value,
+        unit: parsed.unit,
+        notes: null,
+      })
     setSaving(false)
+    if (error) return toast.error(t(id ? 'bw_update_error' : 'bw_save_error'))
+    toast.success(t(id ? 'bw_updated' : 'bw_saved'))
+    closeForm()
+    void load()
   }
 
   // Loeschen ueber ein eigenes Sheet statt des Browser-Fensters.
@@ -221,7 +214,7 @@ export function BlutwertePage() {
       markerLocked={!!draft.id || (!!draft.marker && selectedMarker === draft.marker)}
       saving={saving}
       onChange={setDraft}
-      onCancel={() => setShowForm(false)}
+      onCancel={closeForm}
       onSave={save}
     />
   )

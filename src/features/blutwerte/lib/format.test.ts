@@ -7,6 +7,8 @@ describe('Zahl fuer das Eingabefeld', () => {
     expect(formatEingabe(16.5, 'en')).toBe('16.5')
     expect(formatEingabe('1234.5678', 'de')).toBe('1234,5678')
     expect(formatEingabe(12, 'de')).toBe('12')
+    // weder Komma noch Punkt in der Sprache: Punkt, den das Formular lesen kann
+    expect(formatEingabe(16.5, 'ar-EG')).toBe('16.5')
   })
 
   it('laesst Unlesbares stehen', () => {

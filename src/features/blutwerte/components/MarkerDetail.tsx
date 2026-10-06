@@ -242,11 +242,11 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
                 {formatNumber(v)} {u}
               </span>
               <button
-                className="flex h-11 w-11 -my-2 items-center justify-center rounded-xl transition-colors"
+                className="flex h-11 w-11 -my-2 items-center justify-center rounded-xl transition-colors hover:text-cyan-400"
                 style={{ color: MUTED }}
                 onClick={() => onEdit(e)}
                 data-bw-entry-edit
-                aria-label={t('bw_edit_aria', { date: formatDisplayDate(e.tested_at) })}
+                aria-label={t('bw_edit_aria', { value: `${formatNumber(e.value)} ${e.unit}`, date: formatDisplayDate(e.tested_at) })}
               >
                 <Pencil size={15} />
               </button>
@@ -255,7 +255,7 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
                 style={{ color: MUTED }}
                 onClick={() => onDelete(e)}
                 data-bw-entry-delete
-                aria-label={t('bw_delete_aria', { date: formatDisplayDate(e.tested_at) })}
+                aria-label={t('bw_delete_aria', { value: `${formatNumber(e.value)} ${e.unit}`, date: formatDisplayDate(e.tested_at) })}
               >
                 <Trash2 size={15} />
               </button>

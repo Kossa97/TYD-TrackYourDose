@@ -821,11 +821,12 @@ export const MY_STACK_EN = {
   bw_cycles_hint: 'Shown for orientation only — the timing says nothing about cause and effect.',
   bw_cycles_period: '{{from}} – {{to}}',
   bw_edit_title: 'Edit value',
-  bw_edit_aria: 'Edit value from {{date}}',
-  bw_delete_aria: 'Delete value from {{date}}',
+  bw_edit_aria: 'Edit {{value}} from {{date}}',
+  bw_delete_aria: 'Delete {{value}} from {{date}}',
   bw_updated: 'Value updated',
   bw_update_error: 'The value could not be changed.',
   bw_date_from_report: 'The date belongs to the lab report this value comes from.',
+  bw_unit_drops_range: 'The lab reference applies to {{unit}}. With a different unit it is removed.',
 }
 
 export const MY_STACK_DE = {
@@ -1650,11 +1651,12 @@ export const MY_STACK_DE = {
   bw_cycles_hint: 'Nur zur Orientierung — der zeitliche Zusammenhang sagt nichts über Ursache und Wirkung.',
   bw_cycles_period: '{{from}} – {{to}}',
   bw_edit_title: 'Wert bearbeiten',
-  bw_edit_aria: 'Wert vom {{date}} bearbeiten',
-  bw_delete_aria: 'Wert vom {{date}} löschen',
+  bw_edit_aria: '{{value}} vom {{date}} bearbeiten',
+  bw_delete_aria: '{{value}} vom {{date}} löschen',
   bw_updated: 'Wert geändert',
   bw_update_error: 'Der Wert konnte nicht geändert werden.',
   bw_date_from_report: 'Das Datum gehört zum Befund, aus dem der Wert stammt.',
+  bw_unit_drops_range: 'Die Laborreferenz gilt für {{unit}}. Mit einer anderen Einheit fällt sie weg.',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

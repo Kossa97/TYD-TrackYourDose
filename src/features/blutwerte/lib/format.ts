@@ -44,11 +44,18 @@ export const formatNumber = (value: number | string) => {
  * Zahl fuer ein Eingabefeld: volle Genauigkeit, ohne Tausendertrennung, mit
  * dem Dezimalzeichen der Sprache (16,5 / 16.5). Das Formular liest beides.
  */
+const dezimalKomma = new Map<string, boolean>()
+
 export const formatEingabe = (value: number | string, sprache: string = aktiveSprache()) => {
   const numeric = toNumber(value)
   if (!Number.isFinite(numeric)) return String(value)
-  const komma = new Intl.NumberFormat(sprache).formatToParts(1.5).find(part => part.type === 'decimal')?.value ?? '.'
-  return String(numeric).replace('.', komma)
+  // Nur Komma oder Punkt — andere Zeichen (etwa arabisch ٫) liest das Formular nicht.
+  let komma = dezimalKomma.get(sprache)
+  if (komma === undefined) {
+    komma = new Intl.NumberFormat(sprache).formatToParts(1.5).some(part => part.type === 'decimal' && part.value === ',')
+    dezimalKomma.set(sprache, komma)
+  }
+  return komma ? String(numeric).replace('.', ',') : String(numeric)
 }
 
 /** Menschlich lesbarer Referenztext, z.B. "400–900 ng/dL" oder "bis 1 mg/L" / "up to 1 mg/L". */

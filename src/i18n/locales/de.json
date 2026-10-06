@@ -2029,9 +2029,10 @@
   "bw_cycles_hint": "Nur zur Orientierung — der zeitliche Zusammenhang sagt nichts über Ursache und Wirkung.",
   "bw_cycles_period": "{{from}} – {{to}}",
   "bw_edit_title": "Wert bearbeiten",
-  "bw_edit_aria": "Wert vom {{date}} bearbeiten",
-  "bw_delete_aria": "Wert vom {{date}} löschen",
+  "bw_edit_aria": "{{value}} vom {{date}} bearbeiten",
+  "bw_delete_aria": "{{value}} vom {{date}} löschen",
   "bw_updated": "Wert geändert",
   "bw_update_error": "Der Wert konnte nicht geändert werden.",
-  "bw_date_from_report": "Das Datum gehört zum Befund, aus dem der Wert stammt."
+  "bw_date_from_report": "Das Datum gehört zum Befund, aus dem der Wert stammt.",
+  "bw_unit_drops_range": "Die Laborreferenz gilt für {{unit}}. Mit einer anderen Einheit fällt sie weg."
 }

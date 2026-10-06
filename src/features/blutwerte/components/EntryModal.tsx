@@ -11,6 +11,9 @@ export interface EntryDraft {
   id?: string
   /** Wert aus einem Befund: das Datum gehoert dem Befund und bleibt fest. */
   reportId?: string | null
+  /** Einheit beim Oeffnen und ob eine Laborreferenz daran haengt. */
+  originalUnit?: string
+  hasLabRange?: boolean
   tested_at: string
   marker: string
   value: string
@@ -131,6 +134,12 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
             />
           </div>
         </div>
+
+        {draft.hasLabRange && draft.unit.trim() !== draft.originalUnit && (
+          <p className="text-xs" style={{ color: MUTED }} data-bw-unit-drops-range>
+            {t('bw_unit_drops_range', { unit: draft.originalUnit })}
+          </p>
+        )}
 
         {(() => {
           const hint = conversionHint(draft.marker, draft.unit, Number(draft.value.replace(',', '.')))

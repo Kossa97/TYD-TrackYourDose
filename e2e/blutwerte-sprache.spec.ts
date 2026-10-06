@@ -43,7 +43,7 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
 
   await page.goto('/blutwerte')
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
-  await page.getByRole('button', { name: 'Wert vom 15.09.2026 löschen' }).click()
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 löschen' }).click()
 
   const sheet = page.getByRole('alertdialog', { name: 'Wert löschen?' })
   await expect(sheet).toContainText('Kortisol vom 15.09.2026 wird entfernt.')
@@ -62,7 +62,7 @@ test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mo
   const eintrag = wert(mock, 'Kortisol', { value: 14, notes: 'nuechtern' })
   await page.goto('/blutwerte')
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
-  await page.getByRole('button', { name: 'Wert vom 15.09.2026 bearbeiten' }).click()
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
 
   await expect(page.getByRole('heading', { name: 'Wert bearbeiten' })).toBeVisible()
   // Marker ist fest, kein Auswahlfeld
@@ -75,7 +75,7 @@ test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mo
   const [zeile] = mock.table('bloodwork')
   expect(zeile).toMatchObject({ id: eintrag.id, tested_at: '2026-09-14', value: 16.5, unit: 'µg/dL', notes: 'nuechtern' })
   // erneut geoeffnet: Dezimalkomma wie eingegeben
-  await page.getByRole('button', { name: 'Wert vom 14.09.2026 bearbeiten' }).click()
+  await page.getByRole('button', { name: '16,5 µg/dL vom 14.09.2026 bearbeiten' }).click()
   await expect(page.getByPlaceholder('42.5')).toHaveValue('16,5')
 })
 
@@ -85,7 +85,7 @@ test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz b
   await page.goto('/blutwerte')
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
   if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/liste.png`, fullPage: true })
-  await page.getByRole('button', { name: 'Wert vom 15.09.2026 bearbeiten' }).click()
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
 
   const datum = page.locator('[data-app-modal] input[type="date"]')
   await expect(datum).toBeDisabled()
@@ -96,6 +96,22 @@ test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz b
 
   await expect(page.getByText('Wert geändert')).toBeVisible()
   expect(mock.table('bloodwork')[0]).toMatchObject({ tested_at: '2026-09-15', value: 20, report_id: befund.id, ref_min: 5, ref_max: 25 })
+})
+
+test('Bearbeiten: andere Einheit — Laborreferenz faellt weg, mit Hinweis', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
+  await page.goto('/blutwerte')
+  await page.getByRole('button', { name: /Kortisol/ }).first().click()
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
+
+  await expect(page.locator('[data-bw-unit-drops-range]')).toHaveCount(0)
+  await page.getByPlaceholder('42.5').fill('386')
+  await page.getByPlaceholder('ng/mL').fill('nmol/L')
+  await expect(page.locator('[data-bw-unit-drops-range]')).toContainText('Die Laborreferenz gilt für µg/dL.')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+
+  await expect(page.getByText('Wert geändert')).toBeVisible()
+  expect(mock.table('bloodwork')[0]).toMatchObject({ value: 386, unit: 'nmol/L', ref_min: null, ref_max: null })
 })
 
 test('Verlauf: Zyklen aus My Stack als Zeilen unter dem Diagramm', async ({ page, mock }) => {
