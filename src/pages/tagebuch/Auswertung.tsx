@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, addDays } from 'date-fns'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -235,29 +235,38 @@ export function Auswertung({ userId, refreshKey }: { userId: string; refreshKey:
                 <thead>
                   <tr className="text-left text-xs text-slate-500">
                     <th scope="col" className="px-1 py-1.5 font-medium">{t('tagebuch_spalte_substanz')}</th>
-                    <th scope="col" className="px-1 py-1.5 font-medium text-right">
-                      <span className="sr-only">{t('wirkungen')}</span>
-                      <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: COLOR.effects }} />
-                    </th>
-                    <th scope="col" className="px-1 py-1.5 font-medium text-right">
-                      <span className="sr-only">{t('nebenwirkungen')}</span>
-                      <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: COLOR.sideEffects }} />
-                    </th>
-                    <th scope="col" className="px-1 py-1.5 font-medium text-right whitespace-nowrap">{t('tagebuch_avg_intensitaet')}</th>
-                    <th scope="col" className="px-1 py-1.5 font-medium">{t('tagebuch_spalte_haeufigste')}</th>
+                    {(['effects', 'sideEffects'] as const).map(key => (
+                      <th key={key} scope="col" className="px-1 py-1.5 font-medium text-right whitespace-nowrap">
+                        <span className="sr-only">{t(key === 'effects' ? 'wirkungen' : 'nebenwirkungen')}</span>
+                        <span aria-hidden="true" className="inline-flex flex-col items-end gap-1">
+                          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: COLOR[key] }} />
+                          {t(key === 'effects' ? 'tagebuch_spalte_wirkung_kurz' : 'tagebuch_spalte_neben_kurz')}
+                        </span>
+                      </th>
+                    ))}
+                    <th scope="col" className="px-1 py-1.5 font-medium text-right">{t('tagebuch_avg_intensitaet')}</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-nums">
                   {substanzen.map(stat => (
-                    <tr key={stat.id ?? '-'} className="border-t border-slate-800 align-top">
-                      <th scope="row" className="px-1 py-2 text-left font-medium text-slate-200">{stat.name ?? t('tagebuch_ohne_substanz')}</th>
-                      <td className="px-1 py-2 text-right">{stat.effects}</td>
-                      <td className="px-1 py-2 text-right">{stat.sideEffects}</td>
-                      <td className="px-1 py-2 text-right">{stat.avgSeverity.toLocaleString(i18n.language, { minimumFractionDigits: 1 })}</td>
-                      <td className="px-1 py-2 text-slate-400 break-words">
-                        {stat.topSideEffect ? `${stat.topSideEffect.text} (${stat.topSideEffect.count}×)` : '–'}
-                      </td>
-                    </tr>
+                    <Fragment key={stat.id ?? '-'}>
+                      <tr className="border-t border-slate-800 align-top">
+                        <th scope="row" id={`tagebuch-substanz-${stat.id ?? 'ohne'}`} className={`px-1 text-left font-medium text-slate-200 ${stat.topSideEffect ? 'pt-2' : 'py-2'}`}>
+                          {stat.name ?? t('tagebuch_ohne_substanz')}
+                        </th>
+                        <td className="px-1 pt-2 text-right">{stat.effects}</td>
+                        <td className="px-1 pt-2 text-right">{stat.sideEffects}</td>
+                        <td className="px-1 pt-2 text-right">{stat.avgSeverity.toLocaleString(i18n.language, { minimumFractionDigits: 1 })}</td>
+                      </tr>
+                      {/* Häufigste Nebenwirkung über die volle Breite — als eigene Spalte passte sie auf kleinen Handys nicht */}
+                      {stat.topSideEffect && (
+                        <tr>
+                          <td colSpan={4} headers={`tagebuch-substanz-${stat.id ?? 'ohne'}`} className="px-1 pb-2 text-xs text-slate-400 break-words">
+                            {t('tagebuch_haeufigste_zeile', { text: stat.topSideEffect.text, count: stat.topSideEffect.count })}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
