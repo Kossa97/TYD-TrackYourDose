@@ -117,6 +117,7 @@ import { MyStackHeader } from './page/MyStackHeader'
 import { LegacyCycleManager } from './page/LegacyCycleManager'
 import { RekonstitutionDialog } from './page/RekonstitutionDialog'
 import { EscalationFormSheet } from './page/EscalationFormSheet'
+import { BatchDateiLink } from '../../components/BatchDateiLink'
 
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
@@ -1838,9 +1839,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       return {
                         label: FELD_LABEL[feld], wide,
                         valueNode: (
-                          <a className="truncate text-cyan-300 hover:text-cyan-200" href={a.url} target="_blank" rel="noopener noreferrer">
+                          <BatchDateiLink className="truncate text-cyan-300 hover:text-cyan-200" wert={a.url}>
                             {wert}
-                          </a>
+                          </BatchDateiLink>
                         ),
                       }
                     }
@@ -2371,15 +2372,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 wide: true,
                 valueNode: p.batch_file_url
                   ? (
-                    <a
-                      href={p.batch_file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <BatchDateiLink
+                      wert={p.batch_file_url}
                       className="inline-flex max-w-full items-center gap-2 text-cyan-300 hover:text-cyan-200"
                     >
                       <span className="truncate">{p.batch_file_url.split('/').pop() || t('dokument_oeffnen')}</span>
                       <ExternalLink size={14} className="shrink-0" />
-                    </a>
+                    </BatchDateiLink>
                   )
                   : <span>-</span>,
               },

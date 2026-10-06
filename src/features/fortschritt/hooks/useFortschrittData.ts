@@ -18,6 +18,7 @@ import { normalizeCycles, rangeFromActiveSubstances } from '../lib/substances'
 import { numeric } from '../lib/metrics'
 import { collectPagedRows } from '../lib/pagination'
 import { PHOTO_BUCKET, SIGNED_URL_TTL_SECONDS } from '../constants'
+import { signiereBatchDateien } from '../../../lib/batchFiles'
 
 function mapDailyLogs(rows: Record<string, unknown>[] | null): DailyLogEntry[] {
   return (rows ?? []).map(row => ({
@@ -39,18 +40,22 @@ async function resolvePhotoDisplayUrls(
   photos: Omit<ProgressPhotoEntry, 'display_url'>[],
 ): Promise<ProgressPhotoEntry[]> {
   const paths = photos.filter(p => !isLegacyPhotoUrl(p.photo_url)).map(p => p.photo_url)
+  const legacy = photos.filter(p => isLegacyPhotoUrl(p.photo_url)).map(p => p.photo_url)
   const signed = new Map<string, string>()
-  if (paths.length > 0) {
-    const { data } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS)
-    for (const entry of data ?? []) {
-      if (entry.path && entry.signedUrl) signed.set(entry.path, entry.signedUrl)
-    }
-  }
+  // Alte Fotos liegen im ebenfalls privaten `batch-files` — auch signiert.
+  const [, legacySigned] = await Promise.all([
+    paths.length > 0
+      ? supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, SIGNED_URL_TTL_SECONDS).then(({ data }) => {
+        for (const entry of data ?? []) {
+          if (entry.path && entry.signedUrl) signed.set(entry.path, entry.signedUrl)
+        }
+      })
+      : undefined,
+    signiereBatchDateien(supabase as never, legacy, SIGNED_URL_TTL_SECONDS).catch(() => new Map<string, string>()),
+  ])
   return photos.map(p => ({
     ...p,
-    display_url: isLegacyPhotoUrl(p.photo_url) ? p.photo_url : (signed.get(p.photo_url) ?? ''),
+    display_url: isLegacyPhotoUrl(p.photo_url) ? (legacySigned.get(p.photo_url) ?? '') : (signed.get(p.photo_url) ?? ''),
   }))
 }
 

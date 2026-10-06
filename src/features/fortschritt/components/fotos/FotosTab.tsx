@@ -10,6 +10,7 @@ import { PHOTO_GRID_OPTIONS, photoGridColumns, readPhotoGridSize, writePhotoGrid
 import { isLegacyPhotoUrl } from '../../hooks/useFortschrittData'
 import { fieldLabel, inputStyle, panel } from '../../styles'
 import { denyProps } from '../../../../lib/denyFeedback'
+import { BATCH_BUCKET, batchDateiPfad } from '../../../../lib/batchFiles'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
 const fmtDate = (d: string) => format(parseISO(`${d}T00:00:00`), 'dd.MM.yyyy')
@@ -96,10 +97,8 @@ export function FotosTab({ photos, onChange }: Props) {
   const deletePhoto = async (photo: ProgressPhotoEntry) => {
     if (!confirm('Foto wirklich löschen?')) return
     if (isLegacyPhotoUrl(photo.photo_url)) {
-      const parts = photo.photo_url.split('/batch-files/')
-      if (parts.length > 1) {
-        await supabase.storage.from('batch-files').remove([parts[1]])
-      }
+      const pfad = batchDateiPfad(photo.photo_url)
+      if (pfad) await supabase.storage.from(BATCH_BUCKET).remove([pfad])
     } else {
       await supabase.storage.from(PHOTO_BUCKET).remove([photo.photo_url])
     }

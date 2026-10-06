@@ -411,7 +411,7 @@ export class MockSupabase {
     })
   }
 
-  /** Nur Auflisten und Loeschen — genug fuer „Konto loeschen". */
+  /** Auflisten und Loeschen (Konto loeschen), signierte Links (private Buckets). */
   private async handleStorage(route: Route, url: URL): Promise<void> {
     const method = route.request().method()
     const rest = url.pathname.slice('/storage/v1/object/'.length)
@@ -423,6 +423,17 @@ export class MockSupabase {
         .map(path => path.slice(prefix.length + 1))
         .slice(offset, offset + limit)
       return route.fulfill({ headers: corsHeaders(), json: names.map(name => ({ name, id: name, metadata: {} })) })
+    }
+    if (method === 'POST' && rest.startsWith('sign/')) {
+      const bucket = rest.slice('sign/'.length)
+      const { paths = [] } = (route.request().postDataJSON() ?? {}) as { paths?: string[] }
+      const vorhanden = this.storage.get(bucket) ?? []
+      return route.fulfill({
+        headers: corsHeaders(),
+        json: paths.map(path => vorhanden.includes(path)
+          ? { path, signedURL: `/object/sign/${bucket}/${path}?token=e2e`, error: null }
+          : { path, signedURL: null, error: 'Object not found' }),
+      })
     }
     if (method === 'DELETE') {
       const bucket = rest
