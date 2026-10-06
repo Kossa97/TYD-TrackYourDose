@@ -182,8 +182,9 @@ export type MarkerFilter = KategorieFilter | null | typeof AUFFAELLIG
 
 export function filterByKategorie(
   summaries: MarkerSummary[],
-  kategorie: KategorieFilter | null,
+  kategorie: MarkerFilter,
 ): MarkerSummary[] {
+  if (kategorie === AUFFAELLIG) return auffaelligeWerte(summaries)
   if (!kategorie) return summaries
   return summaries.filter(s => s.kategorie === kategorie)
 }

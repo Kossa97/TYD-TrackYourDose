@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { BloodworkEntry } from '../types'
 import { normalizeMarker } from './markerCatalog'
 import {
+  AUFFAELLIG,
   auffaelligeWerte,
   buildMarkerSummaries,
   computeTrend,
@@ -232,6 +233,14 @@ describe('auffaelligeWerte', () => {
   it('ignoriert Marker ohne Referenzbereich', () => {
     const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert', value: 999 })])
     expect(auffaelligeWerte(summaries)).toEqual([])
+  })
+
+  it('der Filter „Auffällige“ liefert genau die auffaelligen Marker', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'hoch', marker: 'Testosteron', value: 1200 }),
+      entry({ id: 'ok', marker: 'Ferritin', value: 100, unit: 'ng/mL' }),
+    ])
+    expect(filterByKategorie(summaries, AUFFAELLIG).map(s => s.name)).toEqual(['Testosteron'])
   })
 
   it('zaehlt Gemessenes ohne Referenzbereich als ungeprueft — nicht als „im Bereich"', () => {

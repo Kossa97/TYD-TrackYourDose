@@ -40,11 +40,11 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
           const active = kategorie === chip.key
           return (
             <button
-              key={chip.label}
+              key={chip.key ?? 'alle'}
               onClick={() => onKategorie(chip.key)}
               aria-pressed={active}
-              // Die Zahl am Chip mit Zusammenhang vorlesen: „Auffällige Werte (2)“.
-              aria-label={chip.key === AUFFAELLIG && auffaellig > 0 ? t('bw_out_of_range_title', { count: auffaellig }) : undefined}
+              // Sichtbarer Text plus Anzahl: „Auffällige (2)“ — Sprachsteuerung findet ihn am Namen.
+              aria-label={chip.key === AUFFAELLIG && auffaellig > 0 ? `${chip.label} (${auffaellig})` : undefined}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
               style={
                 active

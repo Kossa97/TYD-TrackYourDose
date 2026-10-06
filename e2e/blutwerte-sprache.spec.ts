@@ -31,7 +31,7 @@ test.describe('auf Englisch', () => {
     await page.goto('/blutwerte')
 
     await expect(page.getByRole('heading', { name: 'Blood values' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Out-of-range values (1)' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Out of range (1)' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('[data-bw-flagged]')).toContainText('Cortisol')
     await page.getByRole('button', { name: 'All', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Hormones' })).toBeVisible()
@@ -53,12 +53,15 @@ test('Marker: Filter „Auffällige" steht vorn und ist vorausgewaehlt, mit Anza
   // Oben die zwei Tabs, Marker aktiv
   await expect(page.getByRole('button', { name: 'Marker', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: 'Befunde', exact: true })).toBeVisible()
-  const tab = page.getByRole('button', { name: 'Auffällige Werte (1)' })
+  const tab = page.getByRole('button', { name: 'Auffällige (1)' })
   await expect(tab).toHaveAttribute('aria-pressed', 'true')
   await expect(tab).toContainText('Auffällige')
   // Vorn in der Leiste, vor „Alle" und den Kategorien
-  const chips = await tab.locator('..').getByRole('button').allTextContents()
-  expect(chips.slice(0, 3)).toEqual(['Auffällige1', 'Alle', 'Hormone'])
+  const chips = tab.locator('..').getByRole('button')
+  await expect(chips.nth(0)).toHaveAccessibleName('Auffällige (1)')
+  await expect(chips.nth(1)).toHaveAccessibleName('Alle')
+  await expect(chips.nth(2)).toHaveAccessibleName('Hormone')
+  await expect(page.getByRole('region', { name: 'Auffällige Werte (1)' })).toBeVisible()
   // keine Sortierung in der Liste der Auffaelligen
   await expect(page.locator('#blutwerte-sort')).toHaveCount(0)
   const liste = page.locator('[data-bw-flagged]')
@@ -118,7 +121,11 @@ test('Uebersicht: Ladefehler sagt nicht „keine Blutwerte", sondern bietet Erne
   const fehler = page.locator('[data-bw-load-error]')
   await expect(fehler).toContainText('Blutwerte konnten nicht geladen werden.')
   await expect(page.getByText('Noch keine Blutwerte.')).toHaveCount(0)
+  // auch unter „Alle" kein Raster, als waere nichts gemessen
+  await page.getByRole('button', { name: 'Alle', exact: true }).click()
+  await expect(fehler).toBeVisible()
   await fehler.getByRole('button', { name: 'Erneut versuchen' }).click()
+  await page.getByRole('button', { name: 'Auffällige (1)' }).click()
   await expect(page.locator('[data-bw-flagged]')).toContainText('Kortisol')
 })
 

@@ -15,7 +15,10 @@ interface Props {
   onAlleMarker: () => void
 }
 
-/** Tab „Auffällig": die zuletzt gemessenen Werte ausserhalb des Referenzbereichs. */
+/**
+ * Filter „Auffällige“ unter „Marker“: die zuletzt gemessenen Werte ausserhalb
+ * des Referenzbereichs, mit Leerzustaenden.
+ */
 export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, onAlleMarker }: Props) {
   const { t, i18n } = useTranslation()
 
@@ -44,7 +47,12 @@ export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, on
 
   return (
     <div className="mb-4">
-    <div style={{ ...PANEL_STYLE, border: `1px solid ${RED_BORDER}` }} data-bw-flagged>
+    <div
+      role="region"
+      aria-label={t('bw_out_of_range_title', { count: summaries.length })}
+      style={{ ...PANEL_STYLE, border: `1px solid ${RED_BORDER}` }}
+      data-bw-flagged
+    >
       <div className="flex items-center gap-2 px-5 pt-4 pb-2">
         <AlertTriangle size={15} style={{ color: RED }} aria-hidden="true" />
         <p className="text-xs" style={{ color: MUTED }}>{t('bw_flagged_hint')}</p>

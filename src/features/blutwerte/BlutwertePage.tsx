@@ -103,11 +103,13 @@ export function BlutwertePage() {
 
   const summaries = useMemo(() => buildMarkerSummaries(entries), [entries])
 
+  const zeigtAuffaellige = kategorie === AUFFAELLIG
   const showSonstige = useMemo(() => summaries.some(s => s.kategorie === SONSTIGE), [summaries])
 
   const visibleSummaries = useMemo(
-    () => sortSummaries(filterByKategorie(summaries, kategorie === AUFFAELLIG ? null : kategorie), sortMode),
-    [summaries, kategorie, sortMode],
+    // Bei „Auffällige“ zeigt die Seite die Liste, nicht das Raster — dann nichts zu rechnen.
+    () => (zeigtAuffaellige ? [] : sortSummaries(filterByKategorie(summaries, kategorie), sortMode)),
+    [summaries, kategorie, sortMode, zeigtAuffaellige],
   )
 
   const auffaellig = useMemo(() => auffaelligeWerte(summaries), [summaries])
@@ -321,27 +323,27 @@ export function BlutwertePage() {
             onSortMode={setSortMode}
           />
 
-          {kategorie !== AUFFAELLIG ? (
-            <MarkerGrid
-              summaries={visibleSummaries}
-              grouped={sortMode === 'kategorie' && kategorie === null}
-              onSelect={setSelectedMarker}
-            />
-          ) : ladeFehler && entries.length === 0 ? (
-            // Nie „Noch keine Blutwerte“ sagen, wenn nur das Laden scheiterte.
+          {ladeFehler && entries.length === 0 ? (
+            // Nie „keine Werte“ zeigen, wenn nur das Laden scheiterte — unter keinem Filter.
             <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-load-error>
               <p className="text-sm" style={{ color: TEXT }}>{t('bw_load_error')}</p>
               <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={() => void load()}>
                 {t('ai_consent_retry')}
               </button>
             </div>
-          ) : (
+          ) : zeigtAuffaellige ? (
             <AuffaelligeWerte
               summaries={auffaellig}
               ungeprueft={ungeprueft}
               hatWerte={entries.length > 0}
               onSelect={setSelectedMarker}
               onAlleMarker={() => setKategorie(null)}
+            />
+          ) : (
+            <MarkerGrid
+              summaries={visibleSummaries}
+              grouped={sortMode === 'kategorie' && kategorie === null}
+              onSelect={setSelectedMarker}
             />
           )}
         </>
