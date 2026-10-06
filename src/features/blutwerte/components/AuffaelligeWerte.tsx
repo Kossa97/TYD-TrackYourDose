@@ -1,4 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatNumber, formatRange } from '../lib/format'
 import { MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export function AuffaelligeWerte({ summaries, onSelect }: Props) {
+  const { t, i18n } = useTranslation()
   if (summaries.length === 0) return null
 
   return (
@@ -16,7 +19,7 @@ export function AuffaelligeWerte({ summaries, onSelect }: Props) {
       <div className="flex items-center gap-2 px-5 pt-4 pb-2">
         <AlertTriangle size={15} style={{ color: RED }} />
         <p className="text-sm font-bold" style={{ color: TEXT }}>
-          Auffällige Werte ({summaries.length})
+          {t('bw_out_of_range_title', { count: summaries.length })}
         </p>
       </div>
       {summaries.map((summary, i) => {
@@ -32,9 +35,9 @@ export function AuffaelligeWerte({ summaries, onSelect }: Props) {
             style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
           >
             <div>
-              <p className="text-sm font-semibold" style={{ color: TEXT }}>{summary.name}</p>
+              <p className="text-sm font-semibold" style={{ color: TEXT }}>{markerName(summary.name, i18n.resolvedLanguage ?? i18n.language)}</p>
               {referenz && (
-                <p className="text-xs mt-0.5" style={{ color: MUTED }}>Referenz: {referenz}</p>
+                <p className="text-xs mt-0.5" style={{ color: MUTED }}>{t('bw_reference', { range: referenz })}</p>
               )}
             </div>
             <span className="text-sm font-bold" style={{ color: RED }}>

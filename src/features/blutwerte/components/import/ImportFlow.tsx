@@ -56,7 +56,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
   /** Ruft die Extraktion auf und gibt das validierte Ergebnis zurück (oder null bei Fehler). */
   const runExtraction = async (file: File): Promise<ExtractResult | null> => {
     if (file.size > MAX_UPLOAD_BYTES) {
-      toast.error('Datei ist zu groß (max. 10 MB). Bitte kleiner fotografieren oder komprimieren.')
+      toast.error(t('bw_file_too_large'))
       return null
     }
     const prepared = await prepareFile(file)
@@ -69,16 +69,14 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       if (fehler.code === EINWILLIGUNG_FEHLT) {
         // Inzwischen widerrufen (etwa auf einem anderen Geraet): neu fragen.
         vergessenEinwilligung()
-        toast.error(t('ai_consent_required'))
-      } else {
-        toast.error(fehler.text)
       }
+      toast.error(t(fehler.schluessel))
       return null
     }
 
     const result = parseExtractResult(data)
     if (!result || result.values.length === 0) {
-      toast.error('Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.')
+      toast.error(t('bw_no_report_found'))
       return null
     }
     return result
@@ -98,7 +96,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       setRows(result.values.map(v => ({ ...v, selected: true })))
       setPhase('review')
     } catch {
-      toast.error('Die Datei konnte nicht verarbeitet werden.')
+      toast.error(t('bw_file_error'))
       setPhase('idle')
     }
   }
@@ -124,12 +122,12 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       if (newConflicts.length > 0) setConflicts(newConflicts)
 
       const parts: string[] = []
-      if (added.length > 0) parts.push(`${added.length} ergänzt`)
-      if (duplicates > 0) parts.push(`${duplicates} bereits vorhanden`)
-      if (newConflicts.length > 0) parts.push(`${newConflicts.length} zu klären`)
-      toast.success(parts.length > 0 ? parts.join(' · ') : 'Keine neuen Werte gefunden')
+      if (added.length > 0) parts.push(t('bw_rescan_added', { count: added.length }))
+      if (duplicates > 0) parts.push(t('bw_rescan_dupes', { count: duplicates }))
+      if (newConflicts.length > 0) parts.push(t('bw_rescan_conflicts', { count: newConflicts.length }))
+      toast.success(parts.length > 0 ? parts.join(' · ') : t('bw_rescan_none'))
     } catch {
-      toast.error('Die Datei konnte nicht verarbeitet werden.')
+      toast.error(t('bw_file_error'))
     } finally {
       setRescanning(false)
     }
@@ -173,11 +171,11 @@ export function ImportFlow({ onClose, onSaved }: Props) {
     if (!user) return
 
     if (selected.length === 0) {
-      toast.error('Bitte mindestens einen Wert auswählen')
+      toast.error(t('bw_select_one'))
       return
     }
     if (!testedAt) {
-      toast.error('Bitte ein Testdatum eintragen')
+      toast.error(t('bw_err_date'))
       return
     }
 
@@ -190,7 +188,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
       .single()
 
     if (reportError || !report) {
-      toast.error('Werte konnten nicht gespeichert werden')
+      toast.error(t('bw_save_values_error'))
       setPhase('review')
       return
     }
@@ -212,12 +210,12 @@ export function ImportFlow({ onClose, onSaved }: Props) {
     if (valuesError) {
       // Ein Befund ohne Werte wäre ein verwaister Datensatz.
       await supabase.from('bloodwork_reports').delete().eq('id', report.id)
-      toast.error('Werte konnten nicht gespeichert werden')
+      toast.error(t('bw_save_values_error'))
       setPhase('review')
       return
     }
 
-    toast.success(`${selected.length} Werte übernommen`)
+    toast.success(t('bw_values_saved', { count: selected.length }))
     onSaved()
     onClose()
   }
@@ -231,7 +229,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold" style={{ color: TEXT }}>Befund importieren</h2>
+        <h2 className="text-lg font-bold" style={{ color: TEXT }}>{t('bw_import_title')}</h2>
 
         {phase === 'idle' && einwilligung === undefined && !einwilligungFehler && (
           <div className="py-10 text-center text-sm" style={{ color: MUTED }}>…</div>
@@ -251,8 +249,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
         {phase === 'idle' && einwilligung && (
           <>
             <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
-              Fotografiere einen Laborbefund oder lade eine Datei hoch. Die Werte werden automatisch
-              erkannt und müssen vor dem Speichern geprüft werden.
+              {t('bw_import_desc')}
             </p>
 
             <input
@@ -274,23 +271,23 @@ export function ImportFlow({ onClose, onSaved }: Props) {
             <p data-ai-consent-note className="text-xs leading-relaxed" style={{ color: MUTED }}>{t('ai_consent_note')}</p>
 
             <div className="flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => fileInputRef.current?.click()}>Datei</button>
-              <button className="btn-primary flex-1" onClick={() => photoInputRef.current?.click()}>Foto</button>
+              <button className="btn-secondary flex-1" onClick={() => fileInputRef.current?.click()}>{t('bw_file')}</button>
+              <button className="btn-primary flex-1" onClick={() => photoInputRef.current?.click()}>{t('bw_photo')}</button>
             </div>
-            <button className="btn-secondary w-full" data-app-back-close onClick={onClose}>Abbrechen</button>
+            <button className="btn-secondary w-full" data-app-back-close onClick={onClose}>{t('cancel')}</button>
           </>
         )}
 
         {phase === 'extracting' && (
           <div className="py-10 text-center font-semibold" style={{ color: CYAN }}>
-            Befund wird ausgelesen...
+            {t('bw_extracting')}
           </div>
         )}
 
         {(phase === 'review' || saving) && (
           <>
             <div>
-              <label className="label">Testdatum</label>
+              <label className="label">{t('bw_test_date')}</label>
               <input
                 className="input"
                 type="date"
@@ -299,10 +296,10 @@ export function ImportFlow({ onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <label className="label">Labor</label>
+              <label className="label">{t('bw_lab')}</label>
               <input
                 className="input"
-                placeholder="Optional"
+                placeholder={t('bw_optional')}
                 value={labName}
                 onChange={e => setLabName(e.target.value)}
               />
@@ -325,17 +322,17 @@ export function ImportFlow({ onClose, onSaved }: Props) {
               onClick={() => rescanInputRef.current?.click()}
               disabled={saving || rescanning}
             >
-              {rescanning ? 'Wird ausgelesen...' : '+ Weitere Datei scannen'}
+              {rescanning ? t('bw_rescanning') : t('bw_rescan')}
             </button>
 
             <p className="text-xs" style={{ color: MUTED }}>
-              Wird gespeichert als Befund vom {testedAt ? formatDisplayDate(testedAt) : '–'}
+              {t('bw_saved_as', { date: testedAt ? formatDisplayDate(testedAt) : '–' })}
             </p>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" data-app-back-close onClick={onClose} disabled={saving}>Abbrechen</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={onClose} disabled={saving}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={handleSave} disabled={saving || rescanning}>
-                {saving ? 'Speichern...' : `${selected.length} übernehmen`}
+                {saving ? t('saving') : t('bw_take_over', { count: selected.length })}
               </button>
             </div>
           </>

@@ -1,4 +1,7 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { KATEGORIE_KEY, markerName } from '../lib/markerCatalog.en'
+import type { KategorieFilter } from '../lib/markerCatalog'
 import type { MarkerSummary, Trend } from '../lib/bloodwork'
 import { formatDisplayDate, formatNumber } from '../lib/format'
 import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
@@ -27,6 +30,8 @@ interface Props {
 }
 
 export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
   const renderCard = (summary: MarkerSummary) => {
     const { latest, inRange, trend, name } = summary
     const hasData = !!latest
@@ -47,7 +52,7 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
           opacity: hasData ? 1 : 0.55,
         }}
       >
-        <p className="font-bold text-sm" style={{ color: TEXT }}>{name}</p>
+        <p className="font-bold text-sm" style={{ color: TEXT }}>{markerName(name, sprache)}</p>
         {hasData && latest ? (
           <>
             <div className="flex items-center justify-between mt-2">
@@ -61,7 +66,7 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
             <p className="text-xs mt-1.5" style={{ color: MUTED }}>{formatDisplayDate(latest.tested_at)}</p>
           </>
         ) : (
-          <p className="text-xs mt-3" style={{ color: MUTED }}>– Noch kein Test</p>
+          <p className="text-xs mt-3" style={{ color: MUTED }}>{t('bw_no_test')}</p>
         )}
       </button>
     )
@@ -70,7 +75,7 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
   if (summaries.length === 0) {
     return (
       <div className="p-10 text-center" style={{ ...PANEL_STYLE, color: MUTED }}>
-        Keine Marker in dieser Kategorie.
+        {t('bw_no_markers')}
       </div>
     )
   }
@@ -97,7 +102,7 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
     <div className="space-y-5">
       {groups.map(group => (
         <div key={group.kategorie}>
-          <p className="text-[0.65rem] uppercase tracking-wide mb-2" style={{ color: MUTED }}>{group.kategorie}</p>
+          <p className="text-[0.65rem] uppercase tracking-wide mb-2" style={{ color: MUTED }}>{t(KATEGORIE_KEY[group.kategorie as KategorieFilter] ?? group.kategorie)}</p>
           <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
             {group.items.map(summary => renderCard(summary))}
           </div>

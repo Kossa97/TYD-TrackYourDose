@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { markerErklaerung, markerName } from '../lib/markerCatalog.en'
 import { format } from 'date-fns'
 import { ArrowLeft, Info, Plus, Trash2 } from 'lucide-react'
 import {
@@ -15,7 +17,7 @@ import type { MarkerSummary } from '../lib/bloodwork'
 import { toNumber } from '../lib/bloodwork'
 import type { BloodworkEntry } from '../types'
 import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
-import { CYAN, DISCLAIMER, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
 import { TrendIcon, trendColor } from './MarkerGrid'
 import { ReferenceBar } from './ReferenceBar'
 
@@ -29,6 +31,8 @@ interface Props {
 }
 
 export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
 
   const { name, entries, latest, range, inRange, trend, diff } = summary
@@ -65,13 +69,13 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
           className="p-2 -ml-2 transition-colors"
           style={{ color: MUTED }}
           onClick={onBack}
-          aria-label="Zurück"
+          aria-label={t('back')}
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-lg font-bold" style={{ color: TEXT }}>{name}</h1>
+        <h1 className="text-lg font-bold" style={{ color: TEXT }}>{markerName(name, sprache)}</h1>
         <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={onAdd}>
-          <Plus size={15} /> Eintrag
+          <Plus size={15} /> {t('bw_entry')}
         </button>
       </div>
 
@@ -87,7 +91,7 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
               {trend && (
                 <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: trendColor(summary) }}>
                   <TrendIcon trend={trend} />
-                  {trend === 'same' ? 'gleich' : formatNumber(Math.abs(diff))}
+                  {trend === 'same' ? t('bw_trend_same') : formatNumber(Math.abs(diff))}
                 </div>
               )}
             </div>
@@ -101,22 +105,22 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
                 />
               </div>
             ) : (
-              <p className="text-xs mt-2" style={{ color: MUTED }}>Kein Referenzbereich hinterlegt</p>
+              <p className="text-xs mt-2" style={{ color: MUTED }}>{t('bw_no_reference_set')}</p>
             )}
             <div className="mt-3">
               {inRange === true && (
-                <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>Im Normalbereich</span>
+                <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>{t('bw_in_range')}</span>
               )}
               {inRange === false && (
-                <span className="badge" style={{ background: 'rgba(239,68,68,0.12)', color: RED }}>Außerhalb</span>
+                <span className="badge" style={{ background: 'rgba(239,68,68,0.12)', color: RED }}>{t('bw_out_range')}</span>
               )}
               {inRange === null && (
-                <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>Kein Referenzbereich</span>
+                <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>{t('bw_no_reference')}</span>
               )}
             </div>
           </>
         ) : (
-          <p style={{ color: MUTED }}>Noch kein Test für {name}.</p>
+          <p style={{ color: MUTED }}>{t('bw_no_test_for', { name: markerName(name, sprache) })}</p>
         )}
       </div>
 
@@ -124,21 +128,21 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
       <div className="p-5 mb-4" style={PANEL_STYLE}>
         <div className="flex items-center gap-2 mb-2">
           <Info size={15} style={{ color: CYAN }} />
-          <p className="text-sm font-bold" style={{ color: TEXT }}>Was ist das?</p>
+          <p className="text-sm font-bold" style={{ color: TEXT }}>{t('bw_what_is')}</p>
         </div>
         {summary.def ? (
-          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{summary.def.erklaerung}</p>
+          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{markerErklaerung(summary.def, sprache)}</p>
         ) : (
           <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
-            Für diesen Marker ist keine Erklärung hinterlegt. Er wurde aus einem importierten Befund übernommen.
+            {t('bw_no_explanation')}
           </p>
         )}
-        <p className="text-xs mt-3" style={{ color: MUTED, opacity: 0.8 }}>{DISCLAIMER}</p>
+        <p className="text-xs mt-3" style={{ color: MUTED, opacity: 0.8 }}>{t('bw_disclaimer')}</p>
       </div>
 
       {/* Range filter */}
       <div className="flex gap-2 mb-4">
-        {([['3M', '3M'], ['6M', '6M'], ['1J', '1J'], ['ALL', 'Alles']] as [RangeFilter, string][]).map(([key, label]) => (
+        {([['3M', t('bw_range_3m')], ['6M', t('bw_range_6m')], ['1J', t('bw_range_1y')], ['ALL', t('bw_range_all')]] as [RangeFilter, string][]).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setRangeFilter(key)}
@@ -172,20 +176,20 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
         </div>
       ) : (
         <div className="p-6 mb-4 text-center text-sm" style={{ ...PANEL_STYLE, color: MUTED }}>
-          Keine Werte im gewählten Zeitraum.
+          {t('bw_no_values_period')}
         </div>
       )}
 
       {excludedCount > 0 && (
         <p className="text-xs mb-4 -mt-2" style={{ color: MUTED }}>
-          {excludedCount === 1 ? '1 Wert mit abweichender Einheit ist nicht im Diagramm.' : `${excludedCount} Werte mit abweichender Einheit sind nicht im Diagramm.`}
+          {excludedCount === 1 ? t('bw_excluded_one') : t('bw_excluded_many', { count: excludedCount })}
         </p>
       )}
 
       {/* Entry list */}
       <div style={PANEL_STYLE}>
         {entries.length === 0 && (
-          <p className="p-5 text-sm text-center" style={{ color: MUTED }}>Noch keine Einträge.</p>
+          <p className="p-5 text-sm text-center" style={{ color: MUTED }}>{t('bw_no_entries')}</p>
         )}
         {summary.points.map((p, i) => {
           const e = p.entry
@@ -205,7 +209,8 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
                 className="p-1.5 transition-colors hover:text-red-400"
                 style={{ color: MUTED }}
                 onClick={() => onDelete(e)}
-                aria-label="Löschen"
+                data-bw-entry-delete
+                aria-label={t('delete')}
               >
                 <Trash2 size={15} />
               </button>

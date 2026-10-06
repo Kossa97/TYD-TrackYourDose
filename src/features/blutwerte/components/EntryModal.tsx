@@ -1,4 +1,6 @@
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
+import { markerName } from '../lib/markerCatalog.en'
 import toast from 'react-hot-toast'
 import { CATALOG_MARKER_NAMES, normalizeMarker } from '../lib/markerCatalog'
 import { conversionHint } from '../lib/conversionHint'
@@ -30,6 +32,8 @@ interface Props {
 }
 
 export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, onSave }: Props) {
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
   const setMarker = (marker: string) => {
     onChange({
       ...draft,
@@ -43,10 +47,10 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
     const unit = draft.unit.trim()
     const parsedValue = Number(draft.value.replace(',', '.'))
 
-    if (!draft.tested_at) return toast.error('Bitte ein Testdatum eintragen')
-    if (!marker) return toast.error('Bitte einen Marker auswählen')
-    if (!Number.isFinite(parsedValue)) return toast.error('Bitte einen gültigen Wert eintragen')
-    if (!unit) return toast.error('Bitte eine Einheit eintragen')
+    if (!draft.tested_at) return toast.error(t('bw_err_date'))
+    if (!marker) return toast.error(t('bw_err_marker'))
+    if (!Number.isFinite(parsedValue)) return toast.error(t('bw_err_value'))
+    if (!unit) return toast.error(t('bw_err_unit'))
 
     onSave({ tested_at: draft.tested_at, marker, value: parsedValue, unit })
   }
@@ -62,16 +66,16 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold" style={{ color: TEXT }}>Neuer Eintrag</h2>
+        <h2 className="text-lg font-bold" style={{ color: TEXT }}>{t('bw_entry_title')}</h2>
 
         <div>
-          <label className="label">Marker</label>
+          <label className="label">{t('bw_marker')}</label>
           {markerLocked ? (
             <div
               className="rounded-2xl px-4 py-3 font-semibold"
               style={{ border: '1px solid var(--accent-border)', color: CYAN }}
             >
-              {draft.marker}
+              {markerName(draft.marker, sprache)}
             </div>
           ) : (
             <select
@@ -79,16 +83,16 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
               value={draft.marker}
               onChange={e => setMarker(e.target.value)}
             >
-              <option value="">Marker auswählen</option>
+              <option value="">{t('bw_marker_choose')}</option>
               {CATALOG_MARKER_NAMES.map(marker => (
-                <option key={marker} value={marker}>{marker}</option>
+                <option key={marker} value={marker}>{markerName(marker, sprache)}</option>
               ))}
             </select>
           )}
         </div>
 
         <div>
-          <label className="label">Datum</label>
+          <label className="label">{t('bw_date')}</label>
           <input
             className="input"
             type="date"
@@ -99,7 +103,7 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Wert</label>
+            <label className="label">{t('bw_value')}</label>
             <input
               className="input"
               inputMode="decimal"
@@ -109,7 +113,7 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
             />
           </div>
           <div>
-            <label className="label">Einheit</label>
+            <label className="label">{t('bw_unit')}</label>
             <input
               className="input"
               placeholder="ng/mL"
@@ -123,15 +127,15 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
           const hint = conversionHint(draft.marker, draft.unit, Number(draft.value.replace(',', '.')))
           return hint ? (
             <p className="text-xs" style={{ color: CYAN }}>
-              {hint} <span style={{ color: MUTED }}>· wird so im Verlauf angezeigt</span>
+              {hint} <span style={{ color: MUTED }}>{t('bw_conversion_note')}</span>
             </p>
           ) : null
         })()}
 
         <div className="flex gap-3 pt-2">
-          <button className="btn-secondary flex-1" data-app-back-close onClick={onCancel}>Abbrechen</button>
+          <button className="btn-secondary flex-1" data-app-back-close onClick={onCancel}>{t('cancel')}</button>
           <button className="btn-primary flex-1" onClick={save} disabled={saving}>
-            {saving ? 'Speichern...' : 'Speichern'}
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </div>

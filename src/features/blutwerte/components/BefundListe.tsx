@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { markerName } from '../lib/markerCatalog.en'
 import { ArrowLeft, ChevronRight, LayoutGrid, List } from 'lucide-react'
 import type { BloodworkEntry, BloodworkReport } from '../types'
 import { effectiveRange, isInRange, toNumber } from '../lib/bloodwork'
@@ -25,12 +27,13 @@ interface Props {
   onChanged: () => void
 }
 
-const werteLabel = (n: number) => (n === 1 ? '1 Wert' : `${n} Werte`)
-
 const isAuffaellig = (entry: BloodworkEntry): boolean =>
   isInRange(toNumber(entry.value), effectiveRange(entry, normalizeMarker(entry.marker))) === false
 
 export function BefundListe({ reports, entries, onChanged }: Props) {
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
+  const werteLabel = (n: number) => (n === 1 ? t('bw_values_one') : t('bw_values_many', { count: n }))
   const [openId, setOpenId] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
   const [layout, setLayout] = useState<Layout>(loadLayout)
@@ -55,7 +58,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
   if (reports.length === 0) {
     return (
       <div className="p-10 text-center" style={{ ...PANEL_STYLE, color: MUTED }}>
-        Noch keine Befunde. Importiere einen Laborbefund, um alle Werte eines Termins zusammen zu sehen.
+        {t('bw_reports_empty')}
       </div>
     )
   }
@@ -65,7 +68,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
     if (report) {
       const values = (byReport.get(report.id) ?? [])
         .slice()
-        .sort((a, b) => a.marker.localeCompare(b.marker, 'de'))
+        .sort((a, b) => markerName(a.marker, sprache).localeCompare(markerName(b.marker, sprache), sprache))
 
       return (
         <div>
@@ -74,7 +77,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
               className="p-2 -ml-2 transition-colors"
               style={{ color: MUTED }}
               onClick={() => setOpenId(null)}
-              aria-label="Zurück"
+              aria-label={t('back')}
             >
               <ArrowLeft size={20} />
             </button>
@@ -82,7 +85,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
               <p className="text-lg font-bold" style={{ color: TEXT }}>{formatDisplayDate(report.tested_at)}</p>
               {report.lab_name && <p className="text-xs" style={{ color: MUTED }}>{report.lab_name}</p>}
             </div>
-            <button className="btn-secondary text-sm" onClick={() => setEditing(true)}>Ergänzen</button>
+            <button className="btn-secondary text-sm" onClick={() => setEditing(true)}>{t('bw_add_to')}</button>
           </div>
 
           {values.length > 1 && (
@@ -90,7 +93,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
               <div className="flex gap-1 p-1 rounded-full" style={{ border: '1px solid var(--border)' }}>
                 <button
                   onClick={() => chooseLayout('liste')}
-                  aria-label="Listenansicht"
+                  aria-label={t('bw_list_view')}
                   className="p-1.5 rounded-full transition-colors"
                   style={layout === 'liste' ? { background: 'var(--accent-weak)', color: CYAN } : { color: MUTED }}
                 >
@@ -98,7 +101,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
                 </button>
                 <button
                   onClick={() => chooseLayout('raster')}
-                  aria-label="Rasteransicht"
+                  aria-label={t('bw_grid_view')}
                   className="p-1.5 rounded-full transition-colors"
                   style={layout === 'raster' ? { background: 'var(--accent-weak)', color: CYAN } : { color: MUTED }}
                 >
@@ -110,7 +113,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
 
           {values.length === 0 ? (
             <div style={PANEL_STYLE}>
-              <p className="p-5 text-sm text-center" style={{ color: MUTED }}>Keine Werte zu diesem Befund.</p>
+              <p className="p-5 text-sm text-center" style={{ color: MUTED }}>{t('bw_report_no_values')}</p>
             </div>
           ) : layout === 'raster' ? (
             <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -123,7 +126,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
                     key={entry.id}
                     style={{ padding: 12, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)' }}
                   >
-                    <p className="text-xs font-semibold leading-tight" style={{ color: TEXT }}>{entry.marker}</p>
+                    <p className="text-xs font-semibold leading-tight" style={{ color: TEXT }}>{markerName(entry.marker, sprache)}</p>
                     <p className="text-base font-bold mt-1.5" style={{ color: auffaellig ? RED : TEXT }}>
                       {formatNumber(entry.value)}{' '}
                       <span className="text-xs font-semibold" style={{ color: MUTED }}>{entry.unit}</span>
@@ -146,8 +149,8 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
                     style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
                   >
                     <div>
-                      <p className="text-sm font-semibold" style={{ color: TEXT }}>{entry.marker}</p>
-                      {referenz && <p className="text-xs mt-0.5" style={{ color: MUTED }}>Referenz: {referenz}</p>}
+                      <p className="text-sm font-semibold" style={{ color: TEXT }}>{markerName(entry.marker, sprache)}</p>
+                      {referenz && <p className="text-xs mt-0.5" style={{ color: MUTED }}>{t('bw_reference', { range: referenz })}</p>}
                     </div>
                     <span className="text-sm font-bold" style={{ color: auffaellig ? RED : TEXT }}>
                       {formatNumber(entry.value)}{' '}
@@ -189,7 +192,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
               <p className="text-xs mt-0.5" style={{ color: MUTED }}>
                 {report.lab_name ? `${report.lab_name} · ` : ''}
                 {werteLabel(values.length)}
-                {auffaelligCount > 0 && <span style={{ color: RED }}> · {auffaelligCount} auffällig</span>}
+                {auffaelligCount > 0 && <span style={{ color: RED }}> · {t('bw_out_of_range_count', { count: auffaelligCount })}</span>}
               </p>
             </div>
             <ChevronRight size={18} style={{ color: MUTED }} />

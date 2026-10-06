@@ -132,7 +132,12 @@ export function Layout() {
             ? 0
             : lockViewport
               ? 'var(--bottom-nav-height)'
-              : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
+              // Platz fuer den schwebenden FAQ-Knopf (38 px + Abstand): sonst
+              // liegt die letzte Zeile einer Seite dauerhaft unter ihm, und ein
+              // Knopf rechts darin (etwa Loeschen) laesst sich nicht antippen.
+              : hideFloatingFaq
+                ? 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))'
+                : 'calc(var(--bottom-nav-height) + 48px + env(safe-area-inset-bottom))',
           paddingTop: hideBottomNav ? 0 : (showPushBanner || showIOSBanner)
             ? 'calc(1rem + 72px + env(safe-area-inset-top))'
             : undefined,

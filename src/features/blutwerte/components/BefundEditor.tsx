@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { markerName } from '../lib/markerCatalog.en'
 import toast from 'react-hot-toast'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
@@ -50,6 +52,8 @@ const toReviewRow = (item: MergeItem): ReviewRow => ({
 
 export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
   const { user } = useAuth()
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
   const [pending, setPending] = useState<ReviewRow[]>([])
   const [conflicts, setConflicts] = useState<MergeConflict[]>([])
   const [replacements, setReplacements] = useState<Record<string, MergeItem>>({})
@@ -67,7 +71,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
   /** Ruft die Extraktion auf und gibt das validierte Ergebnis zurück (oder null bei Fehler). */
   const runExtraction = async (file: File): Promise<ExtractResult | null> => {
     if (file.size > MAX_UPLOAD_BYTES) {
-      toast.error('Datei ist zu groß (max. 10 MB). Bitte kleiner fotografieren oder komprimieren.')
+      toast.error(t('bw_file_too_large'))
       return null
     }
     const prepared = await prepareFile(file)
@@ -82,14 +86,14 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
         vergessenEinwilligung()
         setEinwilligungOffen(true)
       } else {
-        toast.error(fehler.text)
+        toast.error(t(fehler.schluessel))
       }
       return null
     }
 
     const result = parseExtractResult(data)
     if (!result || result.values.length === 0) {
-      toast.error('Auf dem Bild wurde kein Laborbefund erkannt. Bitte manuell eintragen.')
+      toast.error(t('bw_no_report_found'))
       return null
     }
     return result
@@ -124,12 +128,12 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
       if (newConflicts.length > 0) setConflicts(newConflicts)
 
       const parts: string[] = []
-      if (added.length > 0) parts.push(`${added.length} ergänzt`)
-      if (duplicates > 0) parts.push(`${duplicates} bereits vorhanden`)
-      if (newConflicts.length > 0) parts.push(`${newConflicts.length} zu klären`)
-      toast.success(parts.length > 0 ? parts.join(' · ') : 'Keine neuen Werte gefunden')
+      if (added.length > 0) parts.push(t('bw_rescan_added', { count: added.length }))
+      if (duplicates > 0) parts.push(t('bw_rescan_dupes', { count: duplicates }))
+      if (newConflicts.length > 0) parts.push(t('bw_rescan_conflicts', { count: newConflicts.length }))
+      toast.success(parts.length > 0 ? parts.join(' · ') : t('bw_rescan_none'))
     } catch {
-      toast.error('Die Datei konnte nicht verarbeitet werden.')
+      toast.error(t('bw_file_error'))
     } finally {
       setRescanning(false)
     }
@@ -179,11 +183,11 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
 
     const skipped = validPending.length - insertable.length
     if (skipped > 0) {
-      toast.success(`${skipped} Wert(e) übersprungen (schon im Befund).`)
+      toast.success(t('bw_skipped', { count: skipped }))
     }
 
     if (insertable.length === 0 && Object.keys(replacements).length === 0) {
-      toast.error('Nichts zu speichern')
+      toast.error(t('bw_nothing_to_save'))
       return
     }
 
@@ -203,7 +207,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
       }))
       const { error } = await supabase.from('bloodwork').insert(payload)
       if (error) {
-        toast.error('Konnte nicht gespeichert werden')
+        toast.error(t('bw_save_failed'))
         setSaving(false)
         return
       }
@@ -216,13 +220,13 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
         .eq('id', entryId)
         .eq('user_id', user.id)
       if (error) {
-        toast.error('Konnte nicht gespeichert werden')
+        toast.error(t('bw_save_failed'))
         setSaving(false)
         return
       }
     }
 
-    toast.success('Befund aktualisiert')
+    toast.success(t('bw_report_updated'))
     onSaved()
     onClose()
   }
@@ -235,17 +239,17 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <h2 className="text-lg font-bold" style={{ color: TEXT }}>
-          Befund vom {formatDisplayDate(report.tested_at)}{report.lab_name ? ` · ${report.lab_name}` : ''} ergänzen
+          {t('bw_editor_title', { date: formatDisplayDate(report.tested_at), lab: report.lab_name ? ` · ${report.lab_name}` : '' })}
         </h2>
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: MUTED }}>
-            Bereits gespeichert ({entries.length})
+            {t('bw_already_saved', { count: entries.length })}
           </p>
           <div className="space-y-1.5">
             {entries.map(entry => (
               <div key={entry.id} className="flex items-center justify-between text-sm">
-                <span style={{ color: MUTED }}>{entry.marker}</span>
+                <span style={{ color: MUTED }}>{markerName(entry.marker, sprache)}</span>
                 <span style={{ color: MUTED }}>
                   {formatNumber(entry.value)} {entry.unit}
                 </span>
@@ -256,7 +260,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: MUTED }}>
-            Neue Werte
+            {t('bw_new_values')}
           </p>
           <ReviewTable
             rows={pending}
@@ -274,7 +278,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
 
         <div className="flex gap-3">
           <button className="btn-secondary flex-1" onClick={addManualRow} disabled={saving || rescanning}>
-            Manuell hinzufügen
+            {t('bw_add_manual')}
           </button>
           <button
             className="btn-secondary flex-1"
@@ -286,14 +290,14 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
             }}
             disabled={saving || rescanning || (einwilligung === undefined && !einwilligungFehler)}
           >
-            {rescanning ? 'Wird ausgelesen...' : 'Datei scannen'}
+            {rescanning ? t('bw_rescanning') : t('bw_scan_file')}
           </button>
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button className="btn-secondary flex-1" data-app-back-close onClick={onClose} disabled={saving}>Abbrechen</button>
+          <button className="btn-secondary flex-1" data-app-back-close onClick={onClose} disabled={saving}>{t('cancel')}</button>
           <button className="btn-primary flex-1" onClick={handleSave} disabled={saving || rescanning}>
-            {saving ? 'Speichern...' : 'Speichern'}
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </div>

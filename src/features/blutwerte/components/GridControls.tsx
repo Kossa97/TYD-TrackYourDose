@@ -1,13 +1,15 @@
+import { useTranslation } from 'react-i18next'
 import type { SortMode } from '../lib/bloodwork'
+import { KATEGORIE_KEY } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import { KATEGORIEN, SONSTIGE } from '../lib/markerCatalog'
 import { CYAN, MUTED, TEXT } from '../styles'
 
 const SORT_LABELS: Record<SortMode, string> = {
-  kategorie: 'Kategorie',
-  name: 'Name',
-  zuletzt: 'Zuletzt getestet',
-  status: 'Auffällige zuerst',
+  kategorie: 'bw_sort_category',
+  name: 'bw_sort_name',
+  zuletzt: 'bw_sort_recent',
+  status: 'bw_sort_status',
 }
 
 interface Props {
@@ -20,10 +22,11 @@ interface Props {
 }
 
 export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, onSortMode }: Props) {
+  const { t } = useTranslation()
   const chips: Array<{ key: KategorieFilter | null; label: string }> = [
-    { key: null, label: 'Alle' },
-    ...KATEGORIEN.map(k => ({ key: k as KategorieFilter, label: k })),
-    ...(showSonstige ? [{ key: SONSTIGE as KategorieFilter, label: SONSTIGE }] : []),
+    { key: null, label: t('bw_all') },
+    ...KATEGORIEN.map(k => ({ key: k as KategorieFilter, label: t(KATEGORIE_KEY[k]) })),
+    ...(showSonstige ? [{ key: SONSTIGE as KategorieFilter, label: t(KATEGORIE_KEY[SONSTIGE]) }] : []),
   ]
 
   return (
@@ -49,7 +52,7 @@ export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, o
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">Sortieren:</label>
+        <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">{t('bw_sort')}</label>
         <select
           id="blutwerte-sort"
           className="select"
@@ -58,7 +61,7 @@ export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, o
           onChange={e => onSortMode(e.target.value as SortMode)}
         >
           {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
-            <option key={mode} value={mode}>{SORT_LABELS[mode]}</option>
+            <option key={mode} value={mode}>{t(SORT_LABELS[mode])}</option>
           ))}
         </select>
       </div>

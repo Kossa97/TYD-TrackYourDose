@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Camera, Plus } from 'lucide-react'
+import { Camera, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
@@ -8,7 +9,9 @@ import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummarie
 import { formatDisplayDate } from './lib/format'
 import type { KategorieFilter } from './lib/markerCatalog'
 import { SONSTIGE } from './lib/markerCatalog'
-import { CYAN, DISCLAIMER, PANEL_STYLE, TEXT, MUTED } from './styles'
+import { CYAN, PANEL_STYLE, TEXT, MUTED } from './styles'
+import { markerName } from './lib/markerCatalog.en'
+import { Sheet } from '../compliance/components/Sheet'
 import { MarkerGrid } from './components/MarkerGrid'
 import { MarkerDetail } from './components/MarkerDetail'
 import { GridControls } from './components/GridControls'
@@ -19,6 +22,10 @@ import { ImportFlow } from './components/import/ImportFlow'
 
 export function BlutwertePage() {
   const { user } = useAuth()
+  const { t, i18n } = useTranslation()
+  const sprache = i18n.resolvedLanguage ?? i18n.language
+  const [loeschen, setLoeschen] = useState<BloodworkEntry | null>(null)
+  const [loescht, setLoescht] = useState(false)
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
   const [reports, setReports] = useState<BloodworkReport[]>([])
   const [view, setView] = useState<'marker' | 'befunde'>('marker')
@@ -48,7 +55,7 @@ export function BlutwertePage() {
         .order('tested_at', { ascending: false }),
     ])
 
-    if (entriesResult.error) toast.error('Blutwerte konnten nicht geladen werden')
+    if (entriesResult.error) toast.error(t('bw_load_error'))
     else setEntries((entriesResult.data ?? []) as BloodworkEntry[])
 
     // Die Tabelle existiert erst nach der separat auszuführenden Migration —
@@ -56,7 +63,7 @@ export function BlutwertePage() {
     if (!reportsResult.error) setReports((reportsResult.data ?? []) as BloodworkReport[])
 
     setLoading(false)
-  }, [user])
+  }, [user, t])
 
   useEffect(() => {
     let cancelled = false
@@ -107,9 +114,9 @@ export function BlutwertePage() {
 
     const { error } = await supabase.from('bloodwork').insert(payload)
 
-    if (error) toast.error('Blutwert konnte nicht gespeichert werden')
+    if (error) toast.error(t('bw_save_error'))
     else {
-      toast.success('Blutwert gespeichert')
+      toast.success(t('bw_saved'))
       setShowForm(false)
       setDraft(emptyDraft())
       load()
@@ -117,15 +124,43 @@ export function BlutwertePage() {
     setSaving(false)
   }
 
-  const remove = async (entry: BloodworkEntry) => {
-    if (!confirm(`${entry.marker} vom ${formatDisplayDate(entry.tested_at)} löschen?`)) return
-    const { error } = await supabase.from('bloodwork').delete().eq('id', entry.id).eq('user_id', user!.id)
-    if (error) toast.error('Blutwert konnte nicht gelöscht werden')
-    else {
-      toast.success('Blutwert gelöscht')
-      load()
-    }
+  // Loeschen ueber ein eigenes Sheet statt des Browser-Fensters.
+  const remove = (entry: BloodworkEntry) => setLoeschen(entry)
+
+  const loeschenBestaetigt = async () => {
+    if (!loeschen || !user) return
+    setLoescht(true)
+    const { error } = await supabase.from('bloodwork').delete().eq('id', loeschen.id).eq('user_id', user.id)
+    setLoescht(false)
+    if (error) return toast.error(t('bw_delete_error'))
+    toast.success(t('bw_deleted'))
+    setLoeschen(null)
+    void load()
   }
+
+  const loeschenSheet = loeschen && (
+    <Sheet labelledBy="bw-delete-title" busy={loescht} onClose={() => setLoeschen(null)} role="alertdialog" data-bw-delete-sheet>
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-300">
+          <Trash2 size={18} aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <h2 id="bw-delete-title" className="text-lg font-bold text-white">{t('bw_delete_title')}</h2>
+          <p className="mt-0.5 text-sm text-slate-400">
+            {t('bw_delete_desc', { marker: markerName(loeschen.marker, sprache), date: formatDisplayDate(loeschen.tested_at) })}
+          </p>
+        </div>
+      </div>
+      <div className="mt-5 flex gap-2">
+        <button type="button" autoFocus data-app-back-close disabled={loescht} onClick={() => setLoeschen(null)} className="min-h-11 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 disabled:opacity-50">
+          {t('cancel')}
+        </button>
+        <button type="button" data-bw-delete-confirm disabled={loescht} onClick={() => void loeschenBestaetigt()} className="min-h-11 flex-1 rounded-xl bg-red-600 px-4 text-sm font-bold text-white disabled:opacity-50">
+          {t('delete')}
+        </button>
+      </div>
+    </Sheet>
+  )
 
   const modal = showForm && (
     <EntryModal
@@ -151,6 +186,7 @@ export function BlutwertePage() {
             onDelete={remove}
           />
           {modal}
+          {loeschenSheet}
         </div>
       )
     }
@@ -160,13 +196,13 @@ export function BlutwertePage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold" style={{ color: TEXT }}>Blutwerte</h1>
+        <h1 className="text-xl font-bold" style={{ color: TEXT }}>{t('bw_title')}</h1>
         <div className="flex gap-2">
           <button className="btn-secondary flex items-center gap-1.5 text-sm" onClick={() => setShowImport(true)}>
-            <Camera size={15} /> Import
+            <Camera size={15} /> {t('bw_import')}
           </button>
           <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={() => openNew()}>
-            <Plus size={15} /> Neu
+            <Plus size={15} /> {t('bw_new')}
           </button>
         </div>
       </div>
@@ -174,15 +210,15 @@ export function BlutwertePage() {
       {/* Mini stats */}
       <div className="flex mb-4 p-4" style={PANEL_STYLE}>
         <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>Einträge gesamt</p>
+          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_entries')}</p>
           <p className="text-lg font-bold" style={{ color: TEXT }}>{entries.length}</p>
         </div>
         <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>Marker getestet</p>
+          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_markers')}</p>
           <p className="text-lg font-bold" style={{ color: TEXT }}>{markersTested}</p>
         </div>
         <div className="flex-1 text-center">
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>Letzter Test</p>
+          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_last')}</p>
           <p className="text-sm font-bold leading-tight pt-1" style={{ color: TEXT }}>
             {latestDate ? formatDisplayDate(latestDate) : '–'}
           </p>
@@ -191,7 +227,7 @@ export function BlutwertePage() {
 
       {/* Ansicht: Marker / Befunde */}
       <div className="flex gap-2 mb-4">
-        {([['marker', 'Marker'], ['befunde', 'Befunde']] as [typeof view, string][]).map(([key, label]) => (
+        {([['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setView(key)}
@@ -209,7 +245,7 @@ export function BlutwertePage() {
 
       {loading && (
         <div className="p-10 text-center" style={{ ...PANEL_STYLE, color: MUTED }}>
-          Blutwerte werden geladen...
+          {t('bw_loading')}
         </div>
       )}
 
@@ -235,11 +271,12 @@ export function BlutwertePage() {
             onSelect={setSelectedMarker}
           />
 
-          <p className="text-xs text-center mt-5" style={{ color: MUTED }}>{DISCLAIMER}</p>
+          <p className="text-xs text-center mt-5" style={{ color: MUTED }}>{t('bw_disclaimer')}</p>
         </>
       )}
 
       {modal}
+      {loeschenSheet}
       {showImport && <ImportFlow onClose={() => setShowImport(false)} onSaved={load} />}
     </div>
   )

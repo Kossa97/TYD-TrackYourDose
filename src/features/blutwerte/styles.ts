@@ -11,6 +11,3 @@ export const TEXT = 'var(--text)'
 export const MUTED = 'var(--text-muted)'
 export const GREEN = '#10b981'
 export const RED = '#ef4444'
-
-export const DISCLAIMER =
-  'Diese Angaben dienen der Orientierung und ersetzen keine ärztliche Beratung.'
