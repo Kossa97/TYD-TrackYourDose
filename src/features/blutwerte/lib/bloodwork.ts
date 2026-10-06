@@ -2,6 +2,8 @@ import type { BloodworkEntry } from '../types'
 import type { Kategorie, KategorieFilter, MarkerDef } from './markerCatalog'
 import { KATEGORIEN, MARKER_CATALOG, SONSTIGE, normalizeMarker } from './markerCatalog'
 import { convert, normalizeUnitString } from './unitConversion'
+import { markerName } from './markerCatalog.en'
+import { aktiveSprache } from './sprache'
 
 export interface EffectiveRange {
   min: number | null
@@ -188,14 +190,18 @@ const kategorieRang = (kategorie: KategorieFilter): number => {
   return index === -1 ? KATEGORIEN.length : index
 }
 
+/** Nach dem angezeigten Namen (auf Englisch: dem englischen), in der aktiven Sprache. */
+const vergleicheNamen = (a: MarkerSummary, b: MarkerSummary): number =>
+  markerName(a.name).localeCompare(markerName(b.name), aktiveSprache())
+
 export function sortSummaries(summaries: MarkerSummary[], mode: SortMode): MarkerSummary[] {
   const sorted = summaries.slice()
   switch (mode) {
     case 'name':
-      return sorted.sort((a, b) => a.name.localeCompare(b.name, 'de'))
+      return sorted.sort((a, b) => vergleicheNamen(a, b))
     case 'zuletzt':
       return sorted.sort((a, b) => {
-        if (!a.latest && !b.latest) return a.name.localeCompare(b.name, 'de')
+        if (!a.latest && !b.latest) return vergleicheNamen(a, b)
         if (!a.latest) return 1
         if (!b.latest) return -1
         return b.latest.tested_at.localeCompare(a.latest.tested_at)
@@ -204,13 +210,13 @@ export function sortSummaries(summaries: MarkerSummary[], mode: SortMode): Marke
       return sorted.sort((a, b) => {
         const rang = (s: MarkerSummary) => (s.inRange === false ? 0 : s.latest ? 1 : 2)
         const diff = rang(a) - rang(b)
-        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'de')
+        return diff !== 0 ? diff : vergleicheNamen(a, b)
       })
     case 'kategorie':
     default:
       return sorted.sort((a, b) => {
         const diff = kategorieRang(a.kategorie) - kategorieRang(b.kategorie)
-        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'de')
+        return diff !== 0 ? diff : vergleicheNamen(a, b)
       })
   }
 }

@@ -55,7 +55,8 @@ export function BlutwertePage() {
         .order('tested_at', { ascending: false }),
     ])
 
-    if (entriesResult.error) toast.error(t('bw_load_error'))
+    // i18n.t statt t: sonst wuerde jeder Sprachwechsel alles neu laden.
+    if (entriesResult.error) toast.error(i18n.t('bw_load_error'))
     else setEntries((entriesResult.data ?? []) as BloodworkEntry[])
 
     // Die Tabelle existiert erst nach der separat auszuführenden Migration —
@@ -63,7 +64,7 @@ export function BlutwertePage() {
     if (!reportsResult.error) setReports((reportsResult.data ?? []) as BloodworkReport[])
 
     setLoading(false)
-  }, [user, t])
+  }, [user, i18n])
 
   useEffect(() => {
     let cancelled = false

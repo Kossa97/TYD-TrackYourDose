@@ -2018,5 +2018,9 @@
   "bw_skipped": "{{count}} Wert(e) übersprungen (schon im Befund).",
   "bw_nothing_to_save": "Nichts zu speichern",
   "bw_save_failed": "Konnte nicht gespeichert werden.",
-  "bw_report_updated": "Befund aktualisiert"
+  "bw_report_updated": "Befund aktualisiert",
+  "bw_reference_range": "Referenzbereich",
+  "bw_lab_source": "Labor",
+  "bw_range_up_to": "bis {{value}}",
+  "bw_range_from": "ab {{value}}"
 }

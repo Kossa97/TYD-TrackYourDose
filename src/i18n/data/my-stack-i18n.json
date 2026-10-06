@@ -810,7 +810,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1623,7 +1627,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2436,7 +2444,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3249,7 +3261,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4062,7 +4078,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4875,7 +4895,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5688,7 +5712,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6501,7 +6529,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7314,7 +7346,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8127,7 +8163,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8940,7 +8980,11 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9753,6 +9797,10 @@
     "bw_skipped": "{{count}} value(s) skipped (already in the report).",
     "bw_nothing_to_save": "Nothing to save",
     "bw_save_failed": "Could not be saved.",
-    "bw_report_updated": "Report updated"
+    "bw_report_updated": "Report updated",
+    "bw_reference_range": "Reference range",
+    "bw_lab_source": "lab",
+    "bw_range_up_to": "up to {{value}}",
+    "bw_range_from": "from {{value}}"
   }
 }

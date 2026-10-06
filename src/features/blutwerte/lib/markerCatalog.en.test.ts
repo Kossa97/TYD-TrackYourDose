@@ -21,6 +21,9 @@ describe('Markerkatalog auf Englisch', () => {
     expect(markerName('Kortisol', 'en')).toBe('Cortisol')
     expect(markerName('Kortisol', 'fr')).toBe('Cortisol')
     expect(markerName('Mein Laborwert', 'en')).toBe('Mein Laborwert')
+    // Synonyme aus Importen: ueber den Katalog aufgeloest, auf Deutsch unveraendert.
+    expect(markerName('Testosteron gesamt', 'en')).toBe('Testosterone')
+    expect(markerName('Testosteron gesamt', 'de')).toBe('Testosteron gesamt')
     expect(markerErklaerung(def, 'de-AT')).toBe(def.erklaerung)
     expect(markerErklaerung(def, 'en')).toContain('stress hormone')
   })

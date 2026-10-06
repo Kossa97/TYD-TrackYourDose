@@ -811,6 +811,10 @@ export const MY_STACK_EN = {
   bw_nothing_to_save: 'Nothing to save',
   bw_save_failed: 'Could not be saved.',
   bw_report_updated: 'Report updated',
+  bw_reference_range: 'Reference range',
+  bw_lab_source: 'lab',
+  bw_range_up_to: 'up to {{value}}',
+  bw_range_from: 'from {{value}}',
 }
 
 export const MY_STACK_DE = {
@@ -1625,6 +1629,10 @@ export const MY_STACK_DE = {
   bw_nothing_to_save: 'Nichts zu speichern',
   bw_save_failed: 'Konnte nicht gespeichert werden.',
   bw_report_updated: 'Befund aktualisiert',
+  bw_reference_range: 'Referenzbereich',
+  bw_lab_source: 'Labor',
+  bw_range_up_to: 'bis {{value}}',
+  bw_range_from: 'ab {{value}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

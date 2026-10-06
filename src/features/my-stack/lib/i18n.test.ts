@@ -820,6 +820,10 @@ const EXPECTED_MY_STACK_KEYS = [
   'bw_nothing_to_save',
   'bw_save_failed',
   'bw_report_updated',
+  'bw_reference_range',
+  'bw_lab_source',
+  'bw_range_up_to',
+  'bw_range_from',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

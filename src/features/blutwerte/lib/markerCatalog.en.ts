@@ -1,4 +1,5 @@
-import type { KategorieFilter, MarkerDef } from './markerCatalog'
+import { normalizeMarker, type KategorieFilter, type MarkerDef } from './markerCatalog'
+import { aktiveSprache, istDeutsch } from './sprache'
 
 /**
  * Englische Anzeige des Markerkatalogs.
@@ -105,16 +106,19 @@ export const KATEGORIE_KEY: Record<KategorieFilter, string> = {
   'Sonstige': 'bw_cat_other',
 }
 
-const deutsch = (sprache: string | undefined) => (sprache ?? 'de').toLowerCase().startsWith('de')
-
-/** Anzeigename eines Markers. Unbekannte Marker (aus Befunden) bleiben, wie sie sind. */
-export function markerName(name: string, sprache: string | undefined): string {
-  if (deutsch(sprache)) return name
-  return MARKER_EN[name]?.name ?? name
+/**
+ * Anzeigename eines Markers. Auf Deutsch bleibt der gespeicherte Name, wie er
+ * ist; sonst wird er ueber den Katalog (auch Synonyme wie „Testosteron
+ * gesamt") aufgeloest. Unbekannte Marker aus Befunden bleiben, wie sie sind.
+ */
+export function markerName(name: string, sprache: string = aktiveSprache()): string {
+  if (istDeutsch(sprache)) return name
+  const def = normalizeMarker(name)
+  return (def && MARKER_EN[def.name]?.name) ?? name
 }
 
 /** Erklaerung eines Katalogmarkers in der Anzeigesprache. */
-export function markerErklaerung(def: MarkerDef, sprache: string | undefined): string {
-  if (deutsch(sprache)) return def.erklaerung
+export function markerErklaerung(def: MarkerDef, sprache: string = aktiveSprache()): string {
+  if (istDeutsch(sprache)) return def.erklaerung
   return MARKER_EN[def.name]?.erklaerung ?? def.erklaerung
 }

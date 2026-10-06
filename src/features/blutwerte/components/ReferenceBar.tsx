@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { EffectiveRange } from '../lib/bloodwork'
 import { referenceBarGeometry } from '../lib/referenceBar'
 import { formatNumber, formatRange } from '../lib/format'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ReferenceBar({ value, unit, range, inRange }: Props) {
+  const { t } = useTranslation()
   const geo = referenceBarGeometry(value, range)
   const referenzText = formatRange(range.min, range.max, unit)
 
@@ -19,10 +21,10 @@ export function ReferenceBar({ value, unit, range, inRange }: Props) {
     // trotzdem den Referenztext zeigen, statt gar keine Information.
     return (
       <div className="flex items-baseline justify-between">
-        <p className="text-xs font-semibold" style={{ color: TEXT }}>Referenzbereich</p>
+        <p className="text-xs font-semibold" style={{ color: TEXT }}>{t('bw_reference_range')}</p>
         <p className="text-xs" style={{ color: MUTED }}>
           {referenzText}
-          {range.source === 'lab' && ' (Labor)'}
+          {range.source === 'lab' && ` (${t('bw_lab_source')})`}
         </p>
       </div>
     )
@@ -31,10 +33,10 @@ export function ReferenceBar({ value, unit, range, inRange }: Props) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <p className="text-xs font-semibold" style={{ color: TEXT }}>Referenzbereich</p>
+        <p className="text-xs font-semibold" style={{ color: TEXT }}>{t('bw_reference_range')}</p>
         <p className="text-xs" style={{ color: MUTED }}>
           {referenzText}
-          {range.source === 'lab' && ' (Labor)'}
+          {range.source === 'lab' && ` (${t('bw_lab_source')})`}
         </p>
       </div>
 

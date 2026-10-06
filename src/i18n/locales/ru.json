@@ -1786,5 +1786,9 @@
   "bw_skipped": "{{count}} value(s) skipped (already in the report).",
   "bw_nothing_to_save": "Nothing to save",
   "bw_save_failed": "Could not be saved.",
-  "bw_report_updated": "Report updated"
+  "bw_report_updated": "Report updated",
+  "bw_reference_range": "Reference range",
+  "bw_lab_source": "lab",
+  "bw_range_up_to": "up to {{value}}",
+  "bw_range_from": "from {{value}}"
 }
