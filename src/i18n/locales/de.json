@@ -2027,5 +2027,11 @@
   "bw_cycles_running": "läuft",
   "bw_cycles_more": "+{{count}} weitere",
   "bw_cycles_hint": "Nur zur Orientierung — der zeitliche Zusammenhang sagt nichts über Ursache und Wirkung.",
-  "bw_cycles_period": "{{from}} – {{to}}"
+  "bw_cycles_period": "{{from}} – {{to}}",
+  "bw_edit_title": "Wert bearbeiten",
+  "bw_edit_aria": "Wert vom {{date}} bearbeiten",
+  "bw_delete_aria": "Wert vom {{date}} löschen",
+  "bw_updated": "Wert geändert",
+  "bw_update_error": "Der Wert konnte nicht geändert werden.",
+  "bw_date_from_report": "Das Datum gehört zum Befund, aus dem der Wert stammt."
 }

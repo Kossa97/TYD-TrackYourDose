@@ -7,6 +7,10 @@ import { conversionHint } from '../lib/conversionHint'
 import { CYAN, MUTED, TEXT } from '../styles'
 
 export interface EntryDraft {
+  /** Gesetzt, wenn ein bestehender Wert bearbeitet wird. */
+  id?: string
+  /** Wert aus einem Befund: das Datum gehoert dem Befund und bleibt fest. */
+  reportId?: string | null
   tested_at: string
   marker: string
   value: string
@@ -66,7 +70,7 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold" style={{ color: TEXT }}>{t('bw_entry_title')}</h2>
+        <h2 className="text-lg font-bold" style={{ color: TEXT }}>{t(draft.id ? 'bw_edit_title' : 'bw_entry_title')}</h2>
 
         <div>
           <label className="label">{t('bw_marker')}</label>
@@ -94,11 +98,16 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
         <div>
           <label className="label">{t('bw_date')}</label>
           <input
-            className="input"
+            className="input disabled:opacity-50 disabled:cursor-not-allowed"
             type="date"
             value={draft.tested_at}
+            disabled={!!draft.reportId}
+            aria-describedby={draft.reportId ? 'bw-date-from-report' : undefined}
             onChange={e => onChange({ ...draft, tested_at: e.target.value })}
           />
+          {draft.reportId && (
+            <p id="bw-date-from-report" className="text-xs mt-1.5" style={{ color: MUTED }}>{t('bw_date_from_report')}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

@@ -819,7 +819,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1641,7 +1647,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2463,7 +2475,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3285,7 +3303,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4107,7 +4131,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4929,7 +4959,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5751,7 +5787,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6573,7 +6615,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7395,7 +7443,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8217,7 +8271,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9039,7 +9099,13 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9861,6 +9927,12 @@
     "bw_cycles_running": "ongoing",
     "bw_cycles_more": "+{{count}} more",
     "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-    "bw_cycles_period": "{{from}} – {{to}}"
+    "bw_cycles_period": "{{from}} – {{to}}",
+    "bw_edit_title": "Edit value",
+    "bw_edit_aria": "Edit value from {{date}}",
+    "bw_delete_aria": "Delete value from {{date}}",
+    "bw_updated": "Value updated",
+    "bw_update_error": "The value could not be changed.",
+    "bw_date_from_report": "The date belongs to the lab report this value comes from."
   }
 }

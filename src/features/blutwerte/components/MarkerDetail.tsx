@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { markerErklaerung, markerName } from '../lib/markerCatalog.en'
 import { format } from 'date-fns'
-import { ArrowLeft, Info, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Info, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   CartesianGrid,
   Line,
@@ -35,10 +35,11 @@ interface Props {
   zyklen?: { timelines: CycleTimeline[]; namen: ReadonlyMap<string, string> }
   onBack: () => void
   onAdd: () => void
+  onEdit: (entry: BloodworkEntry) => void
   onDelete: (entry: BloodworkEntry) => void
 }
 
-export function MarkerDetail({ summary, zyklen, onBack, onAdd, onDelete }: Props) {
+export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
@@ -237,15 +238,24 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onDelete }: Props
               style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
             >
               <span className="text-sm" style={{ color: MUTED }}>{formatDisplayDate(e.tested_at)}</span>
-              <span className="text-sm font-semibold flex-1 text-right mr-3" style={{ color: TEXT }}>
+              <span className="text-sm font-semibold flex-1 text-right mr-2" style={{ color: TEXT }}>
                 {formatNumber(v)} {u}
               </span>
               <button
-                className="p-1.5 transition-colors hover:text-red-400"
+                className="flex h-11 w-11 -my-2 items-center justify-center rounded-xl transition-colors"
+                style={{ color: MUTED }}
+                onClick={() => onEdit(e)}
+                data-bw-entry-edit
+                aria-label={t('bw_edit_aria', { date: formatDisplayDate(e.tested_at) })}
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                className="flex h-11 w-11 -my-2 -mr-3 items-center justify-center rounded-xl transition-colors hover:text-red-400"
                 style={{ color: MUTED }}
                 onClick={() => onDelete(e)}
                 data-bw-entry-delete
-                aria-label={t('delete')}
+                aria-label={t('bw_delete_aria', { date: formatDisplayDate(e.tested_at) })}
               >
                 <Trash2 size={15} />
               </button>

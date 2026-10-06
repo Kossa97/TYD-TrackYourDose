@@ -1793,5 +1793,11 @@
   "bw_cycles_running": "ongoing",
   "bw_cycles_more": "+{{count}} more",
   "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
-  "bw_cycles_period": "{{from}} – {{to}}"
+  "bw_cycles_period": "{{from}} – {{to}}",
+  "bw_edit_title": "Edit value",
+  "bw_edit_aria": "Edit value from {{date}}",
+  "bw_delete_aria": "Delete value from {{date}}",
+  "bw_updated": "Value updated",
+  "bw_update_error": "The value could not be changed.",
+  "bw_date_from_report": "The date belongs to the lab report this value comes from."
 }

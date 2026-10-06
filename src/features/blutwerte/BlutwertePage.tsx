@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
 import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, type SortMode } from './lib/bloodwork'
-import { formatDisplayDate } from './lib/format'
+import { formatDisplayDate, formatEingabe } from './lib/format'
 import type { KategorieFilter } from './lib/markerCatalog'
 import { SONSTIGE } from './lib/markerCatalog'
 import { CYAN, PANEL_STYLE, TEXT, MUTED } from './styles'
@@ -121,8 +121,39 @@ export function BlutwertePage() {
     setShowForm(true)
   }
 
+  const openEdit = (entry: BloodworkEntry) => {
+    setDraft({
+      id: entry.id,
+      reportId: entry.report_id,
+      tested_at: entry.tested_at,
+      marker: entry.marker,
+      value: formatEingabe(entry.value),
+      unit: entry.unit,
+    })
+    setShowForm(true)
+  }
+
+  // Bearbeiten aendert nur Datum, Wert und Einheit — Marker, Notiz und
+  // Referenzbereich des Labors bleiben. Bei Werten aus einem Befund gehoert
+  // das Datum dem Befund und wird nicht mitgeschickt.
+  const update = async (id: string, parsed: { tested_at: string; value: number; unit: string }) => {
+    if (!user) return
+    setSaving(true)
+    const changes = draft.reportId
+      ? { value: parsed.value, unit: parsed.unit }
+      : { tested_at: parsed.tested_at, value: parsed.value, unit: parsed.unit }
+    const { error } = await supabase.from('bloodwork').update(changes).eq('id', id).eq('user_id', user.id)
+    setSaving(false)
+    if (error) return toast.error(t('bw_update_error'))
+    toast.success(t('bw_updated'))
+    setShowForm(false)
+    setDraft(emptyDraft())
+    void load()
+  }
+
   const save = async (parsed: { tested_at: string; marker: string; value: number; unit: string }) => {
     if (!user) return
+    if (draft.id) return update(draft.id, parsed)
 
     setSaving(true)
     const payload = {
@@ -187,7 +218,7 @@ export function BlutwertePage() {
   const modal = showForm && (
     <EntryModal
       draft={draft}
-      markerLocked={!!draft.marker && selectedMarker === draft.marker}
+      markerLocked={!!draft.id || (!!draft.marker && selectedMarker === draft.marker)}
       saving={saving}
       onChange={setDraft}
       onCancel={() => setShowForm(false)}
@@ -206,6 +237,7 @@ export function BlutwertePage() {
             zyklen={zyklen}
             onBack={() => setSelectedMarker(null)}
             onAdd={() => openNew(selectedMarker)}
+            onEdit={openEdit}
             onDelete={remove}
           />
           {modal}

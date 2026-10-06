@@ -43,7 +43,7 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
 
   await page.goto('/blutwerte')
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
-  await page.locator('[data-bw-entry-delete]').click()
+  await page.getByRole('button', { name: 'Wert vom 15.09.2026 löschen' }).click()
 
   const sheet = page.getByRole('alertdialog', { name: 'Wert löschen?' })
   await expect(sheet).toContainText('Kortisol vom 15.09.2026 wird entfernt.')
@@ -56,6 +56,46 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
   await expect(page.getByText('Blutwert gelöscht')).toBeVisible()
   expect(mock.table('bloodwork')).toHaveLength(0)
   expect(browserFenster).toBe(false)
+})
+
+test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mock }) => {
+  const eintrag = wert(mock, 'Kortisol', { value: 14, notes: 'nuechtern' })
+  await page.goto('/blutwerte')
+  await page.getByRole('button', { name: /Kortisol/ }).first().click()
+  await page.getByRole('button', { name: 'Wert vom 15.09.2026 bearbeiten' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Wert bearbeiten' })).toBeVisible()
+  // Marker ist fest, kein Auswahlfeld
+  await expect(page.locator('[data-app-modal] select')).toHaveCount(0)
+  await page.locator('[data-app-modal] input[type="date"]').fill('2026-09-14')
+  await page.getByPlaceholder('42.5').fill('16,5')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+
+  await expect(page.getByText('Wert geändert')).toBeVisible()
+  const [zeile] = mock.table('bloodwork')
+  expect(zeile).toMatchObject({ id: eintrag.id, tested_at: '2026-09-14', value: 16.5, unit: 'µg/dL', notes: 'nuechtern' })
+  // erneut geoeffnet: Dezimalkomma wie eingegeben
+  await page.getByRole('button', { name: 'Wert vom 14.09.2026 bearbeiten' }).click()
+  await expect(page.getByPlaceholder('42.5')).toHaveValue('16,5')
+})
+
+test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz bleibt', async ({ page, mock }) => {
+  const befund = mock.insert('bloodwork_reports', { user_id: TEST_USER.id, tested_at: '2026-09-15', lab_name: null, source: 'import' })
+  wert(mock, 'Kortisol', { value: 14, report_id: befund.id, ref_min: 5, ref_max: 25 })
+  await page.goto('/blutwerte')
+  await page.getByRole('button', { name: /Kortisol/ }).first().click()
+  if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/liste.png`, fullPage: true })
+  await page.getByRole('button', { name: 'Wert vom 15.09.2026 bearbeiten' }).click()
+
+  const datum = page.locator('[data-app-modal] input[type="date"]')
+  await expect(datum).toBeDisabled()
+  await expect(page.getByText('Das Datum gehört zum Befund, aus dem der Wert stammt.')).toBeVisible()
+  if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/bearbeiten.png` })
+  await page.getByPlaceholder('42.5').fill('20')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+
+  await expect(page.getByText('Wert geändert')).toBeVisible()
+  expect(mock.table('bloodwork')[0]).toMatchObject({ tested_at: '2026-09-15', value: 20, report_id: befund.id, ref_min: 5, ref_max: 25 })
 })
 
 test('Verlauf: Zyklen aus My Stack als Zeilen unter dem Diagramm', async ({ page, mock }) => {

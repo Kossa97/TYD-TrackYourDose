@@ -40,6 +40,17 @@ export const formatNumber = (value: number | string) => {
   return zahlFormat().format(numeric)
 }
 
+/**
+ * Zahl fuer ein Eingabefeld: volle Genauigkeit, ohne Tausendertrennung, mit
+ * dem Dezimalzeichen der Sprache (16,5 / 16.5). Das Formular liest beides.
+ */
+export const formatEingabe = (value: number | string, sprache: string = aktiveSprache()) => {
+  const numeric = toNumber(value)
+  if (!Number.isFinite(numeric)) return String(value)
+  const komma = new Intl.NumberFormat(sprache).formatToParts(1.5).find(part => part.type === 'decimal')?.value ?? '.'
+  return String(numeric).replace('.', komma)
+}
+
 /** Menschlich lesbarer Referenztext, z.B. "400–900 ng/dL" oder "bis 1 mg/L" / "up to 1 mg/L". */
 export const formatRange = (min: number | null, max: number | null, unit: string): string | null => {
   if (min == null && max == null) return null
