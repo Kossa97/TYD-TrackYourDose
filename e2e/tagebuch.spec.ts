@@ -291,9 +291,15 @@ test('Auswertung: Reiter, Verlauf, Abstand zur Einnahme, Tabelle pro Substanz', 
   await expect(panel.getByText('Nur Einträge mit Bezug zu einer Einnahme (6)')).toBeVisible()
 
   const tabelle = panel.locator('[data-tagebuch-substanzen] tbody tr')
-  await expect(tabelle).toHaveCount(3)
-  await expect(tabelle.first()).toContainText('BPC-157')
-  await expect(tabelle.last()).toContainText('Ohne Substanz')
+  // Je Substanz eine Zeile mit Zahlen, darunter die haeufigste Nebenwirkung.
+  const zeilen = page.locator('[data-tagebuch-substanzen] tbody th[scope=row]')
+  await expect(zeilen).toHaveText(['BPC-157', 'TB-500', 'Ohne Substanz'])
+  // Alle drei haben eine Nebenwirkung: je Substanz zwei Zeilen, die zweite gehoert zur ersten.
+  await expect(tabelle).toHaveCount(6)
+  await expect(tabelle.nth(1)).toHaveText('Häufigste Nebenwirkung: Rötung (3×)')
+  await expect(tabelle.nth(5)).toHaveText('Häufigste Nebenwirkung: Müdigkeit (1×)')
+  const bezug = await tabelle.nth(1).locator('td').getAttribute('headers')
+  await expect(page.locator(`[id="${bezug}"]`)).toHaveText('BPC-157')
 
   await panel.getByRole('button', { name: 'Alles' }).click()
   await expect(panel.getByText('Nur Einträge mit Bezug zu einer Einnahme (8)')).toBeVisible()
@@ -344,4 +350,48 @@ test('Liste: Bearbeiten und Loeschen sitzen vertikal mittig in der Karte', async
     expect(Math.abs(mitteKarte - mitteKnopf)).toBeLessThan(2)
   }
   if (info.project.name === 'iphone-13') await page.screenshot({ path: info.outputPath('liste.png') })
+})
+
+test('Formular: Speichern ist ohne Scrollen sichtbar; Intensitaet per Stufe waehlbar', async ({ page, mock }, info) => {
+  seedPeptide(mock, 'BPC-157', { startDate: '2026-09-01' })
+  await page.goto('/tagebuch')
+  await page.getByRole('button', { name: 'Neu' }).click()
+  const dialog = page.getByRole('dialog')
+  const speichern = dialog.getByRole('button', { name: 'Speichern' })
+  await expect(speichern).toBeInViewport({ ratio: 1 })
+
+  const stufen = dialog.getByRole('group', { name: 'Intensität' })
+  await expect(stufen.getByRole('radio', { name: '3 – Mittel' })).toBeChecked()
+  await stufen.getByText('4', { exact: true }).click()
+  await expect(stufen.getByRole('radio', { name: '4 – Stark' })).toBeChecked()
+  await expect(stufen).toContainText('Stark')
+
+  // Ein fokussiertes Feld am Ende verschwindet nicht hinter der festen Knopfleiste.
+  await dialog.getByLabel('Notizen (optional)').focus()
+  const feld = (await dialog.getByLabel('Notizen (optional)').boundingBox())!
+  const leiste = (await speichern.boundingBox())!
+  expect(feld.y + feld.height).toBeLessThanOrEqual(leiste.y)
+
+  await dialog.getByLabel('Beschreibung *').fill('Unruhe')
+  if (info.project.name === 'iphone-se') await page.screenshot({ path: info.outputPath('form.png') })
+  await speichern.click()
+  await expect(dialog).toBeHidden()
+  expect(mock.table('effects')[0]).toMatchObject({ description: 'Unruhe', severity: 4 })
+})
+
+test('Auswertung: Tabellenkopf nennt Wirkung und Nebenwirkung in Worten', async ({ page, mock }, info) => {
+  auswertungsDaten(mock)
+  await page.goto('/tagebuch')
+  await page.getByRole('tab', { name: 'Auswertung' }).click()
+  const kopf = page.locator('[data-tagebuch-substanzen] thead')
+  await expect(kopf).toContainText('Wirk.')
+  await expect(kopf).toContainText('Neben.')
+  await expect(page.locator('[data-tagebuch-substanzen]').getByRole('columnheader', { name: 'Nebenwirkungen' })).toHaveCount(1)
+  // Passt ohne seitliches Scrollen auf das kleinste Geraet.
+  const breite = await page.locator('[data-tagebuch-substanzen]').evaluate(el => [el.scrollWidth, el.parentElement!.clientWidth])
+  expect(breite[0]).toBeLessThanOrEqual(breite[1])
+  if (info.project.name === 'iphone-se') {
+    await page.locator('[data-tagebuch-substanzen]').scrollIntoViewIfNeeded()
+    await page.screenshot({ path: info.outputPath('tabelle.png') })
+  }
 })
