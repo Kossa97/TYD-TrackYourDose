@@ -19,12 +19,17 @@ import { AuffaelligeWerte } from './components/AuffaelligeWerte'
 import { BefundListe } from './components/BefundListe'
 import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal'
 import { ImportFlow } from './components/import/ImportFlow'
+import type { CycleTimeline } from '../../lib/planTimeline'
+import { loadCycleTimelines } from '../my-stack/services/planLifecycle'
 
 export function BlutwertePage() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [loeschen, setLoeschen] = useState<BloodworkEntry | null>(null)
+  // Zyklen aus My Stack fuer die Zeitstreifen im Verlauf. Fehlen sie
+  // (Fehler, keine Zyklen), bleibt der Verlauf einfach ohne Streifen.
+  const [zyklen, setZyklen] = useState<{ timelines: CycleTimeline[]; namen: Map<string, string> } | undefined>(undefined)
   const [loescht, setLoescht] = useState(false)
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
   const [reports, setReports] = useState<BloodworkReport[]>([])
@@ -73,6 +78,23 @@ export function BlutwertePage() {
     })
     return () => { cancelled = true }
   }, [load])
+
+  useEffect(() => {
+    if (!user) return
+    let aktuell = true
+    void Promise.allSettled([
+      loadCycleTimelines(supabase as never, user.id, { includeUnavailable: true }),
+      supabase.from('stack_items').select('id, display_name').eq('user_id', user.id),
+    ]).then(([timelines, items]) => {
+      if (!aktuell || timelines.status !== 'fulfilled') return
+      const namen = new Map<string, string>()
+      if (items.status === 'fulfilled') {
+        for (const item of (items.value.data ?? []) as { id: string; display_name: string }[]) namen.set(item.id, item.display_name)
+      }
+      setZyklen({ timelines: timelines.value, namen })
+    })
+    return () => { aktuell = false }
+  }, [user])
 
   const summaries = useMemo(() => buildMarkerSummaries(entries), [entries])
 
@@ -182,6 +204,7 @@ export function BlutwertePage() {
         <div>
           <MarkerDetail
             summary={summary}
+            zyklen={zyklen}
             onBack={() => setSelectedMarker(null)}
             onAdd={() => openNew(selectedMarker)}
             onDelete={remove}

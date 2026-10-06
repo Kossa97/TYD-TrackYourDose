@@ -814,7 +814,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1631,7 +1636,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2448,7 +2458,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3265,7 +3280,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4082,7 +4102,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4899,7 +4924,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5716,7 +5746,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6533,7 +6568,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7350,7 +7390,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8167,7 +8212,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8984,7 +9034,12 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9801,6 +9856,11 @@
     "bw_reference_range": "Reference range",
     "bw_lab_source": "lab",
     "bw_range_up_to": "up to {{value}}",
-    "bw_range_from": "from {{value}}"
+    "bw_range_from": "from {{value}}",
+    "bw_cycles_title": "Your cycles in this period",
+    "bw_cycles_running": "ongoing",
+    "bw_cycles_more": "+{{count}} more",
+    "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+    "bw_cycles_period": "{{from}} – {{to}}"
   }
 }

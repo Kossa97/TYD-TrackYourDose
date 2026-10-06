@@ -20,17 +20,26 @@ import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
 import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
 import { TrendIcon, trendColor } from './MarkerGrid'
 import { ReferenceBar } from './ReferenceBar'
+import { PLOT_LINKS, PLOT_RECHTS, ZyklusStreifen } from './ZyklusStreifen'
+import type { CycleTimeline } from '../../../lib/planTimeline'
+import { zyklusZeilen } from '../lib/zyklusZeilen'
 
 export type RangeFilter = '3M' | '6M' | '1J' | 'ALL'
 
+/** Ein Kalendertag als Zeitpunkt (UTC-Mitternacht) — und zurueck. */
+const tagMs = (tag: string) => Date.parse(`${tag}T00:00:00Z`)
+const msTag = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+
 interface Props {
   summary: MarkerSummary
+  /** Zyklen aus My Stack fuer die Zeitstreifen unter dem Verlauf. */
+  zyklen?: { timelines: CycleTimeline[]; namen: ReadonlyMap<string, string> }
   onBack: () => void
   onAdd: () => void
   onDelete: (entry: BloodworkEntry) => void
 }
 
-export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
+export function MarkerDetail({ summary, zyklen, onBack, onAdd, onDelete }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
@@ -49,16 +58,27 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
     return format(d, 'yyyy-MM-dd')
   })()
 
-  // oldest -> newest for the chart
+  // oldest -> newest for the chart. Die x-Achse ist echte Zeit (Tage), damit
+  // die Zyklus-Zeilen darunter auf derselben Achse liegen.
   const windowPoints = summary.points.filter(p => (cutoff ? p.entry.tested_at >= cutoff : true))
   const chartData = windowPoints
     .filter(p => p.value != null)
     .slice()
     .sort((a, b) => a.entry.tested_at.localeCompare(b.entry.tested_at))
     .map(p => ({
-      date_label: formatChartDate(p.entry.tested_at),
+      t: tagMs(p.entry.tested_at),
       value: p.value as number,
     }))
+
+  const heute = format(now, 'yyyy-MM-dd')
+  const fenster = {
+    von: cutoff ?? (chartData.length > 0 ? msTag(chartData[0].t) : heute),
+    bis: heute,
+  }
+  const achse: [number, number] = [tagMs(fenster.von), tagMs(fenster.bis)]
+  const streifen = zyklen
+    ? zyklusZeilen(zyklen.timelines, zyklen.namen, fenster, heute, Intl.DateTimeFormat().resolvedOptions().timeZone)
+    : { zeilen: [], weitere: 0 }
 
   const excludedCount = windowPoints.filter(p => p.value == null).length
 
@@ -162,17 +182,29 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
       {chartData.length > 0 ? (
         <div className="p-4 mb-4" style={PANEL_STYLE}>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+            <LineChart data={chartData} margin={{ top: 8, right: PLOT_RECHTS, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="date_label" tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
-              <YAxis tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
-              <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 12, color: 'var(--text)' }} />
+              <XAxis
+                dataKey="t"
+                type="number"
+                scale="time"
+                domain={achse}
+                tickFormatter={(ms: number) => formatChartDate(msTag(ms))}
+                tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }}
+              />
+              <YAxis width={PLOT_LINKS} tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
+              <Tooltip
+                labelFormatter={label => (typeof label === 'number' ? formatDisplayDate(msTag(label)) : label)}
+                formatter={value => [`${formatNumber(Number(value))} ${shownUnit}`, markerName(name, sprache)]}
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 12, color: 'var(--text)' }}
+              />
               {range.min != null && range.max != null && (
                 <ReferenceArea y1={range.min} y2={range.max} fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)" />
               )}
               <Line type="monotone" dataKey="value" stroke="#00ccf5" strokeWidth={2} dot={{ fill: '#00ccf5', r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
+          <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
         </div>
       ) : (
         <div className="p-6 mb-4 text-center text-sm" style={{ ...PANEL_STYLE, color: MUTED }}>

@@ -1792,5 +1792,10 @@
   "bw_reference_range": "Reference range",
   "bw_lab_source": "lab",
   "bw_range_up_to": "up to {{value}}",
-  "bw_range_from": "from {{value}}"
+  "bw_range_from": "from {{value}}",
+  "bw_cycles_title": "Your cycles in this period",
+  "bw_cycles_running": "ongoing",
+  "bw_cycles_more": "+{{count}} more",
+  "bw_cycles_hint": "Shown for orientation only — the timing says nothing about cause and effect.",
+  "bw_cycles_period": "{{from}} – {{to}}"
 }

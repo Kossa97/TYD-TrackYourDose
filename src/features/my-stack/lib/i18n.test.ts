@@ -824,6 +824,11 @@ const EXPECTED_MY_STACK_KEYS = [
   'bw_lab_source',
   'bw_range_up_to',
   'bw_range_from',
+  'bw_cycles_title',
+  'bw_cycles_running',
+  'bw_cycles_more',
+  'bw_cycles_hint',
+  'bw_cycles_period',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

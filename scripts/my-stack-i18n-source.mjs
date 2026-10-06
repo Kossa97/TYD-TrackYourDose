@@ -815,6 +815,11 @@ export const MY_STACK_EN = {
   bw_lab_source: 'lab',
   bw_range_up_to: 'up to {{value}}',
   bw_range_from: 'from {{value}}',
+  bw_cycles_title: 'Your cycles in this period',
+  bw_cycles_running: 'ongoing',
+  bw_cycles_more: '+{{count}} more',
+  bw_cycles_hint: 'Shown for orientation only — the timing says nothing about cause and effect.',
+  bw_cycles_period: '{{from}} – {{to}}',
 }
 
 export const MY_STACK_DE = {
@@ -1633,6 +1638,11 @@ export const MY_STACK_DE = {
   bw_lab_source: 'Labor',
   bw_range_up_to: 'bis {{value}}',
   bw_range_from: 'ab {{value}}',
+  bw_cycles_title: 'Deine Zyklen in diesem Zeitraum',
+  bw_cycles_running: 'läuft',
+  bw_cycles_more: '+{{count}} weitere',
+  bw_cycles_hint: 'Nur zur Orientierung — der zeitliche Zusammenhang sagt nichts über Ursache und Wirkung.',
+  bw_cycles_period: '{{from}} – {{to}}',
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)
