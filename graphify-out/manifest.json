@@ -1524,9 +1524,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1791303480.109002,
-    "seen": 1791303503.6796124,
-    "ast_hash": "62a25b3d08afe894768dbb183642bb89",
+    "mtime": 1791304396.6693265,
+    "seen": 1791304413.9610791,
+    "ast_hash": "c93a416ae335eaaa64542f58c5696d4f",
     "semantic_hash": ""
   },
   "README.md": {
@@ -2328,9 +2328,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/BlutwertePage.tsx": {
-    "mtime": 1791302781.4586341,
-    "seen": 1791303503.6569679,
-    "ast_hash": "a284a4c1d66c1d2fc6fa23d03ec0f606",
+    "mtime": 1791303756.4472456,
+    "seen": 1791304413.935975,
+    "ast_hash": "dbdf8fce6bed80794f79b6404a03c257",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/AuffaelligeWerte.tsx": {
@@ -4188,15 +4188,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
-    "mtime": 1791302837.8354356,
-    "seen": 1791303503.6686,
-    "ast_hash": "d0334a9d8ebb30b6f67a8132bcd9f5d2",
+    "mtime": 1791303840.2704368,
+    "seen": 1791304413.949492,
+    "ast_hash": "41e81cb956b2eb8dacbe8d7f6bac5e39",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.ts": {
-    "mtime": 1791302626.8233235,
-    "seen": 1791303503.6686022,
-    "ast_hash": "23f12e5f7f16f4810474643f1b7f99d9",
+    "mtime": 1791303664.1242664,
+    "seen": 1791304413.9494936,
+    "ast_hash": "2b159cd06fb5fbc8a360f03b7fa0a274",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackInventory.test.ts": {
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791303022.932993,
-    "seen": 1791303503.6783705,
+    "mtime": 1791303951.5530481,
+    "seen": 1791304413.959842,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5316,9 +5316,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planCard.ts": {
-    "mtime": 1790828474.203064,
-    "seen": 1791278682.5269904,
-    "ast_hash": "a952093a3b1702e5d6f42214c80513b2",
+    "mtime": 1791303664.1235745,
+    "seen": 1791304413.9477525,
+    "ast_hash": "cffad427207d8e1d63a7aa6ccf784264",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/localDays.ts": {
@@ -6234,15 +6234,15 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/zyklusZeilen.test.ts": {
-    "mtime": 1791302846.9200041,
-    "seen": 1791303503.6581547,
-    "ast_hash": "49b74cdce58423ba81f207b42b80ff32",
+    "mtime": 1791303840.2698622,
+    "seen": 1791304413.9375913,
+    "ast_hash": "57a3dc4da93eda0a774ba6cfb850b29c",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/zyklusZeilen.ts": {
-    "mtime": 1791302846.9144764,
-    "seen": 1791303503.6581566,
-    "ast_hash": "a5eda2f455cd83c5669f6b6174e85b25",
+    "mtime": 1791303709.5963686,
+    "seen": 1791304413.9375942,
+    "ast_hash": "d57f07eab15e53718ca230657df2e759",
     "semantic_hash": ""
   }
 }
