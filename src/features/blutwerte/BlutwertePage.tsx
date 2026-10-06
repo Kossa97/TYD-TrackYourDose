@@ -5,11 +5,10 @@ import { Camera, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
-import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, ungepruefteWerte, type SortMode } from './lib/bloodwork'
+import { AUFFAELLIG, auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, ungepruefteWerte, type MarkerFilter, type SortMode } from './lib/bloodwork'
 import { formatDisplayDate, formatEingabe } from './lib/format'
-import type { KategorieFilter } from './lib/markerCatalog'
 import { SONSTIGE } from './lib/markerCatalog'
-import { CYAN, PANEL_STYLE, RED, RED_WEAK, TEXT, MUTED } from './styles'
+import { CYAN, PANEL_STYLE, TEXT, MUTED } from './styles'
 import { markerName } from './lib/markerCatalog.en'
 import { Sheet } from '../compliance/components/Sheet'
 import { MarkerGrid } from './components/MarkerGrid'
@@ -35,8 +34,7 @@ export function BlutwertePage() {
   const [loescht, setLoescht] = useState(false)
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
   const [reports, setReports] = useState<BloodworkReport[]>([])
-  // Vorausgewaehlt: was Aufmerksamkeit braucht.
-  const [view, setView] = useState<'auffaellig' | 'marker' | 'befunde'>('auffaellig')
+  const [view, setView] = useState<'marker' | 'befunde'>('marker')
   const [loading, setLoading] = useState(true)
   // Einmal geladen: spaeteres Neuladen (nach Speichern, Import …) laesst den
   // Inhalt stehen, statt ihn kurz durch „Laden …" zu ersetzen.
@@ -47,7 +45,8 @@ export function BlutwertePage() {
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft())
-  const [kategorie, setKategorie] = useState<KategorieFilter | null>(null)
+  // Vorausgewaehlt: der Filter „Auffällige“ — was Aufmerksamkeit braucht.
+  const [kategorie, setKategorie] = useState<MarkerFilter>(AUFFAELLIG)
   const [sortMode, setSortMode] = useState<SortMode>('kategorie')
 
   const load = useCallback(async () => {
@@ -107,7 +106,7 @@ export function BlutwertePage() {
   const showSonstige = useMemo(() => summaries.some(s => s.kategorie === SONSTIGE), [summaries])
 
   const visibleSummaries = useMemo(
-    () => sortSummaries(filterByKategorie(summaries, kategorie), sortMode),
+    () => sortSummaries(filterByKategorie(summaries, kategorie === AUFFAELLIG ? null : kategorie), sortMode),
     [summaries, kategorie, sortMode],
   )
 
@@ -249,7 +248,7 @@ export function BlutwertePage() {
     }
   }
 
-  // ---------- Übersicht: Tabs Auffällig / Marker / Befunde ----------
+  // ---------- Übersicht: Tabs Marker / Befunde ----------
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -282,16 +281,14 @@ export function BlutwertePage() {
         </div>
       </div>
 
-      {/* Ansicht: Auffällig (vorausgewählt) / Marker / Befunde */}
-      <div className="flex gap-1.5 mb-4">
-        {([['auffaellig', t('bw_view_flagged')], ['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
+      {/* Ansicht: Marker / Befunde; unter Marker der Filter „Auffällige“ (vorausgewählt) */}
+      <div className="flex gap-2 mb-4">
+        {([['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setView(key)}
             aria-pressed={view === key}
-            // Die Zahl am Tab mit Zusammenhang vorlesen: „Auffällige Werte (2)".
-            aria-label={key === 'auffaellig' && auffaellig.length > 0 ? t('bw_out_of_range_title', { count: auffaellig.length }) : undefined}
-            className="flex-auto inline-flex min-h-9 items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
+            className="flex-1 min-h-9 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
             style={
               view === key
                 ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
@@ -299,16 +296,6 @@ export function BlutwertePage() {
             }
           >
             {label}
-            {key === 'auffaellig' && !erstLaden && auffaellig.length > 0 && (
-              <span
-                aria-hidden="true"
-                className="min-w-5 rounded-full px-1.5 text-xs font-bold leading-5 tabular-nums"
-                style={{ background: RED_WEAK, color: RED }}
-                data-bw-flagged-count
-              >
-                {auffaellig.length}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -323,41 +310,40 @@ export function BlutwertePage() {
         <BefundListe reports={reports} entries={entries} onChanged={load} />
       )}
 
-      {!erstLaden && view === 'auffaellig' && (
-        ladeFehler && entries.length === 0 ? (
-          // Nie „Noch keine Blutwerte" sagen, wenn nur das Laden scheiterte.
-          <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-load-error>
-            <p className="text-sm" style={{ color: TEXT }}>{t('bw_load_error')}</p>
-            <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={() => void load()}>
-              {t('ai_consent_retry')}
-            </button>
-          </div>
-        ) : (
-          <AuffaelligeWerte
-            summaries={auffaellig}
-            ungeprueft={ungeprueft}
-            hatWerte={entries.length > 0}
-            onSelect={setSelectedMarker}
-            onAlleMarker={() => setView('marker')}
-          />
-        )
-      )}
-
       {!erstLaden && view === 'marker' && (
         <>
           <GridControls
             kategorie={kategorie}
+            auffaellig={auffaellig.length}
             sortMode={sortMode}
             showSonstige={showSonstige}
             onKategorie={setKategorie}
             onSortMode={setSortMode}
           />
 
-          <MarkerGrid
-            summaries={visibleSummaries}
-            grouped={sortMode === 'kategorie' && kategorie === null}
-            onSelect={setSelectedMarker}
-          />
+          {kategorie !== AUFFAELLIG ? (
+            <MarkerGrid
+              summaries={visibleSummaries}
+              grouped={sortMode === 'kategorie' && kategorie === null}
+              onSelect={setSelectedMarker}
+            />
+          ) : ladeFehler && entries.length === 0 ? (
+            // Nie „Noch keine Blutwerte“ sagen, wenn nur das Laden scheiterte.
+            <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-load-error>
+              <p className="text-sm" style={{ color: TEXT }}>{t('bw_load_error')}</p>
+              <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={() => void load()}>
+                {t('ai_consent_retry')}
+              </button>
+            </div>
+          ) : (
+            <AuffaelligeWerte
+              summaries={auffaellig}
+              ungeprueft={ungeprueft}
+              hatWerte={entries.length > 0}
+              onSelect={setSelectedMarker}
+              onAlleMarker={() => setKategorie(null)}
+            />
+          )}
         </>
       )}
 

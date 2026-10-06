@@ -10,10 +10,10 @@ import { seedPeptide } from './support/myStack'
  * deutsche Markername der Schluessel.
  */
 
-/** Uebersicht oeffnen und in den Tab „Marker" wechseln (vorausgewaehlt ist „Auffällig"). */
+/** Uebersicht oeffnen und unter „Marker" den Filter „Alle" waehlen (vorausgewaehlt ist „Auffällige"). */
 async function markerAnsicht(page: Page) {
   await page.goto('/blutwerte')
-  await page.getByRole('button', { name: 'Marker', exact: true }).click()
+  await page.getByRole('button', { name: 'Alle', exact: true }).click()
 }
 
 function wert(mock: MockSupabase, marker: string, felder: Record<string, unknown> = {}) {
@@ -33,7 +33,7 @@ test.describe('auf Englisch', () => {
     await expect(page.getByRole('heading', { name: 'Blood values' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Out-of-range values (1)' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('[data-bw-flagged]')).toContainText('Cortisol')
-    await page.getByRole('button', { name: 'Markers', exact: true }).click()
+    await page.getByRole('button', { name: 'All', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Hormones' })).toBeVisible()
     await expect(page.getByText('Kortisol')).toHaveCount(0)
 
@@ -45,13 +45,22 @@ test.describe('auf Englisch', () => {
   })
 })
 
-test('Uebersicht: „Auffällig" ist vorausgewaehlt, mit Anzahl; Tippen fuehrt zum Marker', async ({ page, mock }) => {
+test('Marker: Filter „Auffällige" steht vorn und ist vorausgewaehlt, mit Anzahl; Tippen fuehrt zum Marker', async ({ page, mock }) => {
   wert(mock, 'Kortisol', { value: 30, ref_min: 5, ref_max: 25 })
   wert(mock, 'Ferritin', { value: 80, unit: 'ng/mL', ref_min: 30, ref_max: 400 })
   await page.goto('/blutwerte')
 
+  // Oben die zwei Tabs, Marker aktiv
+  await expect(page.getByRole('button', { name: 'Marker', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Befunde', exact: true })).toBeVisible()
   const tab = page.getByRole('button', { name: 'Auffällige Werte (1)' })
   await expect(tab).toHaveAttribute('aria-pressed', 'true')
+  await expect(tab).toContainText('Auffällige')
+  // Vorn in der Leiste, vor „Alle" und den Kategorien
+  const chips = await tab.locator('..').getByRole('button').allTextContents()
+  expect(chips.slice(0, 3)).toEqual(['Auffällige1', 'Alle', 'Hormone'])
+  // keine Sortierung in der Liste der Auffaelligen
+  await expect(page.locator('#blutwerte-sort')).toHaveCount(0)
   const liste = page.locator('[data-bw-flagged]')
   await expect(liste).toContainText('Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.')
   await expect(liste).toContainText('Kortisol')
@@ -62,9 +71,10 @@ test('Uebersicht: „Auffällig" ist vorausgewaehlt, mit Anzahl; Tippen fuehrt z
       await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/auffaellig-${thema}.png` })
     }
   }
-  // Der Marker-Tab zeigt den Block nicht mehr oben
-  await page.getByRole('button', { name: 'Marker', exact: true }).click()
+  // „Alle" zeigt das Raster ohne den Block
+  await page.getByRole('button', { name: 'Alle', exact: true }).click()
   await expect(page.locator('[data-bw-flagged]')).toHaveCount(0)
+  await expect(page.locator('#blutwerte-sort')).toBeVisible()
   await tab.click()
   await liste.getByRole('button', { name: /Kortisol/ }).click()
   await expect(page.getByRole('heading', { name: 'Kortisol' })).toBeVisible()
@@ -81,7 +91,7 @@ test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne W
   await expect(leer).toContainText('Alle zuletzt gemessenen Werte liegen im Referenzbereich.')
   await expect(leer.locator('[data-bw-unchecked]')).toHaveCount(0)
   await leer.getByRole('button', { name: 'Alle Marker ansehen' }).click()
-  await expect(page.getByRole('button', { name: 'Marker', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Alle', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('Uebersicht: Werte ohne Referenzbereich gelten als ungeprueft, nicht als „im Bereich"', async ({ page, mock }) => {

@@ -176,6 +176,10 @@ export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[]
   })
 }
 
+/** Filter-Chip „Auffällige“ in der Marker-Ansicht — neben den Kategorien. */
+export const AUFFAELLIG = 'auffaellig' as const
+export type MarkerFilter = KategorieFilter | null | typeof AUFFAELLIG
+
 export function filterByKategorie(
   summaries: MarkerSummary[],
   kategorie: KategorieFilter | null,

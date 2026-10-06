@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import type { SortMode } from '../lib/bloodwork'
+import { AUFFAELLIG, type MarkerFilter, type SortMode } from '../lib/bloodwork'
 import { KATEGORIE_KEY } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import { KATEGORIEN, SONSTIGE } from '../lib/markerCatalog'
-import { CYAN, MUTED, TEXT } from '../styles'
+import { CYAN, MUTED, RED, RED_WEAK, TEXT } from '../styles'
 
 const SORT_LABELS: Record<SortMode, string> = {
   kategorie: 'bw_sort_category',
@@ -13,17 +13,21 @@ const SORT_LABELS: Record<SortMode, string> = {
 }
 
 interface Props {
-  kategorie: KategorieFilter | null
+  kategorie: MarkerFilter
+  /** Anzahl fuer den Chip „Auffällige“. */
+  auffaellig: number
   sortMode: SortMode
   /** "Sonstige" nur anbieten, wenn Custom-Marker existieren. */
   showSonstige: boolean
-  onKategorie: (kategorie: KategorieFilter | null) => void
+  onKategorie: (kategorie: MarkerFilter) => void
   onSortMode: (mode: SortMode) => void
 }
 
-export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, onSortMode }: Props) {
+export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, onKategorie, onSortMode }: Props) {
   const { t } = useTranslation()
-  const chips: Array<{ key: KategorieFilter | null; label: string }> = [
+  const chips: Array<{ key: MarkerFilter; label: string }> = [
+    // Zuerst und vorausgewaehlt: was Aufmerksamkeit braucht.
+    { key: AUFFAELLIG, label: t('bw_view_flagged') },
     { key: null, label: t('bw_all') },
     ...KATEGORIEN.map(k => ({ key: k as KategorieFilter, label: t(KATEGORIE_KEY[k]) })),
     ...(showSonstige ? [{ key: SONSTIGE as KategorieFilter, label: t(KATEGORIE_KEY[SONSTIGE]) }] : []),
@@ -38,7 +42,10 @@ export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, o
             <button
               key={chip.label}
               onClick={() => onKategorie(chip.key)}
-              className="px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
+              aria-pressed={active}
+              // Die Zahl am Chip mit Zusammenhang vorlesen: „Auffällige Werte (2)“.
+              aria-label={chip.key === AUFFAELLIG && auffaellig > 0 ? t('bw_out_of_range_title', { count: auffaellig }) : undefined}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
               style={
                 active
                   ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
@@ -46,12 +53,23 @@ export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, o
               }
             >
               {chip.label}
+              {chip.key === AUFFAELLIG && auffaellig > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="min-w-5 rounded-full px-1.5 text-xs font-bold leading-5 tabular-nums text-center"
+                  style={{ background: RED_WEAK, color: RED }}
+                  data-bw-flagged-count
+                >
+                  {auffaellig}
+                </span>
+              )}
             </button>
           )
         })}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Sortieren greift nur im Raster, nicht in der Liste der Auffaelligen. */}
+      {kategorie !== AUFFAELLIG && <div className="flex items-center gap-2">
         <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">{t('bw_sort')}</label>
         <select
           id="blutwerte-sort"
@@ -64,7 +82,7 @@ export function GridControls({ kategorie, sortMode, showSonstige, onKategorie, o
             <option key={mode} value={mode}>{t(SORT_LABELS[mode])}</option>
           ))}
         </select>
-      </div>
+      </div>}
     </div>
   )
 }

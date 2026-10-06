@@ -1664,7 +1664,7 @@ export const MY_STACK_DE = {
   bw_update_error: 'Der Wert konnte nicht geändert werden.',
   bw_date_from_report: 'Das Datum gehört zum Befund, aus dem der Wert stammt.',
   bw_unit_drops_range: 'Die Laborreferenz gilt für {{unit}}. Mit einer anderen Einheit fällt sie weg.',
-  bw_view_flagged: 'Auffällig',
+  bw_view_flagged: 'Auffällige',
   bw_flagged_hint: 'Deine zuletzt gemessenen Werte außerhalb des Referenzbereichs.',
   bw_flagged_none: 'Alle zuletzt gemessenen Werte liegen im Referenzbereich.',
   bw_flagged_no_data: 'Noch keine Blutwerte. Trag einen Wert ein oder importiere einen Befund.',
