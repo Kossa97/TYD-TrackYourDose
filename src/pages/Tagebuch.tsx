@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search, CloudOff } from 'lucide-react'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../i18n/dateLocales'
@@ -11,6 +12,8 @@ import { ORDER, PAGE_SIZE, searchFilter, type SortBy } from './tagebuch/query'
 import { INTAKE_OPTIONS, intakeDose, intakeGap, type IntakeOption } from './tagebuch/intake'
 import { Sheet } from '../features/compliance/components/Sheet'
 import { Auswertung } from './tagebuch/Auswertung'
+import { discardFailed, enqueue, isNetworkError, type PendingEffect } from './tagebuch/offlineQueue'
+import { useQueueCounts } from './tagebuch/useTagebuchOfflineSync'
 
 interface Effect {
   id: string
@@ -74,6 +77,16 @@ export function Tagebuch() {
 
   const userId = user!.id
   const reload = () => setReloadToken(n => n + 1)
+
+  // Ohne Netz gespeicherte neue Einträge (gesendet wird app-weit, siehe Layout).
+  const { waiting: pendingCount, failed: failedCount } = useQueueCounts(userId)
+  const [discardOpen, setDiscardOpen] = useState(false)
+  // Sinkt die Zahl der wartenden, sind welche angekommen — Liste neu laden.
+  const lastPending = useRef(pendingCount)
+  useEffect(() => {
+    if (pendingCount < lastPending.current) setReloadToken(n => n + 1)
+    lastPending.current = pendingCount
+  }, [pendingCount])
 
   useEffect(() => {
     let cancelled = false
@@ -147,6 +160,38 @@ export function Tagebuch() {
     return () => { cancelled = true }
   }, [showForm, form.stack_item_id, form.occurred_at, linkedAtOpen, userId])
 
+  // Aus dem Kalender: /tagebuch?einnahme=<id> öffnet ein neues Formular,
+  // in dem Substanz und genau diese Einnahme schon gewählt sind.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const fromIntake = searchParams.get('einnahme')
+  useEffect(() => {
+    if (!fromIntake) return
+    let cancelled = false
+    supabase.from('dose_logs').select('id, stack_item_id, logged_at')
+      .eq('user_id', userId).eq('id', fromIntake).eq('taken', true).maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        // Bei einem Ladefehler bleibt der Parameter: Neu laden versucht es noch einmal.
+        if (error) { toast.error(t('tagebuch_load_error')); return }
+        setSearchParams(params => { params.delete('einnahme'); return params }, { replace: true })
+        if (!data?.stack_item_id) { toast.error(t('tagebuch_einnahme_nicht_gefunden')); return }
+        // Der Eintrag liegt nie vor der Einnahme — sonst stünde sie nicht zur Wahl.
+        const at = new Date(Math.max(Date.now(), new Date(data.logged_at).getTime()))
+        const prefilled = {
+          type: 'effect' as const, description: '', severity: 3,
+          duration: '', occurred_at: format(at, "yyyy-MM-dd'T'HH:mm"),
+          stack_item_id: data.stack_item_id, dose_log_id: data.id, notes: '',
+        }
+        setForm(prefilled)
+        setFormAtOpen(prefilled)
+        setCustomDuration(false)
+        setEditingId(null)
+        setView('liste')
+        setShowForm(true)
+      })
+    return () => { cancelled = true }
+  }, [fromIntake, userId, setSearchParams, t])
+
   const resetForm = () => {
     const empty = {
       type: 'effect' as const, description: '', severity: 3,
@@ -188,11 +233,24 @@ export function Tagebuch() {
       dose_log_id: form.dose_log_id || null,
       notes:       form.notes || null,
     }
+    // Neue Einträge bekommen ihre id hier: so kann ein späterer Versuch ohne Netz
+    // dieselbe Zeile treffen statt eine zweite anzulegen.
+    const newRow: PendingEffect | null = editingId ? null
+      : { ...fields, id: crypto.randomUUID(), user_id: userId, status: 'eingetreten' }
     // .select() liefert die geänderte Zeile – leer heißt: Eintrag existiert nicht mehr
     const { data, error } = editingId
       ? await supabase.from('effects').update(fields).eq('id', editingId).eq('user_id', userId).select('id')
-      : await supabase.from('effects').insert({ ...fields, user_id: userId, status: 'eingetreten' }).select('id')
-    if (error?.message?.includes('effect_dose_log_other_substance')) toast.error(t('tagebuch_einnahme_fremd'))
+      : await supabase.from('effects').insert(newRow!).select('id')
+    if (error && isNetworkError(error)) {
+      if (newRow) {
+        enqueue(newRow)
+        toast(t('tagebuch_offline_gemerkt'))
+        setShowForm(false); resetForm()
+      } else {
+        toast.error(t('tagebuch_offline_bearbeiten'))
+      }
+    }
+    else if (error?.message?.includes('effect_dose_log_other_substance')) toast.error(t('tagebuch_einnahme_fremd'))
     else if (error || !data?.length) toast.error(t('fehler_speichern'))
     else {
       toast.success(t(editingId ? 'eintrag_aktualisiert' : 'eintrag_gespeichert'))
@@ -277,6 +335,20 @@ export function Tagebuch() {
         </select>
       </div>
 
+      {pendingCount > 0 && (
+        <p className="mb-3 flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-400" role="status" data-tagebuch-offline>
+          <CloudOff size={14} aria-hidden="true" className="shrink-0" />
+          {t('tagebuch_offline_wartet', { count: pendingCount })}
+        </p>
+      )}
+      {failedCount > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-slate-900 px-3 py-2 text-xs text-slate-300" role="alert" data-tagebuch-offline-failed>
+          <AlertTriangle size={14} aria-hidden="true" className="shrink-0 text-[color:var(--chart-side-effect)]" />
+          <span className="flex-1">{t('tagebuch_offline_gescheitert', { count: failedCount })}</span>
+          <button type="button" className="font-semibold text-sky-400" onClick={() => setDiscardOpen(true)}>{t('verwerfen')}</button>
+        </div>
+      )}
+
       {loadError ? (
         <div className="card text-center py-10 text-slate-500" role="alert">
           <AlertTriangle size={32} className="mx-auto mb-2 text-amber-400 opacity-70" />
@@ -294,16 +366,18 @@ export function Tagebuch() {
       <ul className="space-y-3">
         {effects.map(e => (
           <li key={e.id} className={`card border ${
-            e.type === 'effect' ? 'border-emerald-500/20' : 'border-amber-500/20'
+            e.type === 'effect'
+              ? '[border-color:color-mix(in_srgb,var(--chart-effect)_35%,transparent)]'
+              : '[border-color:color-mix(in_srgb,var(--chart-side-effect)_35%,transparent)]'
           }`}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 {/* Typ + Intensität */}
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   {e.type === 'effect'
-                    ? <Zap size={13} aria-hidden="true" className="text-emerald-400 shrink-0" />
-                    : <AlertTriangle size={13} aria-hidden="true" className="text-amber-400 shrink-0" />}
-                  <span className={`text-xs font-medium ${e.type === 'effect' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    ? <Zap size={13} aria-hidden="true" className="text-[color:var(--chart-effect)] shrink-0" />
+                    : <AlertTriangle size={13} aria-hidden="true" className="text-[color:var(--chart-side-effect)] shrink-0" />}
+                  <span className={`text-xs font-medium ${e.type === 'effect' ? 'text-[color:var(--text-effect)]' : 'text-[color:var(--text-side-effect)]'}`}>
                     {e.type === 'effect' ? t('wirkung') : t('nebenwirkung')}
                   </span>
                   <span className={`text-xs font-medium ml-auto ${SEVERITY_COLORS[e.severity]}`}>
@@ -374,14 +448,14 @@ export function Tagebuch() {
             <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
               <button type="button" aria-pressed={form.type === 'effect'}
                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-                  form.type === 'effect' ? 'bg-emerald-500 text-white' : 'text-slate-400'
+                  form.type === 'effect' ? 'bg-[color:var(--fill-effect)] text-white' : 'text-slate-400'
                 }`}
                 onClick={() => setForm(f => ({ ...f, type: 'effect' }))}>
                 {t('wirkung')}
               </button>
               <button type="button" aria-pressed={form.type === 'side_effect'}
                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-                  form.type === 'side_effect' ? 'bg-amber-500 text-white' : 'text-slate-400'
+                  form.type === 'side_effect' ? 'bg-[color:var(--fill-side-effect)] text-white' : 'text-slate-400'
                 }`}
                 onClick={() => setForm(f => ({ ...f, type: 'side_effect' }))}>
                 {t('nebenwirkung')}
@@ -502,6 +576,20 @@ export function Tagebuch() {
             </div>
           </div>
         </div>
+      )}
+
+      {discardOpen && (
+        <Sheet labelledBy="tagebuch-discard-title" onClose={() => setDiscardOpen(false)} role="alertdialog">
+          <h2 id="tagebuch-discard-title" className="text-lg font-bold text-white">{t('tagebuch_offline_verwerfen_titel', { count: failedCount })}</h2>
+          <div className="mt-5 flex gap-2">
+            <button type="button" autoFocus data-app-back-close onClick={() => setDiscardOpen(false)} className="min-h-11 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300">
+              {t('cancel')}
+            </button>
+            <button type="button" onClick={() => { discardFailed(userId); setDiscardOpen(false) }} className="min-h-11 flex-1 rounded-xl bg-red-600 px-4 text-sm font-bold text-white">
+              {t('verwerfen')}
+            </button>
+          </div>
+        </Sheet>
       )}
 
       {deleting && (

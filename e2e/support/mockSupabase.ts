@@ -526,6 +526,11 @@ export class MockSupabase {
     if (method === 'POST') {
       const incoming = Array.isArray(body) ? body : [body ?? {}]
       const saved = incoming.map(row => {
+        if (prefer.includes('resolution=ignore-duplicates')) {
+          const conflict = (url.searchParams.get('on_conflict') ?? 'id').split(',')
+          const existing = rows.find(candidate => conflict.every(column => candidate[column] === row[column]))
+          if (existing) return null
+        }
         if (prefer.includes('resolution=merge-duplicates')) {
           const conflict = (url.searchParams.get('on_conflict') ?? 'id').split(',')
           const existing = rows.find(candidate => conflict.every(column => candidate[column] === row[column]))
@@ -533,7 +538,8 @@ export class MockSupabase {
         }
         return this.insert(tableName, { user_id: TEST_USER.id, ...row })
       })
-      return returnRows ? respond(saved) : route.fulfill({ status: 201, headers: corsHeaders() })
+      const written = saved.filter((row): row is Row => row !== null)
+      return returnRows ? respond(written) : route.fulfill({ status: 201, headers: corsHeaders() })
     }
 
     if (method === 'PATCH') {

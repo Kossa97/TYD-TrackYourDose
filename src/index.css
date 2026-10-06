@@ -657,6 +657,12 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
      geprueft (Helligkeitsband, Farbsehschwaeche, Kontrast) — hell wie dunkel. */
   --chart-effect:      #0d9488;
   --chart-side-effect: #d97706;
+  /* Dieselben Farbtöne für Text (≥ 4,5:1 auf der Fläche) und für Knöpfe mit
+     weißer Schrift — Liste und Auswertung sprechen eine Farbsprache. */
+  --text-effect:       #2dd4bf;
+  --text-side-effect:  #fbbf24;
+  --fill-effect:       #0f766e;
+  --fill-side-effect:  #b45309;
   --glow-accent:     0 0 28px rgba(0,204,245,0.24);
 
   --c-bg:          var(--app-bg);
@@ -752,6 +758,8 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   --cat-emerald:     #059669;
   --cat-amber:       #d97706;
   --cat-rose:        #e11d48;
+  --text-effect:      #0f766e;
+  --text-side-effect: #b45309;
   --glow-accent:     none;
   --c-cyan-20:       rgba(0,145,196,0.20);
   --shadow-card:     0 6px 20px rgba(20,40,80,0.10);

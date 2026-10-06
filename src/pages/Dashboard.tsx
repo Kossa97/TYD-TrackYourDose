@@ -10,7 +10,7 @@ import {
   parseISO, startOfDay,
 } from 'date-fns'
 import {
-  AlertTriangle, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
+  AlertTriangle, Bell, BookHeart, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
   Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, X, XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -1892,6 +1892,13 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             {log.notes && log.notes !== AUTO_MISSED_NOTE && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
           </div>
         </div>
+        {log.taken === true && log.stack_item_id && (
+          <button aria-label={t('tagebuch_eintrag_zu_einnahme')} data-tagebuch-aus-einnahme
+            className="p-1.5 text-slate-500 hover:text-sky-400 transition-colors shrink-0"
+            onClick={() => navigate(`/tagebuch?einnahme=${encodeURIComponent(log.id)}`)}>
+            <BookHeart size={14} aria-hidden="true" />
+          </button>
+        )}
         {(!FEATURES.planTimelineV2 || log.taken === null) && <button aria-label={t('eintrag_loeschen')} className="p-1.5 text-slate-600 hover:text-red-400 transition-colors shrink-0"
           onClick={() => deleteLog(log)}>
           <X size={13} />
