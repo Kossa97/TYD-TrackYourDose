@@ -365,8 +365,8 @@ export function Tagebuch() {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal data-app-back-dirty-on-interaction
           onClick={dismissForm}>
           <div role="dialog" aria-modal="true" aria-labelledby="tagebuch-form-title"
-            className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
-            overflow-y-auto max-h-[92vh]" onClick={e => e.stopPropagation()}
+            className="bg-slate-900 rounded-t-2xl w-full max-w-lg px-6 pt-6 space-y-4
+            overflow-y-auto max-h-[92vh] scroll-pb-28" onClick={e => e.stopPropagation()}
             onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); dismissForm() } }}>
             <h2 id="tagebuch-form-title" className="text-lg font-bold">{t(editingId ? 'tagebuch_eintrag_bearbeiten' : 'neuer_tagebuch_eintrag')}</h2>
 
@@ -407,16 +407,27 @@ export function Tagebuch() {
               </select>
             </div>
 
-            {/* 4. Intensität */}
-            <div>
-              <label className="label" htmlFor="tagebuch-intensitaet">{t('intensitaet_label', { value: severityLabel(form.severity) })}</label>
-              <input id="tagebuch-intensitaet" type="range" aria-valuetext={severityLabel(form.severity)} min={1} max={5} value={form.severity}
-                onChange={e => setForm(f => ({ ...f, severity: parseInt(e.target.value) }))}
-                className="w-full accent-sky-500" />
+            {/* 4. Intensität — fünf Stufen; native Radios: Pfeiltasten funktionieren von selbst */}
+            <fieldset>
+              <legend className="label">{t('tagebuch_intensitaet')}</legend>
+              <p className="-mt-1 mb-2 text-sm text-slate-300" aria-hidden="true">{severityLabel(form.severity)}</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {[1, 2, 3, 4, 5].map(level => (
+                  <label key={level} className="cursor-pointer">
+                    <input type="radio" name="tagebuch-intensitaet" value={level} className="peer sr-only"
+                      checked={form.severity === level} aria-label={`${level} – ${severityLabel(level)}`}
+                      onChange={() => setForm(f => ({ ...f, severity: level }))} />
+                    <span aria-hidden="true" className="flex h-10 items-center justify-center rounded-lg bg-slate-800 text-sm font-semibold text-slate-400
+                      transition-colors peer-checked:bg-sky-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400">
+                      {level}
+                    </span>
+                  </label>
+                ))}
+              </div>
               <div className="flex justify-between text-xs text-slate-500 mt-1" aria-hidden="true">
                 <span>{t('sehr_leicht')}</span><span>{t('sehr_stark')}</span>
               </div>
-            </div>
+            </fieldset>
 
             {/* 5. Zeitpunkt */}
             <div>
@@ -482,7 +493,8 @@ export function Tagebuch() {
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* Bleibt unten stehen — Speichern ist ohne Scrollen erreichbar */}
+            <div className="sticky bottom-0 -mx-6 flex gap-3 border-t border-slate-800 bg-slate-900 px-6 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
               <button type="button" className="btn-secondary flex-1" data-app-back-close onClick={closeForm}>{t('cancel')}</button>
               <button type="button" className="btn-primary flex-1" onClick={save} disabled={saving}>
                 {saving ? t('saving') : t('save')}
