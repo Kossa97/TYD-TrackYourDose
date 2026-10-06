@@ -123,11 +123,18 @@ describe('plan lifecycle service', () => {
       { ...databaseRow(), id: 'discarded', closed_by_migration_resolution: true, stack_items: item('BPC-157') },
       { ...databaseRow(), id: 'conflicted', stack_item_id: 'stack-2', stack_items: item('TB-500', [{ resolved_at: null }]) },
       { ...databaseRow({ ...timeline, versions: [] }), id: 'planless', stack_item_id: 'stack-3', stack_items: item('Sema') },
+      { ...databaseRow(), id: 'zone-review', stack_item_id: 'stack-4', timezone_review_required: true, stack_items: item('GHK-Cu') },
     ] as never)
     const { timelines, namen } = await loadCycleHistory(query.client, 'user-1')
     expect(timelines).toEqual([timeline])
     expect([...namen]).toEqual([['stack-1', 'BPC-157']])
     expect(query.select).toHaveBeenCalledWith(expect.stringContaining('display_name'))
+  })
+
+  it('fetches substance names only for the history', async () => {
+    const query = queryClient([databaseRow()])
+    await loadCycleTimelines(query.client, 'user-1')
+    expect(query.select).not.toHaveBeenCalledWith(expect.stringContaining('display_name'))
   })
 
   it.each([

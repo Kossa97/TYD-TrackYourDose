@@ -76,6 +76,32 @@ describe('Zyklen als Zeitstreifen', () => {
     expect(zeilen.map(z => [z.stackItemId, z.farbe])).toEqual([['s6', 0]])
   })
 
+  it('teilen sich zwei sichtbare Substanzen den Platz, weicht die spaetere aus', () => {
+    const timelines = [
+      ...Array.from({ length: 6 }, (_, i) => zyklus(`alt${i}`, `s${i}`, `2025-0${i + 1}-01`, `2025-0${i + 1}-10`)),
+      zyklus('a', 's0', '2026-01-10', '2026-02-01'),
+      zyklus('b', 's6', '2026-02-01', '2026-03-01'),
+    ]
+    const { zeilen } = zyklusZeilen(timelines, new Map(), fenster, '2026-04-10', timeZone)
+    expect(zeilen.map(z => [z.stackItemId, z.farbe])).toEqual([['s0', 0], ['s6', 1]])
+  })
+
+  it('am selben Tag pausiert und fortgesetzt: keine Luecke', () => {
+    const z = zyklus('c1', 'bpc', '2026-02-01', '2026-03-01')
+    z.pauses = [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-02-10T07:00:00.000Z', ends_at: '2026-02-10T19:00:00.000Z' }]
+    const { zeilen } = zyklusZeilen([z], namen, fenster, '2026-04-10', timeZone)
+    expect(zeilen[0].abschnitte.map(a => [a.von, a.bis])).toEqual([['2026-02-01', '2026-02-28']])
+  })
+
+  it('Pausentage gelten in der Zeitzone des Zyklus, nicht des Geraets', () => {
+    const z = zyklus('c1', 'bpc', '2026-02-01', '2026-03-01')
+    z.cycle.lifecycle_timezone = 'America/New_York'
+    // 22:00 in New York = 04:00 am Folgetag in Berlin
+    z.pauses = [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-02-11T03:00:00.000Z', ends_at: '2026-02-15T15:00:00.000Z' }]
+    const { zeilen } = zyklusZeilen([z], namen, fenster, '2026-04-10', timeZone)
+    expect(zeilen[0].abschnitte.map(a => [a.von, a.bis])).toEqual([['2026-02-01', '2026-02-09'], ['2026-02-15', '2026-02-28']])
+  })
+
   it('Pausen sind Luecken; nur das Stueck bis heute laeuft', () => {
     const offen = zyklus('c1', 'bpc', '2026-02-01', null)
     offen.pauses = [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-02-10T08:00:00.000Z', ends_at: '2026-02-15T08:00:00.000Z' }]

@@ -263,7 +263,8 @@ export function inclusiveDayCount(from: string, to: string): number {
   return differenceInCalendarDays(parseISO(to), parseISO(from)) + 1
 }
 
-function localDay(value: string, timeZone: string): string {
+/** Der lokale Kalendertag (yyyy-MM-dd) eines Zeitpunkts. */
+export function localDay(value: string, timeZone: string): string {
   return localDateTimeKey(new Date(value), timeZone).slice(0, 10)
 }
 

@@ -77,7 +77,10 @@ export class PlanLifecycleError extends Error {
   }
 }
 
-const TIMELINE_SELECT = `
+/** Felder der Substanz im Embed; der Verlauf braucht zusaetzlich den Namen. */
+const ITEM_FIELDS = 'archived, configuration_status, migration_conflicts:cycle_migration_conflicts(resolved_at)'
+
+const timelineSelect = (itemFields: string) => `
   id,
   stack_item_id,
   started_at,
@@ -87,7 +90,7 @@ const TIMELINE_SELECT = `
   lifecycle_timezone,
   timezone_review_required,
   closed_by_migration_resolution,
-  stack_items(archived, configuration_status, display_name, migration_conflicts:cycle_migration_conflicts(resolved_at)),
+  stack_items(${itemFields}),
   versions:cycle_plan_versions (
     id,
     created_at,
@@ -117,6 +120,22 @@ const TIMELINE_SELECT = `
     ends_at
   )
 `
+
+const TIMELINE_SELECT = timelineSelect(ITEM_FIELDS)
+const HISTORY_SELECT = timelineSelect(`display_name, ${ITEM_FIELDS}`)
+
+const hasOpenConflict = (row: CycleTimelineRow) =>
+  row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null) === true
+
+async function loadTimelineRows(client: PlanQueryClient, userId: string, select: string): Promise<CycleTimelineRow[]> {
+  const { data, error } = await client
+    .from('cycles')
+    .select(select)
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+  throwIfError(error)
+  return data ?? []
+}
 
 function lifecycleError(error: ServiceError): PlanLifecycleError {
   let code: PlanLifecycleErrorCode = 'unknown'
@@ -177,46 +196,36 @@ export async function loadCycleTimelines(
   userId: string,
   options: { includeUnavailable?: boolean } = {},
 ): Promise<CycleTimeline[]> {
-  const { data, error } = await client
-    .from('cycles')
-    .select(TIMELINE_SELECT)
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-  throwIfError(error)
+  const rows = await loadTimelineRows(client, userId, TIMELINE_SELECT)
   // Management keeps unavailable timelines for conflict resolution; scheduling
   // must not offer archived or contradictory plans. Archiving does not end them.
-  return (data ?? []).filter(row => options.includeUnavailable || (
+  return rows.filter(row => options.includeUnavailable || (
     row.closed_by_migration_resolution !== true
     && row.timezone_review_required !== true
     && row.stack_items?.archived !== true
     && row.stack_items?.configuration_status !== 'needs_review'
-    && !row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)
+    && !hasOpenConflict(row)
   )).map(mapTimeline)
 }
 
 /**
  * Zyklen als Verlauf (etwa unter Blutwerten): was tatsaechlich lief, auch bei
  * archivierten Substanzen — aber ohne die bei einer Migration verworfenen
- * Zyklen und ohne Substanzen mit noch offenem Konflikt. Ein einzelner
- * kaputter Zyklus (ohne Plan) faellt heraus, statt alles scheitern zu lassen.
- * Dazu die Namen der Substanzen.
+ * Zyklen, ohne Substanzen mit noch offenem Konflikt und ohne Zyklen, deren
+ * lokale Tage noch auf die Zeitzonen-Pruefung warten (koennten um einen Tag
+ * verschoben sein). Ein einzelner kaputter Zyklus (ohne Plan) faellt heraus,
+ * statt alles scheitern zu lassen. Dazu die Namen der Substanzen.
  */
 export async function loadCycleHistory(
   client: PlanQueryClient,
   userId: string,
 ): Promise<{ timelines: CycleTimeline[]; namen: Map<string, string> }> {
-  const { data, error } = await client
-    .from('cycles')
-    .select(TIMELINE_SELECT)
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-  throwIfError(error)
+  const rows = await loadTimelineRows(client, userId, HISTORY_SELECT)
   const namen = new Map<string, string>()
   const timelines: CycleTimeline[] = []
-  for (const row of data ?? []) {
-    if (row.closed_by_migration_resolution === true) continue
-    if (row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)) continue
-    if (!row.versions?.length) continue
+  for (const row of rows) {
+    if (row.closed_by_migration_resolution === true || row.timezone_review_required === true) continue
+    if (hasOpenConflict(row) || !row.versions?.length) continue
     if (row.stack_items?.display_name) namen.set(row.stack_item_id, row.stack_items.display_name)
     timelines.push(mapTimeline(row))
   }

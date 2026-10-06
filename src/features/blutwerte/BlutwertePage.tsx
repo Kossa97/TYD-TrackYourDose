@@ -21,6 +21,7 @@ import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal
 import { ImportFlow } from './components/import/ImportFlow'
 import type { CycleTimeline } from '../../lib/planTimeline'
 import { loadCycleHistory } from '../my-stack/services/planLifecycle'
+import { reportError } from '../../lib/monitoring'
 
 export function BlutwertePage() {
   const { user } = useAuth()
@@ -29,7 +30,8 @@ export function BlutwertePage() {
   const [loeschen, setLoeschen] = useState<BloodworkEntry | null>(null)
   // Zyklen aus My Stack fuer die Zeitstreifen im Verlauf. Fehlen sie
   // (Fehler, keine Zyklen), bleibt der Verlauf einfach ohne Streifen.
-  const [zyklen, setZyklen] = useState<{ timelines: CycleTimeline[]; namen: Map<string, string> } | undefined>(undefined)
+  // Zyklen je Konto gemerkt: nach einem Kontowechsel nie die des vorherigen zeigen.
+  const [zyklenVon, setZyklenVon] = useState<{ userId: string; timelines: CycleTimeline[]; namen: Map<string, string> } | null>(null)
   const [loescht, setLoescht] = useState(false)
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
   const [reports, setReports] = useState<BloodworkReport[]>([])
@@ -83,12 +85,15 @@ export function BlutwertePage() {
     if (!user) return
     let aktuell = true
     // Die Zyklen sind eine Beigabe: scheitert das Laden, bleibt der Verlauf ohne sie.
-    loadCycleHistory(supabase as never, user.id).then(
-      verlauf => { if (aktuell) setZyklen(verlauf) },
-      () => {},
+    const userId = user.id
+    loadCycleHistory(supabase as never, userId).then(
+      verlauf => { if (aktuell) setZyklenVon({ userId, ...verlauf }) },
+      error => reportError(error, 'blutwerte.cycle-history'),
     )
     return () => { aktuell = false }
   }, [user])
+
+  const zyklen = zyklenVon && zyklenVon.userId === user?.id ? zyklenVon : undefined
 
   const summaries = useMemo(() => buildMarkerSummaries(entries), [entries])
 

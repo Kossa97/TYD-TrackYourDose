@@ -1,5 +1,5 @@
-import { localDateTimeKey, type CycleTimeline } from '../../../lib/planTimeline'
-import { cyclePeriod } from '../../my-stack/lib/planCard'
+import type { CycleTimeline } from '../../../lib/planTimeline'
+import { cyclePeriod, localDay } from '../../my-stack/lib/planCard'
 
 /**
  * Zyklen aus My Stack als Zeitstreifen unter dem Verlauf eines Markers:
@@ -22,7 +22,7 @@ export interface ZyklusAbschnitt {
 export interface ZyklusZeile {
   stackItemId: string
   substanz: string
-  /** Farbplatz 0–5, fest je Substanz (nach erstem Start, reihum). */
+  /** Farbplatz 0–5: fest je Substanz, im selben Fenster nie doppelt. */
   farbe: number
   abschnitte: ZyklusAbschnitt[]
 }
@@ -54,12 +54,11 @@ export function achsenTicks([start, ende]: [number, number], anzahl = 4): number
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const lokalerTag = (instant: string, timeZone: string) => localDateTimeKey(new Date(instant), timeZone).slice(0, 10)
-
 /** [start, ende) minus Pausen — die uebrigen Stuecke. */
 function ohnePausen(start: number, ende: number, pausen: [number, number][]): [number, number][] {
   let stuecke: [number, number][] = [[start, ende]]
   for (const [pStart, pEnde] of pausen) {
+    if (pEnde <= pStart) continue // am selben Tag pausiert und fortgesetzt: keine Luecke
     stuecke = stuecke.flatMap(([a, b]): [number, number][] => {
       if (pEnde <= a || pStart >= b) return [[a, b]]
       const rest: [number, number][] = []
@@ -88,25 +87,24 @@ export function zyklusZeilen(
   if (!(spanne > 0)) return { zeilen: [], weitere: 0 }
   const heuteEnde = tagMs(heute) + TAG_MS
 
-  // Farbe folgt der Substanz: feste Reihenfolge nach erstem Start ueberhaupt,
-  // damit ein anderer Zeitraum die Farben nicht neu verteilt. Ab der siebten
-  // Substanz wiederholen sich die Plaetze; der Name steht an jeder Zeile.
-  const reihenfolge = [...new Set(
-    timelines
-      .slice()
-      .sort((a, b) => a.cycle.started_at.localeCompare(b.cycle.started_at))
-      .map(timeline => timeline.cycle.stack_item_id),
-  )]
+  // Farbe folgt der Substanz: Wunschplatz aus der Reihenfolge nach erstem
+  // Start ueberhaupt, damit ein anderer Zeitraum die Farben nicht neu verteilt.
+  const reihenfolge = new Map<string, number>()
+  for (const timeline of timelines.slice().sort((a, b) => a.cycle.started_at.localeCompare(b.cycle.started_at))) {
+    if (!reihenfolge.has(timeline.cycle.stack_item_id)) reihenfolge.set(timeline.cycle.stack_item_id, reihenfolge.size)
+  }
 
   const proSubstanz = new Map<string, ZyklusAbschnitt[]>()
   for (const timeline of timelines) {
-    const { first, last } = cyclePeriod(timeline, timeZone)
+    // Die Tage des Zyklus gelten in seiner eigenen Zeitzone — Pausen ebenso.
+    const zone = timeline.cycle.lifecycle_timezone ?? timeZone
+    const { first, last } = cyclePeriod(timeline, zone)
     const letzter = last !== null && last < first ? first : last
     const startMs = tagMs(first)
     const endeMs = letzter ? tagMs(letzter) + TAG_MS : heuteEnde
     const pausen = timeline.pauses.map((pause): [number, number] => [
-      tagMs(lokalerTag(pause.paused_at, timeZone)),
-      pause.ends_at ? tagMs(lokalerTag(pause.ends_at, timeZone)) : heuteEnde,
+      tagMs(localDay(pause.paused_at, zone)),
+      pause.ends_at ? tagMs(localDay(pause.ends_at, zone)) : heuteEnde,
     ])
     const stuecke = ohnePausen(startMs, endeMs, pausen)
     stuecke.forEach(([a, b], index) => {
@@ -129,10 +127,25 @@ export function zyklusZeilen(
     .map(([stackItemId, abschnitte]) => ({
       stackItemId,
       substanz: namen.get(stackItemId) ?? '—',
-      farbe: Math.max(0, reihenfolge.indexOf(stackItemId)) % FARBEN,
       abschnitte: abschnitte.sort((a, b) => a.start - b.start),
     }))
     .sort((a, b) => a.abschnitte[0].start - b.abschnitte[0].start)
+  const sichtbar = alle.slice(0, MAX_ZEILEN)
 
-  return { zeilen: alle.slice(0, MAX_ZEILEN), weitere: Math.max(0, alle.length - MAX_ZEILEN) }
+  // Bei mehr als sechs Substanzen ueberhaupt teilen sich zwei denselben
+  // Wunschplatz. Im Fenster stehen hoechstens sechs Zeilen — die frueher
+  // begonnene behaelt ihren Platz, die andere nimmt den naechsten freien.
+  const farbe = new Map<string, number>()
+  const belegt = new Set<number>()
+  for (const zeile of sichtbar.slice().sort((a, b) => reihenfolge.get(a.stackItemId)! - reihenfolge.get(b.stackItemId)!)) {
+    let platz = reihenfolge.get(zeile.stackItemId)! % FARBEN
+    while (belegt.has(platz)) platz = (platz + 1) % FARBEN
+    belegt.add(platz)
+    farbe.set(zeile.stackItemId, platz)
+  }
+
+  return {
+    zeilen: sichtbar.map(zeile => ({ ...zeile, farbe: farbe.get(zeile.stackItemId)! })),
+    weitere: alle.length - sichtbar.length,
+  }
 }
