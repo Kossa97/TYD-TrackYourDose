@@ -13,15 +13,18 @@ const ALLGEMEIN = 'Der Befund konnte nicht ausgelesen werden. Bitte manuell eint
 const LIMIT = 'Import-Limit erreicht (10 pro Monat). Bitte später erneut versuchen.'
 const ZU_GROSS = 'Datei ist zu groß (max. 10 MB).'
 
-export async function beschreibeExtraktionsFehler(response: Response | undefined): Promise<ExtraktionsFehler> {
-  if (!response) return { code: null, text: ALLGEMEIN }
-  let code: string | null = null
+async function fehlerCode(response: Response): Promise<string | null> {
   try {
     const body = await response.clone().json()
-    code = typeof body?.error === 'string' ? body.error : null
+    return typeof body?.error === 'string' ? body.error : null
   } catch {
-    code = null
+    return null
   }
+}
+
+export async function beschreibeExtraktionsFehler(response: Response | undefined): Promise<ExtraktionsFehler> {
+  if (!response) return { code: null, text: ALLGEMEIN }
+  const code = await fehlerCode(response)
   if (code === EINWILLIGUNG_FEHLT) return { code, text: '' }
   if (response.status === 429 || code === 'rate_limit') return { code, text: LIMIT }
   if (response.status === 413 || code === 'file_too_large') return { code, text: ZU_GROSS }
