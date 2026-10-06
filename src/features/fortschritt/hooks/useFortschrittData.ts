@@ -18,7 +18,8 @@ import { normalizeCycles, rangeFromActiveSubstances } from '../lib/substances'
 import { numeric } from '../lib/metrics'
 import { collectPagedRows } from '../lib/pagination'
 import { PHOTO_BUCKET, SIGNED_URL_TTL_SECONDS } from '../constants'
-import { signiereBatchDateien } from '../../../lib/batchFiles'
+import { BATCH_LINK_ERNEUERN_MS, istAdresse, signiereBatchDateien } from '../../../lib/batchFiles'
+import { reportError } from '../../../lib/monitoring'
 
 function mapDailyLogs(rows: Record<string, unknown>[] | null): DailyLogEntry[] {
   return (rows ?? []).map(row => ({
@@ -33,7 +34,7 @@ function mapDailyLogs(rows: Record<string, unknown>[] | null): DailyLogEntry[] {
 
 /** Legacy-Fotos tragen eine volle Public-URL; neue Fotos nur den Storage-Pfad. */
 export function isLegacyPhotoUrl(photoUrl: string): boolean {
-  return photoUrl.startsWith('http://') || photoUrl.startsWith('https://')
+  return istAdresse(photoUrl)
 }
 
 async function resolvePhotoDisplayUrls(
@@ -51,7 +52,10 @@ async function resolvePhotoDisplayUrls(
         }
       })
       : undefined,
-    signiereBatchDateien(supabase as never, legacy, SIGNED_URL_TTL_SECONDS).catch(() => new Map<string, string>()),
+    signiereBatchDateien(supabase as never, legacy, SIGNED_URL_TTL_SECONDS).catch(error => {
+      reportError(error, 'fortschritt.legacy-photos')
+      return new Map<string, string>()
+    }),
   ])
   return photos.map(p => ({
     ...p,
@@ -70,6 +74,9 @@ export function useFortschrittData() {
   const [weightLogs, setWeightLogs] = useState<WeightLogEntry[]>([])
   const [bloodwork, setBloodwork] = useState<BloodworkEntry[]>([])
   const [photos, setPhotos] = useState<ProgressPhotoEntry[]>([])
+  const photosSignedAtRef = useRef(0)
+  const photosRef = useRef<ProgressPhotoEntry[]>([])
+  useEffect(() => { photosRef.current = photos }, [photos])
   const [doseLogs, setDoseLogs] = useState<DoseLogEntry[]>([])
   const [stackItemNames, setStackItemNames] = useState<Map<string, string>>(new Map())
 
@@ -189,6 +196,7 @@ export function useFortschrittData() {
       notes: row.notes ?? null,
     }))
     setPhotos(await resolvePhotoDisplayUrls(rawPhotos))
+    photosSignedAtRef.current = Date.now()
 
     setDoseLogs((doseRes.data ?? []) as DoseLogEntry[])
 
@@ -205,6 +213,22 @@ export function useFortschrittData() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // Signierte Foto-Links laufen nach einer Stunde ab. Kommt die Seite nach
+  // laengerer Pause wieder in den Vordergrund (Geraet geschlafen, Tab im
+  // Hintergrund — Timer liefen dann nicht), werden sie neu geholt.
+  useEffect(() => {
+    const auffrischen = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - photosSignedAtRef.current < BATCH_LINK_ERNEUERN_MS) return
+      const current = photosRef.current
+      if (current.length === 0) return
+      photosSignedAtRef.current = Date.now()
+      void resolvePhotoDisplayUrls(current).then(setPhotos)
+    }
+    document.addEventListener('visibilitychange', auffrischen)
+    return () => document.removeEventListener('visibilitychange', auffrischen)
+  }, [])
 
   // Stabile Referenz: die Felder sind schon stabil, ein neues Objektliteral pro
   // Render würde aber jeden `useMemo` der Konsumenten mit `state` in den Deps
