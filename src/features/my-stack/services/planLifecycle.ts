@@ -32,6 +32,7 @@ interface CycleTimelineRow extends TimelineCycle {
   stack_items?: {
     archived: boolean
     configuration_status: string
+    display_name?: string
     migration_conflicts: Array<{ resolved_at: string | null }>
   } | null
 }
@@ -86,7 +87,7 @@ const TIMELINE_SELECT = `
   lifecycle_timezone,
   timezone_review_required,
   closed_by_migration_resolution,
-  stack_items(archived, configuration_status, migration_conflicts:cycle_migration_conflicts(resolved_at)),
+  stack_items(archived, configuration_status, display_name, migration_conflicts:cycle_migration_conflicts(resolved_at)),
   versions:cycle_plan_versions (
     id,
     created_at,
@@ -191,6 +192,35 @@ export async function loadCycleTimelines(
     && row.stack_items?.configuration_status !== 'needs_review'
     && !row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)
   )).map(mapTimeline)
+}
+
+/**
+ * Zyklen als Verlauf (etwa unter Blutwerten): was tatsaechlich lief, auch bei
+ * archivierten Substanzen — aber ohne die bei einer Migration verworfenen
+ * Zyklen und ohne Substanzen mit noch offenem Konflikt. Ein einzelner
+ * kaputter Zyklus (ohne Plan) faellt heraus, statt alles scheitern zu lassen.
+ * Dazu die Namen der Substanzen.
+ */
+export async function loadCycleHistory(
+  client: PlanQueryClient,
+  userId: string,
+): Promise<{ timelines: CycleTimeline[]; namen: Map<string, string> }> {
+  const { data, error } = await client
+    .from('cycles')
+    .select(TIMELINE_SELECT)
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+  throwIfError(error)
+  const namen = new Map<string, string>()
+  const timelines: CycleTimeline[] = []
+  for (const row of data ?? []) {
+    if (row.closed_by_migration_resolution === true) continue
+    if (row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)) continue
+    if (!row.versions?.length) continue
+    if (row.stack_items?.display_name) namen.set(row.stack_item_id, row.stack_items.display_name)
+    timelines.push(mapTimeline(row))
+  }
+  return { timelines, namen }
 }
 
 export async function createPlanVersion(

@@ -20,7 +20,7 @@ import { BefundListe } from './components/BefundListe'
 import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal'
 import { ImportFlow } from './components/import/ImportFlow'
 import type { CycleTimeline } from '../../lib/planTimeline'
-import { loadCycleTimelines } from '../my-stack/services/planLifecycle'
+import { loadCycleHistory } from '../my-stack/services/planLifecycle'
 
 export function BlutwertePage() {
   const { user } = useAuth()
@@ -82,17 +82,11 @@ export function BlutwertePage() {
   useEffect(() => {
     if (!user) return
     let aktuell = true
-    void Promise.allSettled([
-      loadCycleTimelines(supabase as never, user.id, { includeUnavailable: true }),
-      supabase.from('stack_items').select('id, display_name').eq('user_id', user.id),
-    ]).then(([timelines, items]) => {
-      if (!aktuell || timelines.status !== 'fulfilled') return
-      const namen = new Map<string, string>()
-      if (items.status === 'fulfilled') {
-        for (const item of (items.value.data ?? []) as { id: string; display_name: string }[]) namen.set(item.id, item.display_name)
-      }
-      setZyklen({ timelines: timelines.value, namen })
-    })
+    // Die Zyklen sind eine Beigabe: scheitert das Laden, bleibt der Verlauf ohne sie.
+    loadCycleHistory(supabase as never, user.id).then(
+      verlauf => { if (aktuell) setZyklen(verlauf) },
+      () => {},
+    )
     return () => { aktuell = false }
   }, [user])
 

@@ -29,7 +29,7 @@ export function ZyklusStreifen({ zeilen, weitere }: { zeilen: ZyklusZeile[]; wei
             <div className="relative h-2.5 rounded-full" style={{ background: 'var(--border)' }}>
               {zeile.abschnitte.map(abschnitt => (
                 <span
-                  key={abschnitt.cycleId}
+                  key={abschnitt.key}
                   role="img"
                   aria-label={`${zeile.substanz}: ${zeitraum(abschnitt.von, abschnitt.bis)}`}
                   title={`${zeile.substanz}: ${zeitraum(abschnitt.von, abschnitt.bis)}`}
@@ -38,7 +38,7 @@ export function ZyklusStreifen({ zeilen, weitere }: { zeilen: ZyklusZeile[]; wei
                     left: `${abschnitt.start * 100}%`,
                     // Mindestens sichtbar, auch bei einem einzelnen Tag in einem Jahr.
                     width: `max(${(abschnitt.ende - abschnitt.start) * 100}%, 4px)`,
-                    background: zeile.farbe != null ? `var(--cycle-${zeile.farbe + 1})` : 'var(--text-muted)',
+                    background: `var(--cycle-${zeile.farbe + 1})`,
                     // Laufender Zyklus: rechts offen statt abgerundet.
                     borderRadius: abschnitt.bis ? 4 : '4px 0 0 4px',
                   }}

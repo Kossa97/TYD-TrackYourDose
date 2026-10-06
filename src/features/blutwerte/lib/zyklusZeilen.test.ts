@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CycleTimeline } from '../../../lib/planTimeline'
-import { MAX_ZEILEN, zyklusZeilen } from './zyklusZeilen'
+import { MAX_ZEILEN, achse, achsenTicks, msTag, zyklusZeilen } from './zyklusZeilen'
 
 const timeZone = 'Europe/Berlin'
 
@@ -64,6 +64,42 @@ describe('Zyklen als Zeitstreifen', () => {
     expect(zeilen).toHaveLength(MAX_ZEILEN)
     expect(weitere).toBe(2)
     expect(zeilen[0].substanz).toBe('—')
+  })
+
+  it('ab der siebten Substanz wiederholen sich die Farbplaetze, statt grau zu werden', () => {
+    // s0 begann zuerst (alter Zyklus ausserhalb des Fensters), s6 als siebte.
+    const timelines = [
+      ...Array.from({ length: 6 }, (_, i) => zyklus(`alt${i}`, `s${i}`, `2025-0${i + 1}-01`, `2025-0${i + 1}-10`)),
+      zyklus('neu', 's6', '2026-02-01', '2026-03-01'),
+    ]
+    const { zeilen } = zyklusZeilen(timelines, new Map(), fenster, '2026-04-10', timeZone)
+    expect(zeilen.map(z => [z.stackItemId, z.farbe])).toEqual([['s6', 0]])
+  })
+
+  it('Pausen sind Luecken; nur das Stueck bis heute laeuft', () => {
+    const offen = zyklus('c1', 'bpc', '2026-02-01', null)
+    offen.pauses = [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-02-10T08:00:00.000Z', ends_at: '2026-02-15T08:00:00.000Z' }]
+    const { zeilen } = zyklusZeilen([offen], namen, fenster, '2026-04-10', timeZone)
+    expect(zeilen[0].abschnitte.map(a => [a.von, a.bis])).toEqual([['2026-02-01', '2026-02-09'], ['2026-02-15', null]])
+  })
+
+  it('eine noch offene Pause reicht bis heute', () => {
+    const pausiert = zyklus('c1', 'bpc', '2026-02-01', null)
+    pausiert.pauses = [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-03-01T08:00:00.000Z', ends_at: null }]
+    const { zeilen } = zyklusZeilen([pausiert], namen, fenster, '2026-04-10', timeZone)
+    expect(zeilen[0].abschnitte.map(a => [a.von, a.bis])).toEqual([['2026-02-01', '2026-02-28']])
+  })
+
+  it('Achse und Ticks liegen auf ganzen Tagen, Ende einschliesslich des letzten Tags', () => {
+    const [start, ende] = achse(fenster)
+    expect(msTag(start)).toBe('2026-01-01')
+    expect((ende - start) / 86_400_000).toBe(100)
+    const ticks = achsenTicks([start, ende])
+    expect(ticks.map(msTag)).toEqual(['2026-01-01', '2026-01-26', '2026-02-20', '2026-03-17'])
+    // Einzelner Tag: trotzdem eine Achse mit Breite.
+    const [a, b] = achse({ von: '2026-05-05', bis: '2026-05-05' })
+    expect(b).toBeGreaterThan(a)
+    expect(achsenTicks([a, b]).map(msTag)).toEqual(['2026-05-05'])
   })
 
   it('am Starttag beendet: ein Tag, nicht rueckwaerts', () => {

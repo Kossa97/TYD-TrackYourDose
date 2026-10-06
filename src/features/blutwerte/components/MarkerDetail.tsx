@@ -22,13 +22,12 @@ import { TrendIcon, trendColor } from './MarkerGrid'
 import { ReferenceBar } from './ReferenceBar'
 import { PLOT_LINKS, PLOT_RECHTS, ZyklusStreifen } from './ZyklusStreifen'
 import type { CycleTimeline } from '../../../lib/planTimeline'
-import { zyklusZeilen } from '../lib/zyklusZeilen'
+import { achse as zeitachse, achsenTicks, msTag, tagMs, zyklusZeilen } from '../lib/zyklusZeilen'
 
 export type RangeFilter = '3M' | '6M' | '1J' | 'ALL'
 
-/** Ein Kalendertag als Zeitpunkt (UTC-Mitternacht) — und zurueck. */
-const tagMs = (tag: string) => Date.parse(`${tag}T00:00:00Z`)
-const msTag = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+/** Messpunkt in der Mitte seines Tags — dort, wo der Tag auch in den Zyklus-Zeilen liegt. */
+const HALBER_TAG = 12 * 60 * 60 * 1000
 
 interface Props {
   summary: MarkerSummary
@@ -66,16 +65,19 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onDelete }: Props
     .slice()
     .sort((a, b) => a.entry.tested_at.localeCompare(b.entry.tested_at))
     .map(p => ({
-      t: tagMs(p.entry.tested_at),
+      t: tagMs(p.entry.tested_at) + HALBER_TAG,
       value: p.value as number,
     }))
 
   const heute = format(now, 'yyyy-MM-dd')
+  const letzterPunkt = chartData.length > 0 ? msTag(chartData[chartData.length - 1].t) : heute
   const fenster = {
     von: cutoff ?? (chartData.length > 0 ? msTag(chartData[0].t) : heute),
-    bis: heute,
+    // Ein Wert mit Datum in der Zukunft verlaengert die Achse, statt herauszufallen.
+    bis: letzterPunkt > heute ? letzterPunkt : heute,
   }
-  const achse: [number, number] = [tagMs(fenster.von), tagMs(fenster.bis)]
+  const achse = zeitachse(fenster)
+  const ticks = achsenTicks(achse)
   const streifen = zyklen
     ? zyklusZeilen(zyklen.timelines, zyklen.namen, fenster, heute, Intl.DateTimeFormat().resolvedOptions().timeZone)
     : { zeilen: [], weitere: 0 }
@@ -187,8 +189,9 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onDelete }: Props
               <XAxis
                 dataKey="t"
                 type="number"
-                scale="time"
                 domain={achse}
+                ticks={ticks}
+                allowDataOverflow
                 tickFormatter={(ms: number) => formatChartDate(msTag(ms))}
                 tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }}
               />

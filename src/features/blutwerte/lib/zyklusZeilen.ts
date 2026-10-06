@@ -1,20 +1,20 @@
-import type { CycleTimeline } from '../../../lib/planTimeline'
+import { localDateTimeKey, type CycleTimeline } from '../../../lib/planTimeline'
 import { cyclePeriod } from '../../my-stack/lib/planCard'
 
 /**
  * Zyklen aus My Stack als Zeitstreifen unter dem Verlauf eines Markers:
  * je Substanz eine Zeile, darin ihre Zyklen als Abschnitte, auf derselben
- * Zeitachse wie das Diagramm. Nur zur Orientierung — die App zeigt
- * Zeitraeume, keine Wirkung.
+ * Zeitachse wie das Diagramm. Pausen sind Luecken. Nur zur Orientierung —
+ * die App zeigt Zeitraeume, keine Wirkung.
  */
 
 export interface ZyklusAbschnitt {
-  cycleId: string
+  key: string
   /** Erster Tag (yyyy-MM-dd). */
   von: string
   /** Letzter Tag; null = laeuft noch. */
   bis: string | null
-  /** Lage im Fenster, 0–1, bereits auf das Fenster zugeschnitten. */
+  /** Lage auf der Achse, 0–1, bereits auf das Fenster zugeschnitten. */
   start: number
   ende: number
 }
@@ -22,20 +22,58 @@ export interface ZyklusAbschnitt {
 export interface ZyklusZeile {
   stackItemId: string
   substanz: string
-  /** Farbplatz 0–5, fest je Substanz (nicht nach Rang im Fenster); null = grau. */
-  farbe: number | null
+  /** Farbplatz 0–5, fest je Substanz (nach erstem Start, reihum). */
+  farbe: number
   abschnitte: ZyklusAbschnitt[]
 }
 
 export const MAX_ZEILEN = 6
 const FARBEN = 6
-
 const TAG_MS = 24 * 60 * 60 * 1000
-const alsMs = (tag: string) => Date.parse(`${tag}T00:00:00Z`)
+
+// ── Gemeinsame Zeitachse fuer Diagramm und Zeilen ────────────────────────────
+// Ein Kalendertag ist seine UTC-Mitternacht; das Fenster reicht vom Beginn des
+// ersten bis zum Ende des letzten Tags (Ende exklusiv). Diagramm und Zeilen
+// rechnen beide hiermit — sonst laufen sie auseinander.
+
+export const tagMs = (tag: string) => Date.parse(`${tag}T00:00:00Z`)
+export const msTag = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+
+export function achse(fenster: { von: string; bis: string }): [number, number] {
+  return [tagMs(fenster.von), tagMs(fenster.bis) + TAG_MS]
+}
+
+/** Etwa `anzahl` Ticks auf ganzen Tagen (UTC-Mitternacht) innerhalb der Achse. */
+export function achsenTicks([start, ende]: [number, number], anzahl = 4): number[] {
+  const tage = Math.max(1, Math.round((ende - start) / TAG_MS))
+  const schritt = Math.max(1, Math.ceil(tage / anzahl))
+  const ticks: number[] = []
+  for (let tag = 0; tag < tage; tag += schritt) ticks.push(start + tag * TAG_MS)
+  return ticks
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const lokalerTag = (instant: string, timeZone: string) => localDateTimeKey(new Date(instant), timeZone).slice(0, 10)
+
+/** [start, ende) minus Pausen — die uebrigen Stuecke. */
+function ohnePausen(start: number, ende: number, pausen: [number, number][]): [number, number][] {
+  let stuecke: [number, number][] = [[start, ende]]
+  for (const [pStart, pEnde] of pausen) {
+    stuecke = stuecke.flatMap(([a, b]): [number, number][] => {
+      if (pEnde <= a || pStart >= b) return [[a, b]]
+      const rest: [number, number][] = []
+      if (pStart > a) rest.push([a, pStart])
+      if (pEnde < b) rest.push([pEnde, b])
+      return rest
+    })
+  }
+  return stuecke
+}
 
 /**
  * @param fenster erster und letzter Tag der Diagramm-Achse (yyyy-MM-dd)
- * @param heute   heutiger Tag — Ende laufender Zyklen
+ * @param heute   heutiger Tag — Ende laufender Zyklen und offener Pausen
  * @returns die Zeilen (hoechstens MAX_ZEILEN) und wie viele weitere es gaebe
  */
 export function zyklusZeilen(
@@ -45,14 +83,14 @@ export function zyklusZeilen(
   heute: string,
   timeZone: string,
 ): { zeilen: ZyklusZeile[]; weitere: number } {
-  const fensterStart = alsMs(fenster.von)
-  // Der letzte Tag zaehlt ganz mit.
-  const fensterEnde = alsMs(fenster.bis) + TAG_MS
+  const [fensterStart, fensterEnde] = achse(fenster)
   const spanne = fensterEnde - fensterStart
   if (!(spanne > 0)) return { zeilen: [], weitere: 0 }
+  const heuteEnde = tagMs(heute) + TAG_MS
 
-  // Farbe folgt der Substanz: feste Reihenfolge ueber alle Zyklen (erster
-  // Start), damit ein anderer Zeitraum die Farben nicht neu verteilt.
+  // Farbe folgt der Substanz: feste Reihenfolge nach erstem Start ueberhaupt,
+  // damit ein anderer Zeitraum die Farben nicht neu verteilt. Ab der siebten
+  // Substanz wiederholen sich die Plaetze; der Name steht an jeder Zeile.
   const reihenfolge = [...new Set(
     timelines
       .slice()
@@ -64,31 +102,36 @@ export function zyklusZeilen(
   for (const timeline of timelines) {
     const { first, last } = cyclePeriod(timeline, timeZone)
     const letzter = last !== null && last < first ? first : last
-    const startMs = alsMs(first)
-    const endeMs = alsMs(letzter ?? heute) + TAG_MS
-    if (endeMs <= fensterStart || startMs >= fensterEnde) continue
-    const abschnitt: ZyklusAbschnitt = {
-      cycleId: timeline.cycle.id,
-      von: first,
-      bis: letzter,
-      start: Math.max(0, (startMs - fensterStart) / spanne),
-      ende: Math.min(1, (endeMs - fensterStart) / spanne),
-    }
-    const liste = proSubstanz.get(timeline.cycle.stack_item_id) ?? []
-    liste.push(abschnitt)
-    proSubstanz.set(timeline.cycle.stack_item_id, liste)
+    const startMs = tagMs(first)
+    const endeMs = letzter ? tagMs(letzter) + TAG_MS : heuteEnde
+    const pausen = timeline.pauses.map((pause): [number, number] => [
+      tagMs(lokalerTag(pause.paused_at, timeZone)),
+      pause.ends_at ? tagMs(lokalerTag(pause.ends_at, timeZone)) : heuteEnde,
+    ])
+    const stuecke = ohnePausen(startMs, endeMs, pausen)
+    stuecke.forEach(([a, b], index) => {
+      if (b <= fensterStart || a >= fensterEnde || b <= a) return
+      // Laeuft nur, was bis heute reicht — nicht ein Stueck vor einer offenen Pause.
+      const laeuft = letzter === null && b === endeMs
+      const liste = proSubstanz.get(timeline.cycle.stack_item_id) ?? []
+      liste.push({
+        key: `${timeline.cycle.id}:${index}`,
+        von: msTag(a),
+        bis: laeuft ? null : msTag(b - TAG_MS),
+        start: Math.max(0, (a - fensterStart) / spanne),
+        ende: Math.min(1, (b - fensterStart) / spanne),
+      })
+      proSubstanz.set(timeline.cycle.stack_item_id, liste)
+    })
   }
 
   const alle = [...proSubstanz.entries()]
-    .map(([stackItemId, abschnitte]) => {
-      const platz = reihenfolge.indexOf(stackItemId)
-      return {
-        stackItemId,
-        substanz: namen.get(stackItemId) ?? '—',
-        farbe: platz >= 0 && platz < FARBEN ? platz : null,
-        abschnitte: abschnitte.sort((a, b) => a.start - b.start),
-      }
-    })
+    .map(([stackItemId, abschnitte]) => ({
+      stackItemId,
+      substanz: namen.get(stackItemId) ?? '—',
+      farbe: Math.max(0, reihenfolge.indexOf(stackItemId)) % FARBEN,
+      abschnitte: abschnitte.sort((a, b) => a.start - b.start),
+    }))
     .sort((a, b) => a.abschnitte[0].start - b.abschnitte[0].start)
 
   return { zeilen: alle.slice(0, MAX_ZEILEN), weitere: Math.max(0, alle.length - MAX_ZEILEN) }
