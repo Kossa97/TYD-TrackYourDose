@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useRef } from 'react'
 import i18n from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { lerpLevel, pickNiceTicks, type ChartPoint, type NamedMarker } from './chartMath'
 
 const PAD = { top: 16, right: 12, bottom: 40, left: 46 } as const
@@ -287,6 +288,10 @@ export function SimulationChartCanvas({
     if (drawRaf.current) cancelAnimationFrame(drawRaf.current)
     drawRaf.current = requestAnimationFrame(draw)
   }, [draw])
+
+  // Achsentexte kommen aus i18n.t im Zeichnen — bei Sprachwechsel neu zeichnen.
+  const { t } = useTranslation()
+  useEffect(() => { scheduleRedraw() }, [t, scheduleRedraw])
 
   useEffect(() => {
     pointsRef.current = points

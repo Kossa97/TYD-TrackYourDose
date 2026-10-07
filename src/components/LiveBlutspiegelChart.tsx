@@ -297,7 +297,8 @@ export function LiveBlutspiegelChart({
   }, [])  // Intentionally empty — reads all live values from refs
 
   // Trigger redraws
-  useEffect(() => { scheduleRedraw() }, [activeCycles, scheduleRedraw])
+  // `t` wechselt mit der Sprache; Achsentexte kommen aus i18n.t im Zeichnen.
+  useEffect(() => { scheduleRedraw() }, [activeCycles, scheduleRedraw, t])
 
   // ResizeObserver
   useEffect(() => {

@@ -7,6 +7,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import i18n from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { getDateLocale } from '../../i18n/dateLocales'
 import {
   lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks, panHapticStepMs,
@@ -377,6 +378,10 @@ function LiveCycleChartCanvas({
     if (drawRaf.current) cancelAnimationFrame(drawRaf.current)
     drawRaf.current = requestAnimationFrame(draw)
   }, [draw])
+
+  // Achsentexte kommen aus i18n.t im Zeichnen — bei Sprachwechsel neu zeichnen.
+  const { t } = useTranslation()
+  useEffect(() => { scheduleRedraw() }, [t, scheduleRedraw])
 
   // Props → Refs synchronisieren, Anker pflegen, neu zeichnen
   useEffect(() => {

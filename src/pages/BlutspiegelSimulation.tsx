@@ -260,6 +260,8 @@ interface PkResult {
   data: ChartPoint[]
   tmaxActual: number
   peakPct: number
+  /** Ende des berechneten Fensters (h) */
+  xMax: number
   t10: number
   accumFactor: number
 }
@@ -274,7 +276,12 @@ function runSimulation(
   const doseOffsets = multiDose && intervalH > 0 && numDoses > 1
     ? Array.from({ length: numDoses }, (_, d) => d * intervalH)
     : [0]
-  const xMax   = profile.half_life_hours * 5
+  // Fenster: letzte Gabe plus fuenf Halbwertszeiten der langsameren Konstante.
+  // Bei langsamer Resorption (ka < ke) bestimmt ka das Abklingen, nicht ke;
+  // mit 5·t½ allein brach die Kurve dann noch weit ueber 10 % ab.
+  const rates  = pkRates(profile.half_life_hours, profile.tmax_hours)
+  const terminalHalfLife = rates ? Math.LN2 / Math.min(rates.ka, rates.ke) : profile.half_life_hours
+  const xMax   = doseOffsets[doseOffsets.length - 1] + Math.max(profile.half_life_hours, terminalHalfLife) * 5
   const rawT   = Array.from({ length: steps + 1 }, (_, i) => (i * xMax) / steps)
 
   const concentrations = levelsAt(profile, rawT, doseOffsets)
@@ -302,7 +309,7 @@ function runSimulation(
   // Das Ablesen rundet erst bei der Anzeige (Chip).
   const data: ChartPoint[] = rawT.map((t, i) => ({ t, c: pctArr[i] }))
 
-  return { data, tmaxActual, peakPct: 100, t10, accumFactor }
+  return { data, tmaxActual, peakPct: 100, xMax, t10, accumFactor }
 }
 
 // ── Design-Tokens ──────────────────────────────────────────────────────────
@@ -589,8 +596,10 @@ function LiveCycleCard({
 
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
+    let cancelled = false
     setCurveLoading(true)
     void loadDoseHistory(cycleId).then(history => {
+      if (cancelled) return
       setEvents(history.events)
       setInterruptedAt(history.interruptedAt)
       if (history.events.some(e => e.status === 'taken')) {
@@ -606,6 +615,7 @@ function LiveCycleCard({
       }
       setCurveLoading(false)
     })
+    return () => { cancelled = true }
   }, [cycleId, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc, iuPerMg, mlFactor])
 
   // Live-Wachstum: Kurve jede Minute bis "jetzt" erweitern (kein DB-Call)
@@ -1033,7 +1043,7 @@ export function BlutspiegelSimulation() {
       { ts: simResult.tmaxActual, label: t('pk_legend_peak'), color: '#f59e0b' },
       { ts: selectedProfile.half_life_hours, label: t('pk_marker_half_life'), color: '#a78bfa' },
     ]
-    if (simResult.t10 < selectedProfile.half_life_hours * 5) {
+    if (simResult.t10 < simResult.xMax) {
       list.push({ ts: simResult.t10, label: t('pk_marker_end'), color: '#9aa6bf' })
     }
     return list
@@ -1333,9 +1343,9 @@ export function BlutspiegelSimulation() {
                 },
                 {
                   label: t('pk_res_duration_label'),
-                  value: simResult.t10 < selectedProfile.half_life_hours * 5
+                  value: simResult.t10 < simResult.xMax
                     ? t('pk_hours_value', { h: Math.round(simResult.t10 * 10) / 10 })
-                    : t('pk_hours_over', { h: Math.round(selectedProfile.half_life_hours * 5) }),
+                    : t('pk_hours_over', { h: Math.round(simResult.xMax) }),
                   explain: t('pk_res_duration_explain'),
                 },
                 {
