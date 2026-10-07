@@ -7,7 +7,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { format } from 'date-fns'
-import { de as deLocale } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
+import { getDateLocale } from '../i18n/dateLocales'
 import type { CycleChartData } from '../services/liveBlutspiegelChart'
 import { splitLiveCurveSegments } from './liveCycleChart/chartMath'
 
@@ -48,6 +50,7 @@ export function LiveBlutspiegelChart({
   cycles: CycleChartData[]
   loading?: boolean
 }) {
+  const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef   = useRef<HTMLDivElement>(null)
 
@@ -152,7 +155,7 @@ export function LiveBlutspiegelChart({
         ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
         ctx.fillStyle = tokenMuted
         ctx.fillText(
-          format(new Date(ts), 'EEE dd.', { locale: deLocale }),
+          format(new Date(ts), 'EEE dd.', { locale: getDateLocale() }),
           x, dY + dH + 5,
         )
       }
@@ -169,7 +172,7 @@ export function LiveBlutspiegelChart({
         ctx.textAlign    = 'center'
         ctx.textBaseline = 'top'
         ctx.fillStyle    = '#00ccf5'
-        ctx.fillText('Jetzt', nowX, dY + 2)
+        ctx.fillText(i18n.t('pk_axis_now_title'), nowX, dY + 2)
       }
 
       // ── Per-cycle curves ────────────────────────────────────────────────
@@ -406,7 +409,7 @@ export function LiveBlutspiegelChart({
   if (loading) {
     return (
       <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Verlauf wird geladen…</span>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('pk_history_loading')}</span>
       </div>
     )
   }
@@ -477,7 +480,7 @@ export function LiveBlutspiegelChart({
               }}
             >
               <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginBottom: 5, fontFamily: 'monospace' }}>
-                {format(new Date(tooltip.timestamp), 'EEE dd.MM · HH:mm', { locale: deLocale })}
+                {format(new Date(tooltip.timestamp), 'EEE dd.MM · HH:mm', { locale: getDateLocale() })}
               </p>
               {tooltip.items.map(item => (
                 <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
@@ -505,7 +508,7 @@ export function LiveBlutspiegelChart({
               borderRadius: 6, padding: '3px 7px', cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
-            Jetzt ↩
+            {t('pk_axis_now_title')} ↩
           </button>
         )}
       </div>
@@ -513,9 +516,9 @@ export function LiveBlutspiegelChart({
       {/* Legend */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {[
-          { dot: <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />, label: 'Einnahme' },
-          { dot: <span style={{ fontSize: '0.8rem', color: '#ef4444', lineHeight: 1 }}>×</span>, label: 'Übersprungen' },
-          { dot: <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1 }}>▲</span>, label: 'Peak' },
+          { dot: <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />, label: t('pk_legend_intake') },
+          { dot: <span style={{ fontSize: '0.8rem', color: '#ef4444', lineHeight: 1 }}>×</span>, label: t('pk_legend_skipped') },
+          { dot: <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1 }}>▲</span>, label: t('pk_legend_peak') },
         ].map(({ dot, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {dot}

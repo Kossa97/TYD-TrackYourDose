@@ -153,9 +153,9 @@ describe('BlutspiegelCarousel PK readiness', () => {
       versions: [{ ...(carouselMocks.normalized.versions as any[])[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }],
       stack_items: { ...carouselMocks.normalized.stack_items as object, id: 'future-item', display_name: 'Future item' } }]
     vi.mocked(getCurrentBlutspiegelLevel).mockResolvedValue({ currentLevel: 50, trend: 'stable', sparkData: [],
-      nextDoseIn: '1h', levelAfterNextDose: 75, peakLabel: 'in 1h', unit: 'mg', interruptedAt: null })
+      nextDoseIn: '1h', levelAfterNextDose: 75, peakInMs: null, unit: 'mg', interruptedAt: null })
     render(<MemoryRouter><BlutspiegelCarousel /></MemoryRouter>)
-    await screen.findByText(/Geschätzter Wirkstoff/)
+    await screen.findByText('pk_carousel_estimate')
     expect(screen.getByText('Future item')).toBeTruthy()
     expect(vi.mocked(getCurrentBlutspiegelLevel).mock.calls.map(args => [args[5], args[6]])).toEqual([
       [{ iuPerMg: 3, mgPerMl: 2.5 }, 'Subkutan'], [{ iuPerMg: 4, mgPerMl: 5 }, 'Subkutan'],
@@ -182,7 +182,7 @@ describe('BlutspiegelCarousel PK readiness', () => {
       sparkData: Array(20).fill(50),
       nextDoseIn: '1h',
       levelAfterNextDose: 75,
-      peakLabel: 'in 1h',
+      peakInMs: null,
       unit: 'mg',
       interruptedAt: null,
     })
@@ -193,7 +193,7 @@ describe('BlutspiegelCarousel PK readiness', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/Geschätzter Wirkstoff/)).toBeTruthy()
+    expect(await screen.findByText('pk_carousel_estimate')).toBeTruthy()
     expect(screen.queryByText(/PK-Daten unvollständig/)).toBeNull()
   })
 
@@ -206,7 +206,7 @@ describe('BlutspiegelCarousel PK readiness', () => {
       sparkData: Array(20).fill(50),
       nextDoseIn: '1h',
       levelAfterNextDose: 75,
-      peakLabel: 'in 1h',
+      peakInMs: null,
       unit: 'mg',
       interruptedAt: null,
     })

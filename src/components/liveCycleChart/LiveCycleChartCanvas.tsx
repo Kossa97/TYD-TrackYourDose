@@ -6,7 +6,8 @@
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { format } from 'date-fns'
-import { de as deLocale } from 'date-fns/locale'
+import i18n from 'i18next'
+import { getDateLocale } from '../../i18n/dateLocales'
 import {
   lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks, panHapticStepMs,
   splitLiveCurveSegments,
@@ -152,9 +153,9 @@ function LiveCycleChartCanvas({
       ctx.fillStyle = muted
       const label = shortWindow
         ? (win <= LIVE_CHART_WINDOW_MS_MOBILE
-          ? format(new Date(ts), 'HH:mm', { locale: deLocale })
-          : format(new Date(ts), 'EEE HH:mm', { locale: deLocale }))
-        : format(new Date(ts), 'EEE dd.', { locale: deLocale })
+          ? format(new Date(ts), 'HH:mm', { locale: getDateLocale() })
+          : format(new Date(ts), 'EEE HH:mm', { locale: getDateLocale() }))
+        : format(new Date(ts), 'EEE dd.', { locale: getDateLocale() })
       ctx.fillText(label, x, dY + dH + 4)
     }
 
@@ -317,7 +318,7 @@ function LiveCycleChartCanvas({
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = muted
-    ctx.fillText('Spiegel %', 0, 0)
+    ctx.fillText(i18n.t('pk_axis_level'), 0, 0)
     ctx.restore()
 
     // "jetzt"-Label
@@ -327,7 +328,7 @@ function LiveCycleChartCanvas({
       ctx.font = '8px ui-monospace,monospace'
       ctx.textAlign = 'right'
       ctx.textBaseline = 'top'
-      ctx.fillText('jetzt', Math.min(nowX, dX + dW), dY - 2)
+      ctx.fillText(i18n.t('pk_axis_now'), Math.min(nowX, dX + dW), dY - 2)
     }
 
     // Ables-Linie
@@ -351,7 +352,7 @@ function LiveCycleChartCanvas({
         ctx.strokeStyle = accentRef.current; ctx.lineWidth = 2; ctx.stroke()
       }
 
-      const label = format(new Date(ts), 'EEE dd.MM · HH:mm', { locale: deLocale })
+      const label = format(new Date(ts), 'EEE dd.MM · HH:mm', { locale: getDateLocale() })
       const valStr = lv.toFixed(1) + '%'
       ctx.font = '9px ui-monospace,monospace'
       const chipW = Math.max(ctx.measureText(label).width, 40) + 16

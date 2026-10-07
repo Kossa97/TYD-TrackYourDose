@@ -160,10 +160,10 @@ function linkedProfiles(cycle: CycleWithPk): VerknuepfteZutat[] {
 // database reads and rerendered the entire carousel 20 times per second.
 const REFRESH_INTERVAL_MS = 60_000
 
-const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> = {
-  rising: { label: '↑ STEIGEND', color: '#10b981' },
-  falling: { label: '↓ FALLEND', color: '#f43f5e' },
-  stable: { label: '→ STABIL', color: '#94a3b8' },
+const TREND_DISPLAY: Record<BlutspiegelTrend, { icon: string; labelKey: string; color: string }> = {
+  rising: { icon: '↑', labelKey: 'pk_trend_rising', color: '#10b981' },
+  falling: { icon: '↓', labelKey: 'pk_trend_falling', color: '#f43f5e' },
+  stable: { icon: '→', labelKey: 'pk_trend_stable', color: '#94a3b8' },
 }
 
 function FlipChar({ char }: { char: string }) {
@@ -218,7 +218,9 @@ function LevelDisplay({
   trend: BlutspiegelTrend
   refreshFlashing: boolean
 }) {
-  const { label, color } = TREND_DISPLAY[trend]
+  const { t } = useTranslation()
+  const { icon, labelKey, color } = TREND_DISPLAY[trend]
+  const label = `${icon} ${t(labelKey).toUpperCase()}`
   const decimals = 4
   const [displayValue, setDisplayValue] = useState(value)
   const [animatedValue, setAnimatedValue] = useState(value)
@@ -318,7 +320,7 @@ function LevelDisplay({
           color: 'var(--text-dim)',
         }}
       >
-        Geschätzter Wirkstoff in deinem Blut basierend auf deinen Einnahmen.
+        {t('pk_carousel_estimate')}
       </p>
     </div>
   )
@@ -445,7 +447,7 @@ function BlutspiegelCard({
               cursor: 'pointer',
             }}
           >
-            mehr
+            {t('pk_more')}
           </button>
         </div>
 
@@ -867,7 +869,7 @@ export function BlutspiegelCarousel() {
             marginTop: 12,
           }}
           role="tablist"
-          aria-label="Zyklus-Auswahl"
+          aria-label={t('pk_cycle_select')}
         >
           {cards.map((card, i) => {
             const active = i === activeIndex
@@ -877,7 +879,7 @@ export function BlutspiegelCarousel() {
                 type="button"
                 role="tab"
                 aria-selected={active}
-                aria-label={`${card.peptideName}, Karte ${i + 1}`}
+                aria-label={t('pk_cycle_card', { name: card.peptideName, index: i + 1 })}
                 onClick={() => setActiveIndex(i)}
                 style={{
                   height: 6,

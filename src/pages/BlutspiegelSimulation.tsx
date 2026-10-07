@@ -3,7 +3,8 @@ import { Area, ResponsiveContainer, AreaChart } from 'recharts'
 import { FEATURES } from '../config/features'
 import { Activity, ChevronDown, ChevronUp, Info, Loader2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -123,10 +124,22 @@ const CATEGORY_ACCENT: Record<PkCategory, string> = {
   other: '#94a3b8',
 }
 
-const TREND_META: Record<BlutspiegelTrend, { label: string; icon: string; color: string }> = {
-  rising:  { label: 'Steigend', icon: '↑', color: '#10b981' },
-  falling: { label: 'Fallend',  icon: '↓', color: '#f43f5e' },
-  stable:  { label: 'Stabil',   icon: '→', color: '#94a3b8' },
+const TREND_META: Record<BlutspiegelTrend, { labelKey: string; icon: string; color: string }> = {
+  rising:  { labelKey: 'pk_trend_rising', icon: '↑', color: '#10b981' },
+  falling: { labelKey: 'pk_trend_falling', icon: '↓', color: '#f43f5e' },
+  stable:  { labelKey: 'pk_trend_stable', icon: '→', color: '#94a3b8' },
+}
+
+/** „vor 3h" / „in 2T" — aus dem Abstand zum Peak, den der Service liefert. */
+function formatPeakOffset(diffMs: number | null | undefined, t: TFunction): string {
+  if (diffMs == null) return '—'
+  const absH = Math.abs(diffMs) / 3_600_000
+  const value = absH < 1
+    ? t('pk_duration_under_hour')
+    : absH < 24
+      ? t('pk_duration_hours', { count: Math.round(absH) })
+      : t('pk_duration_days', { count: Math.round(absH / 24) })
+  return diffMs < 0 ? t('pk_peak_past', { value }) : t('pk_peak_future', { value })
 }
 
 export function PkReadinessPanel({
@@ -198,9 +211,9 @@ export function PkCurveLegend() {
   return (
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
       {[
-        { bg: '#06b6d4', label: 'Wirkungsbeginn' },
-        { bg: '#10b981', label: 'Einnahme' },
-        { bg: '#f59e0b', label: 'Peak' },
+        { bg: '#06b6d4', label: t('pk_legend_onset') },
+        { bg: '#10b981', label: t('pk_legend_intake') },
+        { bg: '#f59e0b', label: t('pk_legend_peak') },
       ].map(({ bg, label }) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: bg, display: 'inline-block', flexShrink: 0 }} />
@@ -327,6 +340,7 @@ const INPUT = {
 // ── UI-Hilfen (Erklärungsebene) ────────────────────────────────────────────
 
 function InfoTip({ text }: { text: string }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   return (
@@ -337,7 +351,7 @@ function InfoTip({ text }: { text: string }) {
     >
       <button
         type="button"
-        aria-label="Mehr Infos"
+        aria-label={t('pk_more_info')}
         onClick={() => setOpen(v => !v)}
         style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -389,6 +403,7 @@ function LiveCycleCarousel({
   cycles: ProtocolCycle[]
   liveData: Map<string, CurrentBlutspiegelLevel>
 }) {
+  const { t } = useTranslation()
   const [activeIndex, setActiveIndex] = useState(0)
   const [dragPx, setDragPx] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -507,7 +522,7 @@ function LiveCycleCarousel({
             marginTop: 12,
           }}
           role="tablist"
-          aria-label="Zyklus-Auswahl"
+          aria-label={t('pk_cycle_select')}
         >
           {eligible.map((c, i) => {
             const pk = linkedProfile(c)!.profile
@@ -519,7 +534,7 @@ function LiveCycleCarousel({
                 type="button"
                 role="tab"
                 aria-selected={active}
-                aria-label={`${c.stack_items!.display_name}, Karte ${i + 1}`}
+                aria-label={t('pk_cycle_card', { name: c.stack_items!.display_name, index: i + 1 })}
                 onClick={() => setActiveIndex(i)}
                 style={{
                   height: 6,
@@ -637,8 +652,8 @@ function LiveCycleCard({
   // Wirkungsbeginn: erster Punkt wo der akkumulierte Spiegel >= 25%
   const onsetMarkers = useMemo((): NamedMarker[] => {
     const onset = chartData.find(p => p.level >= 25)
-    return onset ? [{ ts: onset.ts, label: 'Wirkungsbeginn', color: '#06b6d4' }] : []
-  }, [chartData])
+    return onset ? [{ ts: onset.ts, label: t('pk_legend_onset'), color: '#06b6d4' }] : []
+  }, [chartData, t])
 
   const trend    = level ? TREND_META[level.trend] : TREND_META.stable
   const hasCurve = curve.length > 0
@@ -672,7 +687,7 @@ function LiveCycleCard({
                 {level.currentLevel.toFixed(1)}<span style={{ fontSize: '1rem' }}>%</span>
               </p>
               <p style={{ fontSize: '0.6rem', fontWeight: 800, color: trend.color, marginTop: 2, fontFamily: 'monospace', letterSpacing: '0.06em' }}>
-                {trend.icon} {trend.label.toUpperCase()}
+                {trend.icon} {t(trend.labelKey).toUpperCase()}
               </p>
             </>
           ) : (
@@ -704,7 +719,7 @@ function LiveCycleCard({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, minHeight: 40 }}>
               <div>
                 <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: 4 }}>
-                  {isMobileChart ? '24h-Fenster' : '7-Tage-Fenster'} · wischen für Verlauf · halten zum Ablesen
+                  {isMobileChart ? t('pk_window_24h') : t('pk_window_7d')} · {t('pk_chart_gestures')}
                 </p>
                 {/* Legende */}
                 <PkCurveLegend />
@@ -715,7 +730,7 @@ function LiveCycleCard({
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, paddingLeft: 12 }}>
                   {hasHistory && (
                     <button type="button" className="live-cycle-nav-btn" onClick={() => chartRef.current?.jumpToStart()}>
-                      ⏮ Zyklusstart
+                      {t('pk_jump_start')}
                     </button>
                   )}
                   {showJetzt && (
@@ -758,7 +773,7 @@ function LiveCycleCard({
               </AreaChart>
             </ResponsiveContainer>
             <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>
-              Einnahmen im Kalender bestätigen für vollständigen Verlauf
+              {t('pk_confirm_hint')}
             </p>
           </>
         )}
@@ -768,34 +783,34 @@ function LiveCycleCard({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
         {[
           {
-            label: 'Peak',
-            value: level?.peakLabel ?? '—',
-            sub: 'Zeitpunkt, an dem nach der letzten Injektion der meiste Wirkstoff im Blut ist.',
+            label: t('pk_legend_peak'),
+            value: formatPeakOffset(level?.peakInMs, t),
+            sub: t('pk_stat_peak_sub'),
           },
           {
-            label: 'Halbwertzeit T½ (h)',
+            label: t('pk_stat_half_life'),
             value: `${pk.half_life_hours} h`,
-            sub: `Nach ${pk.half_life_hours} h ist die Hälfte abgebaut. Nach ${pk.half_life_hours * 2} h sind es 75 %, nach ${pk.half_life_hours * 5} h ist der Wirkstoff praktisch weg. Je länger die Halbwertzeit, desto seltener muss dosiert werden.`,
+            sub: t('pk_stat_half_life_sub', { h: pk.half_life_hours, h2: pk.half_life_hours * 2, h5: pk.half_life_hours * 5 }),
           },
           {
-            label: 'Tmax (h)',
+            label: t('pk_stat_tmax'),
             value: `${pk.tmax_hours} h`,
-            sub: `Nach der Injektion dauert es ca. ${pk.tmax_hours} h, bis der Wirkstoff seinen Höchstwert im Blut erreicht. Erst ab diesem Punkt bist du auf dem Wirkungsmaximum.`,
+            sub: t('pk_stat_tmax_sub', { h: pk.tmax_hours }),
           },
           {
-            label: 'Bioverfügbarkeit F (%)',
+            label: t('pk_stat_bioavailability'),
             value: `${Math.round(pk.bioavailability_sc * 100)} %`,
-            sub: `Von der injizierten Menge kommen ${Math.round(pk.bioavailability_sc * 100)} % in den Blutkreislauf an. Bei subkutaner Injektion (SC) ist dieser Wert typischerweise hoch.`,
+            sub: t('pk_stat_bioavailability_sub', { pct: Math.round(pk.bioavailability_sc * 100) }),
           },
           {
-            label: 'Verteilungsvolumen Vd (L/kg)',
+            label: t('pk_stat_vd'),
             value: pk.vd_l_kg != null ? `${pk.vd_l_kg} L/kg` : '—',
-            sub: `Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt.${pk.vd_l_kg != null && pk.vd_l_kg > 1 ? ' Hoher Wert — speichert sich stark im Gewebe, was oft eine längere Wirkdauer erklärt.' : ' Niedriger Wert — bleibt hauptsächlich im Blut.'}`,
+            sub: `${t('pk_stat_vd_sub')} ${pk.vd_l_kg != null && pk.vd_l_kg > 1 ? t('pk_stat_vd_high') : t('pk_stat_vd_low')}`,
           },
           {
-            label: 'Eliminationskonstante ke (1/h)',
+            label: t('pk_stat_ke'),
             value: `${(Math.LN2 / pk.half_life_hours).toFixed(3)} /h`,
-            sub: `Pro Stunde werden ${(fractionEliminatedPerHour(pk.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
+            sub: t('pk_stat_ke_sub', { pct: (fractionEliminatedPerHour(pk.half_life_hours) * 100).toFixed(1) }),
           },
         ].map(({ label, value, sub }) => (
           <div key={label} className="live-cycle-stat-cell">
@@ -816,6 +831,7 @@ function LiveCycleCard({
 // ── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function BlutspiegelSimulation() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const pkFromUrl = searchParams.get('pk')
@@ -1013,35 +1029,35 @@ export function BlutspiegelSimulation() {
     const onset = simResult.data.find(p => p.c >= 25)
 
     const list = [
-      ...(onset ? [{ ts: onset.t, label: 'Wirkungsbeginn', color: '#06b6d4' }] : []),
-      { ts: simResult.tmaxActual, label: 'Peak', color: '#f59e0b' },
-      { ts: selectedProfile.half_life_hours, label: '½ Halbwertzeit', color: '#a78bfa' },
+      ...(onset ? [{ ts: onset.t, label: t('pk_legend_onset'), color: '#06b6d4' }] : []),
+      { ts: simResult.tmaxActual, label: t('pk_legend_peak'), color: '#f59e0b' },
+      { ts: selectedProfile.half_life_hours, label: t('pk_marker_half_life'), color: '#a78bfa' },
     ]
     if (simResult.t10 < selectedProfile.half_life_hours * 5) {
-      list.push({ ts: simResult.t10, label: 'Wirkungsende', color: '#9aa6bf' })
+      list.push({ ts: simResult.t10, label: t('pk_marker_end'), color: '#9aa6bf' })
     }
     return list
-  }, [simResult, selectedProfile])
+  }, [simResult, selectedProfile, t])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
-      {pkLoadError && <p role="alert">PK-Daten konnten nicht geladen werden.</p>}
+      {pkLoadError && <p role="alert">{t('pk_data_load_error')}</p>}
 
       {/* Header */}
       <div style={{ ...PANEL, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 88% 10%, rgba(0,204,245,0.15), transparent 34%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative' }}>
           <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>
-            Pharmakokinetik
+            {t('pk_sim_kicker')}
           </p>
           <h1 style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text)', lineHeight: 1.05 }}>
-            Blutspiegel-Simulation
+            {t('pk_sim_title')}
           </h1>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: 5, lineHeight: 1.5 }}>
-            Sieh auf einen Blick, wann dein Peptid wirkt und wann es wieder abgebaut ist
+            {t('pk_sim_subtitle')}
           </p>
           <p className="disclaimer" style={{ marginTop: 6 }}>
-            Alle Werte basieren auf pharmakologischen Modellen und sind Schätzungen — kein medizinischer Rat.
+            {t('pk_sim_disclaimer')}
           </p>
         </div>
       </div>
@@ -1074,9 +1090,9 @@ export function BlutspiegelSimulation() {
                 animation: 'liveBlutPulse 1.5s ease-in-out infinite',
               }} />
               <style>{`@keyframes liveBlutPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-              <p style={{ fontSize: '0.85rem', fontWeight: 850, color: 'var(--text)' }}>Live-Blutspiegel</p>
+              <p style={{ fontSize: '0.85rem', fontWeight: 850, color: 'var(--text)' }}>{t('pk_live_title')}</p>
               <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 700 }}>
-                · alle 5s
+                {t('pk_live_interval')}
               </span>
             </div>
             {liveRefreshing && <Loader2 size={14} color="var(--accent)" className="animate-spin" />}
@@ -1086,7 +1102,7 @@ export function BlutspiegelSimulation() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', justifyContent: 'center' }}>
               <Loader2 size={18} color="var(--accent)" className="animate-spin" />
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Live-Spiegel wird berechnet…
+                {t('pk_live_loading')}
               </p>
             </div>
           ) : (
@@ -1099,10 +1115,10 @@ export function BlutspiegelSimulation() {
       {FEATURES.LIVE_VERLAUF_CHART && (chartLoading || chartData.length > 0) && (
         <div style={PANEL}>
           <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>
-            Verlaufs-Graph
+            {t('pk_history_title')}
           </p>
           <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-            7-Tage-Fenster mit echten Einnahmen · wischen zum Scrollen
+            {t('pk_history_hint')}
           </p>
           <LiveBlutspiegelChart cycles={chartData} loading={chartLoading} />
         </div>
@@ -1123,11 +1139,11 @@ export function BlutspiegelSimulation() {
         >
           <div style={{ textAlign: 'left' }}>
             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 1 }}>
-              Manuelle Simulation
+              {t('pk_manual_title')}
             </p>
             {!simOpen && (
               <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)' }}>
-                Tippen zum Öffnen
+                {t('pk_manual_tap')}
               </p>
             )}
           </div>
@@ -1138,20 +1154,19 @@ export function BlutspiegelSimulation() {
 
         {simOpen && <>
         <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-          Simuliere den theoretischen Verlauf einer Einzeldosis — wähle Substanz, Dosis und Route.
-          Die Werte sind Schätzungen auf Basis pharmakologischer Durchschnittsdaten.
+          {t('pk_manual_intro')}
         </p>
 
         {/* Peptid-Auswahl */}
         <div style={{ marginBottom: 12 }}>
           <FieldLabel
-            tip="Wähle den Wirkstoff, den du simulieren möchtest. Die pharmakokinetischen Daten (Halbwertzeit, Tmax) werden automatisch geladen."
+            tip={t('pk_field_substance_tip')}
           >
-            Peptid
+            {t('pk_field_substance')}
           </FieldLabel>
           {pkProfiles.length === 0 ? (
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--accent-weak)' }}>
-              Noch keine PK-Profile hinterlegt. Im Admin-Panel hinzufügen.
+              {t('pk_no_profiles')}
             </p>
           ) : (
             <select
@@ -1170,14 +1185,14 @@ export function BlutspiegelSimulation() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, marginBottom: 12 }}>
           <div>
             <FieldLabel
-              tip="Die Menge, die du injizierst. Tipp: Schau in deinen aktiven Zyklus für deine übliche Dosis."
+              tip={t('pk_field_dose_tip')}
             >
-              Dosis
+              {t('pk_field_dose')}
             </FieldLabel>
             <input
               type="number"
               inputMode="decimal"
-              placeholder="z.B. 250"
+              placeholder={t('pk_field_dose_placeholder')}
               value={dose}
               onChange={e => setDose(e.target.value)}
               style={INPUT}
@@ -1185,9 +1200,9 @@ export function BlutspiegelSimulation() {
           </div>
           <div>
             <FieldLabel
-              tip="mcg = Mikrogramm (kleiner), mg = Milligramm (größer), IU = Internationale Einheiten (für HGH/HCG)"
+              tip={t('pk_field_unit_tip')}
             >
-              Einheit
+              {t('pk_field_unit')}
             </FieldLabel>
             <select value={unit} onChange={e => setUnit(e.target.value as 'mg' | 'mcg' | 'IU')} style={{ ...INPUT, width: 'auto' }}>
               <option>mcg</option>
@@ -1197,9 +1212,9 @@ export function BlutspiegelSimulation() {
           </div>
           <div>
             <FieldLabel
-              tip="SC = subkutan (unter die Haut, langsamer), IM = intramuskulär (in den Muskel, etwas schneller)"
+              tip={t('pk_field_route_tip')}
             >
-              Applikationsroute
+              {t('pk_field_route')}
             </FieldLabel>
             <select value={route} onChange={e => setRoute(e.target.value as 'SC' | 'IM' | 'oral')} style={{ ...INPUT, width: 'auto' }}>
               <option>SC</option>
@@ -1212,8 +1227,8 @@ export function BlutspiegelSimulation() {
         {/* Mehrfachdosis Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: multiDose ? 12 : 0 }}>
           <div>
-            <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>Mehrfachdosis simulieren</p>
-            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>Zeigt Akkumulation über mehrere Gaben</p>
+            <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{t('pk_multi_title')}</p>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('pk_multi_sub')}</p>
           </div>
           <button
             onClick={() => setMultiDose(v => !v)}
@@ -1234,11 +1249,11 @@ export function BlutspiegelSimulation() {
         {multiDose && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
-              <label style={LABEL}>Dosierungsintervall (h)</label>
+              <label style={LABEL}>{t('pk_interval_label')}</label>
               <input type="number" value={interval} onChange={e => setInterval(e.target.value)} style={INPUT} />
             </div>
             <div>
-              <label style={LABEL}>Anzahl Dosen (max 10)</label>
+              <label style={LABEL}>{t('pk_num_doses_label')}</label>
               <input type="number" min="2" max="10" value={numDoses} onChange={e => setNumDoses(e.target.value)} style={INPUT} />
             </div>
           </div>
@@ -1246,7 +1261,7 @@ export function BlutspiegelSimulation() {
 
         <button
           onClick={startSimulation}
-          {...denyProps(!selectedProfile, 'Wähle zuerst eine Substanz aus.')}
+          {...denyProps(!selectedProfile, t('pk_select_first'))}
           style={{
             width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 14,
             background: selectedProfile ? 'var(--accent-weak)' : 'var(--surface-raised)',
@@ -1257,7 +1272,7 @@ export function BlutspiegelSimulation() {
             cursor: selectedProfile ? 'pointer' : 'not-allowed', transition: 'all 0.18s',
           }}
         >
-          <Activity size={16} /> Simulation starten
+          <Activity size={16} /> {t('pk_start')}
         </button>
         </>}
       </div>
@@ -1268,10 +1283,10 @@ export function BlutspiegelSimulation() {
         <>
           <div style={{ ...PANEL, paddingBottom: 20 }}>
             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
-              Blutspiegel-Kurve — {selectedProfile.name}
+              {t('pk_curve_title', { name: selectedProfile.name })}
             </p>
             <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14 }}>
-              Relativer Wirkstoffspiegel in % (normalisiert auf Peak = 100 %)
+              {t('pk_curve_sub')}
             </p>
 
             <SimulationChartCanvas
@@ -1286,54 +1301,62 @@ export function BlutspiegelSimulation() {
           {/* Ergebnisse & Parameter — kombiniert, einfach erklärt */}
           <div style={PANEL}>
             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
-              Ergebnisse & Parameter — einfach erklärt
+              {t('pk_results_title')}
             </p>
             <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-              Was die Simulation für <strong style={{ color: 'var(--text-dim)' }}>{selectedProfile.name}</strong> bedeutet — in einfachen Worten.
+              <Trans
+                i18nKey="pk_results_intro"
+                values={{ name: selectedProfile.name }}
+                components={{ b: <strong style={{ color: 'var(--text-dim)' }} /> }}
+              />
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {([
                 {
-                  label: 'Höchster Spiegel (Peak)',
+                  label: t('pk_res_peak_label'),
                   value: '100 %',
-                  explain: 'Der maximale Wirkstoffspiegel, den du mit dieser Dosis erreichst — normiert auf 100 %. Alle anderen Werte werden relativ dazu angezeigt.',
+                  explain: t('pk_res_peak_explain'),
                 },
                 {
-                  label: `Zeit bis zum Peak — Tmax (${Math.round(simResult.tmaxActual * 10) / 10} h)`,
-                  value: `${Math.round(simResult.tmaxActual * 10) / 10} Stunden`,
-                  explain: `Nach der Injektion dauert es ca. ${Math.round(simResult.tmaxActual * 10) / 10} Stunden, bis der Wirkstoff seinen Höchstwert im Blut erreicht. Erst ab diesem Punkt bist du auf dem Wirkungsmaximum.`,
+                  label: t('pk_res_tmax_label', { h: Math.round(simResult.tmaxActual * 10) / 10 }),
+                  value: t('pk_hours_value', { h: Math.round(simResult.tmaxActual * 10) / 10 }),
+                  explain: t('pk_res_tmax_explain', { h: Math.round(simResult.tmaxActual * 10) / 10 }),
                 },
                 {
-                  label: `Halbwertzeit — T½ (${selectedProfile.half_life_hours} h)`,
-                  value: `${selectedProfile.half_life_hours} Stunden`,
-                  explain: `Nach ${selectedProfile.half_life_hours} Stunden ist die Hälfte des Wirkstoffs abgebaut. Nach ${selectedProfile.half_life_hours * 2} h sind es 75 %, nach ${selectedProfile.half_life_hours * 5} h ist er praktisch vollständig eliminiert. Je länger die Halbwertzeit, desto seltener muss dosiert werden.`,
+                  label: t('pk_res_half_label', { h: selectedProfile.half_life_hours }),
+                  value: t('pk_hours_value', { h: selectedProfile.half_life_hours }),
+                  explain: t('pk_res_half_explain', {
+                    h: selectedProfile.half_life_hours,
+                    h2: selectedProfile.half_life_hours * 2,
+                    h5: selectedProfile.half_life_hours * 5,
+                  }),
                 },
                 {
-                  label: 'Wirkungsdauer (bis < 10 %)',
+                  label: t('pk_res_duration_label'),
                   value: simResult.t10 < selectedProfile.half_life_hours * 5
-                    ? `${Math.round(simResult.t10 * 10) / 10} Stunden`
-                    : `über ${Math.round(selectedProfile.half_life_hours * 5)} Stunden`,
-                  explain: 'Ab dem Zeitpunkt, wo der Spiegel unter 10 % fällt, ist die Wirkung vernachlässigbar gering. Das gibt dir einen Anhaltspunkt, wie lange eine Dosis tatsächlich aktiv wirkt.',
+                    ? t('pk_hours_value', { h: Math.round(simResult.t10 * 10) / 10 })
+                    : t('pk_hours_over', { h: Math.round(selectedProfile.half_life_hours * 5) }),
+                  explain: t('pk_res_duration_explain'),
                 },
                 {
-                  label: `Bioverfügbarkeit — F (${Math.round(selectedProfile.bioavailability_sc * 100)} %)`,
+                  label: t('pk_res_f_label', { pct: Math.round(selectedProfile.bioavailability_sc * 100) }),
                   value: `${Math.round(selectedProfile.bioavailability_sc * 100)} %`,
-                  explain: `Von der injizierten Menge kommen tatsächlich ${Math.round(selectedProfile.bioavailability_sc * 100)} % in den Blutkreislauf an. Der Rest wird vor der Wirkung abgebaut. Bei subkutaner Injektion (SC) ist dieser Wert typischerweise hoch.`,
+                  explain: t('pk_res_f_explain', { pct: Math.round(selectedProfile.bioavailability_sc * 100) }),
                 },
                 {
-                  label: `Verteilungsvolumen — Vd (${selectedProfile.vd_l_kg != null ? selectedProfile.vd_l_kg + ' L/kg' : '—'})`,
+                  label: t('pk_res_vd_label', { vd: selectedProfile.vd_l_kg != null ? `${selectedProfile.vd_l_kg} L/kg` : '—' }),
                   value: selectedProfile.vd_l_kg != null ? `${selectedProfile.vd_l_kg} L/kg` : '—',
-                  explain: `Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt.${selectedProfile.vd_l_kg != null && selectedProfile.vd_l_kg > 1 ? ' Hoher Wert (> 1 L/kg) — der Wirkstoff speichert sich stark im Gewebe, nicht nur im Blut. Das erklärt oft eine längere Wirkdauer.' : ' Niedriger Wert — der Wirkstoff bleibt hauptsächlich im Blut.'}`,
+                  explain: `${t('pk_stat_vd_sub')} ${selectedProfile.vd_l_kg != null && selectedProfile.vd_l_kg > 1 ? t('pk_res_vd_high') : t('pk_res_vd_low')}`,
                 },
                 {
-                  label: `Eliminationskonstante — ke (${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h)`,
+                  label: t('pk_res_ke_label', { ke: (Math.LN2 / selectedProfile.half_life_hours).toFixed(3) }),
                   value: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h`,
-                  explain: `Pro Stunde werden ${(fractionEliminatedPerHour(selectedProfile.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
+                  explain: t('pk_stat_ke_sub', { pct: (fractionEliminatedPerHour(selectedProfile.half_life_hours) * 100).toFixed(1) }),
                 },
                 ...(multiDose ? [{
-                  label: `Akkumulationsfaktor (${simResult.accumFactor.toFixed(2)}×)`,
+                  label: t('pk_res_accum_label', { f: simResult.accumFactor.toFixed(2) }),
                   value: `${simResult.accumFactor.toFixed(2)}×`,
-                  explain: `Bei regelmäßiger Einnahme mit deinem gewählten Intervall ist der Steady-State-Spiegel ${simResult.accumFactor.toFixed(2)}-mal so hoch wie nach der ersten Dosis. ${simResult.accumFactor > 2 ? 'Das ist eine starke Akkumulation — der Wirkstoff sammelt sich deutlich an.' : simResult.accumFactor > 1.5 ? 'Der Wirkstoff reichert sich spürbar an.' : 'Die Akkumulation ist gering.'}`,
+                  explain: `${t('pk_res_accum_explain', { f: simResult.accumFactor.toFixed(2) })} ${simResult.accumFactor > 2 ? t('pk_res_accum_strong') : simResult.accumFactor > 1.5 ? t('pk_res_accum_noticeable') : t('pk_res_accum_low')}`,
                 }] : []),
               ] as { label: string; value: string; explain: string }[])
               .map(({ label, value, explain }) => (
@@ -1357,7 +1380,7 @@ export function BlutspiegelSimulation() {
             </div>
             {selectedProfile.notes && (
               <p style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '10px 12px', background: 'var(--accent-weak)', borderRadius: 10, borderLeft: '2px solid var(--accent-border)' }}>
-                <strong style={{ color: 'var(--text-dim)' }}>Hinweis: </strong>{selectedProfile.notes}
+                <strong style={{ color: 'var(--text-dim)' }}>{t('pk_note_prefix')}</strong>{selectedProfile.notes}
               </p>
             )}
           </div>
@@ -1371,14 +1394,14 @@ export function BlutspiegelSimulation() {
             <Activity size={26} color="var(--accent)" />
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Peptid wählen und Simulation starten
+            {t('pk_empty')}
           </p>
         </div>
       )}
       </>}
 
       <p className="disclaimer" style={{ textAlign: 'center', padding: '4px 8px 12px' }}>
-        Konsultiere einen Arzt, bevor du Peptide verwendest.
+        {t('pk_consult')}
       </p>
     </div>
   )

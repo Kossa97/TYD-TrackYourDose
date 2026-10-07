@@ -5,6 +5,7 @@
  * Ablesen: Maus-Hover (Desktop) bzw. Berühren/Ziehen (Touch) → exakter Wert.
  */
 import { useCallback, useEffect, useRef } from 'react'
+import i18n from 'i18next'
 import { lerpLevel, pickNiceTicks, type ChartPoint, type NamedMarker } from './chartMath'
 
 const PAD = { top: 16, right: 12, bottom: 40, left: 46 } as const
@@ -107,7 +108,7 @@ export function SimulationChartCanvas({
     ctx.font = '10px ui-monospace,monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText('Zeit nach Injektion (Stunden)', dX + dW / 2, cssH - 2)
+    ctx.fillText(i18n.t('pk_axis_time_after'), dX + dW / 2, cssH - 2)
 
     // Kurve (auf Plot geclippt)
     ctx.save()
@@ -154,7 +155,7 @@ export function SimulationChartCanvas({
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = muted
-    ctx.fillText('Wirkstoffspiegel (%)', 0, 0)
+    ctx.fillText(i18n.t('pk_axis_level_pct'), 0, 0)
     ctx.restore()
 
     // Marker — nahe Marker (< 10px) werden als Split-Kreis gezeichnet

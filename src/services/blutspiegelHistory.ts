@@ -22,7 +22,8 @@ export interface CurrentBlutspiegelLevel {
   sparkData: number[]
   nextDoseIn: string
   levelAfterNextDose: number | null
-  peakLabel: string
+  /** Abstand des hoechsten Spiegels zum Berechnungszeitpunkt (ms, negativ = vorbei); null ohne Kurve. Formatiert wird in der Oberflaeche. */
+  peakInMs: number | null
   unit: string
   interruptedAt: string | null
 }
@@ -376,7 +377,7 @@ const EMPTY_CURRENT_LEVEL: CurrentBlutspiegelLevel = {
   sparkData: Array(20).fill(0),
   nextDoseIn: '—',
   levelAfterNextDose: 0,
-  peakLabel: '—',
+  peakInMs: null,
   unit: 'mcg',
   interruptedAt: null,
 }
@@ -530,25 +531,13 @@ function sampleSparkData(curve: BlutspiegelCurvePoint[], count = 10): number[] {
   return result
 }
 
-function peakLabelFromCurve(curve: BlutspiegelCurvePoint[], now: Date): string {
-  if (!curve.length) return '—'
-
+function peakOffsetFromCurve(curve: BlutspiegelCurvePoint[], now: Date): number | null {
+  if (!curve.length) return null
   let peakPoint = curve[0]
   for (const p of curve) {
     if (p.level >= peakPoint.level) peakPoint = p
   }
-
-  const diffMs = peakPoint.time.getTime() - now.getTime()
-  const absH = Math.abs(diffMs) / 3_600_000
-
-  if (diffMs < 0) {
-    if (absH < 1) return 'vor <1h'
-    if (absH < 24) return `vor ${Math.round(absH)}h`
-    return `vor ${Math.round(absH / 24)}T`
-  }
-  if (absH < 1) return 'in <1h'
-  if (absH < 24) return `in ${Math.round(absH)}h`
-  return `in ${Math.round(absH / 24)}T`
+  return peakPoint.time.getTime() - now.getTime()
 }
 
 function computeTrend(current: number, previous: number): BlutspiegelTrend {
@@ -660,7 +649,7 @@ export async function getCurrentBlutspiegelLevel(
     sparkData,
     nextDoseIn,
     levelAfterNextDose,
-    peakLabel: peakLabelFromCurve(curve, now),
+    peakInMs: peakOffsetFromCurve(curve, now),
     unit: cycleUnit,
     interruptedAt,
   }

@@ -11,7 +11,7 @@ vi.mock('../services/blutspiegelHistory', async importOriginal => ({
   ...await importOriginal<typeof import('../services/blutspiegelHistory')>(),
   loadDoseHistory: vi.fn(async () => ({ events: [], interruptedAt: null })),
   getCurrentBlutspiegelLevel: vi.fn(async () => ({ currentLevel: 0, trend: 'stable', sparkData: [],
-    nextDoseIn: '1h', levelAfterNextDose: null, peakLabel: '—', unit: 'mg', interruptedAt: null })),
+    nextDoseIn: '1h', levelAfterNextDose: null, peakInMs: null, unit: 'mg', interruptedAt: null })),
 }))
 vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 const pageDb = vi.hoisted(() => ({ tables: [] as string[], cycles: [] as any[] }))
