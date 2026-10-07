@@ -12,6 +12,7 @@ import {
 } from '../features/my-stack/lib/pkReadiness'
 import { cycleAppliesToDay, findNextTimelineIntake, type EscalationRow } from '../lib/intakeSchedule'
 import { resolveCycleAt } from '../lib/planTimeline'
+import { pkRates, singleDoseLevel } from '../lib/pkModel'
 
 export type BlutspiegelTrend = 'rising' | 'falling' | 'stable'
 
@@ -315,23 +316,6 @@ export interface BlutspiegelCurvePoint {
   status: 'actual' | 'planned'
 }
 
-function doseContributionAt(
-  dose: number,
-  bioavailability: number,
-  deltaTHours: number,
-  ke: number,
-  ka: number,
-): number {
-  if (deltaTHours <= 0) return 0
-
-  const scaled = dose * bioavailability
-  if (Math.abs(ka - ke) < 1e-8) {
-    return scaled * ka * deltaTHours * Math.exp(-ke * deltaTHours)
-  }
-  return scaled * (ka / (ka - ke)) * (Math.exp(-ke * deltaTHours) - Math.exp(-ka * deltaTHours))
-}
-
-/** Berechnet den Blutspiegel-Verlauf basierend auf echten Einnahme-Events. */
 /**
  * Was eine geplante Menge in Milligramm uebersetzt.
  *
@@ -352,6 +336,7 @@ export interface DoseUmrechnung {
   mgPerMl?: number | null
 }
 
+/** Berechnet den Blutspiegel-Verlauf basierend auf echten Einnahme-Events. */
 export function calculateHistoryBlutspiegelCurve(
   events: DoseEvent[],
   halfLifeHours: number,
@@ -364,55 +349,17 @@ export function calculateHistoryBlutspiegelCurve(
   // verschwinden, und dasselbe gilt fuer ein in Millilitern geplantes Vial.
   umrechnung: DoseUmrechnung = {},
 ): BlutspiegelCurvePoint[] {
-  if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
-    return []
-  }
-
-  const ke = Math.LN2 / halfLifeHours
-  const ka = Math.LN2 / tmaxHours
-  const start = events[0].timestamp
-  const end = interruptedAt ?? new Date()
-
-  if (start.getTime() > end.getTime()) return []
-
-  const stepMs = resolutionMinutes * 60_000
-  const raw: BlutspiegelCurvePoint[] = []
-
-  const latestActualTimestamp = Math.max(...events
-    .filter(event => event.status === 'taken')
-    .map(event => event.timestamp.getTime()))
-  const withinEnd = interruptedAt
-    ? (timestamp: number) => timestamp < end.getTime()
-    : (timestamp: number) => timestamp <= end.getTime()
-
-  for (let tMs = start.getTime(); withinEnd(tMs); tMs += stepMs) {
-    let total = 0
-
-    for (const event of events) {
-      if (event.status === 'skipped') continue
-      const doseMg = toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null)
-      if (doseMg == null) continue
-      const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
-      total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
-    }
-
-    raw.push({
-      time: new Date(tMs),
-      level: Math.max(0, total),
-      status: tMs <= latestActualTimestamp ? 'actual' : 'planned',
-    })
-  }
-
-  const peak = Math.max(...raw.map(p => p.level), 0)
-  if (peak <= 0) {
-    return raw.map(p => ({ ...p, level: 0 }))
-  }
-
-  return raw.map(p => ({
-    time: p.time,
-    level: (p.level / peak) * 100,
-    status: p.status,
-  }))
+  return calculateCurveTo(
+    events,
+    interruptedAt ?? new Date(),
+    halfLifeHours,
+    tmaxHours,
+    bioavailability,
+    resolutionMinutes,
+    umrechnung,
+    // Bei einer Unterbrechung endet die Kurve VOR der unbrauchbaren Einnahme.
+    interruptedAt != null,
+  )
 }
 
 // ─── Aktueller Spiegel (Live) ────────────────────────────────────────────────
@@ -513,30 +460,33 @@ function calculateCurveTo(
   bioavailability: number,
   resolutionMinutes: number,
   umrechnung: DoseUmrechnung = {},
+  endExclusive = false,
 ): BlutspiegelCurvePoint[] {
-  if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
-    return []
-  }
+  const rates = pkRates(halfLifeHours, tmaxHours)
+  if (events.length === 0 || !rates || resolutionMinutes <= 0) return []
 
-  const ke = Math.LN2 / halfLifeHours
-  const ka = Math.LN2 / tmaxHours
   const start = events[0].timestamp
   if (start.getTime() > end.getTime()) return []
 
   const stepMs = resolutionMinutes * 60_000
+  const endMs = end.getTime()
   const raw: BlutspiegelCurvePoint[] = []
   const latestActualTimestamp = Math.max(...events
     .filter(event => event.status === 'taken')
     .map(event => event.timestamp.getTime()))
+  // Umrechnung einmal je Einnahme statt je Kurvenpunkt.
+  const doses = events
+    .filter(event => event.status !== 'skipped')
+    .map(event => ({
+      ms: event.timestamp.getTime(),
+      mg: toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null),
+    }))
+    .filter((dose): dose is { ms: number; mg: number } => dose.mg != null)
 
-  for (let tMs = start.getTime(); tMs <= end.getTime(); tMs += stepMs) {
+  for (let tMs = start.getTime(); endExclusive ? tMs < endMs : tMs <= endMs; tMs += stepMs) {
     let total = 0
-    for (const event of events) {
-      if (event.status === 'skipped') continue
-      const doseMg = toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null)
-      if (doseMg == null) continue
-      const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
-      total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
+    for (const dose of doses) {
+      total += singleDoseLevel(dose.mg, bioavailability, (tMs - dose.ms) / 3_600_000, rates)
     }
     raw.push({
       time: new Date(tMs),

@@ -35,6 +35,7 @@ import {
   type PkRequirement,
   type PkScheduleCycle,
 } from '../features/my-stack/lib/pkReadiness'
+import { fractionEliminatedPerHour, pkRates, singleDoseLevel } from '../lib/pkModel'
 import type { TrackingLevel } from '../features/my-stack/types'
 import type { EscalationRow } from '../lib/intakeSchedule'
 import { denyProps } from '../lib/denyFeedback'
@@ -229,40 +230,15 @@ function normalizeUnit(unit: string): 'mg' | 'mcg' | 'IU' {
 }
 
 // ── PK-Mathematik ─────────────────────────────────────────────────────────
+// Formel und Konstanten liegen in `lib/pkModel` — dieselben wie im Live-Spiegel.
 
-/**
- * 1-Compartment Modell mit First-Order-Absorption (normalisiert auf % von Peak).
- * Formel: C(t) = (F × ka / (ka − ke)) × (e^−ke×t − e^−ka×t)
- * ke = ln2 / t½, ka = ln2 / Tmax (Approximation per Spec)
- */
-function computeSingleDose(
-  profile: PkProfile,
-  tStart: number,
-  tEnd: number,
-  steps: number,
-): { rawT: number[]; rawC: number[] } {
-  const ke = Math.LN2 / profile.half_life_hours
-  const ka = Math.LN2 / profile.tmax_hours
-  const F  = profile.bioavailability_sc
-  const dt = (tEnd - tStart) / steps
-  const rawT: number[] = []
-  const rawC: number[] = []
-
-  for (let i = 0; i <= steps; i++) {
-    const t = tStart + i * dt
-    let c: number
-    if (t <= 0) {
-      c = 0
-    } else if (Math.abs(ka - ke) < 1e-8) {
-      // Degenerate: ka ≈ ke → use limit
-      c = F * ka * t * Math.exp(-ke * t)
-    } else {
-      c = F * (ka / (ka - ke)) * (Math.exp(-ke * t) - Math.exp(-ka * t))
-    }
-    rawT.push(t)
-    rawC.push(Math.max(0, c))
-  }
-  return { rawT, rawC }
+function levelsAt(profile: PkProfile, times: number[], doseOffsets: number[]): number[] {
+  const rates = pkRates(profile.half_life_hours, profile.tmax_hours)
+  if (!rates) return times.map(() => 0)
+  return times.map(t => doseOffsets.reduce(
+    (total, offset) => total + singleDoseLevel(1, profile.bioavailability_sc, t - offset, rates),
+    0,
+  ))
 }
 
 interface ChartPoint { t: number; c: number }
@@ -282,32 +258,13 @@ function runSimulation(
   numDoses: number,
 ): PkResult {
   const steps  = 300
+  const doseOffsets = multiDose && intervalH > 0 && numDoses > 1
+    ? Array.from({ length: numDoses }, (_, d) => d * intervalH)
+    : [0]
   const xMax   = profile.half_life_hours * 5
+  const rawT   = Array.from({ length: steps + 1 }, (_, i) => (i * xMax) / steps)
 
-  const { rawT, rawC } = computeSingleDose(profile, 0, xMax, steps)
-
-  let concentrations: number[]
-
-  if (multiDose && intervalH > 0 && numDoses > 1) {
-    const keM = Math.LN2 / profile.half_life_hours
-    const kaM = Math.LN2 / profile.tmax_hours
-    const FM  = profile.bioavailability_sc
-    concentrations = rawT.map((t) => {
-      let total = 0
-      for (let d = 0; d < numDoses; d++) {
-        const tShifted = t - d * intervalH
-        if (tShifted < 0) continue
-        if (Math.abs(kaM - keM) < 1e-8) {
-          total += FM * kaM * tShifted * Math.exp(-keM * tShifted)
-        } else {
-          total += Math.max(0, FM * (kaM / (kaM - keM)) * (Math.exp(-keM * tShifted) - Math.exp(-kaM * tShifted)))
-        }
-      }
-      return Math.max(0, total)
-    })
-  } else {
-    concentrations = rawC
-  }
+  const concentrations = levelsAt(profile, rawT, doseOffsets)
 
   const peak     = Math.max(...concentrations)
   const peakIdx  = concentrations.indexOf(peak)
@@ -322,9 +279,8 @@ function runSimulation(
 
   // Akkumulationsfaktor: nur relevant bei Mehrfachdosis
   let accumFactor = 1
-  if (multiDose && numDoses > 1) {
-    const { rawC: singleC } = computeSingleDose(profile, 0, xMax, steps)
-    const singlePeak = Math.max(...singleC)
+  if (doseOffsets.length > 1) {
+    const singlePeak = Math.max(...levelsAt(profile, rawT, [0]))
     accumFactor = singlePeak > 0 ? peak / singlePeak : 1
   }
 
@@ -522,7 +478,8 @@ function LiveCycleCarousel({
           }}
         >
           {eligible.map(c => {
-            const pk = linkedProfile(c)!.profile
+            const linked = linkedProfile(c)!
+            const pk = linked.profile
             const accent = CATEGORY_ACCENT[normCat(pk.category)]
             return (
               <div key={c.id} style={{ flex: '0 0 100%', width: '100%' }}>
@@ -530,6 +487,7 @@ function LiveCycleCarousel({
                   cycleId={c.id}
                   peptideName={c.stack_items!.display_name}
                   pk={pk}
+                  mgPerMl={linked.mgPerMl}
                   level={liveData.get(c.id)}
                   accent={accent}
                 />
@@ -588,12 +546,14 @@ function LiveCycleCard({
   cycleId,
   peptideName,
   pk,
+  mgPerMl,
   level,
   accent,
 }: {
   cycleId: string
   peptideName: string
   pk: PkProfileEmbed
+  mgPerMl: number | null
   level: CurrentBlutspiegelLevel | undefined
   accent: string
 }) {
@@ -607,6 +567,10 @@ function LiveCycleCard({
   const [hasHistory, setHasHistory]     = useState(false)
   const isMobileChart = useMediaQuery(LIVE_CHART_MOBILE_MQ)
   const chartWindowMs = isMobileChart ? LIVE_CHART_WINDOW_MS_MOBILE : LIVE_CHART_WINDOW_MS_DESKTOP
+  // Ohne Umrechnung fielen IE- und ml-Einnahmen still aus der Kurve
+  // (dieselbe Regel wie beim Live-Wert in `loadLiveLevels`).
+  const iuPerMg = FEATURES.planTimelineV2 ? pk.iu_per_mg ?? null : null
+  const mlFactor = FEATURES.planTimelineV2 ? mgPerMl : null
 
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
@@ -622,22 +586,23 @@ function LiveCycleCard({
           pk.bioavailability_sc,
           30,
           history.interruptedAt ? new Date(history.interruptedAt) : null,
+          { iuPerMg, mgPerMl: mlFactor },
         ))
       }
       setCurveLoading(false)
     })
-  }, [cycleId, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
+  }, [cycleId, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc, iuPerMg, mlFactor])
 
   // Live-Wachstum: Kurve jede Minute bis "jetzt" erweitern (kein DB-Call)
   useEffect(() => {
     if (interruptedAt || !events.some(e => e.status === 'taken')) return
     const id = window.setInterval(() => {
       setCurve(calculateHistoryBlutspiegelCurve(
-        events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc,
+        events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc, 30, null, { iuPerMg, mgPerMl: mlFactor },
       ))
     }, 10_000)
     return () => window.clearInterval(id)
-  }, [events, interruptedAt, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
+  }, [events, interruptedAt, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc, iuPerMg, mlFactor])
 
   // Volle Kurve als Chart-Daten
   const chartData = useMemo(
@@ -830,7 +795,7 @@ function LiveCycleCard({
           {
             label: 'Eliminationskonstante ke (1/h)',
             value: `${(Math.LN2 / pk.half_life_hours).toFixed(3)} /h`,
-            sub: `Pro Stunde werden ${((Math.LN2 / pk.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
+            sub: `Pro Stunde werden ${(fractionEliminatedPerHour(pk.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
           },
         ].map(({ label, value, sub }) => (
           <div key={label} className="live-cycle-stat-cell">
@@ -1363,7 +1328,7 @@ export function BlutspiegelSimulation() {
                 {
                   label: `Eliminationskonstante — ke (${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h)`,
                   value: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h`,
-                  explain: `Pro Stunde werden ${((Math.LN2 / selectedProfile.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
+                  explain: `Pro Stunde werden ${(fractionEliminatedPerHour(selectedProfile.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
                 },
                 ...(multiDose ? [{
                   label: `Akkumulationsfaktor (${simResult.accumFactor.toFixed(2)}×)`,
