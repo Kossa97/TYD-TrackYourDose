@@ -257,12 +257,6 @@
     "ast_hash": "94baa9356e28493a698dfaac5a1602c4",
     "semantic_hash": ""
   },
-  "src/components/BlutspiegelCarousel.tsx": {
-    "mtime": 1791387935.666676,
-    "seen": 1791388576.0980282,
-    "ast_hash": "feb4d4d48386766e0aeca66917d1fe22",
-    "semantic_hash": ""
-  },
   "src/components/ExpiryWarningBanners.tsx": {
     "mtime": 1791384778.6169498,
     "seen": 1791388576.0980325,
@@ -411,18 +405,6 @@
     "mtime": 1791384778.619685,
     "seen": 1791388576.09807,
     "ast_hash": "b0a272c6d3950d1dd89f6e17d91625c9",
-    "semantic_hash": ""
-  },
-  "src/components/liveCycleChart/LiveCycleChartCanvas.tsx": {
-    "mtime": 1791388462.4702315,
-    "seen": 1791388576.098074,
-    "ast_hash": "c85f2eaf085f0f87d5182a20d21aa43c",
-    "semantic_hash": ""
-  },
-  "src/components/liveCycleChart/SimulationChartCanvas.tsx": {
-    "mtime": 1791388462.4695368,
-    "seen": 1791388576.0980752,
-    "ast_hash": "7af8d6bde1dd71c97ef166386b8cb867",
     "semantic_hash": ""
   },
   "src/components/liveCycleChart/chartMath.test.ts": {
@@ -702,87 +684,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1791387935.6177464,
-    "seen": 1791388576.0988193,
-    "ast_hash": "e768067e83ca409db9dda1443317b5d0",
+    "mtime": 1791394559.4609714,
+    "seen": 1791396219.2193482,
+    "ast_hash": "fe69d439d33e1e5decb4f7e6678f2050",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1791387935.6137464,
-    "seen": 1791388576.0988207,
-    "ast_hash": "40e96d4c6897e9dd6821b42188f8278a",
+    "mtime": 1791394559.4569714,
+    "seen": 1791396219.2193503,
+    "ast_hash": "baada516a9bc4899b582bf0de06e5017",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1791387935.6177464,
-    "seen": 1791388576.0988219,
-    "ast_hash": "9ba6cba54e2d30dd724e9b5358e74f0b",
+    "mtime": 1791394559.4609714,
+    "seen": 1791396219.219352,
+    "ast_hash": "8062577d87182631b2b93c57f42ea47d",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1791387935.6217465,
-    "seen": 1791388576.0988228,
-    "ast_hash": "4f9c0a8064b8ffcd7fd9153dc48cda9d",
+    "mtime": 1791394559.4649713,
+    "seen": 1791396219.2193537,
+    "ast_hash": "5427090054e21008c30a40aaf5c432a8",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1791387935.6217465,
-    "seen": 1791388576.098824,
-    "ast_hash": "20859f42bd01a55035f8016fa55cc84b",
+    "mtime": 1791394559.4649713,
+    "seen": 1791396219.2193549,
+    "ast_hash": "6e6e02e8a4f9c2c4dec8a5bbc96b2e51",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1791387935.6217465,
-    "seen": 1791388576.0988252,
-    "ast_hash": "b15595e10316757973d67b01cf81f10f",
+    "mtime": 1791394559.4689715,
+    "seen": 1791396219.2193568,
+    "ast_hash": "32a5cdf6a6740fdefb1a9a94909e5c64",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1791387935.6257465,
-    "seen": 1791388576.0988262,
-    "ast_hash": "2f66b680f2add46bbb328bcacf4c99a0",
+    "mtime": 1791394559.4689715,
+    "seen": 1791396219.2193582,
+    "ast_hash": "438f87e5cccb6ce418912c33f1f08b8b",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1791387935.6257465,
-    "seen": 1791388576.0988274,
-    "ast_hash": "64a53ac8d120ec9728e586fea5bf4b28",
+    "mtime": 1791394559.4729714,
+    "seen": 1791396219.2193596,
+    "ast_hash": "86a0c7a4fe9cc9bc14ccd4d45bbc1af9",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1791387935.6297464,
-    "seen": 1791388576.0988283,
-    "ast_hash": "b5cc95a86359d282d70eee7c77a7eea5",
+    "mtime": 1791394559.4729714,
+    "seen": 1791396219.219361,
+    "ast_hash": "38ea9c5f394e2d9f215071bf5b687f6f",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1791387935.6297464,
-    "seen": 1791388576.0988295,
-    "ast_hash": "3572870c74939c2bf8c3192b33be46db",
+    "mtime": 1791394559.4809713,
+    "seen": 1791396219.2193623,
+    "ast_hash": "cb04d48aa6fac894211c2fd1182a3e45",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1791387935.6337464,
-    "seen": 1791388576.0988307,
-    "ast_hash": "69a389b369fb89fbccc139617a999410",
+    "mtime": 1791394559.4809713,
+    "seen": 1791396219.2193637,
+    "ast_hash": "cf4fc78ed7875992ebaa75c1f91f1220",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1791387935.6337464,
-    "seen": 1791388576.098832,
-    "ast_hash": "e4056cfe3aa66a7ef09a480d48ceb48a",
+    "mtime": 1791394559.4809713,
+    "seen": 1791396219.219365,
+    "ast_hash": "5a8aa589390126cdcd0fa2d181e9075c",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1791387935.6337464,
-    "seen": 1791388576.0988328,
-    "ast_hash": "e2f619a452e666386d1a8688281d0e24",
+    "mtime": 1791394559.4849713,
+    "seen": 1791396219.2193663,
+    "ast_hash": "e4d08036812d752240931d01030ebc42",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1791387935.6377463,
-    "seen": 1791388576.098834,
-    "ast_hash": "1e12f6420bfbfa41a97330f4bb4f65ee",
+    "mtime": 1791394559.4849713,
+    "seen": 1791396219.2193682,
+    "ast_hash": "d7973532aa91201c916e510d86dcd2e7",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -1044,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/pages/BlutspiegelSimulation.tsx": {
-    "mtime": 1791388451.8220832,
-    "seen": 1791388576.0989468,
-    "ast_hash": "10696e609373a09bb5724218dc3a01b7",
+    "mtime": 1791394647.2209694,
+    "seen": 1791396219.221375,
+    "ast_hash": "1bfa8b6918f182424ba741c70ca6ee81",
     "semantic_hash": ""
   },
   "src/pages/Blutwerte.tsx": {
@@ -1080,15 +1062,15 @@
     "semantic_hash": ""
   },
   "src/pages/Home.test.ts": {
-    "mtime": 1791384778.7047596,
-    "seen": 1791388576.0989547,
-    "ast_hash": "53b2419620881583c2df93b7ec243248",
+    "mtime": 1791394710.3511002,
+    "seen": 1791396219.2215438,
+    "ast_hash": "994fbfa36013e9b0565131b59e24b5fd",
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
-    "mtime": 1791384778.7047596,
-    "seen": 1791388576.098956,
-    "ast_hash": "9808d2db7725354f871a3419c83866ea",
+    "mtime": 1791394699.3269882,
+    "seen": 1791396219.2215464,
+    "ast_hash": "fdaf594fbb63973c26868d218e085c93",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
@@ -1242,9 +1224,9 @@
     "semantic_hash": ""
   },
   "src/services/blutspiegelHistory.ts": {
-    "mtime": 1791388143.6970415,
-    "seen": 1791388576.099019,
-    "ast_hash": "84a7fac70bd1205e9d822eb1753a4b24",
+    "mtime": 1791395757.6421556,
+    "seen": 1791396219.2227383,
+    "ast_hash": "1e456fa4fe76990961dc22ae13a8802d",
     "semantic_hash": ""
   },
   "src/services/liveBlutspiegelChart.ts": {
@@ -3078,9 +3060,9 @@
     "semantic_hash": ""
   },
   "scripts/my-stack-i18n-source.mjs": {
-    "mtime": 1791387935.4346645,
-    "seen": 1791388576.0979772,
-    "ast_hash": "3a3c31f675fa08d1bfaa30afb4d03b1a",
+    "mtime": 1791394559.2805104,
+    "seen": 1791396219.2027917,
+    "ast_hash": "cae384d7cc1e6e75d191d8f65a93e14f",
     "semantic_hash": ""
   },
   "scripts/pk-profile-source.mjs": {
@@ -3165,12 +3147,6 @@
     "mtime": 1791384778.6152842,
     "seen": 1791388576.0980194,
     "ast_hash": "38a7260425b93513ebc2e210cfb06b2f",
-    "semantic_hash": ""
-  },
-  "src/components/BlutspiegelCarousel.test.tsx": {
-    "mtime": 1791388143.6974838,
-    "seen": 1791388576.0980268,
-    "ast_hash": "482956c4df45bbbec7e40778d0c62de0",
     "semantic_hash": ""
   },
   "src/components/ColorField.test.tsx": {
@@ -3942,9 +3918,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1791387935.4352927,
-    "seen": 1791388576.0985305,
-    "ast_hash": "7a62cef7f9c5c08d1d675d720a7bf4af",
+    "mtime": 1791394559.2815943,
+    "seen": 1791396219.2132044,
+    "ast_hash": "7195c24309fcc219dfd3ca36bef7bba7",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4650,9 +4626,9 @@
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
-    "mtime": 1791387935.4497464,
-    "seen": 1791388576.0987742,
-    "ast_hash": "04ee61a09cd05b55ff04ef99e3d83772",
+    "mtime": 1791394559.3049715,
+    "seen": 1791396219.2184036,
+    "ast_hash": "c9bd902da3e50cdd6b9e08c242dd6d18",
     "semantic_hash": ""
   },
   "src/i18n/planDataErrors.test.ts": {
@@ -4703,12 +4679,6 @@
     "ast_hash": "29878b9f95335557eb3789bf6e9c3b5d",
     "semantic_hash": ""
   },
-  "src/pages/BlutspiegelSimulation.readiness.test.tsx": {
-    "mtime": 1791388143.6978846,
-    "seen": 1791388576.0989456,
-    "ast_hash": "db2d38fe8b29661e48825a8afda22ccc",
-    "semantic_hash": ""
-  },
   "src/pages/InjektionsTracker.stockRetry.test.tsx": {
     "mtime": 1791384778.7047596,
     "seen": 1791388576.098957,
@@ -4740,9 +4710,9 @@
     "semantic_hash": ""
   },
   "src/services/blutspiegelHistory.iu.test.ts": {
-    "mtime": 1791384778.718621,
-    "seen": 1791388576.0990176,
-    "ast_hash": "0b416ec4c926dc029b49869d81e276d6",
+    "mtime": 1791394710.3547785,
+    "seen": 1791396219.222736,
+    "ast_hash": "bdfd2a60e75b14f00ec4092fd3b0e67d",
     "semantic_hash": ""
   },
   "src/services/liveBlutspiegelChart.test.ts": {
@@ -4842,8 +4812,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791388260.321739,
-    "seen": 1791388576.0990748,
+    "mtime": 1791395965.1889393,
+    "seen": 1791396219.223672,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -6291,6 +6261,72 @@
     "mtime": 1791387492.4290593,
     "seen": 1791388576.0989044,
     "ast_hash": "2a267609bda9e0f9be4e35b6537dc29c",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/BlutspiegelView.test.tsx": {
+    "mtime": 1791395809.946835,
+    "seen": 1791396219.2047763,
+    "ast_hash": "6e04bee180cc8e4df43bd16bcd4a0afb",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/BlutspiegelView.tsx": {
+    "mtime": 1791395824.8420546,
+    "seen": 1791396219.204779,
+    "ast_hash": "ef8c50f45a8f583895f96e44762f4754",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/ManualSimulation.tsx": {
+    "mtime": 1791395711.5985332,
+    "seen": 1791396219.204781,
+    "ast_hash": "fd15a7b0b6eb9581b5a33ab27227eb6d",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/chart/StocksChart.tsx": {
+    "mtime": 1791395711.5968132,
+    "seen": 1791396219.2047825,
+    "ast_hash": "29bd5d6397ec2afee631ea2f274000ef",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/chart/stocksChartMath.test.ts": {
+    "mtime": 1791395121.2913175,
+    "seen": 1791396219.2047842,
+    "ast_hash": "afff1e53a2516d4ce33aed182b036c3f",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/chart/stocksChartMath.ts": {
+    "mtime": 1791395711.597223,
+    "seen": 1791396219.204785,
+    "ast_hash": "402a17a1bc5171ad3676f1926036ff8a",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/entries.test.ts": {
+    "mtime": 1791395809.947261,
+    "seen": 1791396219.204786,
+    "ast_hash": "bec5fff9c7c4914c44b1d6d182a29e76",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/entries.ts": {
+    "mtime": 1791395596.4673195,
+    "seen": 1791396219.2047875,
+    "ast_hash": "f521ca6cceb93f3eaa9206c9664d6f30",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/format.ts": {
+    "mtime": 1791394494.7629254,
+    "seen": 1791396219.2047882,
+    "ast_hash": "4fadfacc61811feb54ceda660a9153e7",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/simulation.ts": {
+    "mtime": 1791394699.3260784,
+    "seen": 1791396219.2047894,
+    "ast_hash": "93ff59e7880a4bcde79d78159d82750a",
+    "semantic_hash": ""
+  },
+  "src/features/blutspiegel/useBlutspiegelData.ts": {
+    "mtime": 1791395711.5988646,
+    "seen": 1791396219.2047908,
+    "ast_hash": "7d7097e3875757e85881f8b4af40f7c2",
     "semantic_hash": ""
   }
 }
