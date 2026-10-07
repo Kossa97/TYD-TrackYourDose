@@ -105,6 +105,31 @@ describe('loadBlutspiegelEntries', () => {
     ])
   })
 
+  it('gibt einer Kombi-Zutat ohne umrechenbare Staerke keinen 0-%-Spiegel', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const base = legacyCycle()
+    const ingredient = (base.stack_items as { ingredients: Array<Record<string, any>> }).ingredients[0]
+    ;(base.stack_items as { ingredients: unknown[] }).ingredients = [0, 1].map(position => ({
+      ...ingredient, position,
+      amount_value: position === 0 ? 5 : null, amount_unit: position === 0 ? 'mg' : null, basis_value: 2, basis_unit: 'ml',
+      substance_catalog: { canonical_name: `Zutat ${position}`, pk_profile_id: `pk-${position}`, pk_profiles: ingredient.substance_catalog.pk_profiles },
+    }))
+    const normalized = normalizedCycle(base)
+    ;(normalized.versions[0] as Record<string, unknown>).unit = 'ml'
+    ;(normalized.versions[0] as Record<string, unknown>).dose = 0.2
+    db.normalized = [normalized]
+    const entries = await loadBlutspiegelEntries('user-1', NOW)
+    expect(entries.map(e => [e.key, e.kind])).toEqual([['cycle-1:pk-0', 'ready'], ['cycle-1:pk-1', 'unsupported']])
+  })
+
+  it('meldet ein fehlendes PK-Profil, statt den Eintrag zu verschweigen', async () => {
+    const base = legacyCycle()
+    ;(base.stack_items as { ingredients: Array<Record<string, any>> }).ingredients[0].substance_catalog = null
+    db.cycles = [base]
+    const entries = await loadBlutspiegelEntries('user-1', NOW)
+    expect(entries).toEqual([expect.objectContaining({ kind: 'unsupported', reason: 'profile', name: 'BPC-157' })])
+  })
+
   it('meldet fehlende Angaben, statt eine Kurve zu versprechen', async () => {
     db.cycles = [legacyCycle({}, 'with_amount')]
     const [entry] = await loadBlutspiegelEntries('user-1', NOW)

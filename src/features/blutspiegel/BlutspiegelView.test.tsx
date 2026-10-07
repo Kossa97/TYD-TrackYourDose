@@ -76,6 +76,25 @@ describe('BlutspiegelView', () => {
     expect(screen.getByRole('link', { name: /pk_complete_action/ }).getAttribute('href')).toBe('/my-stack?edit=stack-2&intent=pk')
   })
 
+  it('sagt bei fehlendem Profil oder fehlender Umrechnung, warum es keine Kurve gibt', async () => {
+    withData([ready, { kind: 'unsupported', key: 'c3', cycleId: 'c3', stackItemId: 's3', name: 'HCG', reason: 'unit_conversion' }])
+    render(<MemoryRouter><BlutspiegelView variant="full" /></MemoryRouter>)
+    expect(await screen.findByText('HCG')).toBeTruthy()
+    expect(screen.getByText('pk_unsupported_unit')).toBeTruthy()
+  })
+
+  it('zeigt bei unterbrochenem Zyklus keine Veraenderung im Zeitraum', async () => {
+    const now = Date.now()
+    vi.mocked(loadBlutspiegelEntries).mockResolvedValue([ready])
+    vi.mocked(loadEntryHistories).mockResolvedValue(new Map([['cycle-1', {
+      events: [{ timestamp: new Date(now - 5 * 24 * H), dose: 5, unit: 'mg', status: 'taken' as const }],
+      interruptedAt: now - 3 * 24 * H,
+    }]]))
+    render(<MemoryRouter><BlutspiegelView variant="full" /></MemoryRouter>)
+    expect(await screen.findByText('pk_interrupted')).toBeTruthy()
+    expect(screen.queryByText(/^[+−±]\d/)).toBeNull()
+  })
+
   it('zeigt ohne fertige Kurve nur, was fehlt', async () => {
     withData([missing])
     render(<MemoryRouter><BlutspiegelView variant="compact" /></MemoryRouter>)
@@ -88,7 +107,7 @@ describe('BlutspiegelView', () => {
     render(<MemoryRouter><BlutspiegelView variant="compact" /></MemoryRouter>)
     await screen.findByRole('heading', { name: 'BPC-157' })
     expect(screen.queryByRole('radiogroup')).toBeNull()
-    expect(screen.getByRole('link', { name: /pk_more/ }).getAttribute('href')).toBe('/simulation?entry=cycle-1%3Apk-1')
+    expect(screen.getByRole('link', { name: /pk_more/ }).getAttribute('href')).toBe('/simulation?entry=cycle-1%3Apk-1&pk=pk-1')
   })
 
   it('fragt die Datenbank nicht vor Ablauf einer Minute erneut', async () => {

@@ -111,7 +111,7 @@ export function yDomainFor(points: LevelPoint[], start: number, end: number): YD
   return niceYDomain(min, max)
 }
 
-const TIME_STEPS = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY, 14 * DAY, 28 * DAY]
+const TIME_STEPS = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY, 14 * DAY, 28 * DAY, 56 * DAY, 91 * DAY, 182 * DAY, 364 * DAY]
 
 /** Schrittweite der Zeitachse: so fein wie moeglich, mindestens minPx je Beschriftung. */
 export function timeStep(start: number, end: number, widthPx: number, minPx = 56): number {

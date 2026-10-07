@@ -483,10 +483,18 @@ function calculateCurveTo(
       mg: toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null),
     }))
     .filter((dose): dose is { ms: number; mg: number } => dose.mg != null)
+    .sort((a, b) => a.ms - b.ms)
+  // Nach 20 Halbwertszeiten der langsameren Konstante bleibt weniger als ein
+  // Millionstel einer Dosis — sie faellt aus der Summe. Bei langen Verlaeufen
+  // spart das den Grossteil der Rechnung (nur die juengeren Dosen zaehlen).
+  const horizonMs = 20 * (Math.LN2 / Math.min(rates.ka, rates.ke)) * 3_600_000
+  let oldest = 0
 
   for (let tMs = start.getTime(); endExclusive ? tMs < endMs : tMs <= endMs; tMs += stepMs) {
     let total = 0
-    for (const dose of doses) {
+    while (oldest < doses.length && tMs - doses[oldest].ms > horizonMs) oldest++
+    for (let i = oldest; i < doses.length && doses[i].ms < tMs; i++) {
+      const dose = doses[i]
       total += singleDoseLevel(dose.mg, bioavailability, (tMs - dose.ms) / 3_600_000, rates)
     }
     raw.push({

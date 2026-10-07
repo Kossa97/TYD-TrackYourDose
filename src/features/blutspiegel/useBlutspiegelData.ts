@@ -10,9 +10,9 @@ import {
   type ReadyEntry,
 } from './entries'
 
-// PK-Kurven aendern sich im Minuten- bis Stundentakt. Die Datenbank wird
-// deshalb hoechstens einmal pro Minute gefragt; dazwischen waechst die Kurve
-// nur lokal bis „jetzt" weiter.
+// PK-Kurven aendern sich im Minuten- bis Stundentakt. Einmal pro Minute
+// werden Eintraege und Einnahmen neu geladen und die Kurve bis „jetzt"
+// neu gerechnet — oefter lohnt sich nicht.
 export const BLUTSPIEGEL_REFRESH_MS = 60_000
 
 export interface BlutspiegelData {
@@ -29,7 +29,6 @@ interface Loaded {
   userId: string
   entries: BlutspiegelEntry[]
   histories: Map<string, EntryHistory>
-  tick: number
   asOf: number
 }
 
@@ -49,15 +48,13 @@ export function useBlutspiegelData(): BlutspiegelData {
     if (!userId) return
     let cancelled = false
     let inFlight = false
-    let tick = 0
     const run = () => {
       if (inFlight) return
       inFlight = true
-      const thisTick = tick++
       fetchAll(userId)
         .then(data => {
           if (cancelled) return
-          setLoaded({ userId, ...data, tick: thisTick, asOf: Date.now() })
+          setLoaded({ userId, ...data, asOf: Date.now() })
           setError(false)
         })
         .catch(() => { if (!cancelled) setError(true) })
@@ -71,7 +68,6 @@ export function useBlutspiegelData(): BlutspiegelData {
   const current = loaded && loaded.userId === userId ? loaded : null
   const entries = useMemo(() => current?.entries ?? [], [current])
   const ready = useMemo(() => entries.filter((e): e is ReadyEntry => e.kind === 'ready'), [entries])
-  // Jeder Abruf (auch ohne neue Einnahmen) rechnet die Kurve bis „jetzt" neu.
   const curves = useMemo(
     () => new Map(ready.map(entry => [entry.key, buildEntryCurve(entry, current?.histories.get(entry.cycleId))])),
     [ready, current],

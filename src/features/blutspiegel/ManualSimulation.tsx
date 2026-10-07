@@ -43,8 +43,10 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
   const [multiDose, setMultiDose] = useState(false)
   const [interval, setIntervalH] = useState('8')
   const [numDoses, setNumDoses] = useState('3')
-  const [result, setResult] = useState<SimResult | null>(null)
-  const [open, setOpen] = useState(Boolean(preselectProfileId))
+  // Das Ergebnis haelt fest, womit gerechnet wurde — spaetere Eingaben
+  // aendern Kurve und Beschriftung erst nach erneutem „Starten".
+  const [run, setRun] = useState<{ sim: SimResult; profile: PkProfile; multiDose: boolean; key: string } | null>(null)
+  const [open, setOpen] = useState(false)
   const [scrub, setScrub] = useState<LevelPoint | null>(null)
 
   useEffect(() => {
@@ -63,13 +65,20 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
   const start = useCallback(() => {
     if (!profile) return
     setScrub(null)
-    setResult(runSimulation(profile, multiDose, Number(interval), Math.min(10, Math.max(1, Number(numDoses)))))
+    const count = Math.min(10, Math.max(1, Number(numDoses)))
+    setRun({
+      sim: runSimulation(profile, multiDose, Number(interval), count),
+      profile,
+      multiDose,
+      key: `${profile.id}:${multiDose}:${interval}:${count}`,
+    })
   }, [profile, multiDose, interval, numDoses])
 
+  const result = run?.sim ?? null
   const points = useMemo(() => result?.data.map(p => ({ ts: p.t * HOUR, level: p.c })) ?? [], [result])
 
   const markers = useMemo((): ChartMarker[] => {
-    if (!result || !profile) return []
+    if (!result) return []
     const onset = result.data.find(p => p.c >= 25)
     const list: ChartMarker[] = [
       ...(onset ? [{ ts: onset.t * HOUR, label: t('pk_legend_onset'), color: '#06b6d4' }] : []),
@@ -77,7 +86,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
     ]
     if (result.t10 < result.xMax) list.push({ ts: result.t10 * HOUR, label: t('pk_marker_end'), color: '#9aa6bf' })
     return list
-  }, [result, profile, t])
+  }, [result, t])
 
   const hours = (h: number) => Math.round(h * 10) / 10
 
@@ -170,7 +179,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
             <Activity size={18} /> {t('pk_start')}
           </button>
 
-          {result && profile && (
+          {result && run && (() => { const profile = run.profile; const multiDose = run.multiDose; return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 6 }}>
               <div aria-live="polite">
                 <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{t('pk_curve_title', { name: profile.name })}</p>
@@ -187,7 +196,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
                 end={result.xMax * HOUR}
                 accent="#00ccf5"
                 height={260}
-                seriesKey={`${profile.id}:${multiDose}:${interval}:${numDoses}`}
+                seriesKey={run.key}
                 markers={markers}
                 formatTick={ts => `${f.num(Math.round(ts / HOUR))} h`}
                 xTicks={hourTicks}
@@ -235,7 +244,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
                 </p>
               )}
             </div>
-          )}
+          ) })()}
         </div>
       )}
     </section>

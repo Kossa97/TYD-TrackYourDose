@@ -88,7 +88,17 @@ export interface MissingEntry {
   missing: PkRequirement[]
 }
 
-export type BlutspiegelEntry = ReadyEntry | MissingEntry
+/** Kein Profil oder keine sichere Umrechnung: es gibt keine Kurve, und das wird gesagt. */
+export interface UnsupportedEntry {
+  kind: 'unsupported'
+  key: string
+  cycleId: string
+  stackItemId: string
+  name: string
+  reason: 'unit_conversion' | 'profile'
+}
+
+export type BlutspiegelEntry = ReadyEntry | MissingEntry | UnsupportedEntry
 
 export const CATEGORY_ACCENT: Record<PkCategory, string> = {
   peptide: '#00ccf5',
@@ -181,31 +191,39 @@ export async function loadBlutspiegelEntries(userId: string, now = new Date()): 
     if (!FEATURES.planTimelineV2 && !isLegacyCycleActive(cycle, todayKey)) continue
     if (!cycle.stack_items) continue
     const verknuepft = linkedProfiles(cycle)
-    const linked = verknuepft[0] ?? null
     const escalations = ((escalationRows ?? []) as EscalationRow[]).filter(row => row.cycle_id === cycle.id)
     const schedule = resolvePkScheduleForDay(cycle, escalations, now)
-    const readiness = evaluatePkReadiness({
-      trackingLevel: cycle.stack_items.tracking_level ?? 'intake_only',
-      pkProfileId: linked?.id ?? null,
-      pkProfileMethod: cycle.stack_items.pk_profile_method ?? null,
+    const item = cycle.stack_items
+    // Je Zutat mit Profil eine eigene Pruefung: im Kombi-Vial kann die eine
+    // Zutat umrechenbar sein und die andere nicht (fehlende Staerke).
+    const pruefe = (zutat: VerknuepfteZutat | null) => evaluatePkReadiness({
+      trackingLevel: item.tracking_level ?? 'intake_only',
+      pkProfileId: zutat?.id ?? null,
+      pkProfileMethod: item.pk_profile_method ?? null,
       method: schedule?.method ?? null,
       dose: schedule?.dose ?? null,
       unit: schedule?.unit ?? null,
       scheduledAt: schedule?.scheduledAt ?? null,
       // Ohne Faktor bzw. Konzentration fiele eine in IU oder ml geplante
       // Einnahme hier durch und der Eintrag verschwaende wortlos.
-      iuPerMg: linked?.profile.iu_per_mg ?? null,
-      mgPerMl: linked?.mgPerMl ?? null,
+      iuPerMg: zutat?.profile.iu_per_mg ?? null,
+      mgPerMl: zutat?.mgPerMl ?? null,
     })
-    if (readiness.status === 'unsupported') continue
-    if (readiness.status === 'missing') {
+    const base = { cycleId: cycle.id, stackItemId: item.id }
+
+    const first = pruefe(verknuepft[0] ?? null)
+    if (first.status === 'missing') {
+      entries.push({ kind: 'missing', key: cycle.id, ...base, name: item.display_name, missing: first.missing })
+      continue
+    }
+    if (first.status === 'unsupported' || !verknuepft.length) {
       entries.push({
-        kind: 'missing', key: cycle.id, cycleId: cycle.id, stackItemId: cycle.stack_items.id,
-        name: cycle.stack_items.display_name, missing: readiness.missing,
+        kind: 'unsupported', key: cycle.id, ...base, name: item.display_name,
+        reason: first.status === 'unsupported' && first.reason === 'unit_conversion' ? 'unit_conversion' : 'profile',
       })
       continue
     }
-    if (!linked || !schedule) continue
+    if (!schedule) continue
 
     let nextDoseAt: number | null
     try {
@@ -214,12 +232,19 @@ export async function loadBlutspiegelEntries(userId: string, now = new Date()): 
       nextDoseAt = null
     }
     for (const zutat of verknuepft) {
+      const key = `${cycle.id}:${zutat.id}`
+      const name = verknuepft.length > 1 ? `${item.display_name} · ${zutat.name}` : item.display_name
+      const readiness = zutat === verknuepft[0] ? first : pruefe(zutat)
+      if (readiness.status === 'missing') {
+        entries.push({ kind: 'missing', key, ...base, name, missing: readiness.missing })
+        continue
+      }
+      if (readiness.status === 'unsupported') {
+        entries.push({ kind: 'unsupported', key, ...base, name, reason: readiness.reason === 'unit_conversion' ? 'unit_conversion' : 'profile' })
+        continue
+      }
       entries.push({
-        kind: 'ready',
-        key: `${cycle.id}:${zutat.id}`,
-        cycleId: cycle.id,
-        stackItemId: cycle.stack_items.id,
-        name: verknuepft.length > 1 ? `${cycle.stack_items.display_name} · ${zutat.name}` : cycle.stack_items.display_name,
+        kind: 'ready', key, ...base, name,
         profileId: zutat.id,
         profile: zutat.profile,
         accent: CATEGORY_ACCENT[normalizeCategory(zutat.profile.category)],

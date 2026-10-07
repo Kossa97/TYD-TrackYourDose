@@ -3,13 +3,13 @@
  * Simulationsseite (voll). Keine Karten, keine Rahmen: Substanz-Leiste,
  * grosse Zahl, Zeitraum, Graph, Kennzahlen als schlichte Tabelle.
  */
-import { useCallback, useState, type CSSProperties } from 'react'
+import { memo, useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { fractionEliminatedPerHour } from '../../lib/pkModel'
 import type { PkRequirement } from '../my-stack/lib/pkReadiness'
-import type { EntryCurve, MissingEntry, ReadyEntry } from './entries'
+import type { EntryCurve, MissingEntry, ReadyEntry, UnsupportedEntry } from './entries'
 import { useBlutspiegelData } from './useBlutspiegelData'
 import { formatOffset, useBlutspiegelFormat } from './format'
 import { StocksChart } from './chart/StocksChart'
@@ -50,7 +50,7 @@ function lastDay(points: LevelPoint[], now: number): LevelPoint[] {
   return points.filter(p => p.ts >= now - DAY)
 }
 
-function TickerStrip({
+const TickerStrip = memo(function TickerStrip({
   entries, curves, selectedKey, onSelect, compact, now,
 }: {
   entries: ReadyEntry[]
@@ -101,7 +101,7 @@ function TickerStrip({
       })}
     </div>
   )
-}
+})
 
 function RangeControl({ value, onChange }: { value: ChartRange; onChange: (r: ChartRange) => void }) {
   const { t } = useTranslation()
@@ -149,6 +149,100 @@ function StatTable({ rows }: { rows: Array<{ label: string; value: string }> }) 
   )
 }
 
+function UnsupportedRow({ entry }: { entry: UnsupportedEntry }) {
+  const { t } = useTranslation()
+  return (
+    <div style={{ padding: '12px 0', borderTop: HAIRLINE }}>
+      <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{entry.name}</p>
+      <p style={{ marginTop: 2, fontSize: 13, color: 'var(--text-dim)' }}>{t('pk_unavailable_title')}</p>
+      <p style={{ marginTop: 2, fontSize: 12, lineHeight: 1.5, ...MUTED }}>
+        {entry.reason === 'unit_conversion' ? t('pk_unsupported_unit') : t('pk_unsupported_profile')}
+      </p>
+    </div>
+  )
+}
+
+function NoCurveRow({ entry }: { entry: MissingEntry | UnsupportedEntry }) {
+  return entry.kind === 'missing' ? <MissingRow entry={entry} /> : <UnsupportedRow entry={entry} />
+}
+
+/** Kennzahlen + Erklaerungen. Eigene, gemerkte Komponente: beim Ablesen rendert nur der Kopf neu. */
+const DetailStats = memo(function DetailStats({
+  entry, curve, start, end, now,
+}: {
+  entry: ReadyEntry
+  curve: EntryCurve | undefined
+  start: number
+  end: number
+  now: number
+}) {
+  const f = useBlutspiegelFormat()
+  const { t } = f
+  const [explainOpen, setExplainOpen] = useState(false)
+  const p = entry.profile
+  const points = curve?.points ?? []
+
+  let high: number | null = null
+  let low: number | null = null
+  for (const pt of points) {
+    if (pt.ts < start || pt.ts > end) continue
+    high = high == null ? pt.level : Math.max(high, pt.level)
+    low = low == null ? pt.level : Math.min(low, pt.level)
+  }
+
+  const statRows = [
+    { label: t('pk_stat_high'), value: high != null ? `${f.pct(high)} %` : '—' },
+    { label: t('pk_stat_low'), value: low != null ? `${f.pct(low)} %` : '—' },
+    { label: t('pk_stat_last_peak'), value: formatOffset(curve?.lastPeak ? curve.lastPeak.ts - now : null, t) },
+    { label: t('pk_stat_next'), value: formatOffset(entry.nextDoseAt != null ? entry.nextDoseAt - now : null, t) },
+    { label: t('pk_short_half'), value: `${f.num(p.half_life_hours)} h` },
+    { label: t('pk_short_tmax'), value: `${f.num(p.tmax_hours)} h` },
+    { label: t('pk_short_f'), value: `${Math.round(p.bioavailability_sc * 100)} %` },
+    { label: t('pk_short_vd'), value: p.vd_l_kg != null ? `${f.num(p.vd_l_kg)} L/kg` : '—' },
+    { label: t('pk_short_ke'), value: `${(Math.LN2 / p.half_life_hours).toFixed(3)} /h` },
+  ]
+
+  const explanations = [
+    { label: t('pk_stat_last_peak'), text: t('pk_stat_peak_sub') },
+    { label: t('pk_short_half'), text: t('pk_stat_half_life_sub', { h: f.num(p.half_life_hours), h2: f.num(p.half_life_hours * 2), h5: f.num(p.half_life_hours * 5) }) },
+    { label: t('pk_short_tmax'), text: t('pk_stat_tmax_sub', { h: f.num(p.tmax_hours) }) },
+    { label: t('pk_short_f'), text: t('pk_stat_bioavailability_sub', { pct: Math.round(p.bioavailability_sc * 100) }) },
+    { label: t('pk_short_vd'), text: `${t('pk_stat_vd_sub')} ${p.vd_l_kg != null && p.vd_l_kg > 1 ? t('pk_stat_vd_high') : t('pk_stat_vd_low')}` },
+    { label: t('pk_short_ke'), text: t('pk_stat_ke_sub', { pct: f.pct(fractionEliminatedPerHour(p.half_life_hours) * 100) }) },
+  ]
+
+  return (
+    <>
+      <StatTable rows={statRows} />
+      <div style={{ borderTop: HAIRLINE }}>
+        <button
+          type="button"
+          aria-expanded={explainOpen}
+          onClick={() => setExplainOpen(o => !o)}
+          style={{
+            width: '100%', minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 15, fontWeight: 700, color: 'var(--text)',
+          }}
+        >
+          {t('pk_explain_title')}
+          <ChevronDown size={18} style={{ transform: explainOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--text-muted)' }} />
+        </button>
+        {explainOpen && (
+          <dl style={{ margin: '0 0 8px' }}>
+            {explanations.map(e => (
+              <div key={e.label} style={{ padding: '8px 0' }}>
+                <dt style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{e.label}</dt>
+                <dd style={{ margin: '2px 0 0', fontSize: 13, lineHeight: 1.55, color: 'var(--text-dim)' }}>{e.text}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+    </>
+  )
+})
+
 function MissingRow({ entry }: { entry: MissingEntry }) {
   const { t } = useTranslation()
   const labels: Record<PkRequirement, string> = {
@@ -185,11 +279,16 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
   const [pickedKey, setPickedKey] = useState<string | null>(initialKey ?? null)
   const [range, setRange] = useState<ChartRange>('1d')
   const [scrub, setScrub] = useState<LevelPoint | null>(null)
-  const [explainOpen, setExplainOpen] = useState(false)
 
   const selected = data.ready.find(e => e.key === pickedKey) ?? data.ready[0] ?? null
   const curve = selected ? data.curves.get(selected.key) : undefined
-  const missing = data.entries.filter((e): e is MissingEntry => e.kind === 'missing')
+  // Kompakt (Home) nur, was sich ergaenzen laesst; ein Vitamin ohne PK-Profil
+  // waere dort bloss Rauschen. Die volle Seite nennt alles.
+  const missing = useMemo(
+    () => data.entries.filter((e): e is MissingEntry | UnsupportedEntry =>
+      e.kind === 'missing' || (!compact && e.kind === 'unsupported')),
+    [data.entries, compact],
+  )
 
   const select = useCallback((key: string) => { setPickedKey(key); setScrub(null) }, [])
   const changeRange = useCallback((r: ChartRange) => { setRange(r); setScrub(null) }, [])
@@ -214,7 +313,7 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
     return (
       <div>
         {missing.length > 0
-          ? missing.map(entry => <MissingRow key={entry.key} entry={entry} />)
+          ? missing.map(entry => <NoCurveRow key={entry.key} entry={entry} />)
           : (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
               <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 6 }}>{t('pk_no_ready_items')}</p>
@@ -229,42 +328,15 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
 
   const points = curve?.points ?? []
   const effectiveRange: ChartRange = compact ? '1d' : range
-  const startLevel = levelAt(points, bounds.start) ?? points[0]?.level ?? null
+  // Beginnt der Verlauf erst im Zeitraum, zaehlt sein Anfang. Endet er davor
+  // (unterbrochener Zyklus), gibt es keine Veraenderung „im Zeitraum".
+  const startLevel = points.length && bounds.start < points[0].ts
+    ? points[0].level
+    : levelAt(points, bounds.start)
   const shown = scrub ?? (curve?.current != null && points.length ? points[points.length - 1] : null)
   const change = shown && startLevel != null ? shown.level - startLevel : null
   const changeColor = change == null || Math.abs(change) < 0.05 ? 'var(--text-dim)' : change > 0 ? RISING : FALLING
   const subline = scrub ? f.scrub(scrub.ts) : t(`pk_range_label_${effectiveRange}`)
-  const p = selected.profile
-  const now = asOf
-
-  let high: number | null = null
-  let low: number | null = null
-  for (const pt of points) {
-    if (pt.ts < bounds.start || pt.ts > bounds.end) continue
-    high = high == null ? pt.level : Math.max(high, pt.level)
-    low = low == null ? pt.level : Math.min(low, pt.level)
-  }
-
-  const statRows = [
-    { label: t('pk_stat_high'), value: high != null ? `${f.pct(high)} %` : '—' },
-    { label: t('pk_stat_low'), value: low != null ? `${f.pct(low)} %` : '—' },
-    { label: t('pk_stat_last_peak'), value: formatOffset(curve?.lastPeak ? curve.lastPeak.ts - now : null, t) },
-    { label: t('pk_stat_next'), value: formatOffset(selected.nextDoseAt != null ? selected.nextDoseAt - now : null, t) },
-    { label: t('pk_short_half'), value: `${f.num(p.half_life_hours)} h` },
-    { label: t('pk_short_tmax'), value: `${f.num(p.tmax_hours)} h` },
-    { label: t('pk_short_f'), value: `${Math.round(p.bioavailability_sc * 100)} %` },
-    { label: t('pk_short_vd'), value: p.vd_l_kg != null ? `${f.num(p.vd_l_kg)} L/kg` : '—' },
-    { label: t('pk_short_ke'), value: `${(Math.LN2 / p.half_life_hours).toFixed(3)} /h` },
-  ]
-
-  const explanations = [
-    { label: t('pk_stat_last_peak'), text: t('pk_stat_peak_sub') },
-    { label: t('pk_short_half'), text: t('pk_stat_half_life_sub', { h: f.num(p.half_life_hours), h2: f.num(p.half_life_hours * 2), h5: f.num(p.half_life_hours * 5) }) },
-    { label: t('pk_short_tmax'), text: t('pk_stat_tmax_sub', { h: f.num(p.tmax_hours) }) },
-    { label: t('pk_short_f'), text: t('pk_stat_bioavailability_sub', { pct: Math.round(p.bioavailability_sc * 100) }) },
-    { label: t('pk_short_vd'), text: `${t('pk_stat_vd_sub')} ${p.vd_l_kg != null && p.vd_l_kg > 1 ? t('pk_stat_vd_high') : t('pk_stat_vd_low')}` },
-    { label: t('pk_short_ke'), text: t('pk_stat_ke_sub', { pct: f.pct(fractionEliminatedPerHour(p.half_life_hours) * 100) }) },
-  ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 14 }}>
@@ -288,7 +360,7 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
           )}
           {compact && (
             <Link
-              to={`/simulation?entry=${encodeURIComponent(selected.key)}`}
+              to={`/simulation?entry=${encodeURIComponent(selected.key)}&pk=${encodeURIComponent(selected.profileId)}`}
               style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}
             >
               {t('pk_more')} <ChevronRight size={16} />
@@ -339,36 +411,11 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
 
       {!compact && (
         <>
-          <StatTable rows={statRows} />
-          <div style={{ borderTop: HAIRLINE }}>
-            <button
-              type="button"
-              aria-expanded={explainOpen}
-              onClick={() => setExplainOpen(o => !o)}
-              style={{
-                width: '100%', minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 15, fontWeight: 700, color: 'var(--text)',
-              }}
-            >
-              {t('pk_explain_title')}
-              <ChevronDown size={18} style={{ transform: explainOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--text-muted)' }} />
-            </button>
-            {explainOpen && (
-              <dl style={{ margin: '0 0 8px' }}>
-                {explanations.map(e => (
-                  <div key={e.label} style={{ padding: '8px 0' }}>
-                    <dt style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{e.label}</dt>
-                    <dd style={{ margin: '2px 0 0', fontSize: 13, lineHeight: 1.55, color: 'var(--text-dim)' }}>{e.text}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
+          <DetailStats entry={selected} curve={curve} start={bounds.start} end={bounds.end} now={asOf} />
           {missing.length > 0 && (
             <div>
               <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', padding: '12px 0 4px' }}>{t('pk_incomplete_title')}</p>
-              {missing.map(entry => <MissingRow key={entry.key} entry={entry} />)}
+              {missing.map(entry => <NoCurveRow key={entry.key} entry={entry} />)}
             </div>
           )}
         </>

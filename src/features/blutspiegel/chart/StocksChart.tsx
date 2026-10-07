@@ -14,7 +14,7 @@
  * Alles laeuft in einem Canvas mit requestAnimationFrame; React rendert den
  * Graph nur bei neuen Props, nicht pro Frame.
  */
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { hapticTick } from '../../../lib/haptics'
 import {
   easeOutCubic,
@@ -75,7 +75,7 @@ function cssVar(el: Element, name: string, fallback: string): string {
   return v || fallback
 }
 
-export function StocksChart({
+export const StocksChart = memo(function StocksChart({
   points, start, end, accent, height, seriesKey, intakes = [], markers = [],
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, ariaLabel, liveEnd = false,
 }: StocksChartProps) {
@@ -492,7 +492,7 @@ export function StocksChart({
       />
     </div>
   )
-}
+})
 
 // Ticks gehoeren zur Ziel-Ansicht; beim Gleiten wandern dieselben Linien mit.
 const domainTicks = new WeakMap<View, YDomain>()
