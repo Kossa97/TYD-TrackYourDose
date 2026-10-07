@@ -40,7 +40,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key }),
 }))
 vi.mock('react-hot-toast', () => ({ default: pageMocks.toast }))
-vi.mock('../components/BlutspiegelCarousel', () => ({ BlutspiegelCarousel: () => null }))
+vi.mock('../features/blutspiegel/BlutspiegelView', () => ({ BlutspiegelView: () => null }))
 vi.mock('../components/ExpiryWarningBanners', () => ({ ExpiryWarningBanners: () => null }))
 vi.mock('../components/WorkflowBanner', () => ({ WorkflowBanner: () => null }))
 vi.mock('../components/injection3d/InjectionTrackerHero', () => ({ InjectionTrackerHero: () => null }))

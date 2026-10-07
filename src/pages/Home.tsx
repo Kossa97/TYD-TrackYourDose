@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
+import { BlutspiegelView } from '../features/blutspiegel/BlutspiegelView'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
 import { expirySources, vialStockOverview, type LegacyInventoryItem, type StockOverviewItem } from '../lib/stockOverview'
 import {
@@ -1106,9 +1106,10 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
 
       <section>
         <p style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>
-          Live-Blutspiegel
+          {t('pk_live_title')}
         </p>
-        <BlutspiegelCarousel />
+        <BlutspiegelView variant="compact" />
+        <p className="disclaimer" style={{ marginTop: 8 }}>{t('pk_sim_disclaimer')}</p>
       </section>
 
       <ExpiryWarningBanners alerts={expiryAlerts} />
