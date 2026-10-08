@@ -98,8 +98,6 @@ interface CardProps {
   onTogglePill: () => void
 }
 
-const CARD_H = 180
-
 /** Was Karte und Zeile gleich zeigen: Wert, Farbe, Plakette, Vorleselabel. */
 function useMarkerView(summary: MarkerSummary, pillMode: PillMode) {
   const { t, i18n } = useTranslation()
@@ -114,9 +112,9 @@ function useMarkerView(summary: MarkerSummary, pillMode: PillMode) {
   const referenz = formatRange(summary.range.min, summary.range.max, '')
   // „Erstwert" nur, wenn es wirklich der erste ist; sonst sind die frueheren
   // Werte nicht in diese Einheit umrechenbar — dann kein Vergleich.
-  const pillText = pillMode === 'change'
-    ? (change != null ? signed(change) : summary.entries.length > 1 ? '—' : t('bw_pill_first'))
-    : (referenz ?? t('bw_pill_no_range'))
+  const changeText = change != null ? signed(change) : summary.entries.length > 1 ? '—' : t('bw_pill_first')
+  const rangeText = referenz ?? t('bw_pill_no_range')
+  const pillText = pillMode === 'change' ? changeText : rangeText
   const statusText = t(`bw_status_${status}`)
 
   const ariaLabel = latest
@@ -124,18 +122,20 @@ function useMarkerView(summary: MarkerSummary, pillMode: PillMode) {
     : `${name}, ${t('bw_no_test').replace(/^[–-]\s*/, '')}`
 
   const pillAria = t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })
-  return { t, status, color, latest, name, shownValue, shownUnit, pillText, pillAria, ariaLabel }
+  return { t, status, color, latest, name, shownValue, shownUnit, pillText, pillTexts: [changeText, rangeText], pillAria, ariaLabel }
 }
 
 function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
-  const { t, status, color, latest, name, shownValue, shownUnit, pillText, pillAria, ariaLabel } = useMarkerView(summary, pillMode)
+  const { t, status, color, latest, name, shownValue, shownUnit, pillTexts, pillAria, ariaLabel } = useMarkerView(summary, pillMode)
+  // Schriftgroesse nach dem laengeren der beiden Texte — in beiden Modi gleich.
+  const longest = Math.max(...pillTexts.map(text => text.length))
 
   // Die ganze Karte oeffnet den Marker (unsichtbare Flaeche darunter); die
   // Plakette liegt darueber und hat ihre eigene Aufgabe. So bleibt der Inhalt
   // ein normales Layout — Wert und Plakette stehen nebeneinander, statt sich
   // bei langen Werten zu ueberlappen.
   return (
-    <div className="bw-marker-card" style={{ position: 'relative', minHeight: CARD_H, opacity: latest ? 1 : 0.55 }}>
+    <div className="bw-marker-card" style={{ position: 'relative', opacity: latest ? 1 : 0.55 }}>
       <button
         type="button"
         onClick={() => onSelect(summary.name)}
@@ -144,7 +144,7 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
       />
       <div
         style={{
-          position: 'relative', minHeight: CARD_H, boxSizing: 'border-box', padding: '14px 12px 12px 14px', pointerEvents: 'none',
+          position: 'relative', minHeight: 180, boxSizing: 'border-box', padding: '14px 12px 12px 14px', pointerEvents: 'none',
           display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 6,
         }}
       >
@@ -159,8 +159,10 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
         </div>
         {latest && <CardSparkline summary={summary} color={color} />}
         {latest && (
-          // Reicht der Platz nicht, rutscht die Plakette unter den Wert — nichts wird gekuerzt.
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+          // Reicht der Platz nicht, rutscht die Plakette unter den Wert — nichts wird
+          // gekuerzt. Damit die Karte beim Umschalten gleich gross bleibt, ist die
+          // Plakette immer so breit wie der laengere ihrer beiden Texte.
+          <div className="bw-card-bottom">
             <div aria-hidden="true" style={{ flexShrink: 0, maxWidth: '100%', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
               <p style={{ margin: 0, fontSize: 20, fontWeight: 800, lineHeight: 1.1, color: TEXT }}>{formatNumber(shownValue!)}</p>
               <p style={{ margin: 0, fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis' }}>{shownUnit}</p>
@@ -171,12 +173,20 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
               aria-label={pillAria}
               data-bw-status={status}
               style={{
-                pointerEvents: 'auto', flexShrink: 0, marginLeft: 'auto', minWidth: 56, minHeight: 32, padding: '0 8px',
+                pointerEvents: 'auto', flexShrink: 0, minWidth: 56, marginLeft: 'auto', minHeight: 32,
+                padding: longest > 7 ? '0 6px' : '0 8px',
                 borderRadius: 7, border: 'none', background: color, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
+                fontSize: longest > 9 ? 11 : longest > 7 ? 12 : 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
               }}
             >
-              {pillText}
+              {/* Beide Texte in derselben Zelle; der nicht gezeigte haelt nur die Breite. */}
+              <span style={{ display: 'grid', justifyItems: 'end' }}>
+                {pillTexts.map((text, i) => (
+                  <span key={i} style={{ gridArea: '1 / 1', visibility: i === (pillMode === 'change' ? 0 : 1) ? 'visible' : 'hidden' }}>
+                    {text}
+                  </span>
+                ))}
+              </span>
             </button>
           </div>
         )}

@@ -1995,10 +1995,20 @@ main.flex-1 {
 
 /* Blutwerte: Marker-Karten, zwei nebeneinander */
 .bw-marker-card {
+  min-height: 180px;
   border-radius: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
 }
 [data-theme="light"] .bw-marker-card {
   box-shadow: 0 4px 18px rgba(20, 40, 80, 0.07);
+}
+
+/* Wert und Plakette nebeneinander; reicht der Platz nicht, die Plakette darunter. */
+.bw-card-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
 }

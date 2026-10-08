@@ -110,6 +110,33 @@ test('Uebersicht: Umschalter oben wechselt zwischen Raster und Liste und merkt s
   await expect(page.locator('[data-bw-layout-toggle]')).toHaveCount(0)
 })
 
+test('Raster: Tippen auf die Plakette aendert die Kartengroesse nicht', async ({ page, mock }) => {
+  wert(mock, 'Testosteron', { tested_at: '2026-01-10', value: 738, unit: 'ng/dL', ref_min: 349, ref_max: 1110 })
+  wert(mock, 'Testosteron', { value: 1310, unit: 'ng/dL', ref_min: 349, ref_max: 1110 })
+  wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
+  await markerAnsicht(page)
+
+  const karten = page.locator('.bw-marker-card')
+  await expect(karten).toHaveCount(2)
+  const groessen = () => karten.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().height)))
+  const vorher = await groessen()
+  const plakette = karten.filter({ hasText: 'Testosteron' }).locator('[data-bw-status]')
+  const breite = (await plakette.boundingBox())!
+
+  // Beide Texte liegen in der Plakette, sichtbar ist immer nur einer
+  await expect(plakette.getByText('+572', { exact: true })).toBeVisible()
+  await expect(plakette.getByText('349–1.110', { exact: true })).toBeHidden()
+  await plakette.click()
+  await expect(plakette.getByText('349–1.110', { exact: true })).toBeVisible()
+  await expect(plakette.getByText('+572', { exact: true })).toBeHidden()
+  if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/plakette-${test.info().project.name}.png` })
+  expect(await groessen()).toEqual(vorher)
+  // Plakette bleibt neben dem Wert, rutscht nicht darunter
+  const danach = (await plakette.boundingBox())!
+  expect(Math.abs(danach.y - breite.y)).toBeLessThan(1)
+  expect(await plakette.evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true)
+})
+
 test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne Werte ein Einstieg', async ({ page, mock }) => {
   await page.goto('/blutwerte')
   await expect(page.locator('[data-bw-flagged-empty]')).toContainText('Noch keine Blutwerte.')
