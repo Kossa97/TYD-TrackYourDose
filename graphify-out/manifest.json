@@ -2328,9 +2328,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/GridControls.tsx": {
-    "mtime": 1791468350.0836024,
-    "seen": 1791468508.064536,
-    "ast_hash": "272467c7d8e412f74565b6c60fba679d",
+    "mtime": 1791472724.0284762,
+    "seen": 1791472946.058985,
+    "ast_hash": "b2682ed3a9ac76a1374f53fe807233f6",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerDetail.tsx": {
