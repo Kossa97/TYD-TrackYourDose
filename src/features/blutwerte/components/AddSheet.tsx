@@ -44,14 +44,15 @@ export function AddSheet({ onPick, onClose }: Props) {
               <Icon size={19} aria-hidden="true" />
               {/* KI-Sterne: diese Wege lesen die Werte per KI aus */}
               {ki && (
-                <span
+                <Sparkles
                   aria-hidden="true"
                   data-bw-ki-badge
-                  className="absolute -right-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full"
-                  style={{ background: 'var(--surface-raised)', color: CYAN, boxShadow: '0 0 0 2px var(--surface-raised)' }}
-                >
-                  <Sparkles size={13} strokeWidth={2.25} />
-                </span>
+                  size={15}
+                  strokeWidth={1.5}
+                  fill="currentColor"
+                  className="absolute -right-1 -top-1"
+                  style={{ color: CYAN }}
+                />
               )}
             </span>
             <span className="min-w-0 flex-1">
