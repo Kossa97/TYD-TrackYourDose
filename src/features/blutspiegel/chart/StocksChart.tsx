@@ -16,6 +16,7 @@
  */
 import { memo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { hapticTick } from '../../../lib/haptics'
+import { useThemeRedraw } from './useThemeRedraw'
 import {
   easeOutCubic,
   indexAtOrBefore,
@@ -44,6 +45,9 @@ export interface LaneBand {
 }
 
 export interface LaneLayout { blockHeight: number; laneHeight: number; laneGap: number }
+
+/** Weitere Linie im selben Graph (z. B. mehrere Marker in % Veraenderung). */
+export interface ExtraSeries { key: string; name: string; points: LevelPoint[]; color: string }
 
 export interface StocksChartProps {
   points: LevelPoint[]
@@ -98,6 +102,20 @@ export interface StocksChartProps {
   holdMs?: number
   /** Weitere Zeitpunkte, an denen das Ablesen einrastet (z. B. Zyklus-Starts). */
   snapTimes?: number[]
+  /** Name der Hauptlinie im Ablese-Schild, wenn es weitere Linien gibt. */
+  seriesName?: string
+  /** Weitere Linien; das Schild nennt dann alle Werte des Zeitpunkts. */
+  others?: ExtraSeries[]
+  /** Zeitabschnitte im Hintergrund (z. B. Zyklusphasen) mit Namen oben links. */
+  xBands?: Array<{ x1: number; x2: number; color: string; label: string }>
+  /** Senkrechte gestrichelte Linien (z. B. Bluttests), optional beschriftet. */
+  xLines?: Array<{ ts: number; color: string; label?: string }>
+  /** Zeitachse unten zeigen; Standard an. */
+  xAxis?: boolean
+  /** Ungefaehre Zahl der Werte-Linien; Standard 4 (kleine Graphen: 2). */
+  yTicks?: number
+  /** Von aussen gesetzter Ablesezeitpunkt (gekoppelte Graphen). */
+  syncTs?: number | null
   /** Zyklus-Balken hinter der Kurve. */
   lanes?: { items: LaneBand[]; count: number; layout: (plotHeight: number, count: number) => LaneLayout }
 }
@@ -135,11 +153,15 @@ export const StocksChart = memo(function StocksChart({
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
   band, dots = false, yInclude, percentCap = true, minSpan = 2, intakeStrip = true,
   axisWidth = AXIS_WIDTH, pan, holdMs = HOLD_MS, snapTimes, lanes,
+  seriesName, others, xBands, xLines, xAxis = true, syncTs = null, yTicks = 4,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const widthRef = useRef(0)
   const rafRef = useRef<number | null>(null)
+  // Wischen: hoechstens ein Fensterwechsel je Bild
+  const panFrameRef = useRef<number | null>(null)
+  const pendingPanRef = useRef<number | null>(null)
 
   // Was gerade gezeichnet wird (animiert) und wohin es geht.
   const viewRef = useRef<View | null>(null)
@@ -156,11 +178,11 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs })
   const onScrubRef = useRef(onScrub)
   const panRef = useRef(pan)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs }
     onScrubRef.current = onScrub
     panRef.current = pan
   })
@@ -238,7 +260,9 @@ export const StocksChart = memo(function StocksChart({
     const plotR = width
     const label = propsRef.current.scrubLabel
     const plotT = PAD_TOP + (label ? LABEL_H : 0)
-    const plotB = h - AXIS_BOTTOM - INTAKE_STRIP
+    // Ohne Zeitachse bleibt ein schmaler Rand, damit die unterste Zahl nicht abgeschnitten wird.
+    const axisBottom = propsRef.current.xAxis ? AXIS_BOTTOM : 8
+    const plotB = h - axisBottom - INTAKE_STRIP
     const plotW = plotR - plotL
     const plotH = plotB - plotT
     const span = Math.max(1, view.end - view.start)
@@ -339,11 +363,44 @@ export const StocksChart = memo(function StocksChart({
       ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
       ctx.fillStyle = muted
       const label = fmtTick(ts, step)
-      if (x + 4 + ctx.measureText(label).width < plotR) ctx.fillText(label, x + 4, plotB + INTAKE_STRIP + 6)
+      if (propsRef.current.xAxis && x + 4 + ctx.measureText(label).width < plotR) ctx.fillText(label, x + 4, plotB + INTAKE_STRIP + 6)
     }
     // Grundlinie
     ctx.strokeStyle = grid
     ctx.beginPath(); ctx.moveTo(plotL, plotB + INTAKE_STRIP + 0.5); ctx.lineTo(plotR, plotB + INTAKE_STRIP + 0.5); ctx.stroke()
+
+    // Zeitabschnitte (Zyklusphasen) und senkrechte Linien (Bluttests)
+    ctx.textBaseline = 'top'
+    ctx.font = '700 9px ui-sans-serif, system-ui, -apple-system, sans-serif'
+    for (const b of propsRef.current.xBands ?? []) {
+      const x1 = Math.max(plotL, xOf(b.x1))
+      const x2 = Math.min(plotR, xOf(b.x2))
+      if (x2 <= x1) continue
+      ctx.fillStyle = hexAlpha(b.color, 0.07)
+      ctx.fillRect(x1, plotT, x2 - x1, plotB - plotT)
+      if (x2 - x1 > 30) {
+        ctx.save()
+        ctx.beginPath(); ctx.rect(x1, plotT, x2 - x1, 14); ctx.clip()
+        ctx.fillStyle = hexAlpha(b.color, 0.75)
+        ctx.fillText(b.label, x1 + 4, plotT + 3)
+        ctx.restore()
+      }
+    }
+    for (const l of propsRef.current.xLines ?? []) {
+      const x = Math.round(xOf(l.ts)) + 0.5
+      if (x < plotL || x > plotR) continue
+      ctx.save()
+      ctx.strokeStyle = hexAlpha(l.color, 0.45)
+      ctx.setLineDash([2, 5])
+      ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB); ctx.stroke()
+      ctx.restore()
+      if (l.label) {
+        ctx.fillStyle = hexAlpha(l.color, 0.8)
+        ctx.textAlign = x + 4 + ctx.measureText(l.label).width > plotR ? 'right' : 'left'
+        ctx.fillText(l.label, ctx.textAlign === 'right' ? x - 4 : x + 4, plotB - 14)
+        ctx.textAlign = 'left'
+      }
+    }
 
     // Einnahmen als Striche
     ctx.fillStyle = muted
@@ -354,7 +411,10 @@ export const StocksChart = memo(function StocksChart({
     }
 
     // Kurve(n)
-    const scrubTs = scrubTsRef.current
+    // Eigenes Ablesen geht vor; sonst der Zeitpunkt eines gekoppelten Graphen.
+    const wantedScrub = scrubTsRef.current ?? propsRef.current.syncTs
+    // Ein Zeitpunkt ausserhalb des Fensters (gekoppelter Graph) wird nicht gezeichnet.
+    const scrubTs = wantedScrub != null && wantedScrub >= view.start && wantedScrub <= view.end ? wantedScrub : null
     const revealX = plotL + plotW * reveal
     const drawSeries = (pts: LevelPoint[], stroke: string, alpha: number) => {
       const slice = visibleSlice(pts, view.start, view.end)
@@ -401,18 +461,22 @@ export const StocksChart = memo(function StocksChart({
     const prev = prevPointsRef.current
     if (prev) drawSeries(prev, prevAccentRef.current, 1 - fade)
     const pts = pointsRef.current
+    const otherList = propsRef.current.others ?? []
+    for (const o of otherList) drawSeries(o.points, o.color, fade)
     drawSeries(pts, color, fade)
 
     // Messpunkte
     if (showDots && reveal >= 1) {
-      for (const p of visibleSlice(pts, view.start, view.end)) {
-        if (p.ts < view.start || p.ts > view.end) continue
-        const x = xOf(p.ts)
-        const y = yOf(p.level)
-        ctx.fillStyle = surface
-        ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill()
-        ctx.fillStyle = scrubTs != null && p.ts > scrubTs ? hexAlpha(color, 0.45) : color
-        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+      for (const [list, c] of [...otherList.map(o => [o.points, o.color] as const), [pts, color] as const]) {
+        for (const p of visibleSlice(list, view.start, view.end)) {
+          if (p.ts < view.start || p.ts > view.end) continue
+          const x = xOf(p.ts)
+          const y = yOf(p.level)
+          ctx.fillStyle = surface
+          ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill()
+          ctx.fillStyle = scrubTs != null && p.ts > scrubTs ? hexAlpha(c, 0.45) : c
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+        }
       }
     }
 
@@ -456,7 +520,34 @@ export const StocksChart = memo(function StocksChart({
       ctx.strokeStyle = label ? color : muted
       ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(x, label ? LABEL_H : plotT - 4); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
-      if (label && lv != null) {
+      if (label && otherList.length) {
+        // Mehrere Linien: Datum, darunter je Linie Name und Wert in ihrer Farbe
+        const parts = [{ name: propsRef.current.seriesName ?? '', v: lv, c: color }, ...otherList.map(o => ({ name: o.name, v: levelAt(o.points, scrubTs), c: o.color }))]
+          .filter((part): part is { name: string; v: number; c: string } => part.v != null)
+          .map(part => ({ text: `${part.name} ${label.value(part.v)}`.trim(), c: part.c }))
+        ctx.textBaseline = 'alphabetic'
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        const dateText = label.date(scrubTs)
+        const wDate = ctx.measureText(dateText).width
+        ctx.font = '800 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        const gap = 10
+        const widths = parts.map(part => ctx.measureText(part.text).width)
+        const total = widths.reduce((sum, w) => sum + w, 0) + gap * Math.max(0, parts.length - 1)
+        const half = Math.max(wDate, total) / 2
+        const cx = Math.min(Math.max(x, plotL + half), width - half)
+        ctx.textAlign = 'center'
+        ctx.fillStyle = cssVar(canvas, '--text', '#e2e8f0')
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        ctx.fillText(dateText, cx, 14)
+        ctx.textAlign = 'left'
+        ctx.font = '800 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        let left = cx - total / 2
+        parts.forEach((part, i) => {
+          ctx.fillStyle = part.c
+          ctx.fillText(part.text, left, 33)
+          left += widths[i] + gap
+        })
+      } else if (label && lv != null) {
         // Schild: Datum, darunter der Wert — mittig ueber der Linie, am Rand angeschlagen.
         const dateText = label.date(scrubTs)
         const valueText = label.value(lv)
@@ -492,11 +583,12 @@ export const StocksChart = memo(function StocksChart({
           ctx.fillText(valueText, cx, 33)
         }
       }
-      if (lv != null) {
-        const y = yOf(lv)
+      for (const [v, c] of [...otherList.map(o => [levelAt(o.points, scrubTs), o.color] as const), [lv, color] as const]) {
+        if (v == null) continue
+        const y = yOf(v)
         ctx.fillStyle = surface
         ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill()
-        ctx.fillStyle = color
+        ctx.fillStyle = c
         ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill()
       }
     }
@@ -513,7 +605,7 @@ export const StocksChart = memo(function StocksChart({
   // Als Text, damit ein neues Array mit gleichen Werten keine Animation ausloest.
   const yIncludeKey = (yInclude ?? []).filter(Number.isFinite).join('|')
   useEffect(() => {
-    const domain = yDomainFor(points, start, end, { include: yIncludeKey ? yIncludeKey.split('|').map(Number) : [], percentCap, minSpan })
+    const domain = yDomainFor(points, start, end, { include: yIncludeKey ? yIncludeKey.split('|').map(Number) : [], percentCap, minSpan, targetTicks: yTicks })
     const nextTarget: View = { start, end, lo: domain.lo, hi: domain.hi }
     domainTicks.set(nextTarget, domain)
     const now = performance.now()
@@ -537,9 +629,10 @@ export const StocksChart = memo(function StocksChart({
     pointsRef.current = points
     targetViewRef.current = nextTarget
     schedule()
-  }, [points, start, end, seriesKey, accent, schedule, yIncludeKey, percentCap, minSpan])
+  }, [points, start, end, seriesKey, accent, schedule, yIncludeKey, percentCap, minSpan, yTicks])
 
-  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, band, dots, intakeStrip, lanes, schedule])
+  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, formatValue, xTicks, axisWidth, seriesName, snapTimes, scrubLabel, band, dots, intakeStrip, lanes, others, xBands, xLines, xAxis, syncTs, schedule])
+  useThemeRedraw(schedule)
 
   // Breite
   useEffect(() => {
@@ -559,7 +652,10 @@ export const StocksChart = memo(function StocksChart({
     return () => ro.disconnect()
   }, [schedule])
 
-  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current) }, [])
+  useEffect(() => () => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+    if (panFrameRef.current != null) cancelAnimationFrame(panFrameRef.current)
+  }, [])
 
   // ── Ablesen ──────────────────────────────────────────────────────────────
   const gesture = useRef<{ id: number; x: number; y: number; scrubbing: boolean; hold: number | null } | null>(null)
@@ -573,17 +669,21 @@ export const StocksChart = memo(function StocksChart({
     const axisW = propsRef.current.axisWidth
     const plotW = rect.width - axisW
     const frac = Math.min(1, Math.max(0, (clientX - rect.left - axisW) / plotW))
+    // Ablesbar ist, was eine der Linien abdeckt — nicht nur die Hauptlinie.
+    const otherList = propsRef.current.others ?? []
+    const first = Math.min(pts[0].ts, ...otherList.filter(o => o.points.length).map(o => o.points[0].ts))
+    const last = Math.max(pts[pts.length - 1].ts, ...otherList.filter(o => o.points.length).map(o => o.points[o.points.length - 1].ts))
     let ts = view.start + frac * (view.end - view.start)
-    ts = Math.min(Math.max(ts, pts[0].ts), pts[pts.length - 1].ts)
+    ts = Math.min(Math.max(ts, Math.max(first, view.start)), Math.min(last, view.end))
     // auf den naechsten Datenpunkt einrasten (15-min-Raster) — oder auf einen
-    // naeheren Zusatzpunkt wie einen Zyklus-Start
+    // naeheren Zusatzpunkt wie einen Zyklus-Start oder einen Wert einer anderen Linie
     const i = indexAtOrBefore(pts, ts)
     const a = pts[Math.max(0, i)]
     const b = pts[Math.min(pts.length - 1, i + 1)]
     let snap = Math.abs(ts - a.ts) <= Math.abs(b.ts - ts) ? a : b
     for (const extra of propsRef.current.snapTimes ?? []) {
-      if (extra < pts[0].ts || extra > pts[pts.length - 1].ts || Math.abs(extra - ts) >= Math.abs(snap.ts - ts)) continue
-      const lv = levelAt(pts, extra)
+      if (extra < first || extra > last || Math.abs(extra - ts) >= Math.abs(snap.ts - ts)) continue
+      const lv = levelAt(pts, extra) ?? otherList.map(o => levelAt(o.points, extra)).find(v => v != null)
       if (lv != null) snap = { ts: extra, level: lv }
     }
     if (scrubTsRef.current === snap.ts) return
@@ -625,15 +725,33 @@ export const StocksChart = memo(function StocksChart({
     const next = Math.min(p.max, Math.max(Math.min(p.max, p.min + ps.span), shifted))
     const bucket = Math.floor(next / timeStep(next - ps.span, next, ps.plotW))
     if (bucket !== ps.bucket) { ps.bucket = bucket; void hapticTick() }
-    p.onPan(next)
+    // Hoechstens ein Zustandswechsel je Bild — sonst rendert der Eltern-Graph bei jedem Zeigerereignis.
+    pendingPanRef.current = next
+    if (panFrameRef.current == null) {
+      panFrameRef.current = requestAnimationFrame(() => {
+        panFrameRef.current = null
+        const end = pendingPanRef.current
+        pendingPanRef.current = null
+        if (end != null) panRef.current?.onPan(end)
+      })
+    }
   }
   const endPan = () => {
+    if (panFrameRef.current != null) {
+      cancelAnimationFrame(panFrameRef.current)
+      panFrameRef.current = null
+      if (pendingPanRef.current != null) panRef.current?.onPan(pendingPanRef.current)
+      pendingPanRef.current = null
+    }
     panState.current = null
-    panningRef.current = false
+    // Erst nach dem letzten Bild zuruecksetzen, sonst gleitet der letzte Schritt nach.
+    requestAnimationFrame(() => { if (!panState.current) panningRef.current = false })
   }
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!pointsRef.current.length) return
+    // Ein zweiter Finger aendert nichts an der laufenden Geste.
+    if (gesture.current && gesture.current.id !== e.pointerId) return
     const canPan = !!panRef.current
     // Ohne Wischen liest die Maus beim Druecken ab; mit Wischen liest sie beim Ueberfahren.
     const startScrub = e.pointerType === 'mouse' && !canPan
@@ -682,7 +800,8 @@ export const StocksChart = memo(function StocksChart({
     scrubAt(e.clientX)
   }
 
-  const onPointerEnd = () => {
+  const onPointerEnd = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (gesture.current && gesture.current.id !== e.pointerId) return
     endPan()
     endScrub()
   }
@@ -694,9 +813,13 @@ export const StocksChart = memo(function StocksChart({
     if (e.key === 'Escape') { endScrub(); return }
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
     e.preventDefault()
-    const current = scrubTsRef.current ?? pts[pts.length - 1].ts
+    // Im sichtbaren Fenster bleiben — auch nach dem Zurueckwischen
+    const lo = Math.max(view.start, pts[0].ts)
+    const hi = Math.min(view.end, pts[pts.length - 1].ts)
+    if (hi < lo) return
+    const current = scrubTsRef.current ?? hi
     const stepMs = (view.end - view.start) / 48
-    const next = Math.min(Math.max(current + (e.key === 'ArrowLeft' ? -stepMs : stepMs), Math.max(view.start, pts[0].ts)), pts[pts.length - 1].ts)
+    const next = Math.min(Math.max(current + (e.key === 'ArrowLeft' ? -stepMs : stepMs), lo), hi)
     const lv = levelAt(pts, next)
     if (lv == null) return
     scrubTsRef.current = next
@@ -717,7 +840,7 @@ export const StocksChart = memo(function StocksChart({
         onPointerCancel={onPointerEnd}
         onPointerLeave={e => { if (e.pointerType === 'mouse' && !panState.current) endScrub() }}
         onKeyDown={onKeyDown}
-        onBlur={onPointerEnd}
+        onBlur={() => { endPan(); endScrub() }}
         onContextMenu={e => e.preventDefault()}
         style={{
           display: 'block', width: '100%', height,

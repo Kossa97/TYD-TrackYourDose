@@ -19,20 +19,8 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  LineChart,
-  ReferenceArea,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { StocksChart, type ExtraSeries } from '../features/blutspiegel/chart/StocksChart'
+import { levelAt, type LevelPoint } from '../features/blutspiegel/chart/stocksChartMath'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -285,23 +273,7 @@ function toPercentChange(entries: { date: string; value: number }[]): { date: st
   }))
 }
 
-function interpolatePct(date: string, anchors: { date: string; pct: number }[]): number | undefined {
-  if (anchors.length === 0) return undefined
-  if (date <= anchors[0].date) return anchors[0].pct
-  if (date >= anchors[anchors.length - 1].date) return anchors[anchors.length - 1].pct
-  for (let i = 0; i < anchors.length - 1; i++) {
-    if (date >= anchors[i].date && date <= anchors[i + 1].date) {
-      const span = anchors[i + 1].date.localeCompare(anchors[i].date)
-      const t = span > 0 ? date.localeCompare(anchors[i].date) / span : 0
-      return Math.round((anchors[i].pct + t * (anchors[i + 1].pct - anchors[i].pct)) * 10) / 10
-    }
-  }
-  return undefined
-}
 
-function gradId(marker: string): string {
-  return `grad-${marker.replace(/[^a-zA-Z0-9]/g, '')}`
-}
 
 const SHARE_URL = 'https://tyd-track-your-dose.vercel.app/protokoll?ref=share'
 
@@ -409,95 +381,79 @@ function KpiCard({ label, value, sub, color }: { label: string; value: string; s
   )
 }
 
-function NormalizedChartDefs({ markers }: { markers: string[] }) {
-  return (
-    <defs>
-      {markers.map(marker => {
-        const color = getSeriesColor(marker)
-        const id = gradId(marker)
-        return (
-          <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={color} stopOpacity={0.22} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        )
-      })}
-    </defs>
-  )
-}
+/** Ein Kalendertag als Zeitpunkt (Tagesmitte) fuer die Zeitachse. */
+const dayTs = (date: string) => parseISO(`${date}T12:00:00`).getTime()
 
-function NormalizedTooltip({ active, payload, label }: {
-  active?: boolean
-  payload?: { name: string; value: number; color: string }[]
-  label?: string
-}) {
-  if (!active || !payload?.length) return null
-  const visible = payload.filter(p => p.value != null && !p.name.endsWith('-glow') && !p.name.endsWith('-area'))
-  if (!visible.length) return null
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', fontSize: 11 }}>
-      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#475569', marginBottom: 6 }}>{label}</p>
-      {visible.map(p => (
-        <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, fontWeight: 700, color: p.color }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-          <span>{p.name}: {p.value > 0 ? '+' : ''}{p.value}%</span>
-        </div>
-      ))}
-    </div>
-  )
-}
+const signedPct = (v: number, language: string) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${formatNumber(Math.abs(v), language, 1)} %`
 
 interface SmallMultipleSeriesProps {
   marker: string; unit: string; color: string
   normalMin: number | null; normalMax: number | null
-  yDomain: [number, number]
-  data: { date: string; label: string; value: number | null }[]
+  points: LevelPoint[]
   lastValue: number | null
 }
 
-function SmallMultipleRow({ series, isLast, language }: { series: SmallMultipleSeriesProps; isLast: boolean; language: string }) {
-  const { marker, unit, color, normalMin, normalMax, yDomain, data, lastValue } = series
+/**
+ * Detailansicht: je Marker ein kleiner Graph auf derselben Zeitachse. Die
+ * Graphen sind gekoppelt — wer einen abliest, sieht in allen denselben Tag;
+ * der Wert steht dann in der Kopfzeile der Reihe.
+ */
+function SmallMultiples({ series, start, end, language }: { series: SmallMultipleSeriesProps[]; start: number; end: number; language: string }) {
+  const [syncTs, setSyncTs] = useState<number | null>(null)
+  const dayFmt = useMemo(() => new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }), [language])
+  const onScrub = useCallback((p: LevelPoint | null) => setSyncTs(p ? p.ts : null), [])
+  const formatTick = useCallback((ts: number) => dayFmt.format(ts), [dayFmt])
   return (
-    <div style={{ marginBottom: isLast ? 0 : 4 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2, paddingLeft: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, color }}>{marker}</span>
-          <span style={{ fontSize: 9, color: '#334155', fontWeight: 600 }}>{unit}</span>
-          {normalMin != null && normalMax != null && (
-            <span style={{ fontSize: 8, color: '#334155' }}>Norm: {normalMin}–{normalMax}</span>
-          )}
-        </div>
-        {lastValue != null && (
-          <span style={{ fontSize: 12, fontWeight: 900, color, letterSpacing: '-0.02em' }}>
-            {formatNumber(lastValue, language, 2)} {unit}
-          </span>
-        )}
-      </div>
-      <ResponsiveContainer width="100%" height={isLast ? 75 : 65}>
-        <LineChart data={data} margin={{ top: 4, right: 50, bottom: 0, left: 0 }} syncId="protokoll-small">
-          {normalMin != null && normalMax != null && (
-            <ReferenceArea y1={normalMin} y2={normalMax} fill={color} fillOpacity={0.08} strokeOpacity={0} />
-          )}
-          {normalMax != null && <ReferenceLine y={normalMax} stroke={color} strokeOpacity={0.2} strokeWidth={1} strokeDasharray="2 3" />}
-          {normalMin != null && normalMin > 0 && <ReferenceLine y={normalMin} stroke={color} strokeOpacity={0.2} strokeWidth={1} strokeDasharray="2 3" />}
-          <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
-          <YAxis domain={yDomain} tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} width={38} tickCount={3} />
-          {isLast && <XAxis dataKey="label" tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />}
-          <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelStyle={{ color: '#475569', fontSize: 9 }}
-            formatter={(value: unknown) => [`${typeof value === 'number' ? formatNumber(value, language, 2) : value} ${unit}`, marker]} />
-          <Line dataKey="value" stroke={color} strokeWidth={6} strokeOpacity={0.12} dot={false} activeDot={false} connectNulls isAnimationActive={false} legendType="none" name="glow" />
-          <Line dataKey="value" stroke={color} strokeWidth={2.5} strokeLinecap="round" connectNulls isAnimationActive={false} name={marker}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            dot={(props: any) => props.payload?.value != null
-              ? <circle key={`${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={4} fill="#07091a" stroke={color} strokeWidth={2} />
-              : <g key="empty" />}
-            activeDot={{ r: 6, fill: color, stroke: '#07091a', strokeWidth: 2 }} />
-        </LineChart>
-      </ResponsiveContainer>
-      {!isLast && <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />}
-    </div>
+    <>
+      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', minHeight: 18, marginBottom: 4 }} aria-live="polite">
+        {syncTs != null ? formatDate(format(new Date(syncTs), 'yyyy-MM-dd'), language) : ''}
+      </p>
+      {series.map((row, i) => {
+        const isLast = i === series.length - 1
+        // Beim Ablesen der Wert der Linie an diesem Tag (wie der Punkt im Graph)
+        const shown = syncTs != null ? levelAt(row.points, syncTs) : row.lastValue
+        return (
+          <div key={row.marker} style={{ marginBottom: isLast ? 0 : 6 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2, paddingLeft: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: row.color }}>{row.marker}</span>
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600 }}>{row.unit}</span>
+                {row.normalMin != null && row.normalMax != null && (
+                  <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>Norm: {row.normalMin}–{row.normalMax}</span>
+                )}
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 900, color: row.color, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+                {shown != null ? `${formatNumber(shown, language, 2)} ${row.unit}` : '–'}
+              </span>
+            </div>
+            <StocksChart
+              points={row.points}
+              start={start}
+              end={end}
+              accent={row.color}
+              height={isLast ? 96 : 74}
+              seriesKey={row.marker}
+              formatTick={formatTick}
+              formatValue={v => formatNumber(v, language, 1)}
+              onScrub={onScrub}
+              syncTs={syncTs}
+              ariaLabel={`${row.marker}: Verlauf`}
+              band={row.normalMin != null || row.normalMax != null ? { lo: row.normalMin, hi: row.normalMax, color: row.color } : undefined}
+              yInclude={[row.normalMin, row.normalMax].filter((v): v is number => v != null)}
+              dots
+              percentCap={false}
+              minSpan={Math.max(0.5, Math.max(...row.points.map(p => Math.abs(p.level)), 1) * 0.1)}
+              intakeStrip={false}
+              xAxis={isLast}
+              yTicks={2}
+            />
+          </div>
+        )
+      })}
+    </>
   )
 }
+
 
 export function Protokoll() {
   const { user } = useAuth()
@@ -585,55 +541,61 @@ export function Protokoll() {
     }
   }, [doseLogs, weightLogs, bloodwork])
 
-  const normalizedChartData = useMemo(() => {
-    const weightSorted = [...weightLogs]
-      .map(l => ({ date: dateKey(l.logged_at), value: numericValue(l.weight_kg) }))
-      .filter((e): e is { date: string; value: number } => e.value != null)
-      .sort((a, b) => a.date.localeCompare(b.date))
-    const weightPcts = toPercentChange(weightSorted)
-
-    const bloodPcts = new Map<string, { date: string; pct: number }[]>()
-    const wellnessPcts = new Map<string, { date: string; pct: number }[]>()
+  // % Veraenderung ab Start, je Marker eine Linie auf der Zeitachse
+  const percentSeries = useMemo(() => {
+    const out: Array<{ marker: string; color: string; points: LevelPoint[] }> = []
+    const toPoints = (pcts: { date: string; pct: number }[]) => pcts.map(p => ({ ts: dayTs(p.date), level: p.pct }))
     for (const marker of activeMarkers) {
-      if (marker === 'Gewicht' || isWellnessMarker(marker)) continue
-      const entries = bloodwork
-        .filter(e => e.marker === marker)
-        .map(e => ({ date: e.tested_at, value: numericValue(e.value) }))
-        .filter((e): e is { date: string; value: number } => e.value != null)
-        .sort((a, b) => a.date.localeCompare(b.date))
-      bloodPcts.set(marker, toPercentChange(entries))
+      let pcts: { date: string; pct: number }[]
+      if (marker === 'Gewicht') {
+        const weightSorted = [...weightLogs]
+          .map(l => ({ date: dateKey(l.logged_at), value: numericValue(l.weight_kg) }))
+          .filter((e): e is { date: string; value: number } => e.value != null)
+          .sort((a, b) => a.date.localeCompare(b.date))
+        pcts = toPercentChange(weightSorted)
+      } else if (isWellnessMarker(marker)) {
+        pcts = toPercentChange(wellnessSeries(dailyLogs, marker))
+      } else {
+        const entries = bloodwork
+          .filter(e => e.marker === marker)
+          .map(e => ({ date: e.tested_at, value: numericValue(e.value) }))
+          .filter((e): e is { date: string; value: number } => e.value != null)
+          .sort((a, b) => a.date.localeCompare(b.date))
+        pcts = toPercentChange(entries)
+      }
+      if (pcts.length) out.push({ marker, color: getSeriesColor(marker), points: toPoints(pcts) })
     }
-    for (const marker of activeMarkers) {
-      if (!isWellnessMarker(marker)) continue
-      wellnessPcts.set(marker, toPercentChange(wellnessSeries(dailyLogs, marker)))
+    return out
+  }, [activeMarkers, weightLogs, bloodwork, dailyLogs])
+
+  // Gemeinsame Zeitachse: gewaehlter Zeitraum, erweitert um Werte ausserhalb
+  const chartWindow = useMemo(() => {
+    // Ein geleertes Datumsfeld zaehlt nicht — sonst wird die ganze Achse NaN.
+    const bounds = [range.from, range.to].map(dayTs).filter(Number.isFinite)
+    const all = [...percentSeries.flatMap(series => series.points.map(p => p.ts)), ...bounds]
+    // Ohne Daten zeigt die Seite keine Graphen — der Wert ist dann egal.
+    if (!all.length) all.push(0)
+    const from = Math.min(...all)
+    const to = Math.max(...all)
+    const pad = Math.max(12 * 3_600_000, (to - from) * 0.02)
+    return { start: from - pad, end: to + pad }
+  }, [percentSeries, range])
+
+  // Fuer den Graph einmal je Datenstand — sonst zeichnet jeder Render den Canvas neu.
+  const percentChart = useMemo(() => {
+    const dateLabel = (ts: number) => formatDate(format(new Date(ts), 'yyyy-MM-dd'), language)
+    const pct = (v: number) => signedPct(v, language)
+    return {
+      formatTick: dateLabel,
+      formatValue: pct,
+      scrubLabel: { date: dateLabel, value: pct },
+      others: percentSeries.slice(1).map((series): ExtraSeries => ({ key: series.marker, name: series.marker, points: series.points, color: series.color })),
+      yInclude: [0, ...percentSeries.flatMap(series => series.points.map(p => p.level))],
+      snapTimes: percentSeries.slice(1).flatMap(series => series.points.map(p => p.ts)),
+      xBands: cycleBands.map(band => ({ x1: dayTs(band.x1) - 12 * 3_600_000, x2: dayTs(band.x2) + 12 * 3_600_000, color: band.color, label: band.name })),
+      xLines: bloodTestDates.map((date, i) => ({ ts: dayTs(date), color: '#00ccf5', label: i === 0 ? 'Bluttest' : undefined })),
     }
-
-    const allDates = new Set<string>()
-    if (activeMarkers.includes('Gewicht')) weightSorted.forEach(e => allDates.add(e.date))
-    bloodPcts.forEach(arr => arr.forEach(p => allDates.add(p.date)))
-    wellnessPcts.forEach(arr => arr.forEach(p => allDates.add(p.date)))
-    const sortedDates = Array.from(allDates).sort()
-
-    return sortedDates.map(date => {
-      const row: Record<string, string | number | null> = {
-        date,
-        label: formatDate(date, language),
-      }
-      if (activeMarkers.includes('Gewicht')) {
-        const exact = weightPcts.find(p => p.date === date)
-        row['Gewicht'] = exact ? exact.pct : (interpolatePct(date, weightPcts) ?? null)
-      }
-      for (const [marker, pcts] of bloodPcts) {
-        const exact = pcts.find(p => p.date === date)
-        row[marker] = exact ? exact.pct : null
-      }
-      for (const [marker, pcts] of wellnessPcts) {
-        const exact = pcts.find(p => p.date === date)
-        row[marker] = exact ? exact.pct : (interpolatePct(date, pcts) ?? null)
-      }
-      return row
-    })
-  }, [activeMarkers, weightLogs, bloodwork, dailyLogs, language])
+  }, [percentSeries, cycleBands, bloodTestDates, language])
 
   interface SmallMultipleSeries {
     marker: string
@@ -641,8 +603,7 @@ export function Protokoll() {
     color: string
     normalMin: number | null
     normalMax: number | null
-    yDomain: [number, number]
-    data: { date: string; label: string; value: number | null }[]
+    points: LevelPoint[]
     lastValue: number | null
   }
 
@@ -668,16 +629,13 @@ export function Protokoll() {
         data = entries.map(e => ({ date: e.tested_at, label: formatDate(e.tested_at, language), value: numericValue(e.value) }))
       }
 
-      const nums = data.map(d => d.value).filter((v): v is number => v != null)
-      const dataMin = nums.length > 0 ? Math.min(...nums) : 0
-      const dataMax = nums.length > 0 ? Math.max(...nums) : 1
-      const pad = (dataMax - dataMin) * 0.2 || dataMax * 0.2 || 1
-      const yMin = normalMin != null ? Math.min(normalMin, dataMin - pad) : dataMin - pad
-      const yMax = normalMax != null ? Math.max(normalMax, dataMax + pad) : dataMax + pad
-      const lastValue = [...data].reverse().find(d => d.value != null)?.value ?? null
+      const points = data
+        .filter((d): d is { date: string; label: string; value: number } => d.value != null)
+        .map(d => ({ ts: dayTs(d.date), level: d.value }))
+      const lastValue = points.length ? points[points.length - 1].level : null
 
-      return { marker, unit, color, normalMin, normalMax, yDomain: [Math.round(yMin * 10) / 10, Math.round(yMax * 10) / 10], data, lastValue }
-    })
+      return { marker, unit, color, normalMin, normalMax, points, lastValue }
+    }).filter(series => series.points.length > 0)
   ), [activeMarkers, weightLogs, bloodwork, dailyLogs, language])
 
   const adherencePerSubstance = useMemo(() => {
@@ -1068,38 +1026,40 @@ export function Protokoll() {
             </div>
             <span style={{ background: 'var(--accent-weak)', border: '1px solid var(--accent-border)', borderRadius: 8, padding: '4px 9px', fontSize: 9, fontWeight: 700, color: 'var(--accent)' }}>% Δ ab Start</span>
           </div>
-          {normalizedChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={normalizedChartData} margin={{ top: 10, right: 50, bottom: 0, left: -10 }}>
-                <NormalizedChartDefs markers={activeMarkers} />
-                {cycleBands.map((band, i) => (
-                  <ReferenceArea key={i} x1={band.x1} x2={band.x2} fill={band.color} fillOpacity={0.06} strokeOpacity={0}
-                    label={{ value: band.name, position: 'insideTopLeft', fontSize: 8, fill: band.color, opacity: 0.55, fontWeight: 700 }} />
+          {percentSeries.length > 0 ? (
+            <>
+              <StocksChart
+                points={percentSeries[0].points}
+                seriesName={percentSeries[0].marker}
+                others={percentChart.others}
+                start={chartWindow.start}
+                end={chartWindow.end}
+                accent={percentSeries[0].color}
+                height={300}
+                seriesKey={percentSeries.map(series => series.marker).join('|')}
+                formatTick={percentChart.formatTick}
+                formatValue={percentChart.formatValue}
+                scrubLabel={percentChart.scrubLabel}
+                ariaLabel="Verlauf — % Veränderung"
+                axisWidth={50}
+                dots
+                percentCap={false}
+                minSpan={10}
+                yInclude={percentChart.yInclude}
+                snapTimes={percentChart.snapTimes}
+                intakeStrip={false}
+                xBands={percentChart.xBands}
+                xLines={percentChart.xLines}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>
+                {percentSeries.map(series => (
+                  <span key={series.marker} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span aria-hidden="true" style={{ width: 10, height: 3, borderRadius: 2, background: series.color }} />
+                    {series.marker}
+                  </span>
                 ))}
-                {bloodTestDates.map((date, i) => (
-                  <ReferenceLine key={date} x={date} stroke="rgba(0,204,245,0.25)" strokeWidth={1} strokeDasharray="2 5"
-                    label={i === 0 ? { value: 'Bluttest', position: 'top', fontSize: 8, fill: 'rgba(0,204,245,0.55)', fontWeight: 700 } : undefined} />
-                ))}
-                <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: '#334155', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tickFormatter={v => `${v > 0 ? '+' : ''}${v}%`} tick={{ fill: '#334155', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip content={<NormalizedTooltip />} />
-                {activeMarkers.map(marker => {
-                  const color = getSeriesColor(marker)
-                  return [
-                    <Line key={`${marker}-glow`} dataKey={marker} stroke={color} strokeWidth={7} strokeOpacity={0.12} dot={false} activeDot={false} connectNulls legendType="none" name={`${marker}-glow`} isAnimationActive={false} />,
-                    <Area key={`${marker}-area`} dataKey={marker} stroke="none" fill={`url(#${gradId(marker)})`} connectNulls legendType="none" name={`${marker}-area`} isAnimationActive={false} activeDot={false} />,
-                    <Line key={marker} dataKey={marker} stroke={color} strokeWidth={2.5} strokeLinecap="round" connectNulls name={marker} isAnimationActive={false}
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      dot={(props: any) => props.payload?.[marker] != null && props.cx != null
-                        ? <circle key={`${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={4} fill="#07091a" stroke={color} strokeWidth={2} />
-                        : <g key="empty" />}
-                      activeDot={{ r: 6, fill: color, stroke: '#07091a', strokeWidth: 2 }} />,
-                  ]
-                })}
-                <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700, paddingTop: 8 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
+              </div>
+            </>
           ) : (
             <EmptyChart label={copy.emptyChart} />
           )}
@@ -1114,9 +1074,7 @@ export function Protokoll() {
                 <p style={{ fontSize: 9, color: '#334155', marginTop: 2, fontWeight: 600, letterSpacing: '0.04em' }}>Absolute Werte · Farbband = Normalbereich</p>
               </div>
             </div>
-            {smallMultiplesData.map((series, i) => (
-              <SmallMultipleRow key={series.marker} series={series} isLast={i === smallMultiplesData.length - 1} language={language} />
-            ))}
+            <SmallMultiples series={smallMultiplesData} start={chartWindow.start} end={chartWindow.end} language={language} />
           </section>
         )}
 

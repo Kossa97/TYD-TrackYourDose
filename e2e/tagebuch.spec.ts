@@ -311,7 +311,9 @@ test('Auswertung: Reiter, Verlauf, Abstand zur Einnahme, Tabelle pro Substanz', 
     await page.screenshot({ path: info.outputPath('auswertung-dunkel.png'), fullPage: true })
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'))
     await page.screenshot({ path: info.outputPath('auswertung-hell.png'), fullPage: true })
-    await panel.locator('.recharts-bar-rectangle').nth(3).hover()
+    const graph = panel.getByRole('img').first()
+    const box = (await graph.boundingBox())!
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.6)
     await page.screenshot({ path: info.outputPath('auswertung-tooltip.png') })
   }
 })

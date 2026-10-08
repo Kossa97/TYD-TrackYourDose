@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, addDays } from 'date-fns'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { StocksBars } from '../../features/blutspiegel/chart/StocksBars'
 import { AlertTriangle, BarChart3, Info } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getDateLocale } from '../../i18n/dateLocales'
@@ -55,45 +55,24 @@ function Legend() {
   )
 }
 
-function ChartTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDatum }> }) {
-  const { t, i18n } = useTranslation()
-  const datum = payload?.[0]?.payload
-  if (!active || !datum) return null
-  return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 shadow-lg">
-      <p className="mb-1 font-semibold">{datum.title}</p>
-      {(['effects', 'sideEffects'] as const).map(key => (
-        <p key={key} className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-sm" style={{ background: COLOR[key] }} />
-          {t(key === 'effects' ? 'wirkungen' : 'nebenwirkungen')}: <span className="tabular-nums">{datum[key]}</span>
-        </p>
-      ))}
-      {datum.avgSeverity != null && (
-        <p className="mt-1 text-slate-400">{t('tagebuch_avg_intensitaet')}: {datum.avgSeverity.toLocaleString(i18n.language, { minimumFractionDigits: 1 })}</p>
-      )}
-    </div>
-  )
-}
-
 /** Gestapelte Balken Wirkung/Nebenwirkung, dazu eine Tabelle für Screenreader. */
 function StackedBars({ data, caption }: { data: ChartDatum[]; caption: string }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const bars = useMemo(() => data.map(datum => ({
+    label: datum.label,
+    title: datum.title,
+    values: [datum.effects, datum.sideEffects],
+    note: datum.avgSeverity != null
+      ? `${t('tagebuch_avg_intensitaet')} ${datum.avgSeverity.toLocaleString(i18n.language, { minimumFractionDigits: 1 })}`
+      : null,
+  })), [data, t, i18n.language])
+  const stacks = useMemo(() => [
+    { name: t('wirkungen'), color: COLOR.effects },
+    { name: t('nebenwirkungen'), color: COLOR.sideEffects },
+  ], [t])
   return (
     <>
-      <div className="h-44" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -18 }} barCategoryGap="20%">
-            <CartesianGrid vertical={false} stroke="var(--c-border)" />
-            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--c-border)' }}
-              tick={{ fill: 'var(--c-text-muted)', fontSize: 11 }} interval="preserveStartEnd" minTickGap={8} />
-            <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40}
-              tick={{ fill: 'var(--c-text-muted)', fontSize: 11 }} />
-            <Tooltip cursor={{ fill: 'var(--c-border)' }} content={<ChartTooltip />} isAnimationActive={false} />
-            <Bar dataKey="effects" stackId="s" fill={COLOR.effects} stroke="var(--c-surface)" strokeWidth={2} maxBarSize={24} />
-            <Bar dataKey="sideEffects" stackId="s" fill={COLOR.sideEffects} stroke="var(--c-surface)" strokeWidth={2} maxBarSize={24} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <StocksBars data={bars} stacks={stacks} height={220} ariaLabel={caption} />
       <table className="sr-only">
         <caption>{caption}</caption>
         <thead>

@@ -111,11 +111,11 @@ export function niceYDomain(min: number, max: number, targetTicks = 4, options: 
 
 export function yDomainFor(
   points: LevelPoint[], start: number, end: number,
-  options: YDomainOptions & { include?: number[] } = {},
+  options: YDomainOptions & { include?: number[]; targetTicks?: number } = {},
 ): YDomain {
-  const { include = [], ...domainOptions } = options
+  const { include = [], targetTicks = 4, ...domainOptions } = options
   const slice = visibleSlice(points, start, end)
-  if (!slice.length && !include.length) return niceYDomain(0, 100, 4, domainOptions)
+  if (!slice.length && !include.length) return niceYDomain(0, 100, targetTicks, domainOptions)
   let min = Infinity
   let max = -Infinity
   for (const v of include) {
@@ -128,7 +128,7 @@ export function yDomainFor(
     if (level < min) min = level
     if (level > max) max = level
   }
-  return niceYDomain(min, max, 4, domainOptions)
+  return niceYDomain(min, max, targetTicks, domainOptions)
 }
 
 const TIME_STEPS = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY, 14 * DAY, 28 * DAY, 56 * DAY, 91 * DAY, 182 * DAY, 364 * DAY]
