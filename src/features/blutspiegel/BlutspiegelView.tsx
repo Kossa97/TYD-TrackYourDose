@@ -279,6 +279,8 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
   const [pickedKey, setPickedKey] = useState<string | null>(initialKey ?? null)
   const [range, setRange] = useState<ChartRange>('1d')
   const [scrub, setScrub] = useState<LevelPoint | null>(null)
+  // Zurueckgeblaettert: Ende des sichtbaren Fensters; null folgt „jetzt".
+  const [viewEnd, setViewEnd] = useState<number | null>(null)
 
   const selected = data.ready.find(e => e.key === pickedKey) ?? data.ready[0] ?? null
   const curve = selected ? data.curves.get(selected.key) : undefined
@@ -291,14 +293,20 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
   )
 
   const scrubLabel = useMemo(() => ({ date: f.scrub, value: (v: number) => `${f.pct(v)} %` }), [f])
-  const select = useCallback((key: string) => { setPickedKey(key); setScrub(null) }, [])
-  const changeRange = useCallback((r: ChartRange) => { setRange(r); setScrub(null) }, [])
+  const select = useCallback((key: string) => { setPickedKey(key); setScrub(null); setViewEnd(null) }, [])
+  const changeRange = useCallback((r: ChartRange) => { setRange(r); setScrub(null); setViewEnd(null) }, [])
 
   // Zeitraum friert „jetzt" je Datenstand ein — sonst liefe die Achse jede Sekunde.
   const lastTs = curve?.points.length ? curve.points[curve.points.length - 1].ts : null
   const firstTs = curve?.points.length ? curve.points[0].ts : null
   const asOf = data.asOf
   const bounds = rangeBounds(compact ? '1d' : range, Math.max(asOf, lastTs ?? 0), firstTs)
+  // Das Fenster laesst sich bis zum Beginn des Verlaufs zurueckwischen.
+  const span = bounds.end - bounds.start
+  const chartEnd = viewEnd != null ? Math.min(bounds.end, Math.max(viewEnd, (firstTs ?? bounds.start) + span)) : bounds.end
+  const pan = firstTs != null && bounds.end - firstTs > span + 60_000
+    ? { min: firstTs, max: bounds.end, onPan: (end: number) => setViewEnd(end >= bounds.end - 1000 ? null : end), jumpLabel: t('pk_axis_now_title') }
+    : undefined
 
   if (data.error) return <p role="alert" style={{ fontSize: 14, ...MUTED }}>{t('pk_data_load_error')}</p>
   if (data.loading) {
@@ -393,8 +401,9 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
       {points.length ? (
         <StocksChart
           points={points}
-          start={bounds.start}
-          end={bounds.end}
+          start={chartEnd - span}
+          end={chartEnd}
+          pan={pan}
           accent={selected.accent}
           height={compact ? 210 : 340}
           seriesKey={selected.key}

@@ -66,10 +66,20 @@ export interface StocksChartProps {
   minSpan?: number
   /** Leiste fuer Einnahme-Striche unter der Kurve; Standard an. */
   intakeStrip?: boolean
+  /** Breite der Werte-Achse links; Standard AXIS_WIDTH. */
+  axisWidth?: number
+  /**
+   * Zurueckblaettern: Wischen verschiebt das Fenster (Ende zwischen min + Spanne
+   * und max), Halten liest ab, die Maus liest beim Ueberfahren. Ohne pan liest
+   * Ziehen ab.
+   */
+  pan?: { min: number; max: number; onPan: (end: number) => void; jumpLabel: string }
+  /** Haltezeit bis zum Ablesen bei Beruehrung; Standard 180 ms. */
+  holdMs?: number
 }
 
 /** Breite der Werte-Achse rechts; Inhalte darunter richten sich danach aus. */
-export const AXIS_RIGHT = 38
+export const AXIS_WIDTH = 38
 const AXIS_BOTTOM = 22
 const INTAKE_STRIP_H = 12
 const PAD_TOP = 10
@@ -100,6 +110,7 @@ export const StocksChart = memo(function StocksChart({
   points, start, end, accent, height, seriesKey, intakes = [], markers = [],
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
   band, dots = false, yInclude, percentCap = true, minSpan = 2, intakeStrip = true,
+  axisWidth = AXIS_WIDTH, pan, holdMs = HOLD_MS,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -121,14 +132,17 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth })
   const onScrubRef = useRef(onScrub)
+  const panRef = useRef(pan)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth }
     onScrubRef.current = onScrub
+    panRef.current = pan
   })
 
   const scrubTsRef = useRef<number | null>(null)
+  const panningRef = useRef(false)
   const lastHapticBucketRef = useRef<number | null>(null)
 
   // ── Zeichnen ──────────────────────────────────────────────────────────────
@@ -196,8 +210,8 @@ export const StocksChart = memo(function StocksChart({
     const grid = 'rgba(148,163,184,0.16)'
     const surface = cssVar(canvas, '--surface', '#05060d')
 
-    const plotL = 0
-    const plotR = width - AXIS_RIGHT
+    const plotL = propsRef.current.axisWidth
+    const plotR = width
     const label = propsRef.current.scrubLabel
     const plotT = PAD_TOP + (label ? LABEL_H : 0)
     const plotB = h - AXIS_BOTTOM - INTAKE_STRIP
@@ -231,7 +245,7 @@ export const StocksChart = memo(function StocksChart({
     // Horizontale Linien + Werte rechts (die Ziel-Ticks, mit gleitender Lage)
     ctx.font = '500 11px ui-sans-serif, system-ui, -apple-system, sans-serif'
     ctx.textBaseline = 'middle'
-    ctx.textAlign = 'left'
+    ctx.textAlign = 'right'
     ctx.lineWidth = 1
     for (const tick of targetDomainTicks(target)) {
       const y = Math.round(yOf(tick)) + 0.5
@@ -239,7 +253,7 @@ export const StocksChart = memo(function StocksChart({
       ctx.strokeStyle = grid
       ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke()
       ctx.fillStyle = muted
-      ctx.fillText(fmtValue(tick), plotR + 8, y)
+      ctx.fillText(fmtValue(tick), plotL - 6, y)
     }
 
     // Senkrechte Linien + Zeit unten
@@ -251,6 +265,7 @@ export const StocksChart = memo(function StocksChart({
     ctx.textBaseline = 'top'
     for (const ts of xAxis.ticks) {
       const x = Math.round(xOf(ts)) + 0.5
+      if (x < plotL || x > plotR) continue
       ctx.strokeStyle = grid
       ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
       ctx.fillStyle = muted
@@ -418,7 +433,10 @@ export const StocksChart = memo(function StocksChart({
     const now = performance.now()
     const seriesChanged = seriesKeyRef.current !== seriesKey
     if (targetViewRef.current && viewRef.current) {
-      fromViewRef.current = { ...viewRef.current }
+      // Beim Wischen folgt die Zeit dem Finger; nur die Y-Achse gleitet nach.
+      fromViewRef.current = panningRef.current
+        ? { ...viewRef.current, start, end }
+        : { ...viewRef.current }
       animStartRef.current = now
     } else {
       revealStartRef.current = now
@@ -466,8 +484,9 @@ export const StocksChart = memo(function StocksChart({
     const pts = pointsRef.current
     if (!canvas || !view || !pts.length) return
     const rect = canvas.getBoundingClientRect()
-    const plotW = rect.width - AXIS_RIGHT
-    const frac = Math.min(1, Math.max(0, (clientX - rect.left) / plotW))
+    const axisW = propsRef.current.axisWidth
+    const plotW = rect.width - axisW
+    const frac = Math.min(1, Math.max(0, (clientX - rect.left - axisW) / plotW))
     let ts = view.start + frac * (view.end - view.start)
     ts = Math.min(Math.max(ts, pts[0].ts), pts[pts.length - 1].ts)
     // auf den naechsten Datenpunkt einrasten (15-min-Raster)
@@ -495,9 +514,44 @@ export const StocksChart = memo(function StocksChart({
     schedule()
   }, [schedule])
 
+  // Wischen: Fenster verschieben, Finger rechts → Vergangenheit.
+  const panState = useRef<{ x: number; end: number; span: number; plotW: number; bucket: number } | null>(null)
+  const startPan = (clientX: number) => {
+    const view = targetViewRef.current
+    const canvas = canvasRef.current
+    if (!view || !canvas) return
+    const plotW = canvas.getBoundingClientRect().width - propsRef.current.axisWidth
+    const span = view.end - view.start
+    panState.current = { x: clientX, end: view.end, span, plotW, bucket: Math.floor(view.end / timeStep(view.start, view.end, plotW)) }
+    panningRef.current = true
+  }
+  const panTo = (clientX: number) => {
+    const ps = panState.current
+    const p = panRef.current
+    if (!ps || !p || ps.plotW <= 0) return
+    const shifted = ps.end - ((clientX - ps.x) / ps.plotW) * ps.span
+    const next = Math.min(p.max, Math.max(Math.min(p.max, p.min + ps.span), shifted))
+    const bucket = Math.floor(next / timeStep(next - ps.span, next, ps.plotW))
+    if (bucket !== ps.bucket) { ps.bucket = bucket; void hapticTick() }
+    p.onPan(next)
+  }
+  const endPan = () => {
+    panState.current = null
+    panningRef.current = false
+  }
+
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!pointsRef.current.length) return
-    const startScrub = e.pointerType === 'mouse'
+    const canPan = !!panRef.current
+    // Ohne Wischen liest die Maus beim Druecken ab; mit Wischen liest sie beim Ueberfahren.
+    const startScrub = e.pointerType === 'mouse' && !canPan
+    if (e.pointerType === 'mouse' && canPan) {
+      if (scrubTsRef.current != null) { scrubTsRef.current = null; onScrubRef.current?.(null); schedule() }
+      gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, scrubbing: false, hold: null }
+      try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+      startPan(e.clientX)
+      return
+    }
     gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, scrubbing: startScrub, hold: null }
     if (startScrub) {
       scrubAt(e.clientX)
@@ -506,29 +560,39 @@ export const StocksChart = memo(function StocksChart({
     const x = e.clientX
     gesture.current.hold = window.setTimeout(() => {
       const g = gesture.current
-      if (!g || g.scrubbing) return
+      if (!g || g.scrubbing || panState.current) return
       g.scrubbing = true
       try { canvasRef.current?.setPointerCapture(g.id) } catch { /* ignore */ }
       void hapticTick()
       scrubAt(x)
-    }, HOLD_MS)
+    }, holdMs)
   }
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const g = gesture.current
     if (!g || g.id !== e.pointerId) {
+      // Maus ohne Druck ueber einem wischbaren Graph: ablesen
+      if (!g && e.pointerType === 'mouse' && panRef.current && e.buttons === 0) scrubAt(e.clientX)
       return
     }
+    if (panState.current) { panTo(e.clientX); return }
     if (!g.scrubbing) {
       const dx = Math.abs(e.clientX - g.x)
       const dy = Math.abs(e.clientY - g.y)
       if (dy > DRAG_START_PX && dy > dx) { endScrub(); return }
       if (dx < DRAG_START_PX) return
-      g.scrubbing = true
       if (g.hold != null) window.clearTimeout(g.hold)
+      g.hold = null
       try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+      if (panRef.current) { startPan(g.x); panTo(e.clientX); return }
+      g.scrubbing = true
     }
     scrubAt(e.clientX)
+  }
+
+  const onPointerEnd = () => {
+    endPan()
+    endScrub()
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
@@ -557,11 +621,11 @@ export const StocksChart = memo(function StocksChart({
         tabIndex={0}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={endScrub}
-        onPointerCancel={endScrub}
-        onPointerLeave={e => { if (e.pointerType === 'mouse') endScrub() }}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
+        onPointerLeave={e => { if (e.pointerType === 'mouse' && !panState.current) endScrub() }}
         onKeyDown={onKeyDown}
-        onBlur={endScrub}
+        onBlur={onPointerEnd}
         onContextMenu={e => e.preventDefault()}
         style={{
           display: 'block', width: '100%', height,
@@ -569,6 +633,17 @@ export const StocksChart = memo(function StocksChart({
           WebkitTouchCallout: 'none', outline: 'none', cursor: 'crosshair',
         }}
       />
+      {pan && end < pan.max - 1000 && (
+        <button
+          type="button"
+          onClick={() => pan.onPan(pan.max)}
+          data-chart-jump-now
+          className="absolute bottom-7 right-1 min-h-8 rounded-full px-3 text-xs font-bold"
+          style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text)' }}
+        >
+          {pan.jumpLabel}
+        </button>
+      )}
     </div>
   )
 })

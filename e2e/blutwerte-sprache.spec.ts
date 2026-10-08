@@ -40,7 +40,7 @@ test.describe('auf Englisch', () => {
     await page.getByRole('button', { name: /Cortisol/ }).first().click()
     await expect(page.getByRole('heading', { name: 'Cortisol' })).toBeVisible()
     await expect(page.getByText('The central stress hormone.', { exact: false })).toBeVisible()
-    await expect(page.locator('[data-bw-status]')).toContainText('Outside the reference range · 5–25 · Lab')
+    await expect(page.locator('[data-bw-status]')).toHaveText('Out of range')
     await expect(page.getByRole('region', { name: 'Key figures' })).toContainText('Above limit+5')
     await expect(page.getByText('09/15/2026')).toBeVisible()
   })
@@ -372,8 +372,11 @@ test('Detail: Wert mit Veraenderung, Status, Kennzahlen, zugeklappte Einordnung 
 
   await expect(page.getByRole('heading', { level: 1, name: 'Testosteron' })).toBeVisible()
   await expect(page.locator('[data-bw-hero-value]')).toContainText('1.310ng/dL')
-  await expect(page.getByText('seit 12.04.2026')).toBeVisible()
-  await expect(page.locator('[data-bw-status]')).toContainText('Außerhalb des Referenzbereichs · 349–1.110 · Labor')
+  // Kasten oben wie in der ersten Fassung: Wert, Veraenderung, Referenzbalken, Plakette
+  const kasten = page.locator('[data-bw-hero]')
+  await expect(kasten).toContainText('330')
+  await expect(kasten).toContainText('349–1.110 ng/dL (Labor)')
+  await expect(page.locator('[data-bw-status]')).toHaveText('Außerhalb')
   await expect(page.getByRole('img', { name: /Testosteron/ })).toBeVisible()
 
   const zeitraum = page.getByRole('group', { name: 'Zeitraum' })
