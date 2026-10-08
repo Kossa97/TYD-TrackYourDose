@@ -33288,7 +33288,7 @@
       "file_type": "code",
       "norm_label": "hexalpha()",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L873"
+      "source_location": "L874"
     },
     {
       "id": "src_features_blutspiegel_chart_stockschart_lerp",
@@ -33324,7 +33324,7 @@
       "file_type": "code",
       "norm_label": "targetdomainticks()",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L868"
+      "source_location": "L869"
     },
     {
       "id": "src_features_blutspiegel_chart_stockschartmath_easeoutcubic",
@@ -74740,7 +74740,7 @@
       "file_type": "code",
       "norm_label": "domainticks",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L867"
+      "source_location": "L868"
     },
     {
       "id": "src_features_blutspiegel_chart_stockschart_stockschart",
@@ -84108,7 +84108,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksBars.tsx",
-      "source_location": "L200",
+      "source_location": "L201",
       "weight": 1.0
     },
     {
@@ -84120,7 +84120,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksBars.tsx",
-      "source_location": "L208",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -84156,7 +84156,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksBars.tsx",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -84216,7 +84216,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L277",
+      "source_location": "L278",
       "weight": 1.0
     },
     {
@@ -84228,7 +84228,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L343",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -84240,7 +84240,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L355",
+      "source_location": "L356",
       "weight": 1.0
     },
     {
@@ -84252,7 +84252,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L355",
+      "source_location": "L356",
       "weight": 1.0
     },
     {
@@ -84264,7 +84264,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L420",
+      "source_location": "L421",
       "weight": 1.0
     },
     {
@@ -84276,7 +84276,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L488",
+      "source_location": "L489",
       "weight": 1.0
     },
     {
@@ -84288,7 +84288,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L608",
+      "source_location": "L609",
       "weight": 1.0
     },
     {
@@ -84300,7 +84300,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L635",
+      "source_location": "L636",
       "weight": 1.0
     },
     {
@@ -84312,7 +84312,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L680",
+      "source_location": "L681",
       "weight": 1.0
     },
     {
@@ -84324,7 +84324,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L692",
+      "source_location": "L693",
       "weight": 1.0
     },
     {
@@ -214035,7 +214035,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L867",
+      "source_location": "L868",
       "weight": 1.0
     },
     {
@@ -214046,7 +214046,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L868",
+      "source_location": "L869",
       "weight": 1.0
     },
     {
@@ -214057,7 +214057,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutspiegel/chart/StocksChart.tsx",
-      "source_location": "L873",
+      "source_location": "L874",
       "weight": 1.0
     },
     {
@@ -253288,5 +253288,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0412a886760ad7ca1ebeecdda75469bfe6b8fed6"
+  "built_at_commit": "6dbe66bc56b6d6de843e2842d44c1111353d2198"
 }
