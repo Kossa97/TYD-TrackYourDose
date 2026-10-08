@@ -257,7 +257,8 @@ export const StocksChart = memo(function StocksChart({
     const surface = cssVar(canvas, '--surface', '#05060d')
 
     const plotL = propsRef.current.axisWidth
-    const plotR = width
+    // Rechts derselbe Rand wie links fuer die Werte: der Graph steht mittig.
+    const plotR = width - propsRef.current.axisWidth
     const label = propsRef.current.scrubLabel
     const plotT = PAD_TOP + (label ? LABEL_H : 0)
     // Ohne Zeitachse bleibt ein schmaler Rand, damit die unterste Zahl nicht abgeschnitten wird.
@@ -363,7 +364,7 @@ export const StocksChart = memo(function StocksChart({
       ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
       ctx.fillStyle = muted
       const label = fmtTick(ts, step)
-      if (propsRef.current.xAxis && x + 4 + ctx.measureText(label).width < plotR) ctx.fillText(label, x + 4, plotB + INTAKE_STRIP + 6)
+      if (propsRef.current.xAxis && x + 4 + ctx.measureText(label).width < width) ctx.fillText(label, x + 4, plotB + INTAKE_STRIP + 6)
     }
     // Grundlinie
     ctx.strokeStyle = grid
@@ -667,7 +668,7 @@ export const StocksChart = memo(function StocksChart({
     if (!canvas || !view || !pts.length) return
     const rect = canvas.getBoundingClientRect()
     const axisW = propsRef.current.axisWidth
-    const plotW = rect.width - axisW
+    const plotW = rect.width - 2 * axisW
     const frac = Math.min(1, Math.max(0, (clientX - rect.left - axisW) / plotW))
     // Ablesbar ist, was eine der Linien abdeckt — nicht nur die Hauptlinie.
     const otherList = propsRef.current.others ?? []
@@ -712,7 +713,7 @@ export const StocksChart = memo(function StocksChart({
     const view = targetViewRef.current
     const canvas = canvasRef.current
     if (!view || !canvas) return
-    const plotW = canvas.getBoundingClientRect().width - propsRef.current.axisWidth
+    const plotW = canvas.getBoundingClientRect().width - 2 * propsRef.current.axisWidth
     const span = view.end - view.start
     panState.current = { x: clientX, end: view.end, span, plotW, bucket: Math.floor(view.end / timeStep(view.start, view.end, plotW)) }
     panningRef.current = true

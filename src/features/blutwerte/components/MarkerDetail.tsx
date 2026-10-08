@@ -292,7 +292,7 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
             </div>
           )}
           {/* Die Zyklus-Zeilen enden vor der Werte-Achse — auf derselben Zeitachse wie der Graph. */}
-          <div style={{ marginLeft: AXIS_WIDTH }}>
+          <div style={{ marginLeft: AXIS_WIDTH, marginRight: AXIS_WIDTH }}>
             <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
           </div>
           <div

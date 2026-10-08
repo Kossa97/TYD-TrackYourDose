@@ -322,7 +322,7 @@ function MetricChartInner({
         {metricBar}
       </div>
 
-      <div className="fortschritt-metric-chart" style={{ position: 'relative', paddingLeft: AXIS_UNIT_GUTTER }}>
+      <div className="fortschritt-metric-chart" style={{ position: 'relative', paddingLeft: AXIS_UNIT_GUTTER, paddingRight: AXIS_UNIT_GUTTER }}>
         <AxisUnitLabel unit={metric.unit} />
         <StocksChart
           points={points}

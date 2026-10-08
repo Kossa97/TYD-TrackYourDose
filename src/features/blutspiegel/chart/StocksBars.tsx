@@ -84,7 +84,8 @@ export const StocksBars = memo(function StocksBars({ data, stacks, height, ariaL
     const colors = layers.map(layer => resolveColor(canvas, layer.color))
 
     const plotL = AXIS_WIDTH
-    const plotR = width
+    // Rechts derselbe Rand wie links: der Graph steht mittig.
+    const plotR = width - AXIS_WIDTH
     const plotT = PAD_TOP + LABEL_H
     const plotB = h - AXIS_BOTTOM
     const max = Math.max(1, ...rows.map(row => row.values.reduce((sum, v) => sum + v, 0)))
@@ -215,7 +216,7 @@ export const StocksBars = memo(function StocksBars({ data, stacks, height, ariaL
     const n = propsRef.current.data.length
     if (!canvas || !n) return
     const rect = canvas.getBoundingClientRect()
-    const frac = (clientX - rect.left - AXIS_WIDTH) / Math.max(1, rect.width - AXIS_WIDTH)
+    const frac = (clientX - rect.left - AXIS_WIDTH) / Math.max(1, rect.width - 2 * AXIS_WIDTH)
     setActive(Math.min(n - 1, Math.max(0, Math.floor(frac * n))))
   }
 
