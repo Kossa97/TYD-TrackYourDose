@@ -3,7 +3,7 @@ import { AUFFAELLIG, type MarkerFilter, type SortMode } from '../lib/bloodwork'
 import { KATEGORIE_KEY } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import { KATEGORIEN, SONSTIGE } from '../lib/markerCatalog'
-import { CYAN, MUTED, RED, RED_WEAK, TEXT } from '../styles'
+import { MUTED, RED, RED_WEAK, TEXT } from '../styles'
 
 const SORT_LABELS: Record<SortMode, string> = {
   kategorie: 'bw_sort_category',
@@ -34,8 +34,8 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
   ]
 
   return (
-    <div className="mb-4 space-y-3">
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+    <div className="mb-2 space-y-2">
+      <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
         {chips.map(chip => {
           const active = kategorie === chip.key
           return (
@@ -45,11 +45,11 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
               aria-pressed={active}
               // Sichtbarer Text plus Anzahl: „Auffällige (2)“ — Sprachsteuerung findet ihn am Namen.
               aria-label={chip.key === AUFFAELLIG && auffaellig > 0 ? `${chip.label} (${auffaellig})` : undefined}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
+              className="inline-flex min-h-9 items-center gap-1.5 px-3.5 rounded-full text-sm whitespace-nowrap transition-colors"
               style={
                 active
-                  ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
-                  : { color: MUTED, border: '1px solid var(--border)' }
+                  ? { background: 'var(--surface-raised)', color: TEXT, fontWeight: 800 }
+                  : { color: 'var(--text-dim)', fontWeight: 600 }
               }
             >
               {chip.label}
@@ -69,12 +69,12 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
       </div>
 
       {/* Sortieren greift nur im Raster, nicht in der Liste der Auffaelligen. */}
-      {kategorie !== AUFFAELLIG && <div className="flex items-center gap-2">
+      {kategorie !== AUFFAELLIG && <div className="flex items-center justify-end gap-2">
         <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">{t('bw_sort')}</label>
         <select
           id="blutwerte-sort"
           className="select"
-          style={{ color: TEXT, width: 'auto', paddingTop: 6, paddingBottom: 6 }}
+          style={{ color: TEXT, width: 'auto', paddingTop: 4, paddingBottom: 4, fontSize: 13 }}
           value={sortMode}
           onChange={e => onSortMode(e.target.value as SortMode)}
         >

@@ -966,6 +966,17 @@ const EXPECTED_MY_STACK_KEYS = [
   'pk_short_f',
   'pk_short_vd',
   'pk_short_ke',
+  'bw_overview_empty_date',
+  'bw_pill_first',
+  'bw_pill_no_range',
+  'bw_pill_aria_change',
+  'bw_pill_aria_range',
+  'bw_row_aria',
+  'bw_status_in',
+  'bw_status_out',
+  'bw_status_unchecked',
+  'bw_status_none',
+  'bw_untested_count',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

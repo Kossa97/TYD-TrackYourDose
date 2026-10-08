@@ -957,6 +957,17 @@ export const MY_STACK_EN = {
   pk_short_f: "Bioavailability",
   pk_short_vd: "Distribution vol.",
   pk_short_ke: "Elimination ke",
+  bw_overview_empty_date: "No values yet",
+  bw_pill_first: "First",
+  bw_pill_no_range: "No range",
+  bw_pill_aria_change: "Change since previous measurement: {{value}}, {{status}}. Tap to show reference ranges.",
+  bw_pill_aria_range: "Reference range: {{value}}, {{status}}. Tap to show changes.",
+  bw_row_aria: "{{name}}, {{value}} {{unit}}, {{status}}, {{date}}",
+  bw_status_in: "within range",
+  bw_status_out: "out of range",
+  bw_status_unchecked: "not checked, no reference range",
+  bw_status_none: "no value yet",
+  bw_untested_count: "Without a value ({{count}})",
 }
 
 export const MY_STACK_DE = {
@@ -1917,6 +1928,17 @@ export const MY_STACK_DE = {
   pk_short_f: "Bioverfügbarkeit",
   pk_short_vd: "Verteilungsvol.",
   pk_short_ke: "Elimination ke",
+  bw_overview_empty_date: "Noch keine Werte",
+  bw_pill_first: "Erstwert",
+  bw_pill_no_range: "Ohne Ref.",
+  bw_pill_aria_change: "Veränderung zur vorigen Messung: {{value}}, {{status}}. Tippen zeigt die Referenzbereiche.",
+  bw_pill_aria_range: "Referenzbereich: {{value}}, {{status}}. Tippen zeigt die Veränderungen.",
+  bw_row_aria: "{{name}}, {{value}} {{unit}}, {{status}}, {{date}}",
+  bw_status_in: "im Referenzbereich",
+  bw_status_out: "außerhalb des Referenzbereichs",
+  bw_status_unchecked: "nicht geprüft, ohne Referenzbereich",
+  bw_status_none: "noch kein Wert",
+  bw_untested_count: "Ohne Wert ({{count}})",
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

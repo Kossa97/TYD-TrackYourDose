@@ -32,6 +32,19 @@ const alsDatum = (date: string) => new Date(`${date}T00:00:00`)
 
 export const formatDisplayDate = (date: string) => datumFormat('lang').format(alsDatum(date))
 
+/** „15. September" bzw. „September 15" — die Ueberschrift der Uebersicht. Mit Jahr, wenn nicht das laufende. */
+export const formatLongDate = (date: string, sprache: string = aktiveSprache()) => {
+  const d = alsDatum(date)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  const key = `langname:${sprache}:${sameYear}`
+  let f = formatierer.get(key) as Intl.DateTimeFormat | undefined
+  if (!f) {
+    f = new Intl.DateTimeFormat(sprache, { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) })
+    formatierer.set(key, f)
+  }
+  return f.format(d)
+}
+
 export const formatChartDate = (date: string) => datumFormat('kurz').format(alsDatum(date))
 
 export const formatNumber = (value: number | string) => {

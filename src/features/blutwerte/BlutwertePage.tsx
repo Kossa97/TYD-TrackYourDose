@@ -6,12 +6,12 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
 import { AUFFAELLIG, auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, ungepruefteWerte, type MarkerFilter, type SortMode } from './lib/bloodwork'
-import { formatDisplayDate, formatEingabe } from './lib/format'
+import { formatDisplayDate, formatEingabe, formatLongDate } from './lib/format'
 import { SONSTIGE } from './lib/markerCatalog'
-import { CYAN, PANEL_STYLE, TEXT, MUTED } from './styles'
+import { CYAN, TEXT, MUTED } from './styles'
 import { markerName } from './lib/markerCatalog.en'
 import { Sheet } from '../compliance/components/Sheet'
-import { MarkerGrid } from './components/MarkerGrid'
+import { MarkerList, type PillMode } from './components/MarkerList'
 import { MarkerDetail } from './components/MarkerDetail'
 import { GridControls } from './components/GridControls'
 import { AuffaelligeWerte } from './components/AuffaelligeWerte'
@@ -48,6 +48,10 @@ export function BlutwertePage() {
   // Vorausgewaehlt: der Filter „Auffällige“ — was Aufmerksamkeit braucht.
   const [kategorie, setKategorie] = useState<MarkerFilter>(AUFFAELLIG)
   const [sortMode, setSortMode] = useState<SortMode>('kategorie')
+  // Wie in der Aktien-App: Tippen auf eine Plakette wechselt fuer alle Zeilen
+  // zwischen Veraenderung und Referenzbereich.
+  const [pillMode, setPillMode] = useState<PillMode>('change')
+  const togglePill = useCallback(() => setPillMode(m => (m === 'change' ? 'range' : 'change')), [])
 
   const load = useCallback(async () => {
     if (!user) return
@@ -115,11 +119,6 @@ export function BlutwertePage() {
   const auffaellig = useMemo(() => auffaelligeWerte(summaries), [summaries])
   const ungeprueft = useMemo(() => ungepruefteWerte(summaries).length, [summaries])
   const erstLaden = loading && !geladen
-
-  const markersTested = useMemo(
-    () => summaries.filter(s => s.latest !== null).length,
-    [summaries],
-  )
 
   const latestDate = useMemo(() => {
     if (entries.length === 0) return null
@@ -250,52 +249,38 @@ export function BlutwertePage() {
     }
   }
 
-  // ---------- Übersicht: Tabs Marker / Befunde ----------
+  // ---------- Übersicht: wie die Aktien-App ----------
+  const headerButton = 'flex h-11 w-11 items-center justify-center rounded-full'
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <h1 className="text-xl font-bold" style={{ color: TEXT }}>{t('bw_title')}</h1>
-        <div className="flex gap-2">
-          <button className="btn-secondary flex items-center gap-1.5 text-sm" onClick={() => setShowImport(true)}>
-            <Camera size={15} /> {t('bw_import')}
-          </button>
-          <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={() => openNew()}>
-            <Plus size={15} /> {t('bw_new')}
-          </button>
-        </div>
-      </div>
-
-      {/* Mini stats */}
-      <div className="flex mb-4 p-4" style={PANEL_STYLE}>
-        <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_entries')}</p>
-          <p className="text-lg font-bold" style={{ color: TEXT }}>{entries.length}</p>
-        </div>
-        <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_markers')}</p>
-          <p className="text-lg font-bold" style={{ color: TEXT }}>{markersTested}</p>
-        </div>
-        <div className="flex-1 text-center">
-          <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>{t('bw_stat_last')}</p>
-          <p className="text-sm font-bold leading-tight pt-1" style={{ color: TEXT }}>
-            {latestDate ? formatDisplayDate(latestDate) : '–'}
+      <header className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[2rem] font-black leading-tight tracking-tight" style={{ color: TEXT }}>{t('bw_title')}</h1>
+          <p className="text-[2rem] font-black leading-tight tracking-tight" style={{ color: MUTED }}>
+            {latestDate ? formatLongDate(latestDate, sprache) : t('bw_overview_empty_date')}
           </p>
         </div>
-      </div>
+        <div className="mt-1 flex shrink-0 items-center rounded-full px-1" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+          <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => setShowImport(true)} aria-label={t('bw_import')} title={t('bw_import')}>
+            <Camera size={20} />
+          </button>
+          <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => openNew()} aria-label={t('bw_new')} title={t('bw_new')}>
+            <Plus size={22} />
+          </button>
+        </div>
+      </header>
 
       {/* Ansicht: Marker / Befunde; unter Marker der Filter „Auffällige“ (vorausgewählt) */}
-      <div className="flex gap-2 mb-4">
+      <div className="mb-3 flex rounded-full p-1" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
         {([['marker', t('bw_view_markers')], ['befunde', t('bw_view_reports')]] as [typeof view, string][]).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setView(key)}
             aria-pressed={view === key}
-            className="flex-1 min-h-9 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
-            style={
-              view === key
-                ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
-                : { color: MUTED, border: '1px solid var(--border)' }
-            }
+            className="min-h-9 flex-1 rounded-full px-3 text-sm whitespace-nowrap transition-colors"
+            style={view === key
+              ? { background: 'var(--surface)', color: TEXT, fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
+              : { color: MUTED, fontWeight: 600 }}
           >
             {label}
           </button>
@@ -303,7 +288,7 @@ export function BlutwertePage() {
       </div>
 
       {erstLaden && (
-        <div className="p-10 text-center" style={{ ...PANEL_STYLE, color: MUTED }}>
+        <div className="p-10 text-center" style={{ color: MUTED }}>
           {t('bw_loading')}
         </div>
       )}
@@ -325,7 +310,7 @@ export function BlutwertePage() {
 
           {ladeFehler && entries.length === 0 ? (
             // Nie „keine Werte“ zeigen, wenn nur das Laden scheiterte — unter keinem Filter.
-            <div className="p-6 mb-4 text-center" style={PANEL_STYLE} data-bw-load-error>
+            <div className="py-8 mb-4 text-center" data-bw-load-error>
               <p className="text-sm" style={{ color: TEXT }}>{t('bw_load_error')}</p>
               <button type="button" className="mt-3 min-h-11 px-3 text-sm font-semibold" style={{ color: CYAN }} onClick={() => void load()}>
                 {t('ai_consent_retry')}
@@ -338,11 +323,15 @@ export function BlutwertePage() {
               hatWerte={entries.length > 0}
               onSelect={setSelectedMarker}
               onAlleMarker={() => setKategorie(null)}
+              pillMode={pillMode}
+              onTogglePill={togglePill}
             />
           ) : (
-            <MarkerGrid
+            <MarkerList
               summaries={visibleSummaries}
               grouped={sortMode === 'kategorie' && kategorie === null}
+              pillMode={pillMode}
+              onTogglePill={togglePill}
               onSelect={setSelectedMarker}
             />
           )}

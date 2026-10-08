@@ -1929,5 +1929,16 @@
   "pk_short_tmax": "Tmax",
   "pk_short_f": "Bioavailability",
   "pk_short_vd": "Distribution vol.",
-  "pk_short_ke": "Elimination ke"
+  "pk_short_ke": "Elimination ke",
+  "bw_overview_empty_date": "No values yet",
+  "bw_pill_first": "First",
+  "bw_pill_no_range": "No range",
+  "bw_pill_aria_change": "Change since previous measurement: {{value}}, {{status}}. Tap to show reference ranges.",
+  "bw_pill_aria_range": "Reference range: {{value}}, {{status}}. Tap to show changes.",
+  "bw_row_aria": "{{name}}, {{value}} {{unit}}, {{status}}, {{date}}",
+  "bw_status_in": "within range",
+  "bw_status_out": "out of range",
+  "bw_status_unchecked": "not checked, no reference range",
+  "bw_status_none": "no value yet",
+  "bw_untested_count": "Without a value ({{count}})"
 }
