@@ -2170,7 +2170,7 @@
   "bw_pill_no_range": "Ohne Ref.",
   "bw_pill_aria_change": "Veränderung zur vorigen Messung: {{value}}, {{status}}. Tippen zeigt die Referenzbereiche.",
   "bw_pill_aria_range": "Referenzbereich: {{value}}, {{status}}. Tippen zeigt die Veränderungen.",
-  "bw_row_aria": "{{name}}, {{value}} {{unit}}, {{status}}, {{date}}",
+  "bw_row_aria": "{{name}}, {{value}}, {{status}}, {{date}}",
   "bw_status_in": "im Referenzbereich",
   "bw_status_out": "außerhalb des Referenzbereichs",
   "bw_status_unchecked": "nicht geprüft, ohne Referenzbereich",

@@ -9,12 +9,15 @@ export const TrendIcon = ({ trend, size = 16 }: { trend: Trend; size?: number })
   return null
 }
 
-/** Grün, wenn sich der Wert in die gewünschte Richtung bewegt. */
+/**
+ * Farbe der Veraenderung: der Befund des neuesten Werts, nicht die Richtung —
+ * dieselbe Regel wie die Plaketten der Uebersicht. Ein Anstieg ist nicht von
+ * sich aus gut oder schlecht; entscheidend ist, wo der Wert jetzt liegt.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export const trendColor = (summary: MarkerSummary): string => {
-  const { trend } = summary
-  if (trend === 'same' || trend === null) return MUTED
-  const lowerIsBetter = summary.def?.lowerIsBetter
-  const good = lowerIsBetter ? trend === 'down' : trend === 'up'
-  return good ? GREEN : RED
+  if (summary.trend === null || summary.trend === 'same') return MUTED
+  if (summary.inRange === true) return GREEN
+  if (summary.inRange === false) return RED
+  return MUTED
 }

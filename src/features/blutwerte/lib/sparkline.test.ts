@@ -25,6 +25,15 @@ describe('sparklineGeometry', () => {
     expect(Math.max(...g.bounds)).toBe(40)
   })
 
+  it('setzt die Messungen nach Datum, nicht in gleichen Abstaenden', () => {
+    const s = kortisol([eintrag('2024-01-01', 10), eintrag('2026-09-01', 12), eintrag('2026-09-08', 14)])
+    const xs = [...sparklineGeometry(s, 100, 40, 0).line.matchAll(/[ML]([\d.]+),/g)].map(m => Number(m[1]))
+    expect(xs[0]).toBe(0)
+    expect(xs[2]).toBe(100)
+    // die beiden juengsten liegen eine Woche auseinander — fast am selben Ort
+    expect(xs[2] - xs[1]).toBeLessThan(2)
+  })
+
   it('zeigt einen einzelnen Wert als Punkt ohne Linie', () => {
     const g = sparklineGeometry(kortisol([eintrag('2026-09-15', 14)]), 100, 40)
     expect(g.line).toBe('')

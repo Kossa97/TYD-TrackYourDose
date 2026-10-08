@@ -18,15 +18,15 @@ import type { KategorieFilter } from '../lib/markerCatalog'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
 import { changeSincePrevious, markerStatus, sparklineGeometry, type MarkerStatus } from '../lib/sparkline'
-import { MUTED, TEXT } from '../styles'
+import { MUTED, PILL_GRAY, PILL_GREEN, PILL_RED, TEXT } from '../styles'
 
 export type PillMode = 'change' | 'range'
 
 const STATUS_COLOR: Record<MarkerStatus, string> = {
-  in: '#22c55e',
-  out: '#ef4444',
-  unchecked: '#64748b',
-  none: '#64748b',
+  in: PILL_GREEN,
+  out: PILL_RED,
+  unchecked: PILL_GRAY,
+  none: PILL_GRAY,
 }
 
 const SPARK_W = 56
@@ -55,8 +55,10 @@ function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }
 }
 
 function signed(value: number): string {
-  if (value === 0) return '±0'
-  return `${value > 0 ? '+' : '−'}${formatNumber(Math.abs(Math.round(value * 1000) / 1000))}`
+  // Erst runden, dann vergleichen: Umrechnungen hinterlassen Reste wie 1e-15.
+  const rounded = Math.round(value * 1000) / 1000
+  if (rounded === 0) return '±0'
+  return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded))}`
 }
 
 interface RowProps {
@@ -77,8 +79,10 @@ function MarkerRow({ summary, pillMode, onSelect, onTogglePill }: RowProps) {
   const shownUnit = summary.displayValue != null ? summary.displayUnit : latest?.unit ?? summary.displayUnit
   const change = changeSincePrevious(summary)
   const referenz = formatRange(summary.range.min, summary.range.max, '')
+  // „Erstwert" nur, wenn es wirklich der erste ist; sonst sind die frueheren
+  // Werte nicht in diese Einheit umrechenbar — dann kein Vergleich.
   const pillText = pillMode === 'change'
-    ? (change != null ? signed(change) : t('bw_pill_first'))
+    ? (change != null ? signed(change) : summary.entries.length > 1 ? '—' : t('bw_pill_first'))
     : (referenz ?? t('bw_pill_no_range'))
   const statusText = t(`bw_status_${status}`)
 
@@ -88,8 +92,8 @@ function MarkerRow({ summary, pillMode, onSelect, onTogglePill }: RowProps) {
         type="button"
         onClick={() => onSelect(summary.name)}
         aria-label={latest
-          ? t('bw_row_aria', { name, value: formatNumber(shownValue!), unit: shownUnit, status: statusText, date: formatDisplayDate(latest.tested_at) })
-          : name}
+          ? t('bw_row_aria', { name, value: `${formatNumber(shownValue!)} ${shownUnit ?? ''}`.trim(), status: statusText, date: formatDisplayDate(latest.tested_at) })
+          : `${name}, ${statusText}`}
         style={{
           flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0',
           background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',

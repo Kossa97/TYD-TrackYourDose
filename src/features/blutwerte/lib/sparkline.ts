@@ -18,14 +18,15 @@ export interface SparklineGeometry {
 }
 
 export function sparklineGeometry(summary: MarkerSummary, width: number, height: number, pad = 3): SparklineGeometry {
-  // Chronologisch; nicht umrechenbare Werte fallen heraus.
-  const values = summary.points
-    .filter((p): p is { entry: typeof p.entry; value: number } => p.value != null && Number.isFinite(p.value))
-    .slice()
+  // Chronologisch; nicht umrechenbare Werte fallen heraus. Die x-Lage folgt
+  // dem Datum: zwei Messungen in einer Woche liegen eng, zwei Jahre weit.
+  const messungen = summary.points
+    .filter(p => p.value != null && Number.isFinite(p.value))
+    .map(p => ({ t: new Date(`${p.entry.tested_at}T00:00:00`).getTime(), value: p.value as number }))
     .reverse()
-    .map(p => p.value)
   const empty: SparklineGeometry = { line: '', area: '', last: null, bounds: [] }
-  if (!values.length) return empty
+  if (!messungen.length) return empty
+  const values = messungen.map(m => m.value)
 
   const limits = [summary.range.min, summary.range.max].filter((v): v is number => v != null && Number.isFinite(v))
   let lo = Math.min(...values, ...limits)
@@ -36,7 +37,11 @@ export function sparklineGeometry(summary: MarkerSummary, width: number, height:
     hi += spread
   }
   const yOf = (v: number) => pad + (1 - (v - lo) / (hi - lo)) * (height - 2 * pad)
-  const xOf = (i: number) => values.length === 1 ? width / 2 : pad + (i / (values.length - 1)) * (width - 2 * pad)
+  const t0 = messungen[0].t
+  const span = messungen[messungen.length - 1].t - t0
+  const xOf = (i: number) => span <= 0
+    ? (messungen.length === 1 ? width / 2 : pad + (i / (messungen.length - 1)) * (width - 2 * pad))
+    : pad + ((messungen[i].t - t0) / span) * (width - 2 * pad)
 
   const pts = values.map((v, i) => ({ x: xOf(i), y: yOf(v) }))
   const r = (n: number) => Math.round(n * 10) / 10
