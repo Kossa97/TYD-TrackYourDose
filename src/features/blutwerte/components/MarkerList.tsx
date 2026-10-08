@@ -33,6 +33,7 @@ const SPARK_H = 44
 function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }) {
   const g = sparklineGeometry(summary, SPARK_W, SPARK_H)
   return (
+    <div style={{ position: 'relative' }}>
     <svg width="100%" height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} preserveAspectRatio="none" aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       {g.bounds.map((y, i) => (
         <line key={i} x1={0} x2={SPARK_W} y1={y} y2={y} stroke={color} strokeOpacity={0.75} strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
@@ -40,6 +41,18 @@ function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }
       {g.area && <path d={g.area} fill={color} fillOpacity={0.16} />}
       {g.line && <path d={g.line} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />}
     </svg>
+    {/* Letzter Wert als Punkt — ausserhalb des gestreckten SVG, damit er rund bleibt.
+        Bei nur einer Messung ist er das Einzige, was den Wert zeigt. */}
+    {g.last && (
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: 6, height: 6, borderRadius: '50%', background: color,
+          left: `calc(${(g.last.x / SPARK_W) * 100}% - 3px)`, top: g.last.y - 3,
+        }}
+      />
+    )}
+    </div>
   )
 }
 
@@ -79,14 +92,14 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
 
   const ariaLabel = latest
     ? t('bw_row_aria', { name, value: `${formatNumber(shownValue!)} ${shownUnit ?? ''}`.trim(), status: statusText, date: formatDisplayDate(latest.tested_at) })
-    : `${name}, ${statusText}`
+    : `${name}, ${t('bw_no_test').replace(/^[–-]\s*/, '')}`
 
   // Die ganze Karte oeffnet den Marker (unsichtbare Flaeche darunter); die
   // Plakette liegt darueber und hat ihre eigene Aufgabe. So bleibt der Inhalt
   // ein normales Layout — Wert und Plakette stehen nebeneinander, statt sich
   // bei langen Werten zu ueberlappen.
   return (
-    <div className="bw-marker-card" style={{ position: 'relative', height: CARD_H, opacity: latest ? 1 : 0.55 }}>
+    <div className="bw-marker-card" style={{ position: 'relative', minHeight: CARD_H, opacity: latest ? 1 : 0.55 }}>
       <button
         type="button"
         onClick={() => onSelect(summary.name)}
@@ -95,7 +108,7 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
       />
       <div
         style={{
-          position: 'relative', height: '100%', boxSizing: 'border-box', padding: '14px 12px 12px 14px', pointerEvents: 'none',
+          position: 'relative', minHeight: CARD_H, boxSizing: 'border-box', padding: '14px 12px 12px 14px', pointerEvents: 'none',
           display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 6,
         }}
       >
@@ -110,9 +123,10 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
         </div>
         {latest && <Sparkline summary={summary} color={color} />}
         {latest && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
-            <div aria-hidden="true" style={{ minWidth: 0, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 800, lineHeight: 1.1, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatNumber(shownValue!)}</p>
+          // Reicht der Platz nicht, rutscht die Plakette unter den Wert — nichts wird gekuerzt.
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+            <div aria-hidden="true" style={{ flexShrink: 0, maxWidth: '100%', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 800, lineHeight: 1.1, color: TEXT }}>{formatNumber(shownValue!)}</p>
               <p style={{ margin: 0, fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis' }}>{shownUnit}</p>
             </div>
             <button
@@ -121,7 +135,7 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
               aria-label={t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })}
               data-bw-status={status}
               style={{
-                pointerEvents: 'auto', flexShrink: 0, minWidth: 56, minHeight: 32, padding: '0 8px',
+                pointerEvents: 'auto', flexShrink: 0, marginLeft: 'auto', minWidth: 56, minHeight: 32, padding: '0 8px',
                 borderRadius: 7, border: 'none', background: color, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
                 fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
               }}
