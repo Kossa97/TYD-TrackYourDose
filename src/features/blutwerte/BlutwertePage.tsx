@@ -273,8 +273,8 @@ export function BlutwertePage() {
   const headerButton = 'flex h-11 w-11 items-center justify-center rounded-full'
   return (
     <div>
-      {/* Titel und Knoepfe in einer Reihe, das Datum darunter ueber die volle Breite —
-          so bricht „15. September" nicht neben den Knoepfen um. */}
+      {/* Titel und Knoepfe in einer Reihe, das Datum kleiner darunter ueber die
+          volle Breite — so bleibt es immer einzeilig. */}
       <header className="mb-4 grid items-start gap-x-3" style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }}>
         <h1 className="min-w-0 text-[2rem] font-black leading-tight tracking-tight" style={{ color: TEXT }}>{t('bw_title')}</h1>
         <div className="mt-1 flex shrink-0 items-center rounded-full px-1" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
@@ -299,7 +299,7 @@ export function BlutwertePage() {
             <Plus size={22} />
           </button>
         </div>
-        <p className="col-span-2 text-[2rem] font-black leading-tight tracking-tight" style={{ color: MUTED }}>
+        <p className="col-span-2 truncate text-[1.5rem] font-extrabold leading-tight tracking-tight" style={{ color: MUTED }}>
           {latestDate ? formatLongDate(latestDate, sprache) : t('bw_overview_empty_date')}
         </p>
       </header>
