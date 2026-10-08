@@ -137,6 +137,39 @@ test('Raster: Tippen auf die Plakette aendert die Kartengroesse nicht', async ({
   expect(await plakette.evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true)
 })
 
+test('Einheiten: rechnet automatisch um, Schalter Konventionell/SI und eigene Wahl je Marker bleiben im Konto', async ({ page, mock }) => {
+  wert(mock, 'Testosteron', { tested_at: '2026-01-10', value: 20, unit: 'nmol/L' })
+  wert(mock, 'Testosteron', { value: 1310, unit: 'ng/dL', ref_min: 349, ref_max: 1110 })
+  await markerAnsicht(page)
+
+  const karte = page.locator('.bw-marker-card').filter({ hasText: 'Testosteron' })
+  // nmol/L wird mit dem veroeffentlichten Faktor umgerechnet: Veraenderung statt „—"
+  await expect(karte).toContainText('ng/dL')
+  await expect(karte.locator('[data-bw-status]')).toHaveAccessibleName(/\+734/)
+
+  await page.getByRole('button', { name: 'SI', exact: true }).click()
+  await expect(karte).toContainText('nmol/L')
+  await expect(karte).toContainText('45,5')
+  if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/si.png` })
+  await expect(karte.locator('[data-bw-status]')).toHaveAccessibleName(/\+25,5/)
+  await expect.poll(() => mock.table('profiles')[0].bloodwork_units).toEqual({ system: 'si' })
+
+  // eigene Wahl im Detail
+  await karte.getByRole('button', { name: /^Testosteron/ }).click()
+  const auswahl = page.getByLabel('Einheit', { exact: true })
+  await expect(auswahl).toHaveValue('')
+  await expect(auswahl.locator('option')).toHaveText(['Automatisch (nmol/L)', 'ng/dL', 'nmol/L'])
+  // eigene Wahl fuer diesen Marker schlaegt den SI-Schalter
+  await auswahl.selectOption('ng/dL')
+  await expect(page.locator('p.text-3xl')).toContainText('1.310ng/dL')
+  await expect.poll(() => mock.table('profiles')[0].bloodwork_units).toEqual({ system: 'si', marker: { Testosteron: 'ng/dL' } })
+
+  await page.reload()
+  await page.getByRole('button', { name: 'Alle', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'SI', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.bw-marker-card').filter({ hasText: 'Testosteron' })).toContainText('ng/dL')
+})
+
 test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne Werte ein Einstieg', async ({ page, mock }) => {
   await page.goto('/blutwerte')
   await expect(page.locator('[data-bw-flagged-empty]')).toContainText('Noch keine Blutwerte.')

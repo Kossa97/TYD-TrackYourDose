@@ -969,6 +969,12 @@ export const MY_STACK_EN = {
   bw_status_none: "no value yet",
   bw_untested_count: "Without a value ({{count}})",
   bw_chart_aria: "History of {{name}}. Move along the chart or use the arrow keys to read values.",
+  bw_units: "Units",
+  bw_units_conventional: "Conventional",
+  bw_units_si: "SI",
+  bw_units_save_error: "Could not save the unit choice.",
+  bw_unit_label: "Unit",
+  bw_unit_auto: "Automatic ({{unit}})",
 }
 
 export const MY_STACK_DE = {
@@ -1941,6 +1947,12 @@ export const MY_STACK_DE = {
   bw_status_none: "noch kein Wert",
   bw_untested_count: "Ohne Wert ({{count}})",
   bw_chart_aria: "Verlauf von {{name}}. Über den Graph fahren oder Pfeiltasten nutzen, um Werte abzulesen.",
+  bw_units: "Einheiten",
+  bw_units_conventional: "Konventionell",
+  bw_units_si: "SI",
+  bw_units_save_error: "Die Einheiten-Wahl konnte nicht gespeichert werden.",
+  bw_unit_label: "Einheit",
+  bw_unit_auto: "Automatisch ({{unit}})",
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

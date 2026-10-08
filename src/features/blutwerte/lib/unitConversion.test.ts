@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canConvert, convert, normalizeUnitString } from './unitConversion'
+import { canConvert, convert, normalizeUnitString, systemUnit, unitChoices } from './unitConversion'
 
 describe('normalizeUnitString', () => {
   it('vereinheitlicht Groß-/Kleinschreibung und Leerzeichen', () => {
@@ -83,5 +83,53 @@ describe('canConvert', () => {
   it('ist false für molare oder unbekannte Einheiten', () => {
     expect(canConvert('nmol/L', 'ng/dL')).toBe(false)
     expect(canConvert('U/L', 'ng/dL')).toBe(false)
+  })
+})
+
+describe('convert mit Marker', () => {
+  it('rechnet Masse ↔ Stoffmenge mit dem veroeffentlichten Faktor', () => {
+    expect(convert(1000, 'ng/dL', 'nmol/L', 'Testosteron')).toBeCloseTo(34.7, 6)
+    expect(convert(34.7, 'nmol/L', 'ng/dL', 'Testosteron')).toBeCloseTo(1000, 6)
+    // ueber Praefixe hinweg: µg/l → pmol/l
+    expect(convert(10, 'µg/l', 'pmol/L', 'Testosteron')).toBeCloseTo(34700, 3)
+    expect(convert(198, 'pmol/l', 'pg/mL', 'Östradiol')).toBeCloseTo(198 / 3.671, 6)
+  })
+
+  it('raet ohne Faktor nicht', () => {
+    expect(convert(20, 'nmol/L', 'ng/dL')).toBeNull()
+    expect(convert(20, 'nmol/L', 'ng/mL', 'SHBG')).toBeNull()
+    expect(convert(306, 'mU/L', 'ng/mL', 'Prolaktin')).toBeNull()
+  })
+
+  it('rechnet IE-Schreibweisen ineinander um', () => {
+    expect(convert(1.5, 'mU/l', 'mIU/L')).toBe(1.5)
+    expect(convert(1.5, 'mIU/L', 'µIU/mL')).toBeCloseTo(1.5, 9)
+    expect(convert(4, 'mIU/mL', 'U/l', 'LH')).toBeCloseTo(4, 9)
+    expect(convert(10, 'uIU/mL', 'mU/L')).toBeCloseTo(10, 9)
+  })
+
+  it('U/l bleibt bei Enzymen Enzymaktivitaet', () => {
+    expect(convert(30, 'U/L', 'mIU/mL', 'GPT (ALT)')).toBeNull()
+    expect(convert(60, 'U/L', 'µkat/L', 'GPT (ALT)')).toBeCloseTo(1, 9)
+  })
+
+  it('G/l heisst bei Zellzahlen Giga pro Liter', () => {
+    expect(convert(6.2, 'G/l', '/nL', 'Leukozyten')).toBeCloseTo(6.2, 9)
+    expect(convert(5.22, 'T/l', 'Mio/µL', 'Erythrozyten')).toBeCloseTo(5.22, 9)
+    // ohne Zellzahl-Marker bleibt G/l Gramm pro Liter
+    expect(convert(1, 'G/l', '/nL')).toBeNull()
+  })
+})
+
+describe('systemUnit und unitChoices', () => {
+  it('liefert konventionell die Katalog-, im SI-System die Faktor-Einheit', () => {
+    expect(systemUnit('Testosteron', 'ng/dL', 'konventionell')).toBe('ng/dL')
+    expect(systemUnit('Testosteron', 'ng/dL', 'si')).toBe('nmol/L')
+    expect(systemUnit('Prolaktin', 'ng/mL', 'si')).toBe('ng/mL')
+  })
+
+  it('bietet Katalog-, SI- und eigene Einheiten an, ohne Dubletten', () => {
+    expect(unitChoices('Testosteron', 'ng/dL', ['nmol/l', 'µg/l', 'ng/dL', 'mU/L'])).toEqual(['ng/dL', 'nmol/L', 'µg/l'])
+    expect(unitChoices('TSH', 'mIU/L', ['mU/l', 'µIU/mL'])).toEqual(['mIU/L'])
   })
 })

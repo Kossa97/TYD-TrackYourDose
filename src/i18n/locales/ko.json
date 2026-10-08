@@ -1941,5 +1941,11 @@
   "bw_status_unchecked": "not checked, no reference range",
   "bw_status_none": "no value yet",
   "bw_untested_count": "Without a value ({{count}})",
-  "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
+  "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values.",
+  "bw_units": "Units",
+  "bw_units_conventional": "Conventional",
+  "bw_units_si": "SI",
+  "bw_units_save_error": "Could not save the unit choice.",
+  "bw_unit_label": "Unit",
+  "bw_unit_auto": "Automatic ({{unit}})"
 }

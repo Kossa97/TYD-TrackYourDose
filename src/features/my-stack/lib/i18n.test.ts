@@ -978,6 +978,12 @@ const EXPECTED_MY_STACK_KEYS = [
   'bw_status_none',
   'bw_untested_count',
   'bw_chart_aria',
+  'bw_units',
+  'bw_units_conventional',
+  'bw_units_si',
+  'bw_units_save_error',
+  'bw_unit_label',
+  'bw_unit_auto',
 ] as const
 // Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
 // unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit

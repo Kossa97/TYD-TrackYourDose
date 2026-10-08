@@ -1,7 +1,7 @@
 import type { BloodworkEntry } from '../types'
 import type { Kategorie, KategorieFilter, MarkerDef } from './markerCatalog'
 import { KATEGORIEN, MARKER_CATALOG, SONSTIGE, normalizeMarker } from './markerCatalog'
-import { convert, normalizeUnitString } from './unitConversion'
+import { convert, normalizeUnitString, systemUnit, type UnitSystem } from './unitConversion'
 import { markerName } from './markerCatalog.en'
 import { aktiveSprache } from './sprache'
 
@@ -57,6 +57,26 @@ export function effectiveRange(entry: BloodworkEntry | null, def: MarkerDef | nu
   return { min: null, max: null, source: 'none' }
 }
 
+/**
+ * Rundet einen umgerechneten Wert laborueblich: ab 100 ganzzahlig, ab 10 auf
+ * eine, ab 1 auf zwei Stellen, darunter drei gueltige Stellen. Umrechnungs-
+ * faktoren erzeugen sonst Scheingenauigkeit wie 733,631.
+ */
+export function roundConverted(value: number): number {
+  const abs = Math.abs(value)
+  if (abs === 0 || !Number.isFinite(value)) return value
+  const decimals = abs >= 100 ? 0 : abs >= 10 ? 1 : abs >= 1 ? 2 : Math.min(6, 2 - Math.floor(Math.log10(abs)))
+  const f = 10 ** decimals
+  return Math.round(value * f) / f
+}
+
+/** convert(), aber umgerechnete Werte gerundet; ein Wert in seiner eigenen Einheit bleibt, wie er ist. */
+export function convertForDisplay(value: number, from: string, to: string, marker?: string): number | null {
+  const converted = convert(value, from, to, marker)
+  if (converted == null || normalizeUnitString(from) === normalizeUnitString(to)) return converted
+  return roundConverted(converted)
+}
+
 export function isInRange(value: number, range: EffectiveRange): boolean | null {
   if (range.min == null && range.max == null) return null
   if (!Number.isFinite(value)) return null
@@ -70,11 +90,11 @@ export function isInRange(value: number, range: EffectiveRange): boolean | null 
  * die sich in displayUnit umrechnen lassen (nicht umrechenbare werden übersprungen).
  * Ohne displayUnit wird die Einheit des neuesten Eintrags verwendet.
  */
-export function computeTrend(entries: BloodworkEntry[], displayUnit?: string): { trend: Trend; diff: number } {
+export function computeTrend(entries: BloodworkEntry[], displayUnit?: string, marker?: string): { trend: Trend; diff: number } {
   const unit = displayUnit ?? entries[0]?.unit ?? ''
   const values: number[] = []
   for (const e of entries) {
-    const v = convert(toNumber(e.value), e.unit, unit)
+    const v = convertForDisplay(toNumber(e.value), e.unit, unit, marker)
     if (v != null) values.push(v)
     if (values.length === 2) break
   }
@@ -100,7 +120,36 @@ export function pickDisplayUnit(
   const catalog = def?.einheit
   if (!catalog) return latestUnit
   if (latestValue == null) return catalog
-  return convert(toNumber(latestValue), latestUnit, catalog) != null ? catalog : latestUnit
+  return convert(toNumber(latestValue), latestUnit, catalog, def?.name) != null ? catalog : latestUnit
+}
+
+/**
+ * Gewaehlte Anzeige-Einheiten: ein System fuer alle Marker, dazu je Marker
+ * eine eigene Einheit, die das System fuer diesen Marker ueberschreibt.
+ * Gespeichert in `profiles.bloodwork_units`.
+ */
+export interface UnitPrefs {
+  system?: UnitSystem
+  marker?: Record<string, string>
+}
+
+/**
+ * Anzeige-Einheit unter Beruecksichtigung der Wahl des Nutzers. Laesst sich der
+ * neueste Wert nicht in die gewuenschte Einheit umrechnen, bleibt es bei
+ * pickDisplayUnit — es wird nie eine Einheit gezeigt, in der der Wert fehlt.
+ */
+export function chooseDisplayUnit(
+  def: MarkerDef | null,
+  name: string,
+  latestValue: number | string | null,
+  latestUnit: string,
+  prefs: UnitPrefs = {},
+): string {
+  const fallback = pickDisplayUnit(def, latestValue, latestUnit)
+  const wanted = prefs.marker?.[name]
+    ?? (def?.einheit && prefs.system ? systemUnit(def.name, def.einheit, prefs.system) : null)
+  if (!wanted || latestValue == null || !latestUnit) return fallback
+  return convert(toNumber(latestValue), latestUnit, wanted, def?.name) != null ? wanted : fallback
 }
 
 /**
@@ -108,11 +157,12 @@ export function pickDisplayUnit(
  * der die Grenzen vorliegen (Eintrags-Einheit bei Labor, Katalog-Einheit bei Katalog).
  * Lässt sich der Bereich nicht sicher umrechnen, gibt es keinen anzeigbaren Bereich.
  */
-function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: string): EffectiveRange {
+function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: string, marker?: string, rounded = true): EffectiveRange {
   if (range.source === 'none') return range
   if (normalizeUnitString(sourceUnit) === normalizeUnitString(toUnit)) return range
-  const min = range.min != null ? convert(range.min, sourceUnit, toUnit) : null
-  const max = range.max != null ? convert(range.max, sourceUnit, toUnit) : null
+  const conv = rounded ? convertForDisplay : convert
+  const min = range.min != null ? conv(range.min, sourceUnit, toUnit, marker) : null
+  const max = range.max != null ? conv(range.max, sourceUnit, toUnit, marker) : null
   if ((range.min != null && min == null) || (range.max != null && max == null)) {
     return { min: null, max: null, source: 'none' }
   }
@@ -123,7 +173,7 @@ function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: s
  * Baut je eine Zusammenfassung pro Katalog-Marker plus je eine pro Custom-Marker,
  * für den Einträge existieren.
  */
-export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[] {
+export function buildMarkerSummaries(entries: BloodworkEntry[], prefs: UnitPrefs = {}): MarkerSummary[] {
   const byName = new Map<string, { def: MarkerDef | null; entries: BloodworkEntry[] }>()
 
   MARKER_CATALOG.forEach(def => byName.set(def.name, { def, entries: [] }))
@@ -140,24 +190,29 @@ export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[]
   return Array.from(byName.entries()).map(([name, bucket]) => {
     const sorted = bucket.entries.slice().sort((a, b) => b.tested_at.localeCompare(a.tested_at))
     const latest = sorted[0] ?? null
-    const displayUnit = pickDisplayUnit(bucket.def, latest ? latest.value : null, latest?.unit ?? '')
+    const markerKey = bucket.def?.name
+    const displayUnit = chooseDisplayUnit(bucket.def, name, latest ? latest.value : null, latest?.unit ?? '', prefs)
 
     const points: MarkerPoint[] = sorted.map(e => ({
       entry: e,
-      value: convert(toNumber(e.value), e.unit, displayUnit),
+      value: convertForDisplay(toNumber(e.value), e.unit, displayUnit, markerKey),
     }))
-    // Der neueste Wert ist per Konstruktion von pickDisplayUnit immer umrechenbar.
-    const displayValue = latest ? convert(toNumber(latest.value), latest.unit, displayUnit) : null
+    // Der neueste Wert ist per Konstruktion von chooseDisplayUnit immer umrechenbar.
+    const displayValue = latest ? convertForDisplay(toNumber(latest.value), latest.unit, displayUnit, markerKey) : null
 
     const rawRange = effectiveRange(latest, bucket.def)
     const rangeSourceUnit = rawRange.source === 'lab' ? (latest?.unit ?? '') : (bucket.def?.einheit ?? '')
-    const range = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit)
+    const range = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit, markerKey)
+    // Das Urteil kommt aus den ungerundeten Werten — die Rundung ist nur Anzeige
+    // und darf einen knapp auffaelligen Wert nicht in den Bereich schieben.
+    const exactRange = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit, markerKey, false)
+    const exactValue = latest ? convert(toNumber(latest.value), latest.unit, displayUnit, markerKey) : null
 
-    const { trend, diff } = computeTrend(sorted, displayUnit)
+    const { trend, diff } = computeTrend(sorted, displayUnit, markerKey)
 
     // Wert und Bereich liegen nun beide in displayUnit; ein nicht umrechenbarer
     // Bereich wurde zu "none" und liefert daher kein (falsches) Urteil.
-    const inRange = displayValue != null ? isInRange(displayValue, range) : null
+    const inRange = exactValue != null ? isInRange(exactValue, exactRange) : null
 
     return {
       name,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Camera, LayoutGrid, List, Plus, Trash2 } from 'lucide-react'
@@ -21,6 +21,9 @@ import { ImportFlow } from './components/import/ImportFlow'
 import type { CycleTimeline } from '../../lib/planTimeline'
 import { loadCycleHistory } from '../my-stack/services/planLifecycle'
 import { reportError } from '../../lib/monitoring'
+import { loadUnitPrefs, saveUnitPrefs, withMarkerUnit } from './lib/unitPrefs'
+import type { UnitPrefs } from './lib/bloodwork'
+import type { UnitSystem } from './lib/unitConversion'
 
 const MARKER_LAYOUT_KEY = 'blutwerte-marker-layout'
 
@@ -125,7 +128,45 @@ export function BlutwertePage() {
 
   const zyklen = zyklenVon && zyklenVon.userId === user?.id ? zyklenVon : undefined
 
-  const summaries = useMemo(() => buildMarkerSummaries(entries), [entries])
+  // Gewaehlte Einheiten aus dem Profil. Bis sie geladen sind, bleiben die
+  // Schalter gesperrt — sonst wuerde eine Aenderung aus dem leeren Stand die
+  // gespeicherte Wahl je Marker ueberschreiben. Scheitert das Laden, bleibt es
+  // bei den Standard-Einheiten; die Werte selbst sind davon nicht betroffen.
+  const [unitPrefsVon, setUnitPrefsVon] = useState<{ userId: string; prefs: UnitPrefs } | null>(null)
+  useEffect(() => {
+    if (!user) return
+    let aktuell = true
+    const userId = user.id
+    loadUnitPrefs(userId).then(
+      prefs => { if (aktuell) setUnitPrefsVon({ userId, prefs }) },
+      error => reportError(error, 'blutwerte.unit-prefs'),
+    )
+    return () => { aktuell = false }
+  }, [user])
+  const unitsReady = !!unitPrefsVon && unitPrefsVon.userId === user?.id
+  const unitPrefs = useMemo(() => (unitsReady ? unitPrefsVon!.prefs : {}), [unitsReady, unitPrefsVon])
+  // Speichern der Reihe nach, damit eine aeltere Wahl nie eine neuere ueberholt.
+  const unitSaves = useRef<Promise<void>>(Promise.resolve())
+  const changeUnitPrefs = useCallback((next: UnitPrefs) => {
+    if (!user || !unitsReady) return
+    const userId = user.id
+    setUnitPrefsVon({ userId, prefs: next })
+    unitSaves.current = unitSaves.current
+      .then(() => saveUnitPrefs(userId, next))
+      .catch(error => {
+        reportError(error, 'blutwerte.unit-prefs-save')
+        toast.error(i18n.t('bw_units_save_error'))
+        // Stand aus der Datenbank zeigen, statt zu raten, was gespeichert ist.
+        return loadUnitPrefs(userId).then(
+          prefs => setUnitPrefsVon({ userId, prefs }),
+          loadError => reportError(loadError, 'blutwerte.unit-prefs'),
+        )
+      })
+  }, [user, unitsReady, i18n])
+  const setUnitSystem = (system: UnitSystem) => changeUnitPrefs({ ...unitPrefs, system })
+  const setMarkerUnit = (name: string, unit: string | null) => changeUnitPrefs(withMarkerUnit(unitPrefs, name, unit))
+
+  const summaries = useMemo(() => buildMarkerSummaries(entries, unitPrefs), [entries, unitPrefs])
 
   const zeigtAuffaellige = kategorie === AUFFAELLIG
   const showSonstige = useMemo(() => summaries.some(s => s.kategorie === SONSTIGE), [summaries])
@@ -257,6 +298,9 @@ export function BlutwertePage() {
           <MarkerDetail
             summary={summary}
             zyklen={zyklen}
+            unitSystem={unitPrefs.system ?? 'konventionell'}
+            markerUnit={unitPrefs.marker?.[summary.name] ?? null}
+            onMarkerUnit={unitsReady ? unit => setMarkerUnit(summary.name, unit) : undefined}
             onBack={() => setSelectedMarker(null)}
             onAdd={() => openNew(selectedMarker)}
             onEdit={openEdit}
@@ -337,6 +381,9 @@ export function BlutwertePage() {
             kategorie={kategorie}
             auffaellig={auffaellig.length}
             sortMode={sortMode}
+            unitSystem={unitPrefs.system ?? 'konventionell'}
+            unitsReady={unitsReady}
+            onUnitSystem={setUnitSystem}
             showSonstige={showSonstige}
             onKategorie={setKategorie}
             onSortMode={setSortMode}

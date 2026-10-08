@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { AUFFAELLIG, type MarkerFilter, type SortMode } from '../lib/bloodwork'
+import type { UnitSystem } from '../lib/unitConversion'
 import { KATEGORIE_KEY } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import { KATEGORIEN, SONSTIGE } from '../lib/markerCatalog'
@@ -17,13 +18,18 @@ interface Props {
   /** Anzahl fuer den Chip „Auffällige“. */
   auffaellig: number
   sortMode: SortMode
+  /** Einheitensystem fuer alle Marker (einzelne koennen abweichen). */
+  unitSystem: UnitSystem
+  /** Erst nach dem Laden der gespeicherten Wahl bedienbar. */
+  unitsReady: boolean
+  onUnitSystem: (system: UnitSystem) => void
   /** "Sonstige" nur anbieten, wenn Custom-Marker existieren. */
   showSonstige: boolean
   onKategorie: (kategorie: MarkerFilter) => void
   onSortMode: (mode: SortMode) => void
 }
 
-export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, onKategorie, onSortMode }: Props) {
+export function GridControls({ kategorie, auffaellig, sortMode, unitSystem, unitsReady, onUnitSystem, showSonstige, onKategorie, onSortMode }: Props) {
   const { t } = useTranslation()
   const chips: Array<{ key: MarkerFilter; label: string }> = [
     // Zuerst und vorausgewaehlt: was Aufmerksamkeit braucht.
@@ -68,8 +74,31 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
         })}
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Einheiten: konventionell (z.B. ng/dL) oder SI (z.B. nmol/L), fuer alle Marker. */}
+        <div role="group" aria-label={t('bw_units')} className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: MUTED }} aria-hidden="true">{t('bw_units')}</span>
+          <div className="flex rounded-full p-0.5" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+            {([['konventionell', t('bw_units_conventional')], ['si', t('bw_units_si')]] as [UnitSystem, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onUnitSystem(key)}
+                disabled={!unitsReady}
+                aria-pressed={unitSystem === key}
+                className="min-h-8 rounded-full px-3 text-xs whitespace-nowrap transition-colors"
+                style={unitSystem === key
+                  ? { background: 'var(--surface)', color: TEXT, fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
+                  : { color: MUTED, fontWeight: 600 }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
       {/* Sortieren greift nur im Raster, nicht in der Liste der Auffaelligen. */}
-      {kategorie !== AUFFAELLIG && <div className="flex items-center justify-end gap-2">
+      {kategorie !== AUFFAELLIG && <div className="ml-auto flex items-center gap-2">
         <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">{t('bw_sort')}</label>
         <select
           id="blutwerte-sort"
@@ -83,6 +112,7 @@ export function GridControls({ kategorie, auffaellig, sortMode, showSonstige, on
           ))}
         </select>
       </div>}
+      </div>
     </div>
   )
 }

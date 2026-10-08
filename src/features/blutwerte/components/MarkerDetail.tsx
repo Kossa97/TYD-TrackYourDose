@@ -13,7 +13,8 @@ import {
   YAxis,
 } from 'recharts'
 import type { MarkerSummary } from '../lib/bloodwork'
-import { toNumber } from '../lib/bloodwork'
+import { chooseDisplayUnit, toNumber } from '../lib/bloodwork'
+import { unitChoices, type UnitSystem } from '../lib/unitConversion'
 import type { BloodworkEntry } from '../types'
 import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
 import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, RED_WEAK, TEXT } from '../styles'
@@ -42,9 +43,13 @@ interface Props {
   onAdd: () => void
   onEdit: (entry: BloodworkEntry) => void
   onDelete: (entry: BloodworkEntry) => void
+  /** Einheitensystem aller Marker; markerUnit ueberschreibt es fuer diesen. */
+  unitSystem?: UnitSystem
+  markerUnit?: string | null
+  onMarkerUnit?: (unit: string | null) => void
 }
 
-export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete }: Props) {
+export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete, unitSystem = 'konventionell', markerUnit = null, onMarkerUnit }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
@@ -123,6 +128,30 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
                 </div>
               )}
             </div>
+            {onMarkerUnit && (() => {
+              // Einheit nur fuer diesen Marker; „Automatisch" folgt dem Schalter in der Uebersicht.
+              const katalog = summary.def?.einheit ?? ''
+              const units = [...(markerUnit ? [markerUnit] : []), ...summary.entries.map(e => e.unit)]
+              const choices = unitChoices(summary.def?.name ?? name, katalog, units)
+              if (choices.length < 2) return null
+              // Was ohne eigene Wahl tatsaechlich gezeigt wuerde — samt Rueckfall.
+              const automatisch = chooseDisplayUnit(summary.def, name, latest.value, latest.unit, { system: unitSystem })
+              return (
+                <div className="mt-3 flex items-center gap-2">
+                  <label className="text-xs" style={{ color: MUTED }} htmlFor="bw-marker-unit">{t('bw_unit_label')}</label>
+                  <select
+                    id="bw-marker-unit"
+                    className="select"
+                    style={{ color: TEXT, width: 'auto', paddingTop: 4, paddingBottom: 4, fontSize: 13 }}
+                    value={markerUnit && choices.includes(markerUnit) ? markerUnit : ''}
+                    onChange={e => onMarkerUnit(e.target.value || null)}
+                  >
+                    <option value="">{t('bw_unit_auto', { unit: automatisch })}</option>
+                    {choices.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                  </select>
+                </div>
+              )
+            })()}
             {range.source !== 'none' ? (
               <div className="mt-4">
                 <ReferenceBar
