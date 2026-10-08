@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next'
+import { ArrowUpDown, ChevronDown } from 'lucide-react'
 import { AUFFAELLIG, type MarkerFilter, type SortMode } from '../lib/bloodwork'
 import type { UnitSystem } from '../lib/unitConversion'
 import { KATEGORIE_KEY } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import { KATEGORIEN, SONSTIGE } from '../lib/markerCatalog'
 import { MUTED, RED, RED_WEAK, TEXT } from '../styles'
+
+const PILL = { background: 'var(--surface-raised)', border: '1px solid var(--border)' } as const
 
 const SORT_LABELS: Record<SortMode, string> = {
   kategorie: 'bw_sort_category',
@@ -74,44 +77,47 @@ export function GridControls({ kategorie, auffaellig, sortMode, unitSystem, unit
         })}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {/* Einheiten: konventionell (z.B. ng/dL) oder SI (z.B. nmol/L), fuer alle Marker. */}
-        <div role="group" aria-label={t('bw_units')} className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: MUTED }} aria-hidden="true">{t('bw_units')}</span>
-          <div className="flex rounded-full p-0.5" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
-            {([['konventionell', t('bw_units_conventional')], ['si', t('bw_units_si')]] as [UnitSystem, string][]).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onUnitSystem(key)}
-                disabled={!unitsReady}
-                aria-pressed={unitSystem === key}
-                className="min-h-8 rounded-full px-3 text-xs whitespace-nowrap transition-colors"
-                style={unitSystem === key
-                  ? { background: 'var(--surface)', color: TEXT, fontWeight: 800, boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
-                  : { color: MUTED, fontWeight: 600 }}
-              >
-                {label}
-              </button>
-            ))}
+      {/* Eine ruhige Zeile: links Sortieren, rechts Einheiten — zwei gleich hohe
+          Pillen ohne sichtbare Etiketten (Screenreader lesen sie trotzdem). */}
+      <div className="flex items-center gap-2">
+        {/* Sortieren greift nur im Raster, nicht in der Liste der Auffaelligen. */}
+        {kategorie !== AUFFAELLIG && (
+          <div className="relative flex h-8 min-w-0 items-center rounded-full" style={PILL}>
+            <label className="sr-only" htmlFor="blutwerte-sort">{t('bw_sort')}</label>
+            <ArrowUpDown size={13} aria-hidden="true" className="pointer-events-none absolute left-2.5" style={{ color: MUTED }} />
+            <select
+              id="blutwerte-sort"
+              className="h-full min-w-0 cursor-pointer appearance-none truncate rounded-full bg-transparent pl-7 pr-7 text-xs font-semibold"
+              style={{ color: TEXT, border: 'none', outline: 'none' }}
+              value={sortMode}
+              onChange={e => onSortMode(e.target.value as SortMode)}
+            >
+              {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
+                <option key={mode} value={mode}>{t(SORT_LABELS[mode])}</option>
+              ))}
+            </select>
+            <ChevronDown size={13} aria-hidden="true" className="pointer-events-none absolute right-2.5" style={{ color: MUTED }} />
           </div>
-        </div>
+        )}
 
-      {/* Sortieren greift nur im Raster, nicht in der Liste der Auffaelligen. */}
-      {kategorie !== AUFFAELLIG && <div className="ml-auto flex items-center gap-2">
-        <label className="text-xs" style={{ color: MUTED }} htmlFor="blutwerte-sort">{t('bw_sort')}</label>
-        <select
-          id="blutwerte-sort"
-          className="select"
-          style={{ color: TEXT, width: 'auto', paddingTop: 4, paddingBottom: 4, fontSize: 13 }}
-          value={sortMode}
-          onChange={e => onSortMode(e.target.value as SortMode)}
-        >
-          {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
-            <option key={mode} value={mode}>{t(SORT_LABELS[mode])}</option>
+        {/* Einheiten: konventionell (z.B. ng/dL) oder SI (z.B. nmol/L), fuer alle Marker. */}
+        <div role="group" aria-label={t('bw_units')} className="ml-auto flex h-8 shrink-0 items-center rounded-full p-0.5" style={PILL}>
+          {([['konventionell', t('bw_units_conventional')], ['si', t('bw_units_si')]] as [UnitSystem, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onUnitSystem(key)}
+              disabled={!unitsReady}
+              aria-pressed={unitSystem === key}
+              className="h-full rounded-full px-3 text-xs whitespace-nowrap transition-colors"
+              style={unitSystem === key
+                ? { background: 'var(--surface)', color: TEXT, fontWeight: 800, boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }
+                : { color: MUTED, fontWeight: 600 }}
+            >
+              {label}
+            </button>
           ))}
-        </select>
-      </div>}
+        </div>
       </div>
     </div>
   )
