@@ -181,13 +181,11 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
 
           {result && run && (() => { const profile = run.profile; const multiDose = run.multiDose; return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 6 }}>
-              <div aria-live="polite">
+              <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{t('pk_curve_title', { name: profile.name })}</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
-                  {scrub ? `${f.pct(scrub.level)} %` : '100 %'}
-                </p>
-                <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
-                  {scrub ? t('pk_hours_value', { h: f.num(hours(scrub.ts / HOUR)) }) : t('pk_curve_sub')}
+                <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 2 }}>{t('pk_curve_sub')}</p>
+                <p className="sr-only" aria-live="polite">
+                  {scrub ? `${t('pk_hours_value', { h: f.num(hours(scrub.ts / HOUR)) })}: ${f.pct(scrub.level)} %` : ''}
                 </p>
               </div>
               <StocksChart
@@ -195,13 +193,14 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
                 start={0}
                 end={result.xMax * HOUR}
                 accent="#00ccf5"
-                height={260}
+                height={300}
                 seriesKey={run.key}
                 markers={markers}
                 formatTick={ts => `${f.num(Math.round(ts / HOUR))} h`}
                 xTicks={hourTicks}
                 formatValue={f.num}
                 onScrub={setScrub}
+                scrubLabel={{ date: ts => t('pk_hours_value', { h: f.num(hours(ts / HOUR)) }), value: v => `${f.pct(v)} %` }}
                 ariaLabel={t('pk_curve_title', { name: profile.name })}
               />
 

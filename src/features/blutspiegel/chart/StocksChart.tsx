@@ -45,6 +45,12 @@ export interface StocksChartProps {
   xTicks?: (start: number, end: number, widthPx: number) => { ticks: number[]; step: number }
   formatValue?: (value: number) => string
   onScrub?: (point: LevelPoint | null) => void
+  /**
+   * Schild ueber dem Graph beim Ablesen (wie die Aktien-App): Datum oben,
+   * Wert darunter in der Linienfarbe. Haelt oben eine feste Zeile frei, damit
+   * beim Antippen nichts springt.
+   */
+  scrubLabel?: { date: (ts: number) => string; value: (level: number) => string }
   ariaLabel: string
   /** Punkt am Kurvenende (Live). */
   liveEnd?: boolean
@@ -54,6 +60,8 @@ const AXIS_RIGHT = 38
 const AXIS_BOTTOM = 22
 const INTAKE_STRIP = 12
 const PAD_TOP = 10
+/** Hoehe der freien Zeile fuer das Ablese-Schild. */
+const LABEL_H = 40
 const ANIM_MS = 350
 const REVEAL_MS = 650
 const HOLD_MS = 180
@@ -77,7 +85,7 @@ function cssVar(el: Element, name: string, fallback: string): string {
 
 export const StocksChart = memo(function StocksChart({
   points, start, end, accent, height, seriesKey, intakes = [], markers = [],
-  formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, ariaLabel, liveEnd = false,
+  formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -99,10 +107,10 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel })
   const onScrubRef = useRef(onScrub)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel }
     onScrubRef.current = onScrub
   })
 
@@ -175,7 +183,8 @@ export const StocksChart = memo(function StocksChart({
 
     const plotL = 0
     const plotR = width - AXIS_RIGHT
-    const plotT = PAD_TOP
+    const label = propsRef.current.scrubLabel
+    const plotT = PAD_TOP + (label ? LABEL_H : 0)
     const plotB = h - AXIS_BOTTOM - INTAKE_STRIP
     const plotW = plotR - plotL
     const plotH = plotB - plotT
@@ -311,9 +320,28 @@ export const StocksChart = memo(function StocksChart({
     if (scrubTs != null) {
       const lv = levelAt(pts, scrubTs)
       const x = Math.round(xOf(scrubTs)) + 0.5
-      ctx.strokeStyle = muted
+      ctx.strokeStyle = label ? color : muted
       ctx.lineWidth = 1
-      ctx.beginPath(); ctx.moveTo(x, plotT - 4); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x, label ? LABEL_H : plotT - 4); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
+      if (label && lv != null) {
+        // Schild: Datum, darunter der Wert — mittig ueber der Linie, am Rand angeschlagen.
+        const dateText = label.date(scrubTs)
+        const valueText = label.value(lv)
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'alphabetic'
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        const wDate = ctx.measureText(dateText).width
+        ctx.font = '800 16px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        const wValue = ctx.measureText(valueText).width
+        const half = Math.max(wDate, wValue) / 2
+        const cx = Math.min(Math.max(x, plotL + half), width - half)
+        ctx.fillStyle = cssVar(canvas, '--text', '#e2e8f0')
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        ctx.fillText(dateText, cx, 14)
+        ctx.fillStyle = color
+        ctx.font = '800 16px ui-sans-serif, system-ui, -apple-system, sans-serif'
+        ctx.fillText(valueText, cx, 33)
+      }
       if (lv != null) {
         const y = yOf(lv)
         ctx.fillStyle = surface

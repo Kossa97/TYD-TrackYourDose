@@ -290,6 +290,7 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
     [data.entries, compact],
   )
 
+  const scrubLabel = useMemo(() => ({ date: f.scrub, value: (v: number) => `${f.pct(v)} %` }), [f])
   const select = useCallback((key: string) => { setPickedKey(key); setScrub(null) }, [])
   const changeRange = useCallback((r: ChartRange) => { setRange(r); setScrub(null) }, [])
 
@@ -333,10 +334,11 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
   const startLevel = points.length && bounds.start < points[0].ts
     ? points[0].level
     : levelAt(points, bounds.start)
-  const shown = scrub ?? (curve?.current != null && points.length ? points[points.length - 1] : null)
+  // Der Kopf bleibt beim Ablesen stehen; der abgelesene Wert steht im Schild ueber dem Graph.
+  const shown = curve?.current != null && points.length ? points[points.length - 1] : null
   const change = shown && startLevel != null ? shown.level - startLevel : null
   const changeColor = change == null || Math.abs(change) < 0.05 ? 'var(--text-dim)' : change > 0 ? RISING : FALLING
-  const subline = scrub ? f.scrub(scrub.ts) : t(`pk_range_label_${effectiveRange}`)
+  const subline = t(`pk_range_label_${effectiveRange}`)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 14 }}>
@@ -367,7 +369,7 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
             </Link>
           )}
         </div>
-        <div aria-live="polite" style={{ marginTop: compact ? 0 : 10 }}>
+        <div style={{ marginTop: compact ? 0 : 10 }}>
           <p style={{ display: 'flex', alignItems: 'baseline', gap: 10, fontVariantNumeric: 'tabular-nums' }}>
             <span style={{ fontSize: compact ? 22 : 26, fontWeight: 800, color: 'var(--text)' }}>
               {shown ? `${f.pct(shown.level)} %` : '—'}
@@ -386,18 +388,21 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
 
       {!compact && <RangeControl value={range} onChange={changeRange} />}
 
+      {/* Fuer Screenreader: der abgelesene Wert (sichtbar steht er im Schild im Graph). */}
+      <p className="sr-only" aria-live="polite">{scrub ? `${f.scrub(scrub.ts)}: ${f.pct(scrub.level)} %` : ''}</p>
       {points.length ? (
         <StocksChart
           points={points}
           start={bounds.start}
           end={bounds.end}
           accent={selected.accent}
-          height={compact ? 170 : 300}
+          height={compact ? 210 : 340}
           seriesKey={selected.key}
           intakes={curve?.intakes}
           formatTick={f.tick}
           formatValue={f.num}
           onScrub={setScrub}
+          scrubLabel={scrubLabel}
           liveEnd={curve?.interruptedAt == null}
           ariaLabel={t('pk_chart_aria', {
             name: selected.name,
