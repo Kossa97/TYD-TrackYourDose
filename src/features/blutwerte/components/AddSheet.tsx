@@ -3,7 +3,7 @@
  * KI aus — der Import fragt vorher nach der Einwilligung) oder manuelle Eingabe.
  */
 import { useTranslation } from 'react-i18next'
-import { Camera, ChevronRight, FileText, PenLine, type LucideIcon } from 'lucide-react'
+import { Camera, ChevronRight, FileText, PenLine, Sparkles, type LucideIcon } from 'lucide-react'
 import { CYAN, MUTED, TEXT } from '../styles'
 
 export type AddChoice = 'document' | 'photo' | 'manual'
@@ -13,9 +13,9 @@ interface Props {
   onClose: () => void
 }
 
-const OPTIONS: Array<{ key: AddChoice; icon: LucideIcon; title: string; desc: string }> = [
-  { key: 'document', icon: FileText, title: 'bw_add_document', desc: 'bw_add_document_desc' },
-  { key: 'photo', icon: Camera, title: 'bw_add_photo', desc: 'bw_add_photo_desc' },
+const OPTIONS: Array<{ key: AddChoice; icon: LucideIcon; title: string; desc: string; ki?: boolean }> = [
+  { key: 'document', icon: FileText, title: 'bw_add_document', desc: 'bw_add_document_desc', ki: true },
+  { key: 'photo', icon: Camera, title: 'bw_add_photo', desc: 'bw_add_photo_desc', ki: true },
   { key: 'manual', icon: PenLine, title: 'bw_add_manual_entry', desc: 'bw_add_manual_desc' },
 ]
 
@@ -32,7 +32,7 @@ export function AddSheet({ onPick, onClose }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <h2 id="bw-add-title" className="text-lg font-bold mb-2" style={{ color: TEXT }}>{t('bw_add_title')}</h2>
-        {OPTIONS.map(({ key, icon: Icon, title, desc }) => (
+        {OPTIONS.map(({ key, icon: Icon, title, desc, ki }) => (
           <button
             key={key}
             type="button"
@@ -40,8 +40,19 @@ export function AddSheet({ onPick, onClose }: Props) {
             className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors"
             style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--accent-weak)', color: CYAN }}>
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--accent-weak)', color: CYAN }}>
               <Icon size={19} aria-hidden="true" />
+              {/* KI-Sterne: diese Wege lesen die Werte per KI aus */}
+              {ki && (
+                <span
+                  aria-hidden="true"
+                  data-bw-ki-badge
+                  className="absolute -right-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full"
+                  style={{ background: 'var(--surface-raised)', color: CYAN, boxShadow: '0 0 0 2px var(--surface-raised)' }}
+                >
+                  <Sparkles size={13} strokeWidth={2.25} />
+                </span>
+              )}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-bold" style={{ color: TEXT }}>{t(title)}</span>
