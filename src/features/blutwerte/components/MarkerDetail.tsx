@@ -1,320 +1,470 @@
-import { useState } from 'react'
+/**
+ * Detailseite eines Blutwerts — aufgebaut wie eine Aktie in der Aktien-App:
+ * Name und Einheit, grosser Wert mit Veraenderung, Verlauf (derselbe Graph
+ * wie im Blutspiegel), Zeitraum, Kennzahlen, Einordnung und die Messungen.
+ */
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { markerErklaerung, markerName } from '../lib/markerCatalog.en'
-import { format } from 'date-fns'
-import { ArrowLeft, Info, Pencil, Plus, Trash2 } from 'lucide-react'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceArea,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { format, subMonths, subYears } from 'date-fns'
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, Plus } from 'lucide-react'
+import { KATEGORIE_KEY, markerErklaerung, markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
-import { chooseDisplayUnit, toNumber } from '../lib/bloodwork'
+import { chooseDisplayUnit, entryInRange, toNumber } from '../lib/bloodwork'
 import { unitChoices, type UnitSystem } from '../lib/unitConversion'
-import type { BloodworkEntry } from '../types'
-import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
-import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, RED_WEAK, TEXT } from '../styles'
-import { TrendIcon, trendColor } from './trend'
-import { ReferenceBar } from './ReferenceBar'
-import { ScrubOverlay } from './ScrubOverlay'
-import { PLOT_LINKS, PLOT_RECHTS, ZyklusStreifen } from './ZyklusStreifen'
+import { GUIDANCE_STAND, markerGuidance, type GuidanceItem } from '../lib/markerGuidance'
+import type { BloodworkEntry, BloodworkReport } from '../types'
+import { formatDisplayDate, formatNumber, formatRange, formatSigned as signed } from '../lib/format'
+import { CYAN, MUTED, PILL_GRAY, PILL_GREEN, PILL_RED, TEXT } from '../styles'
+import { AXIS_RIGHT, StocksChart } from '../../blutspiegel/chart/StocksChart'
+import { timeStep, timeTicks, type LevelPoint } from '../../blutspiegel/chart/stocksChartMath'
+import { ZyklusStreifen } from './ZyklusStreifen'
 import type { CycleTimeline } from '../../../lib/planTimeline'
-import { achse as zeitachse, achsenTicks, msTag, tagMs, zyklusZeilen } from '../lib/zyklusZeilen'
+import { TAG_MS, msTag, tagMs, zyklusZeilen } from '../lib/zyklusZeilen'
 
-export type RangeFilter = '3M' | '6M' | '1J' | 'ALL'
+export type RangeFilter = '3M' | '6M' | '1J' | '2J' | 'ALL'
 
-const CHART_H = 264
-/** Feste Zeile fuer das Ablese-Schild ueber der Zeichenflaeche. */
-const CHART_TOP = 48
-const X_ACHSE_H = 30
+const RANGES: Array<[RangeFilter, string]> = [
+  ['3M', 'bw_range_3m'], ['6M', 'bw_range_6m'], ['1J', 'bw_range_1y'], ['2J', 'bw_range_2y'], ['ALL', 'bw_range_all'],
+]
 
 /** Messpunkt in der Mitte seines Tags — dort, wo der Tag auch in den Zyklus-Zeilen liegt. */
-const HALBER_TAG = 12 * 60 * 60 * 1000
+const HALBER_TAG = TAG_MS / 2
+const CHART_H = 250
+/** Linienfarbe ohne Referenzbereich (Hex, der Graph mischt Transparenz hinein). */
+const NEUTRAL_LINE = '#22c3e6'
 
 interface Props {
   summary: MarkerSummary
   /** Zyklen aus My Stack fuer die Zeitstreifen unter dem Verlauf. */
   zyklen?: { timelines: CycleTimeline[]; namen: ReadonlyMap<string, string> }
+  /** Befunde — fuer die Herkunft einer Messung (Labor). */
+  reports?: BloodworkReport[]
   onBack: () => void
   onAdd: () => void
   onEdit: (entry: BloodworkEntry) => void
-  onDelete: (entry: BloodworkEntry) => void
   /** Einheitensystem aller Marker; markerUnit ueberschreibt es fuer diesen. */
   unitSystem?: UnitSystem
   markerUnit?: string | null
   onMarkerUnit?: (unit: string | null) => void
 }
 
-export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete, unitSystem = 'konventionell', markerUnit = null, onMarkerUnit }: Props) {
+/** Monats-Ticks (1., 2., 3., 6. oder 12. Monat), so fein, wie die Breite erlaubt. */
+function monthTicks(start: number, end: number, widthPx: number): { ticks: number[]; step: number } {
+  if (end - start < 75 * TAG_MS) {
+    const step = timeStep(start, end, widthPx)
+    return { step, ticks: timeTicks(start, end, step) }
+  }
+  const months = (end - start) / (30.4 * TAG_MS)
+  const maxTicks = Math.max(1, Math.floor(widthPx / 52))
+  const every = [1, 2, 3, 6, 12, 24].find(n => months / n <= maxTicks) ?? 24
+  const d = new Date(start)
+  d.setDate(1); d.setHours(0, 0, 0, 0)
+  if (d.getTime() < start) d.setMonth(d.getMonth() + 1)
+  // Auf ein Vielfaches ausrichten, damit die Ticks beim Zeitraumwechsel nicht springen.
+  while (d.getMonth() % Math.min(every, 12) !== 0) d.setMonth(d.getMonth() + 1)
+  const ticks: number[] = []
+  while (d.getTime() <= end) {
+    ticks.push(d.getTime())
+    d.setMonth(d.getMonth() + every)
+  }
+  return { ticks, step: every * 30 * TAG_MS }
+}
+
+export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onEdit, unitSystem = 'konventionell', markerUnit = null, onMarkerUnit }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
+  const [offen, setOffen] = useState<'niedrig' | 'bereich' | 'hoch' | null>(null)
 
-  const { name, entries, latest, range, inRange, trend, diff } = summary
-  const shownValue = summary.displayValue ?? (latest ? latest.value : null)
-  const shownUnit = summary.displayValue != null ? summary.displayUnit : (latest?.unit ?? '')
+  const { name, latest, range, inRange, def } = summary
+  const unit = summary.displayUnit
+  const anzeigeName = markerName(name, sprache)
+  const shownValue = summary.displayValue ?? (latest ? toNumber(latest.value) : null)
+  const shownUnit = summary.displayValue != null ? unit : (latest?.unit ?? '')
 
-  const now = new Date()
-  const cutoff = (() => {
-    const d = new Date(now)
-    if (rangeFilter === '3M') d.setMonth(d.getMonth() - 3)
-    else if (rangeFilter === '6M') d.setMonth(d.getMonth() - 6)
-    else if (rangeFilter === '1J') d.setFullYear(d.getFullYear() - 1)
-    else return null
-    return format(d, 'yyyy-MM-dd')
-  })()
+  const statusColor = inRange === false ? PILL_RED : inRange === true ? PILL_GREEN : PILL_GRAY
+  const lineColor = inRange === false ? '#ef4444' : inRange === true ? '#10b981' : NEUTRAL_LINE
 
-  // oldest -> newest for the chart. Die x-Achse ist echte Zeit (Tage), damit
-  // die Zyklus-Zeilen darunter auf derselben Achse liegen.
-  const windowPoints = summary.points.filter(p => (cutoff ? p.entry.tested_at >= cutoff : true))
-  const chartData = windowPoints
+  // Alle umrechenbaren Messungen, alt → neu
+  const allPoints: LevelPoint[] = useMemo(() => summary.points
     .filter(p => p.value != null)
-    .slice()
-    .sort((a, b) => a.entry.tested_at.localeCompare(b.entry.tested_at))
-    .map(p => ({
-      t: tagMs(p.entry.tested_at) + HALBER_TAG,
-      value: p.value as number,
-    }))
+    .map(p => ({ ts: tagMs(p.entry.tested_at) + HALBER_TAG, level: p.value as number }))
+    .sort((a, b) => a.ts - b.ts), [summary.points])
 
-  const heute = format(now, 'yyyy-MM-dd')
-  const letzterPunkt = chartData.length > 0 ? msTag(chartData[chartData.length - 1].t) : heute
-  const fenster = {
-    von: cutoff ?? (chartData.length > 0 ? msTag(chartData[0].t) : heute),
-    // Ein Wert mit Datum in der Zukunft verlaengert die Achse, statt herauszufallen.
-    bis: letzterPunkt > heute ? letzterPunkt : heute,
-  }
-  const achse = zeitachse(fenster)
-  const ticks = achsenTicks(achse)
+  // Zeitfenster: endet heute (oder beim spaeteren Messdatum)
+  const heute = format(new Date(), 'yyyy-MM-dd')
+  const lastDay = allPoints.length ? msTag(allPoints[allPoints.length - 1].ts) : heute
+  const bisTag = lastDay > heute ? lastDay : heute
+  const end = tagMs(bisTag) + TAG_MS
+  const start = useMemo(() => {
+    const endDate = new Date(end)
+    if (rangeFilter === '3M') return subMonths(endDate, 3).getTime()
+    if (rangeFilter === '6M') return subMonths(endDate, 6).getTime()
+    if (rangeFilter === '1J') return subYears(endDate, 1).getTime()
+    if (rangeFilter === '2J') return subYears(endDate, 2).getTime()
+    // Alles: ab dem ersten Wert, mit etwas Luft links
+    const first = allPoints[0]?.ts ?? end - 90 * TAG_MS
+    return first - Math.max(7 * TAG_MS, (end - first) * 0.04)
+  }, [rangeFilter, end, allPoints])
+
+  const fenster = { von: msTag(start), bis: bisTag }
   const streifen = zyklen
     ? zyklusZeilen(zyklen.timelines, zyklen.namen, fenster, heute, Intl.DateTimeFormat().resolvedOptions().timeZone)
     : { zeilen: [], weitere: 0 }
 
-  const excludedCount = windowPoints.filter(p => p.value == null).length
+  const inWindow = allPoints.filter(p => p.ts >= start && p.ts <= end)
+  const excludedCount = summary.points.filter(p => {
+    if (p.value != null) return false
+    const ts = tagMs(p.entry.tested_at) + HALBER_TAG
+    return ts >= start && ts <= end
+  }).length
+
+  // Graph-Formatierung
+  const monthFmt = useMemo(() => new Intl.DateTimeFormat(sprache, { month: 'short' }), [sprache])
+  const dayFmt = useMemo(() => new Intl.DateTimeFormat(sprache, { day: 'numeric', month: 'short' }), [sprache])
+  const formatTick = useCallback((ts: number, step: number) => {
+    if (step < 28 * TAG_MS) return dayFmt.format(ts)
+    const d = new Date(ts)
+    return d.getMonth() === 0 || step >= 360 * TAG_MS ? String(d.getFullYear()) : monthFmt.format(ts)
+  }, [dayFmt, monthFmt])
+  const scrubLabel = useMemo(() => ({
+    date: (ts: number) => formatDisplayDate(msTag(ts)),
+    value: (v: number) => `${formatNumber(v)} ${unit}`,
+  }), [unit])
+  const formatValue = useCallback((v: number) => formatNumber(v), [])
+  const band = useMemo(() => (range.source !== 'none' ? { lo: range.min, hi: range.max, color: '#10b981' } : undefined), [range])
+  const yInclude = [range.min, range.max].filter((v): v is number => v != null)
+  const values = allPoints.map(p => p.level)
+  // Mindesthoehe der Achse: 10 % des groessten Werts, damit Rauschen flach bleibt.
+  const groesster = values.length ? Math.max(...values.map(Math.abs)) : 0
+  const minSpan = groesster > 0 ? groesster * 0.1 : 1
+
+  // Veraenderung gegenueber dem vorherigen umrechenbaren Wert
+  const convertible = summary.points.filter(p => p.value != null)
+  const previous = convertible[1] ?? null
+  const change = summary.displayValue != null && previous ? summary.displayValue - (previous.value as number) : null
+
+  const rangeText = formatRange(range.min, range.max, '')
+  const statusText = inRange === true ? t('bw_status_in_ref') : inRange === false ? t('bw_status_out_ref') : t('bw_status_no_ref')
+
+  // Kennzahlen
+  const rangeLabel = t(RANGES.find(([k]) => k === rangeFilter)![1])
+  // Richtung nach der naeheren Grenze: das Urteil kommt aus ungerundeten Werten,
+  // ein gerundeter Wert kann genau auf der Grenze liegen.
+  const deviation = (() => {
+    const v = summary.displayValue
+    if (v == null || inRange !== false) return null
+    const above = range.max != null && (range.min == null || Math.abs(v - range.max) <= Math.abs(v - range.min))
+    if (above) return { label: t('bw_stat_above'), value: signed(v - range.max!) }
+    return range.min != null ? { label: t('bw_stat_below'), value: signed(v - range.min) } : null
+  })()
+  const firstDate = summary.entries.length ? summary.entries[summary.entries.length - 1].tested_at : null
+  const monthYear = useMemo(() => new Intl.DateTimeFormat(sprache, { month: '2-digit', year: 'numeric' }), [sprache])
+  const stats: Array<{ label: string; value: string }> = [
+    { label: t('bw_stat_latest'), value: shownValue != null ? formatNumber(shownValue) : '–' },
+    { label: t('bw_stat_previous'), value: previous ? formatNumber(previous.value as number) : '–' },
+    { label: t('bw_stat_reference'), value: rangeText ?? '–' },
+    ...(deviation ? [deviation] : []),
+    { label: t('bw_stat_low', { range: rangeLabel }), value: inWindow.length ? formatNumber(Math.min(...inWindow.map(p => p.level))) : '–' },
+    { label: t('bw_stat_high', { range: rangeLabel }), value: inWindow.length ? formatNumber(Math.max(...inWindow.map(p => p.level))) : '–' },
+    { label: t('bw_stat_count'), value: String(summary.entries.length) },
+    { label: t('bw_stat_since'), value: firstDate ? monthYear.format(new Date(`${firstDate}T00:00:00`)) : '–' },
+  ]
+
+  const guidance = def ? markerGuidance(def.name, sprache) : null
+  const labNamen = useMemo(() => new Map(reports.map(r => [r.id, r.lab_name])), [reports])
+  const standDatum = monthYear.format(new Date(`${GUIDANCE_STAND}-01T00:00:00`))
+
+  const sectionTitle = 'text-xl font-extrabold tracking-tight'
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col gap-6 pb-4">
+      {/* Kopf */}
+      <div className="flex items-center justify-between">
         <button
-          className="p-2 -ml-2 transition-colors"
-          style={{ color: MUTED }}
+          type="button"
           onClick={onBack}
+          className="-ml-2 flex min-h-11 items-center gap-0.5 pr-2 text-[17px] font-medium"
+          style={{ color: CYAN }}
           aria-label={t('back')}
         >
-          <ArrowLeft size={20} />
+          <ChevronLeft size={24} strokeWidth={2.4} aria-hidden="true" />
+          {t('bw_title')}
         </button>
-        <h1 className="text-lg font-bold" style={{ color: TEXT }}>{markerName(name, sprache)}</h1>
-        <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={onAdd}>
-          <Plus size={15} /> {t('bw_entry')}
+        <button
+          type="button"
+          onClick={onAdd}
+          aria-label={t('bw_add_value_aria')}
+          className="flex h-11 w-11 items-center justify-center rounded-full"
+          style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', color: TEXT }}
+        >
+          <Plus size={22} aria-hidden="true" />
         </button>
       </div>
 
-      {/* Hero */}
-      <div className="p-5 mb-4" style={PANEL_STYLE}>
-        {latest ? (
-          <>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold" style={{ color: inRange === false ? RED : CYAN }}>
-                {formatNumber(shownValue!)}
-                <span className="text-base font-semibold ml-1.5" style={{ color: MUTED }}>{shownUnit}</span>
-              </p>
-              {trend && (
-                <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: trendColor(summary) }}>
-                  <TrendIcon trend={trend} />
-                  {trend === 'same' ? t('bw_trend_same') : formatNumber(Math.abs(diff))}
-                </div>
-              )}
-            </div>
-            {onMarkerUnit && (() => {
-              // Einheit nur fuer diesen Marker; „Automatisch" folgt dem Schalter in der Uebersicht.
-              const katalog = summary.def?.einheit ?? ''
-              const units = [...(markerUnit ? [markerUnit] : []), ...summary.entries.map(e => e.unit)]
-              const choices = unitChoices(summary.def?.name ?? name, katalog, units)
-              if (choices.length < 2) return null
-              // Was ohne eigene Wahl tatsaechlich gezeigt wuerde — samt Rueckfall.
-              const automatisch = chooseDisplayUnit(summary.def, name, latest.value, latest.unit, { system: unitSystem })
-              return (
-                <div className="mt-3 flex items-center gap-2">
-                  <label className="text-xs" style={{ color: MUTED }} htmlFor="bw-marker-unit">{t('bw_unit_label')}</label>
-                  <select
-                    id="bw-marker-unit"
-                    className="select"
-                    style={{ color: TEXT, width: 'auto', paddingTop: 4, paddingBottom: 4, fontSize: 13 }}
-                    value={markerUnit && choices.includes(markerUnit) ? markerUnit : ''}
-                    onChange={e => onMarkerUnit(e.target.value || null)}
-                  >
-                    <option value="">{t('bw_unit_auto', { unit: automatisch })}</option>
-                    {choices.map(unit => <option key={unit} value={unit}>{unit}</option>)}
-                  </select>
-                </div>
-              )
-            })()}
-            {range.source !== 'none' ? (
-              <div className="mt-4">
-                <ReferenceBar
-                  value={summary.displayValue ?? toNumber(latest.value)}
-                  unit={shownUnit}
-                  range={range}
-                  inRange={inRange}
-                />
-              </div>
-            ) : (
-              <p className="text-xs mt-2" style={{ color: MUTED }}>{t('bw_no_reference_set')}</p>
-            )}
-            <div className="mt-3">
-              {inRange === true && (
-                <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>{t('bw_in_range')}</span>
-              )}
-              {inRange === false && (
-                <span className="badge" style={{ background: RED_WEAK, color: RED }}>{t('bw_out_range')}</span>
-              )}
-              {inRange === null && (
-                <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>{t('bw_no_reference')}</span>
-              )}
-            </div>
-          </>
-        ) : (
-          <p style={{ color: MUTED }}>{t('bw_no_test_for', { name: markerName(name, sprache) })}</p>
-        )}
-      </div>
-
-      {/* Was ist das? */}
-      <div className="p-5 mb-4" style={PANEL_STYLE}>
-        <div className="flex items-center gap-2 mb-2">
-          <Info size={15} style={{ color: CYAN }} />
-          <p className="text-sm font-bold" style={{ color: TEXT }}>{t('bw_what_is')}</p>
+      {/* Name, Kategorie, Einheit */}
+      <div className="-mt-2 flex flex-col gap-1">
+        <h1 className="text-[2rem] font-black leading-tight tracking-tight break-words" style={{ color: TEXT }}>{anzeigeName}</h1>
+        <div className="flex flex-wrap items-center gap-2 text-[15px]" style={{ color: MUTED }}>
+          <span>{t(KATEGORIE_KEY[summary.kategorie])}</span>
+          {unit && <span aria-hidden="true">·</span>}
+          {(() => {
+            const katalog = def?.einheit ?? ''
+            const units = [...(markerUnit ? [markerUnit] : []), ...summary.entries.map(e => e.unit)]
+            const choices = onMarkerUnit && latest ? unitChoices(def?.name ?? name, katalog, units) : []
+            if (choices.length < 2 || !latest || !onMarkerUnit) return unit ? <span>{unit}</span> : null
+            // Was ohne eigene Wahl tatsaechlich gezeigt wuerde — samt Rueckfall.
+            const automatisch = chooseDisplayUnit(def, name, latest.value, latest.unit, { system: unitSystem })
+            return (
+              <span className="relative inline-flex items-center">
+                <label className="sr-only" htmlFor="bw-marker-unit">{t('bw_unit_label')}</label>
+                {/* Sichtbar ist nur die Einheit; die Auswahl liegt unsichtbar darueber. */}
+                <span className="pointer-events-none flex min-h-8 items-center gap-0.5 font-semibold" style={{ color: CYAN }} aria-hidden="true">
+                  {unit}
+                  <ChevronDown size={14} strokeWidth={2.4} />
+                </span>
+                <select
+                  id="bw-marker-unit"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  value={markerUnit && choices.includes(markerUnit) ? markerUnit : ''}
+                  onChange={e => onMarkerUnit(e.target.value || null)}
+                >
+                  <option value="">{t('bw_unit_auto', { unit: automatisch })}</option>
+                  {choices.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </span>
+            )
+          })()}
         </div>
-        {summary.def ? (
-          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{markerErklaerung(summary.def, sprache)}</p>
-        ) : (
-          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
-            {t('bw_no_explanation')}
+      </div>
+
+      {/* Wert */}
+      {latest && shownValue != null ? (
+        <div className="-mt-2 flex flex-col gap-1.5">
+          <p className="flex items-baseline gap-2 tabular-nums" data-bw-hero-value>
+            <span className="text-[44px] font-extrabold leading-none tracking-tight" style={{ color: TEXT }}>{formatNumber(shownValue)}</span>
+            <span className="text-[17px] font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
           </p>
-        )}
-        <p className="text-xs mt-3" style={{ color: MUTED, opacity: 0.8 }}>{t('bw_disclaimer')}</p>
-      </div>
-
-      {/* Range filter */}
-      <div className="flex gap-2 mb-4">
-        {([['3M', t('bw_range_3m')], ['6M', t('bw_range_6m')], ['1J', t('bw_range_1y')], ['ALL', t('bw_range_all')]] as [RangeFilter, string][]).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setRangeFilter(key)}
-            className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
-            style={
-              rangeFilter === key
-                ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
-                : { color: MUTED, border: '1px solid var(--border)' }
-            }
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Chart */}
-      {chartData.length > 0 ? (
-        <div className="p-4 mb-4" style={PANEL_STYLE}>
-          <ScrubOverlay
-            points={chartData}
-            domain={achse}
-            plotLeft={PLOT_LINKS}
-            plotRight={PLOT_RECHTS}
-            plotTop={CHART_TOP}
-            plotBottom={CHART_H - X_ACHSE_H}
-            color="#00ccf5"
-            ariaLabel={t('bw_chart_aria', { name: markerName(name, sprache) })}
-            describe={p => `${formatDisplayDate(msTag(p.t))}: ${formatNumber(p.value)} ${shownUnit}`}
-            renderLabel={p => (
-              <>
-                <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{formatDisplayDate(msTag(p.t))}</p>
-                <p className="text-base font-extrabold tabular-nums" style={{ color: '#00ccf5' }}>
-                  {formatNumber(p.value)} <span className="text-xs font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
-                </p>
-              </>
-            )}
-          >
-          <ResponsiveContainer width="100%" height={CHART_H}>
-            {/* Oben eine feste Zeile fuer das Ablese-Schild, damit nichts springt. */}
-            <LineChart data={chartData} margin={{ top: CHART_TOP, right: PLOT_RECHTS, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis
-                dataKey="t"
-                type="number"
-                domain={achse}
-                ticks={ticks}
-                allowDataOverflow
-                height={X_ACHSE_H}
-                tickFormatter={(ms: number) => formatChartDate(msTag(ms))}
-                tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }}
-              />
-              <YAxis width={PLOT_LINKS} tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
-              {range.min != null && range.max != null && (
-                <ReferenceArea y1={range.min} y2={range.max} fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)" />
-              )}
-              {/* Ohne Einblend-Animation: sonst startet sie beim Ablesen bei jedem Schritt neu und die Linie verschwindet. */}
-              <Line type="monotone" dataKey="value" stroke="#00ccf5" strokeWidth={2} dot={{ fill: '#00ccf5', r: 3 }} activeDot={false} isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
-          </ScrubOverlay>
-          <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
+          {change != null && previous && (
+            <p className="flex flex-wrap items-center gap-2 text-[15px] tabular-nums">
+              <span className="font-bold" style={{ color: statusColor }}>{signed(change)}</span>
+              <span style={{ color: MUTED }}>{t('bw_since_date', { date: formatDisplayDate(previous.entry.tested_at) })}</span>
+            </p>
+          )}
+          <p className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-dim, var(--text-muted))' }} data-bw-status>
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: statusColor }} aria-hidden="true" />
+            <span>
+              {statusText}
+              {rangeText && <> · <span className="tabular-nums">{rangeText}</span></>}
+              {range.source !== 'none' && <> · {t(range.source === 'lab' ? 'bw_ref_source_lab' : 'bw_ref_source_catalog')}</>}
+            </span>
+          </p>
         </div>
       ) : (
-        <div className="p-6 mb-4 text-center text-sm" style={{ ...PANEL_STYLE, color: MUTED }}>
-          {t('bw_no_values_period')}
+        <p style={{ color: MUTED }}>{t('bw_no_test_for', { name: anzeigeName })}</p>
+      )}
+
+      {/* Verlauf */}
+      {allPoints.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {inWindow.length > 0 ? (
+            <StocksChart
+              points={allPoints}
+              start={start}
+              end={end}
+              accent={lineColor}
+              height={CHART_H}
+              seriesKey={`${name}|${unit}`}
+              formatTick={formatTick}
+              xTicks={monthTicks}
+              formatValue={formatValue}
+              scrubLabel={scrubLabel}
+              ariaLabel={t('bw_chart_aria', { name: anzeigeName })}
+              band={band}
+              dots
+              yInclude={yInclude}
+              percentCap={false}
+              minSpan={minSpan}
+              intakeStrip={false}
+            />
+          ) : (
+            <div className="flex items-center justify-center text-center text-sm" style={{ height: CHART_H, color: MUTED }}>
+              {t('bw_no_values_period')}
+            </div>
+          )}
+          {/* Die Zyklus-Zeilen enden vor der Werte-Achse — auf derselben Zeitachse wie der Graph. */}
+          <div style={{ marginRight: AXIS_RIGHT }}>
+            <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
+          </div>
+          <div
+            role="group"
+            aria-label={t('bw_period_aria')}
+            className="mt-1.5 grid grid-cols-5 gap-1 rounded-[10px] p-[3px]"
+            style={{ background: 'var(--surface-raised)' }}
+          >
+            {RANGES.map(([key, label]) => {
+              const on = rangeFilter === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setRangeFilter(key)}
+                  className="min-h-[34px] rounded-lg text-[13px] font-bold transition-colors"
+                  style={on
+                    ? { background: 'var(--surface)', color: TEXT, boxShadow: '0 1px 2px rgba(0,0,0,0.18)' }
+                    : { color: MUTED }}
+                >
+                  {t(label)}
+                </button>
+              )
+            })}
+          </div>
+          {excludedCount > 0 && (
+            <p className="text-xs" style={{ color: MUTED }}>
+              {excludedCount === 1 ? t('bw_excluded_one') : t('bw_excluded_many', { count: excludedCount })}
+            </p>
+          )}
         </div>
       )}
 
-      {excludedCount > 0 && (
-        <p className="text-xs mb-4 -mt-2" style={{ color: MUTED }}>
-          {excludedCount === 1 ? t('bw_excluded_one') : t('bw_excluded_many', { count: excludedCount })}
-        </p>
+      {/* Kennzahlen */}
+      {latest && (
+        <section aria-labelledby="bw-stats-title" className="flex flex-col gap-2">
+          <h2 id="bw-stats-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_key_figures')}</h2>
+          <dl className="grid grid-cols-2 gap-x-5">
+            {stats.map(s => (
+              <div
+                key={s.label}
+                className="flex min-w-0 items-baseline justify-between gap-2 py-[11px] text-sm"
+                style={{ borderBottom: '1px solid var(--border)' }}
+              >
+                <dt className="min-w-0 truncate" style={{ color: MUTED }}>{s.label}</dt>
+                <dd className="shrink-0 text-right font-bold tabular-nums" style={{ color: TEXT }}>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
 
-      {/* Entry list */}
-      <div style={PANEL_STYLE}>
-        {entries.length === 0 && (
-          <p className="p-5 text-sm text-center" style={{ color: MUTED }}>{t('bw_no_entries')}</p>
-        )}
-        {summary.points.map((p, i) => {
-          const e = p.entry
-          const v = p.value != null ? p.value : e.value
-          const u = p.value != null ? summary.displayUnit : e.unit
-          return (
-            <div
-              key={e.id}
-              className="flex items-center justify-between px-5 py-3.5"
-              style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
-            >
-              <span className="text-sm" style={{ color: MUTED }}>{formatDisplayDate(e.tested_at)}</span>
-              <span className="text-sm font-semibold flex-1 text-right mr-2" style={{ color: TEXT }}>
-                {formatNumber(v)} {u}
-              </span>
-              <button
-                className="flex h-11 w-11 -my-2 items-center justify-center rounded-xl transition-colors hover:text-cyan-400"
-                style={{ color: MUTED }}
-                onClick={() => onEdit(e)}
-                data-bw-entry-edit
-                aria-label={t('bw_edit_aria', { value: `${formatNumber(e.value)} ${e.unit}`, date: formatDisplayDate(e.tested_at) })}
-              >
-                <Pencil size={15} />
-              </button>
-              <button
-                className="flex h-11 w-11 -my-2 -mr-3 items-center justify-center rounded-xl transition-colors hover:text-red-400"
-                style={{ color: MUTED }}
-                onClick={() => onDelete(e)}
-                data-bw-entry-delete
-                aria-label={t('bw_delete_aria', { value: `${formatNumber(e.value)} ${e.unit}`, date: formatDisplayDate(e.tested_at) })}
-              >
-                <Trash2 size={15} />
-              </button>
+      {/* Einordnung */}
+      <section aria-labelledby="bw-meaning-title" className="flex flex-col gap-2.5">
+        <h2 id="bw-meaning-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_meaning_title')}</h2>
+        <p className="text-[15px] leading-relaxed" style={{ color: 'var(--text-dim, var(--text-muted))' }}>
+          {def ? markerErklaerung(def, sprache) : t('bw_no_explanation')}
+        </p>
+        {guidance && (
+          <>
+            <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{guidance.text.hinweis}</p>
+            {/* Immer zugeklappt: nie nach dem eigenen Wert ausgewaehlt. */}
+            <div className="overflow-hidden rounded-2xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }} data-bw-guidance>
+              {([
+                ['niedrig', 'bw_guidance_low', ArrowDown, guidance.text.niedrig],
+                ['bereich', 'bw_guidance_normal', Check, guidance.text.bereich],
+                ['hoch', 'bw_guidance_high', ArrowUp, guidance.text.hoch],
+              ] as const).map(([key, label, Icon, items], i) => {
+                const auf = offen === key
+                const panelId = `bw-guidance-${key}`
+                return (
+                  <div key={key} style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}>
+                    <button
+                      type="button"
+                      aria-expanded={auf}
+                      aria-controls={panelId}
+                      onClick={() => setOffen(auf ? null : key)}
+                      className="flex min-h-[52px] w-full items-center gap-3 px-3.5 text-left text-base font-bold"
+                      style={{ color: TEXT }}
+                    >
+                      <Icon size={18} strokeWidth={2.2} aria-hidden="true" style={{ color: MUTED }} />
+                      <span className="flex-1">{t(label)}</span>
+                      <ChevronDown
+                        size={18}
+                        strokeWidth={2.2}
+                        aria-hidden="true"
+                        className="transition-transform"
+                        style={{ color: MUTED, transform: auf ? 'rotate(180deg)' : undefined }}
+                      />
+                    </button>
+                    {auf && (
+                      <div id={panelId} className="flex flex-col gap-2.5 pb-3.5 pl-11 pr-3.5 text-sm leading-relaxed" style={{ color: 'var(--text-dim, var(--text-muted))' }}>
+                        {items.map((item: GuidanceItem, j: number) => (
+                          <p key={j} style={item.label ? undefined : { color: TEXT }}>
+                            {item.label && <><strong style={{ color: TEXT }}>{item.label}</strong><br /></>}
+                            {item.text}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+            <p className="text-xs leading-relaxed" style={{ color: MUTED }}>
+              {t('bw_guidance_sources')}:{' '}
+              {guidance.quellen.map((q, i) => (
+                <span key={q.url}>
+                  {i > 0 && ' · '}
+                  <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline" style={{ color: CYAN }}>{q.label}</a>
+                </span>
+              ))}
+              {' · '}{t('bw_guidance_footer', { date: standDatum })}
+            </p>
+          </>
+        )}
+        {!guidance && <p className="text-xs" style={{ color: MUTED }}>{t('bw_disclaimer')}</p>}
+      </section>
+
+      {/* Messungen */}
+      <section aria-labelledby="bw-history-title" className="flex flex-col gap-1">
+        <div className="flex items-baseline justify-between">
+          <h2 id="bw-history-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_measurements')}</h2>
+          <span className="text-sm tabular-nums" style={{ color: MUTED }}>{summary.entries.length}</span>
+        </div>
+        {summary.entries.length === 0 && (
+          <p className="py-4 text-sm" style={{ color: MUTED }}>{t('bw_no_entries')}</p>
+        )}
+        <ul>
+          {summary.points.map((p, i) => {
+            const e = p.entry
+            const v = p.value != null ? p.value : toNumber(e.value)
+            const u = p.value != null ? unit : e.unit
+            // Veraenderung zum naechstaelteren umrechenbaren Wert
+            const older = p.value != null ? summary.points.slice(i + 1).find(o => o.value != null) : undefined
+            const diff = older && p.value != null ? p.value - (older.value as number) : null
+            const status = entryInRange(e, def, unit)
+            const pillColor = status === false ? PILL_RED : status === true ? PILL_GREEN : PILL_GRAY
+            const lab = e.report_id ? labNamen.get(e.report_id) : null
+            const source = e.report_id ? [t('bw_source_report'), lab].filter(Boolean).join(' · ') : t('bw_source_manual')
+            return (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  onClick={() => onEdit(e)}
+                  data-bw-entry-edit
+                  aria-label={t('bw_edit_aria', { value: `${formatNumber(e.value)} ${e.unit}`, date: formatDisplayDate(e.tested_at) })}
+                  className="flex min-h-14 w-full items-center gap-3 py-3 text-left"
+                  style={{ borderBottom: '1px solid var(--border)', color: TEXT }}
+                >
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-base font-bold tabular-nums">{formatDisplayDate(e.tested_at)}</span>
+                    <span className="truncate text-[13px]" style={{ color: MUTED }}>{source}</span>
+                  </span>
+                  <span className="text-right tabular-nums">
+                    <span className="block text-base font-bold">{formatNumber(v)}</span>
+                    <span className="block text-xs" style={{ color: MUTED }}>{u}</span>
+                  </span>
+                  <span
+                    className="min-w-[62px] rounded-[7px] px-2 py-[5px] text-right text-[13px] font-bold tabular-nums text-white"
+                    style={{ background: pillColor }}
+                  >
+                    {diff != null ? signed(diff) : p.value != null ? t('bw_first_value') : '–'}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
     </div>
   )
 }

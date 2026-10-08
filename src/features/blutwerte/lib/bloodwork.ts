@@ -170,6 +170,20 @@ function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: s
 }
 
 /**
+ * Lage eines einzelnen Eintrags gegenueber seinem eigenen Bereich (Labor am
+ * Eintrag, sonst Katalog) — in displayUnit, aus ungerundeten Werten.
+ */
+export function entryInRange(entry: BloodworkEntry, def: MarkerDef | null, displayUnit: string): boolean | null {
+  // Ungerundet: die Rundung ist nur Anzeige und darf einen knapp auffaelligen
+  // Wert nicht in den Bereich schieben.
+  const raw = effectiveRange(entry, def)
+  const sourceUnit = raw.source === 'lab' ? entry.unit : (def?.einheit ?? '')
+  const range = rangeInDisplayUnit(raw, sourceUnit, displayUnit, def?.name, false)
+  const value = convert(toNumber(entry.value), entry.unit, displayUnit, def?.name)
+  return value != null ? isInRange(value, range) : null
+}
+
+/**
  * Baut je eine Zusammenfassung pro Katalog-Marker plus je eine pro Custom-Marker,
  * für den Einträge existieren.
  */
@@ -203,16 +217,12 @@ export function buildMarkerSummaries(entries: BloodworkEntry[], prefs: UnitPrefs
     const rawRange = effectiveRange(latest, bucket.def)
     const rangeSourceUnit = rawRange.source === 'lab' ? (latest?.unit ?? '') : (bucket.def?.einheit ?? '')
     const range = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit, markerKey)
-    // Das Urteil kommt aus den ungerundeten Werten — die Rundung ist nur Anzeige
-    // und darf einen knapp auffaelligen Wert nicht in den Bereich schieben.
-    const exactRange = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit, markerKey, false)
-    const exactValue = latest ? convert(toNumber(latest.value), latest.unit, displayUnit, markerKey) : null
 
     const { trend, diff } = computeTrend(sorted, displayUnit, markerKey)
 
-    // Wert und Bereich liegen nun beide in displayUnit; ein nicht umrechenbarer
-    // Bereich wurde zu "none" und liefert daher kein (falsches) Urteil.
-    const inRange = exactValue != null ? isInRange(exactValue, exactRange) : null
+    // Urteil aus ungerundeten Werten in displayUnit; ein nicht umrechenbarer
+    // Bereich liefert kein (falsches) Urteil.
+    const inRange = latest ? entryInRange(latest, bucket.def, displayUnit) : null
 
     return {
       name,

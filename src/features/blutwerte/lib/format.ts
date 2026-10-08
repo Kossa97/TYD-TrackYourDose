@@ -53,6 +53,13 @@ export const formatNumber = (value: number | string) => {
   return zahlFormat().format(numeric)
 }
 
+/** Veraenderung mit Vorzeichen: +3, −2, ±0. Erst runden, dann vergleichen — Umrechnungen hinterlassen Reste wie 1e-15. */
+export const formatSigned = (value: number) => {
+  const rounded = Math.round(value * 1000) / 1000
+  if (rounded === 0) return '±0'
+  return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded))}`
+}
+
 /**
  * Zahl fuer ein Eingabefeld: volle Genauigkeit, ohne Tausendertrennung, mit
  * dem Dezimalzeichen der Sprache (16,5 / 16.5). Das Formular liest beides.

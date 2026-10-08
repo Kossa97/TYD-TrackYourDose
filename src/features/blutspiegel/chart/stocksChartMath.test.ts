@@ -63,3 +63,25 @@ describe('stocksChartMath', () => {
     expect(days.every(t => new Date(t).getHours() === 0)).toBe(true)
   })
 })
+
+describe('yDomainFor mit Optionen', () => {
+  it('nimmt Zusatzwerte auf und deckelt Laborwerte nicht bei 100', () => {
+    const pts = [{ ts: 0, level: 60 }, { ts: 10, level: 90 }]
+    const d = yDomainFor(pts, 0, 10, { include: [40, 120], percentCap: false, minSpan: 9 })
+    expect(d.lo).toBeLessThanOrEqual(40)
+    expect(d.hi).toBeGreaterThanOrEqual(120)
+    const capped = yDomainFor(pts, 0, 10)
+    expect(capped.hi).toBeLessThanOrEqual(100)
+  })
+  it('kleine Werte bekommen feine Schritte', () => {
+    const d = yDomainFor([{ ts: 0, level: 1.2 }, { ts: 10, level: 2.4 }], 0, 10, { percentCap: false, minSpan: 0.24 })
+    expect(d.hi - d.lo).toBeLessThan(5)
+  })
+})
+
+describe('niceYDomain mit negativen Werten', () => {
+  it('Laborwerte duerfen unter 0, der Spiegel nicht', () => {
+    expect(niceYDomain(-3, 1, 4, { percentCap: false }).lo).toBeLessThanOrEqual(-3)
+    expect(niceYDomain(-3, 1).lo).toBe(0)
+  })
+})

@@ -40,7 +40,8 @@ test.describe('auf Englisch', () => {
     await page.getByRole('button', { name: /Cortisol/ }).first().click()
     await expect(page.getByRole('heading', { name: 'Cortisol' })).toBeVisible()
     await expect(page.getByText('The central stress hormone.', { exact: false })).toBeVisible()
-    await expect(page.getByText('Out of range', { exact: true })).toBeVisible()
+    await expect(page.locator('[data-bw-status]')).toContainText('Outside the reference range · 5–25 · Lab')
+    await expect(page.getByRole('region', { name: 'Key figures' })).toContainText('Above limit+5')
     await expect(page.getByText('09/15/2026')).toBeVisible()
   })
 })
@@ -161,7 +162,7 @@ test('Einheiten: rechnet automatisch um, Schalter Konventionell/SI und eigene Wa
   await expect(auswahl.locator('option')).toHaveText(['Automatisch (nmol/L)', 'ng/dL', 'nmol/L'])
   // eigene Wahl fuer diesen Marker schlaegt den SI-Schalter
   await auswahl.selectOption('ng/dL')
-  await expect(page.locator('p.text-3xl')).toContainText('1.310ng/dL')
+  await expect(page.locator('[data-bw-hero-value]')).toContainText('1.310ng/dL')
   await expect.poll(() => mock.table('profiles')[0].bloodwork_units).toEqual({ system: 'si', marker: { Testosteron: 'ng/dL' } })
 
   await page.reload()
@@ -258,7 +259,9 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
 
   await markerAnsicht(page)
   await page.getByRole('button', { name: /Kortisol/ }).first().click()
-  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 löschen' }).click()
+  // Loeschen sitzt im Bearbeiten-Fenster der Messung
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
+  await page.locator('[data-bw-entry-delete]').click()
 
   const sheet = page.getByRole('alertdialog', { name: 'Wert löschen?' })
   await expect(sheet).toContainText('Kortisol vom 15.09.2026 wird entfernt.')
@@ -266,7 +269,8 @@ test('Loeschen: eigenes Sheet statt Browser-Fenster; Abbrechen laesst den Wert s
   await expect(sheet).toBeHidden()
   expect(mock.table('bloodwork')).toHaveLength(1)
 
-  await page.locator('[data-bw-entry-delete]').click()
+  // Abbrechen fuehrt zurueck ins Formular, von dort erneut loeschen
+  await page.getByRole('button', { name: 'Wert löschen' }).click()
   await page.locator('[data-bw-delete-confirm]').click()
   await expect(page.getByText('Blutwert gelöscht')).toBeVisible()
   expect(mock.table('bloodwork')).toHaveLength(0)
@@ -357,4 +361,62 @@ test('Verlauf: Zyklen aus My Stack als Zeilen unter dem Diagramm', async ({ page
       await streifen.locator('..').screenshot({ path: `${process.env.SCREENSHOT_DIR}/verlauf-${thema}.png` })
     }
   }
+})
+
+test('Detail: Wert mit Veraenderung, Status, Kennzahlen, zugeklappte Einordnung und Messungen', async ({ page, mock }) => {
+  const befund = mock.insert('bloodwork_reports', { user_id: TEST_USER.id, tested_at: '2026-09-15', lab_name: 'Labor Mitte', source: 'import' })
+  wert(mock, 'Testosteron', { tested_at: '2026-04-12', value: 980, unit: 'ng/dL' })
+  wert(mock, 'Testosteron', { value: 1310, unit: 'ng/dL', ref_min: 349, ref_max: 1110, report_id: befund.id })
+  await markerAnsicht(page)
+  await page.locator('.bw-marker-card').filter({ hasText: 'Testosteron' }).getByRole('button', { name: /^Testosteron/ }).click()
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Testosteron' })).toBeVisible()
+  await expect(page.locator('[data-bw-hero-value]')).toContainText('1.310ng/dL')
+  await expect(page.getByText('seit 12.04.2026')).toBeVisible()
+  await expect(page.locator('[data-bw-status]')).toContainText('Außerhalb des Referenzbereichs · 349–1.110 · Labor')
+  await expect(page.getByRole('img', { name: /Testosteron/ })).toBeVisible()
+
+  const zeitraum = page.getByRole('group', { name: 'Zeitraum' })
+  await expect(zeitraum.getByRole('button')).toHaveText(['3M', '6M', '1J', '2J', 'Alles'])
+  await expect(zeitraum.getByRole('button', { name: '1J' })).toHaveAttribute('aria-pressed', 'true')
+
+  const kennzahlen = page.getByRole('region', { name: 'Kennzahlen' })
+  await expect(kennzahlen).toContainText('Über Grenze+200')
+  await expect(kennzahlen).toContainText('Messungen2')
+
+  // Einordnung: nie von selbst aufgeklappt
+  const einordnung = page.locator('[data-bw-guidance]')
+  for (const name of ['Zu niedrig', 'Im Bereich', 'Zu hoch']) {
+    await expect(einordnung.getByRole('button', { name })).toHaveAttribute('aria-expanded', 'false')
+  }
+  await einordnung.getByRole('button', { name: 'Zu hoch' }).click()
+  await expect(einordnung).toContainText('Mögliche Ursachen')
+  await expect(page.getByRole('link', { name: 'gesundheitsinformation.de: Testosteron' })).toHaveAttribute('href', /gesundheitsinformation\.de/)
+
+  const messungen = page.getByRole('region', { name: 'Messungen' })
+  await expect(messungen.getByRole('button')).toHaveCount(2)
+  await expect(messungen.getByRole('button').first()).toContainText('Befund · Labor Mitte')
+  await expect(messungen.getByRole('button').first()).toContainText('+330')
+  await expect(messungen.getByRole('button').last()).toContainText('Manuell')
+  await expect(messungen.getByRole('button').last()).toContainText('Erstwert')
+  if (process.env.SCREENSHOT_DIR) {
+    await page.waitForTimeout(900)
+    for (const thema of ['dark', 'light']) {
+      await page.evaluate(wert => document.documentElement.setAttribute('data-theme', wert), thema)
+      await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/detail-${thema}.png`, fullPage: true })
+    }
+  }
+})
+
+test('Loeschen aus dem Formular: Abbrechen fuehrt mit den Eingaben zurueck', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 14 })
+  await markerAnsicht(page)
+  await page.getByRole('button', { name: /Kortisol/ }).first().click()
+  await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
+  await page.getByLabel('Wert', { exact: true }).fill('15')
+  await page.getByRole('button', { name: 'Wert löschen' }).click()
+  await page.getByRole('alertdialog', { name: 'Wert löschen?' }).getByRole('button', { name: 'Abbrechen' }).click()
+  await expect(page.getByRole('heading', { name: 'Wert bearbeiten' })).toBeVisible()
+  await expect(page.getByLabel('Wert', { exact: true })).toHaveValue('15')
+  expect(mock.table('bloodwork')).toHaveLength(1)
 })

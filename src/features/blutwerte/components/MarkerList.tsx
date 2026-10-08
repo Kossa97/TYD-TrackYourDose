@@ -15,7 +15,7 @@ import { ChevronDown } from 'lucide-react'
 import { KATEGORIE_KEY, markerName } from '../lib/markerCatalog.en'
 import type { KategorieFilter } from '../lib/markerCatalog'
 import type { MarkerSummary } from '../lib/bloodwork'
-import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
+import { formatDisplayDate, formatNumber, formatRange, formatSigned } from '../lib/format'
 import { changeSincePrevious, markerStatus, sparklineGeometry, type MarkerStatus } from '../lib/sparkline'
 import { MUTED, PILL_GRAY, PILL_GREEN, PILL_RED, TEXT } from '../styles'
 
@@ -84,12 +84,6 @@ function RowSparkline({ summary, color }: { summary: MarkerSummary; color: strin
   )
 }
 
-function signed(value: number): string {
-  // Erst runden, dann vergleichen: Umrechnungen hinterlassen Reste wie 1e-15.
-  const rounded = Math.round(value * 1000) / 1000
-  if (rounded === 0) return '±0'
-  return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded))}`
-}
 
 interface CardProps {
   summary: MarkerSummary
@@ -112,7 +106,7 @@ function useMarkerView(summary: MarkerSummary, pillMode: PillMode) {
   const referenz = formatRange(summary.range.min, summary.range.max, '')
   // „Erstwert" nur, wenn es wirklich der erste ist; sonst sind die frueheren
   // Werte nicht in diese Einheit umrechenbar — dann kein Vergleich.
-  const changeText = change != null ? signed(change) : summary.entries.length > 1 ? '—' : t('bw_pill_first')
+  const changeText = change != null ? formatSigned(change) : summary.entries.length > 1 ? '—' : t('bw_pill_first')
   const rangeText = referenz ?? t('bw_pill_no_range')
   const pillText = pillMode === 'change' ? changeText : rangeText
   const statusText = t(`bw_status_${status}`)

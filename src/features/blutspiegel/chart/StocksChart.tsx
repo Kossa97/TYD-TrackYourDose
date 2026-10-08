@@ -54,11 +54,24 @@ export interface StocksChartProps {
   ariaLabel: string
   /** Punkt am Kurvenende (Live). */
   liveEnd?: boolean
+  /** Schattiertes Band (z. B. Referenzbereich) mit gestrichelten Grenzen. */
+  band?: { lo: number | null; hi: number | null; color: string }
+  /** Jeden Datenpunkt als Punkt zeigen (Messwerte statt Kurve). */
+  dots?: boolean
+  /** Werte, die die Y-Achse immer enthalten soll (z. B. die Bandgrenzen). */
+  yInclude?: number[]
+  /** Y-Achse bei 100 deckeln (Prozent-Spiegel); Standard an. */
+  percentCap?: boolean
+  /** Kleinste Spanne der Y-Achse; Standard 2. */
+  minSpan?: number
+  /** Leiste fuer Einnahme-Striche unter der Kurve; Standard an. */
+  intakeStrip?: boolean
 }
 
-const AXIS_RIGHT = 38
+/** Breite der Werte-Achse rechts; Inhalte darunter richten sich danach aus. */
+export const AXIS_RIGHT = 38
 const AXIS_BOTTOM = 22
-const INTAKE_STRIP = 12
+const INTAKE_STRIP_H = 12
 const PAD_TOP = 10
 /** Hoehe der freien Zeile fuer das Ablese-Schild. */
 const LABEL_H = 40
@@ -86,6 +99,7 @@ function cssVar(el: Element, name: string, fallback: string): string {
 export const StocksChart = memo(function StocksChart({
   points, start, end, accent, height, seriesKey, intakes = [], markers = [],
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
+  band, dots = false, yInclude, percentCap = true, minSpan = 2, intakeStrip = true,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -107,10 +121,10 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip })
   const onScrubRef = useRef(onScrub)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip }
     onScrubRef.current = onScrub
   })
 
@@ -128,7 +142,8 @@ export const StocksChart = memo(function StocksChart({
     if (!canvas || !target) return
     const width = widthRef.current
     const color = currentAccentRef.current
-    const { intakes: intakeList, markers: markerList, formatTick: fmtTick, xTicks: customTicks, formatValue: fmtValue, liveEnd: showLive, height: h } = propsRef.current
+    const { intakes: intakeList, markers: markerList, formatTick: fmtTick, xTicks: customTicks, formatValue: fmtValue, liveEnd: showLive, height: h, band: bandArea, dots: showDots } = propsRef.current
+    const INTAKE_STRIP = propsRef.current.intakeStrip ? INTAKE_STRIP_H : 0
     if (width <= 0) return
 
     const reduced = prefersReducedMotion()
@@ -191,6 +206,27 @@ export const StocksChart = memo(function StocksChart({
     const span = Math.max(1, view.end - view.start)
     const xOf = (ts: number) => plotL + ((ts - view.start) / span) * plotW
     const yOf = (lv: number) => plotB - ((lv - view.lo) / Math.max(1e-9, view.hi - view.lo)) * plotH
+
+    // Band (Referenzbereich): offene Seite reicht bis an den Rand
+    if (bandArea && (bandArea.lo != null || bandArea.hi != null)) {
+      const yTop = bandArea.hi != null ? Math.max(plotT, yOf(bandArea.hi)) : plotT
+      const yBot = bandArea.lo != null ? Math.min(plotB, yOf(bandArea.lo)) : plotB
+      if (yBot > yTop) {
+        ctx.fillStyle = hexAlpha(bandArea.color, 0.1)
+        ctx.fillRect(plotL, yTop, plotW, yBot - yTop)
+      }
+      ctx.save()
+      ctx.strokeStyle = hexAlpha(bandArea.color, 0.55)
+      ctx.lineWidth = 1
+      ctx.setLineDash([4, 4])
+      for (const edge of [bandArea.lo, bandArea.hi]) {
+        if (edge == null) continue
+        const y = Math.round(yOf(edge)) + 0.5
+        if (y < plotT || y > plotB) continue
+        ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke()
+      }
+      ctx.restore()
+    }
 
     // Horizontale Linien + Werte rechts (die Ziel-Ticks, mit gleitender Lage)
     ctx.font = '500 11px ui-sans-serif, system-ui, -apple-system, sans-serif'
@@ -283,6 +319,19 @@ export const StocksChart = memo(function StocksChart({
     const pts = pointsRef.current
     drawSeries(pts, color, fade)
 
+    // Messpunkte
+    if (showDots && reveal >= 1) {
+      for (const p of visibleSlice(pts, view.start, view.end)) {
+        if (p.ts < view.start || p.ts > view.end) continue
+        const x = xOf(p.ts)
+        const y = yOf(p.level)
+        ctx.fillStyle = surface
+        ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill()
+        ctx.fillStyle = scrubTs != null && p.ts > scrubTs ? hexAlpha(color, 0.45) : color
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+      }
+    }
+
     // Markierungen (manuelle Simulation)
     if (markerList.length && reveal >= 1) {
       ctx.font = '600 10px ui-sans-serif, system-ui, -apple-system, sans-serif'
@@ -360,8 +409,10 @@ export const StocksChart = memo(function StocksChart({
   }, [draw])
 
   // ── Props → Ziel-Ansicht ─────────────────────────────────────────────────
+  // Als Text, damit ein neues Array mit gleichen Werten keine Animation ausloest.
+  const yIncludeKey = (yInclude ?? []).filter(Number.isFinite).join('|')
   useEffect(() => {
-    const domain = yDomainFor(points, start, end)
+    const domain = yDomainFor(points, start, end, { include: yIncludeKey ? yIncludeKey.split('|').map(Number) : [], percentCap, minSpan })
     const nextTarget: View = { start, end, lo: domain.lo, hi: domain.hi }
     domainTicks.set(nextTarget, domain)
     const now = performance.now()
@@ -382,9 +433,9 @@ export const StocksChart = memo(function StocksChart({
     pointsRef.current = points
     targetViewRef.current = nextTarget
     schedule()
-  }, [points, start, end, seriesKey, accent, schedule])
+  }, [points, start, end, seriesKey, accent, schedule, yIncludeKey, percentCap, minSpan])
 
-  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, schedule])
+  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, band, dots, intakeStrip, schedule])
 
   // Breite
   useEffect(() => {

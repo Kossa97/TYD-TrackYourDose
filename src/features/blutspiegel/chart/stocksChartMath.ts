@@ -78,37 +78,57 @@ function niceStep(raw: number): number {
  * Schritte gerundet, nie unter 0. Eine fast flache Kurve bekommt mindestens
  * 2 Prozentpunkte Hoehe, sonst wuerde Rauschen zum Gebirge.
  */
-export function niceYDomain(min: number, max: number, targetTicks = 4): YDomain {
-  let lo = Math.max(0, min)
+export interface YDomainOptions {
+  /** Prozent-Spiegel: nie ueber 100, wenn die Werte 100 nicht ueberschreiten. */
+  percentCap?: boolean
+  /** Kleinste Spanne der Achse; Standard 2 (Prozentpunkte). */
+  minSpan?: number
+}
+
+export function niceYDomain(min: number, max: number, targetTicks = 4, options: YDomainOptions = {}): YDomain {
+  const { percentCap = true, minSpan = 2 } = options
+  // Spiegel und Laborwerte sind nie negativ — nur echte negative Werte (etwa
+  // eigene Marker) duerfen die Achse unter 0 ziehen.
+  const floor = !percentCap && min < 0 ? -Infinity : 0
+  let lo = Math.max(floor, min)
   let hi = Math.max(lo, max)
-  if (hi - lo < 2) {
+  if (hi - lo < minSpan) {
     const mid = (hi + lo) / 2
-    lo = Math.max(0, mid - 1)
-    hi = lo + 2
+    lo = Math.max(floor, mid - minSpan / 2)
+    hi = lo + minSpan
   }
   const pad = (hi - lo) * 0.08
-  lo = Math.max(0, lo - pad)
+  lo = Math.max(floor, lo - pad)
   // Der Spiegel ist % vom bisherigen Hoechstwert — ueber 100 gibt es nichts zu sehen.
-  hi = max <= 100 ? Math.min(100, hi + pad) : hi + pad
+  hi = percentCap && max <= 100 ? Math.min(100, hi + pad) : hi + pad
   const step = niceStep((hi - lo) / targetTicks)
-  const niceLo = Math.max(0, Math.floor(lo / step) * step)
+  const niceLo = Math.max(floor, Math.floor(lo / step) * step)
   const niceHi = Math.ceil(hi / step) * step
   const ticks: number[] = []
   for (let v = niceLo; v <= niceHi + step * 1e-6; v += step) ticks.push(Math.round(v * 1000) / 1000)
   return { lo: niceLo, hi: niceHi, ticks }
 }
 
-export function yDomainFor(points: LevelPoint[], start: number, end: number): YDomain {
+export function yDomainFor(
+  points: LevelPoint[], start: number, end: number,
+  options: YDomainOptions & { include?: number[] } = {},
+): YDomain {
+  const { include = [], ...domainOptions } = options
   const slice = visibleSlice(points, start, end)
-  if (!slice.length) return niceYDomain(0, 100)
+  if (!slice.length && !include.length) return niceYDomain(0, 100, 4, domainOptions)
   let min = Infinity
   let max = -Infinity
+  for (const v of include) {
+    if (!Number.isFinite(v)) continue
+    if (v < min) min = v
+    if (v > max) max = v
+  }
   for (const p of slice) {
     const level = p.ts < start ? levelAt(points, start) ?? p.level : p.ts > end ? levelAt(points, end) ?? p.level : p.level
     if (level < min) min = level
     if (level > max) max = level
   }
-  return niceYDomain(min, max)
+  return niceYDomain(min, max, 4, domainOptions)
 }
 
 const TIME_STEPS = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY, 14 * DAY, 28 * DAY, 56 * DAY, 91 * DAY, 182 * DAY, 364 * DAY]

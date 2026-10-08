@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { markerName } from '../lib/markerCatalog.en'
 import toast from 'react-hot-toast'
+import { Trash2 } from 'lucide-react'
 import { CATALOG_MARKER_NAMES, normalizeMarker } from '../lib/markerCatalog'
 import { conversionHint } from '../lib/conversionHint'
 import { formatEingabe, formatRange } from '../lib/format'
@@ -74,9 +75,11 @@ interface Props {
   onChange: (draft: EntryDraft) => void
   onCancel: () => void
   onSave: (parsed: ParsedEntry) => void
+  /** Beim Bearbeiten: Wert loeschen (fragt danach noch einmal nach). */
+  onDelete?: () => void
 }
 
-export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, onSave }: Props) {
+export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, onSave, onDelete }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const def = draft.custom ? null : normalizeMarker(draft.marker)
@@ -268,6 +271,18 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
             {saving ? t('saving') : t('save')}
           </button>
         </div>
+        {onDelete && (
+          <button
+            type="button"
+            data-bw-entry-delete
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-red-400"
+            disabled={saving}
+            onClick={onDelete}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            {t('bw_delete_entry')}
+          </button>
+        )}
       </div>
     </div>
   )

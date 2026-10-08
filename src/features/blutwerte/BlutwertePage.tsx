@@ -41,6 +41,7 @@ export function BlutwertePage() {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [loeschen, setLoeschen] = useState<BloodworkEntry | null>(null)
+  const [loeschenAusFormular, setLoeschenAusFormular] = useState(false)
   // Zyklen aus My Stack fuer die Zeitstreifen im Verlauf. Fehlen sie
   // (Fehler, keine Zyklen), bleibt der Verlauf einfach ohne Streifen.
   // Zyklen je Konto gemerkt: nach einem Kontowechsel nie die des vorherigen zeigen.
@@ -264,11 +265,23 @@ export function BlutwertePage() {
     if (error) return toast.error(t('bw_delete_error'))
     toast.success(t('bw_deleted'))
     setLoeschen(null)
+    if (loeschenAusFormular) {
+      setLoeschenAusFormular(false)
+      closeForm()
+    }
     void load()
   }
 
+  const loeschenAbbrechen = () => {
+    setLoeschen(null)
+    if (loeschenAusFormular) {
+      setLoeschenAusFormular(false)
+      setShowForm(true)
+    }
+  }
+
   const loeschenSheet = loeschen && (
-    <Sheet labelledBy="bw-delete-title" busy={loescht} onClose={() => setLoeschen(null)} role="alertdialog" data-bw-delete-sheet>
+    <Sheet labelledBy="bw-delete-title" busy={loescht} onClose={loeschenAbbrechen} role="alertdialog" data-bw-delete-sheet>
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-300">
           <Trash2 size={18} aria-hidden="true" />
@@ -281,7 +294,7 @@ export function BlutwertePage() {
         </div>
       </div>
       <div className="mt-5 flex gap-2">
-        <button type="button" autoFocus data-app-back-close disabled={loescht} onClick={() => setLoeschen(null)} className="min-h-11 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 disabled:opacity-50">
+        <button type="button" autoFocus data-app-back-close disabled={loescht} onClick={loeschenAbbrechen} className="min-h-11 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 disabled:opacity-50">
           {t('cancel')}
         </button>
         <button type="button" data-bw-delete-confirm disabled={loescht} onClick={() => void loeschenBestaetigt()} className="min-h-11 flex-1 rounded-xl bg-red-600 px-4 text-sm font-bold text-white disabled:opacity-50">
@@ -299,6 +312,14 @@ export function BlutwertePage() {
       onChange={setDraft}
       onCancel={closeForm}
       onSave={save}
+      onDelete={draft.id ? () => {
+        const entry = entries.find(e => e.id === draft.id)
+        if (!entry) return
+        // Formular nur ausblenden: Abbrechen im Sheet fuehrt mit den Eingaben zurueck.
+        setShowForm(false)
+        setLoeschenAusFormular(true)
+        remove(entry)
+      } : undefined}
     />
   )
 
@@ -311,13 +332,13 @@ export function BlutwertePage() {
           <MarkerDetail
             summary={summary}
             zyklen={zyklen}
+            reports={reports}
             unitSystem={unitPrefs.system ?? 'konventionell'}
             markerUnit={unitPrefs.marker?.[summary.name] ?? null}
             onMarkerUnit={unitsReady ? unit => setMarkerUnit(summary.name, unit) : undefined}
             onBack={() => setSelectedMarker(null)}
             onAdd={() => openNew(selectedMarker)}
             onEdit={openEdit}
-            onDelete={remove}
           />
           {modal}
           {loeschenSheet}

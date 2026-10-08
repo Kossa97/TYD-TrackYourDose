@@ -8,6 +8,7 @@ import {
   roundConverted,
   computeTrend,
   effectiveRange,
+  entryInRange,
   filterByKategorie,
   isInRange,
   sortSummaries,
@@ -414,5 +415,19 @@ describe('buildMarkerSummaries – gewaehlte Einheiten', () => {
     const p = buildMarkerSummaries([entry({ marker: 'Prolaktin', value: 12, unit: 'ng/mL' })], { system: 'si' })
       .find(s => s.name === 'Prolaktin')!
     expect(p.displayUnit).toBe('ng/mL')
+  })
+})
+
+describe('entryInRange', () => {
+  const testo = normalizeMarker('Testosteron')
+  it('nimmt den Laborbereich des Eintrags, sonst den Katalog', () => {
+    expect(entryInRange(entry({ marker: 'Testosteron', value: 950, unit: 'ng/dL', ref_min: 300, ref_max: 1000 }), testo, 'ng/dL')).toBe(true)
+    expect(entryInRange(entry({ marker: 'Testosteron', value: 950, unit: 'ng/dL', ref_min: null, ref_max: null }), testo, 'ng/dL')).toBe(false)
+  })
+  it('rechnet Wert und Bereich in die Anzeige-Einheit', () => {
+    expect(entryInRange(entry({ marker: 'Testosteron', value: 20, unit: 'nmol/L', ref_min: 10, ref_max: 30 }), testo, 'ng/dL')).toBe(true)
+  })
+  it('ohne Bereich kein Urteil', () => {
+    expect(entryInRange(entry({ marker: 'Eigenwert', value: 5, unit: 'x', ref_min: null, ref_max: null }), null, 'x')).toBeNull()
   })
 })

@@ -29,7 +29,7 @@ export interface ZyklusZeile {
 
 export const MAX_ZEILEN = 6
 const FARBEN = 6
-const TAG_MS = 24 * 60 * 60 * 1000
+export const TAG_MS = 24 * 60 * 60 * 1000
 
 // ── Gemeinsame Zeitachse fuer Diagramm und Zeilen ────────────────────────────
 // Ein Kalendertag ist seine UTC-Mitternacht; das Fenster reicht vom Beginn des

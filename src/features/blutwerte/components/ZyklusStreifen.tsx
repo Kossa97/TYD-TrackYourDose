@@ -3,10 +3,6 @@ import type { ZyklusZeile } from '../lib/zyklusZeilen'
 import { formatDisplayDate } from '../lib/format'
 import { MUTED, TEXT } from '../styles'
 
-/** Linker Rand der Plotflaeche im Verlauf (Breite der y-Achse) und rechter Rand. */
-export const PLOT_LINKS = 40
-export const PLOT_RECHTS = 8
-
 /**
  * Die Zyklen aus My Stack unter dem Verlauf eines Markers — je Substanz eine
  * Zeile mit Namen, die Abschnitte auf derselben Zeitachse wie das Diagramm.
@@ -20,7 +16,7 @@ export function ZyklusStreifen({ zeilen, weitere }: { zeilen: ZyklusZeile[]; wei
     t('bw_cycles_period', { from: formatDisplayDate(von), to: bis ? formatDisplayDate(bis) : t('bw_cycles_running') })
 
   return (
-    <div data-cycle-strip className="mt-3" style={{ marginLeft: PLOT_LINKS, marginRight: PLOT_RECHTS }}>
+    <div data-cycle-strip className="mt-3">
       <p className="text-[0.65rem] uppercase tracking-wide mb-2" style={{ color: MUTED }}>{t('bw_cycles_title')}</p>
       <ul className="flex flex-col gap-2">
         {zeilen.map(zeile => (
