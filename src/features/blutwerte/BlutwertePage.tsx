@@ -329,7 +329,6 @@ export function BlutwertePage() {
           ) : (
             <MarkerList
               summaries={visibleSummaries}
-              grouped={sortMode === 'kategorie' && kategorie === null}
               pillMode={pillMode}
               onTogglePill={togglePill}
               onSelect={setSelectedMarker}

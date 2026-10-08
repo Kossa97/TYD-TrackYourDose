@@ -1992,3 +1992,13 @@ main.flex-1 {
 @media (min-width: 480px) {
   .blutspiegel-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Blutwerte: Marker-Karten, zwei nebeneinander */
+.bw-marker-card {
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .bw-marker-card {
+  box-shadow: 0 4px 18px rgba(20, 40, 80, 0.07);
+}

@@ -53,7 +53,7 @@ export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, on
           <AlertTriangle size={15} style={{ color: RED }} aria-hidden="true" />
           {t('bw_flagged_hint')}
         </p>
-        <MarkerList summaries={summaries} grouped={false} pillMode={pillMode} onTogglePill={onTogglePill} onSelect={onSelect} />
+        <MarkerList summaries={summaries} pillMode={pillMode} onTogglePill={onTogglePill} onSelect={onSelect} />
       </div>
       {ungeprueftHinweis}
     </div>

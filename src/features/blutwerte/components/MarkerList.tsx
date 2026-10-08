@@ -1,20 +1,17 @@
 /**
- * Marker-Uebersicht nach dem Vorbild der Aktien-App: eine Zeile je Marker,
- * links Name und Kategorie, in der Mitte der Verlauf als Mini-Kurve mit den
- * Grenzen des Referenzbereichs gestrichelt, rechts der neueste Wert und eine
- * farbige Plakette.
+ * Marker-Uebersicht als Karten, zwei nebeneinander: Name und Datum, der
+ * Verlauf als Mini-Kurve mit den Grenzen des Referenzbereichs gestrichelt,
+ * der neueste Wert und eine farbige Plakette (Gestaltung nach der Aktien-App).
  *
  * Farbe heisst hier Befund, nicht Richtung: gruen im Bereich, rot ausserhalb,
  * grau ohne Referenz. Ein Anstieg ist nicht von sich aus gut oder schlecht.
  * Die Plakette zeigt die Veraenderung zur vorigen Messung oder — nach Tippen,
- * fuer alle Zeilen — den Referenzbereich, wie die Aktien-App zwischen
- * Veraenderung und Marktkapitalisierung wechselt.
+ * fuer alle Karten — den Referenzbereich.
  */
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
-import { KATEGORIE_KEY, markerName } from '../lib/markerCatalog.en'
-import type { KategorieFilter } from '../lib/markerCatalog'
+import { markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
 import { changeSincePrevious, markerStatus, sparklineGeometry, type MarkerStatus } from '../lib/sparkline'
@@ -29,27 +26,19 @@ const STATUS_COLOR: Record<MarkerStatus, string> = {
   none: PILL_GRAY,
 }
 
-const SPARK_W = 56
-const SPARK_H = 36
-const HAIRLINE = '1px solid var(--border)'
+const SPARK_W = 140
+const SPARK_H = 44
 
+/** Mini-Kurve ueber die volle Kartenbreite; Linien bleiben beim Strecken gleich duenn. */
 function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }) {
-  const gradId = useId()
   const g = sparklineGeometry(summary, SPARK_W, SPARK_H)
   return (
-    <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} aria-hidden="true" style={{ flexShrink: 0, overflow: 'visible' }}>
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
+    <svg width="100%" height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} preserveAspectRatio="none" aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       {g.bounds.map((y, i) => (
-        <line key={i} x1={0} x2={SPARK_W} y1={y} y2={y} stroke={color} strokeOpacity={0.75} strokeWidth={1} strokeDasharray="3 3" />
+        <line key={i} x1={0} x2={SPARK_W} y1={y} y2={y} stroke={color} strokeOpacity={0.75} strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
       ))}
-      {g.area && <path d={g.area} fill={`url(#${gradId})`} />}
-      {g.line && <path d={g.line} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />}
-      {g.last && <circle cx={g.last.x} cy={g.last.y} r={2.5} fill={color} />}
+      {g.area && <path d={g.area} fill={color} fillOpacity={0.16} />}
+      {g.line && <path d={g.line} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />}
     </svg>
   )
 }
@@ -61,14 +50,16 @@ function signed(value: number): string {
   return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded))}`
 }
 
-interface RowProps {
+interface CardProps {
   summary: MarkerSummary
   pillMode: PillMode
   onSelect: (name: string) => void
   onTogglePill: () => void
 }
 
-function MarkerRow({ summary, pillMode, onSelect, onTogglePill }: RowProps) {
+const CARD_H = 180
+
+function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const status = markerStatus(summary)
@@ -86,67 +77,79 @@ function MarkerRow({ summary, pillMode, onSelect, onTogglePill }: RowProps) {
     : (referenz ?? t('bw_pill_no_range'))
   const statusText = t(`bw_status_${status}`)
 
+  const ariaLabel = latest
+    ? t('bw_row_aria', { name, value: `${formatNumber(shownValue!)} ${shownUnit ?? ''}`.trim(), status: statusText, date: formatDisplayDate(latest.tested_at) })
+    : `${name}, ${statusText}`
+
+  // Die ganze Karte oeffnet den Marker (unsichtbare Flaeche darunter); die
+  // Plakette liegt darueber und hat ihre eigene Aufgabe. So bleibt der Inhalt
+  // ein normales Layout — Wert und Plakette stehen nebeneinander, statt sich
+  // bei langen Werten zu ueberlappen.
   return (
-    <div style={{ display: 'flex', alignItems: 'center', borderBottom: HAIRLINE }}>
+    <div className="bw-marker-card" style={{ position: 'relative', height: CARD_H, opacity: latest ? 1 : 0.55 }}>
       <button
         type="button"
         onClick={() => onSelect(summary.name)}
-        aria-label={latest
-          ? t('bw_row_aria', { name, value: `${formatNumber(shownValue!)} ${shownUnit ?? ''}`.trim(), status: statusText, date: formatDisplayDate(latest.tested_at) })
-          : `${name}, ${statusText}`}
+        aria-label={ariaLabel}
+        style={{ position: 'absolute', inset: 0, background: 'none', border: 'none', borderRadius: 'inherit', cursor: 'pointer', padding: 0 }}
+      />
+      <div
         style={{
-          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0',
-          background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+          position: 'relative', height: '100%', boxSizing: 'border-box', padding: '14px 12px 12px 14px', pointerEvents: 'none',
+          display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 6,
         }}
       >
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: 'block', fontSize: 17, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {/* Name, Datum und Wert stehen schon im Label der Karte. */}
+        <div aria-hidden="true" style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {name}
-          </span>
-          <span style={{ display: 'block', marginTop: 2, fontSize: 14, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          </p>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {latest ? formatDisplayDate(latest.tested_at) : t('bw_no_test')}
-          </span>
-        </span>
+          </p>
+        </div>
         {latest && <Sparkline summary={summary} color={color} />}
         {latest && (
-          <span style={{ flexShrink: 0, minWidth: 44, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-            <span style={{ display: 'block', fontSize: 18, fontWeight: 700, color: TEXT, whiteSpace: 'nowrap' }}>
-              {formatNumber(shownValue!)}
-            </span>
-            <span style={{ display: 'block', fontSize: 12, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {shownUnit}
-            </span>
-          </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+            <div aria-hidden="true" style={{ minWidth: 0, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 800, lineHeight: 1.1, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatNumber(shownValue!)}</p>
+              <p style={{ margin: 0, fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis' }}>{shownUnit}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onTogglePill}
+              aria-label={t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })}
+              data-bw-status={status}
+              style={{
+                pointerEvents: 'auto', flexShrink: 0, minWidth: 56, minHeight: 32, padding: '0 8px',
+                borderRadius: 7, border: 'none', background: color, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
+              }}
+            >
+              {pillText}
+            </button>
+          </div>
         )}
-      </button>
-      {latest && (
-        <button
-          type="button"
-          onClick={onTogglePill}
-          aria-label={t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })}
-          data-bw-status={status}
-          style={{
-            marginLeft: 8, flexShrink: 0, minWidth: 66, minHeight: 32, padding: '0 8px', borderRadius: 7, border: 'none',
-            background: color, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
-            fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
-          }}
-        >
-          {pillText}
-        </button>
-      )}
+      </div>
     </div>
   )
 }
 
 interface Props {
   summaries: MarkerSummary[]
-  grouped: boolean
   pillMode: PillMode
   onTogglePill: () => void
   onSelect: (name: string) => void
 }
 
-export function MarkerList({ summaries, grouped, pillMode, onTogglePill, onSelect }: Props) {
+const GRID = { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 } as const
+
+/**
+ * Immer zwei Karten nebeneinander, gleich gross. Keine Kategorie-Ueberschriften:
+ * sie liessen nach jeder ungeraden Kategorie eine halbe Reihe leer. Nach
+ * Kategorie filtern die Tabs darueber.
+ */
+export function MarkerList({ summaries, pillMode, onTogglePill, onSelect }: Props) {
   const { t } = useTranslation()
   const [showUntested, setShowUntested] = useState(false)
   const tested = summaries.filter(s => s.latest)
@@ -156,31 +159,13 @@ export function MarkerList({ summaries, grouped, pillMode, onTogglePill, onSelec
     return <p style={{ padding: '32px 0', textAlign: 'center', fontSize: 14, color: MUTED }}>{t('bw_no_markers')}</p>
   }
 
-  const row = (s: MarkerSummary) => (
-    <MarkerRow key={s.name} summary={s} pillMode={pillMode} onSelect={onSelect} onTogglePill={onTogglePill} />
+  const card = (s: MarkerSummary) => (
+    <MarkerCard key={s.name} summary={s} pillMode={pillMode} onSelect={onSelect} onTogglePill={onTogglePill} />
   )
-
-  const groups: Array<{ kategorie: string; items: MarkerSummary[] }> = []
-  if (grouped) {
-    for (const s of tested) {
-      const current = groups[groups.length - 1]
-      if (current && current.kategorie === s.kategorie) current.items.push(s)
-      else groups.push({ kategorie: s.kategorie, items: [s] })
-    }
-  }
 
   return (
     <div>
-      {grouped
-        ? groups.map(group => (
-          <section key={group.kategorie} aria-label={t(KATEGORIE_KEY[group.kategorie as KategorieFilter] ?? group.kategorie)}>
-            <h3 style={{ margin: '18px 0 0', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: MUTED }}>
-              {t(KATEGORIE_KEY[group.kategorie as KategorieFilter] ?? group.kategorie)}
-            </h3>
-            {group.items.map(row)}
-          </section>
-        ))
-        : tested.map(row)}
+      {tested.length > 0 && <div style={GRID}>{tested.map(card)}</div>}
 
       {untested.length > 0 && (
         <div style={{ marginTop: tested.length ? 8 : 0 }}>
@@ -190,14 +175,14 @@ export function MarkerList({ summaries, grouped, pillMode, onTogglePill, onSelec
             onClick={() => setShowUntested(v => !v)}
             style={{
               width: '100%', minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: 'none', border: 'none', borderBottom: showUntested ? HAIRLINE : 'none', padding: 0,
+              background: 'none', border: 'none', padding: 0,
               cursor: 'pointer', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, color: MUTED,
             }}
           >
             {t('bw_untested_count', { count: untested.length })}
             <ChevronDown size={18} style={{ transform: showUntested ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
           </button>
-          {showUntested && untested.map(row)}
+          {showUntested && <div style={GRID}>{untested.map(card)}</div>}
         </div>
       )}
     </div>
