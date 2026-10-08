@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from './support/fixtures'
 import { TEST_USER } from './support/mockSupabase'
 
@@ -7,17 +8,23 @@ import { TEST_USER } from './support/mockSupabase'
  * ohne sie wird nichts gesendet, und sie laesst sich im Profil widerrufen.
  */
 
+/** „+" oben → „Dokument": der Import per KI. */
+async function dokumentImport(page: Page) {
+  await page.getByRole('button', { name: 'Blutwert hinzufügen' }).click()
+  await page.getByRole('dialog', { name: 'Blutwert hinzufügen' }).getByRole('button', { name: /^Dokument/ }).click()
+}
+
 const BEFUND = { name: 'befund.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% Testbefund\n') }
 
 test('Import fragt zuerst nach der Einwilligung; erst danach geht eine Datei raus', async ({ page, mock }) => {
   await page.goto('/blutwerte')
-  await page.getByRole('button', { name: 'Import' }).click()
+  await dokumentImport(page)
 
   const einwilligung = page.locator('[data-ai-consent]')
   await expect(einwilligung).toContainText('Anthropic')
   await expect(einwilligung).toContainText('Name, Geburtsdatum und Adresse')
   // Keine Datei-Knoepfe, solange nicht eingewilligt ist.
-  await expect(page.getByRole('button', { name: 'Foto' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Dokument auswählen' })).toHaveCount(0)
   await expect(einwilligung.locator('[data-ai-consent-accept]')).toBeDisabled()
 
   await einwilligung.locator('[data-ai-consent-check]').check()
@@ -38,7 +45,7 @@ test('Import fragt zuerst nach der Einwilligung; erst danach geht eine Datei rau
 
 test('Abbrechen bei der Einwilligung: nichts gespeichert, nichts gesendet', async ({ page, mock }) => {
   await page.goto('/blutwerte')
-  await page.getByRole('button', { name: 'Import' }).click()
+  await dokumentImport(page)
   await page.locator('[data-ai-consent]').getByRole('button', { name: 'Abbrechen' }).click()
   await expect(page.locator('[data-ai-consent]')).toHaveCount(0)
   expect(mock.table('profiles').find(row => row.id === TEST_USER.id)?.ai_import_consent_at ?? null).toBeNull()
@@ -55,7 +62,7 @@ test('Widerruf im Profil: danach fragt der Import wieder', async ({ page, mock }
   expect(mock.table('profiles').find(row => row.id === TEST_USER.id)?.ai_import_consent_at).toBeNull()
 
   await page.goto('/blutwerte')
-  await page.getByRole('button', { name: 'Import' }).click()
+  await dokumentImport(page)
   await expect(page.locator('[data-ai-consent]')).toBeVisible()
 })
 
@@ -63,7 +70,7 @@ test('Inzwischen widerrufen: der Server lehnt ab, der Import fragt neu statt ins
   const profil = mock.table('profiles').find(row => row.id === TEST_USER.id)!
   Object.assign(profil, { ai_import_consent_at: '2026-10-01T08:00:00.000Z' })
   await page.goto('/blutwerte')
-  await page.getByRole('button', { name: 'Import' }).click()
+  await dokumentImport(page)
   await expect(page.locator('[data-ai-consent-note]')).toBeVisible()
 
   // Widerruf auf einem anderen Geraet.

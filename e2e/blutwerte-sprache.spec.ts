@@ -170,6 +170,41 @@ test('Einheiten: rechnet automatisch um, Schalter Konventionell/SI und eigene Wa
   await expect(page.locator('.bw-marker-card').filter({ hasText: 'Testosteron' })).toContainText('ng/dL')
 })
 
+test('Hinzufuegen: nur „+", darunter Dokument, Foto und manuelle Eingabe mit eigenem Blutwert und Referenzbereich', async ({ page, mock }) => {
+  await page.goto('/blutwerte')
+  await expect(page.getByRole('button', { name: 'Import' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Blutwert hinzufügen' }).click()
+  const blatt = page.getByRole('dialog', { name: 'Blutwert hinzufügen' })
+  await expect(blatt.getByRole('button', { name: /^Dokument/ })).toBeVisible()
+  await expect(blatt.getByRole('button', { name: /^Foto/ })).toBeVisible()
+
+  // Foto fuehrt in den Import — zuerst die KI-Einwilligung
+  await blatt.getByRole('button', { name: /^Foto/ }).click()
+  await expect(page.locator('[data-ai-consent]')).toBeVisible()
+  await page.locator('[data-ai-consent]').getByRole('button', { name: 'Abbrechen' }).click()
+
+  await page.getByRole('button', { name: 'Blutwert hinzufügen' }).click()
+  await blatt.getByRole('button', { name: /^Manuelle Eingabe/ }).click()
+  await page.getByLabel('Marker', { exact: true }).selectOption({ label: 'Eigener Blutwert …' })
+  await page.getByLabel('Name des Blutwerts').fill('Mein Laborwert')
+  await page.getByLabel('Wert', { exact: true }).fill('4,2')
+  await page.getByLabel('Einheit', { exact: true }).selectOption('U/L')
+  await page.getByLabel('von').fill('1')
+  await page.getByLabel('bis').fill('3,5')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+
+  await expect.poll(() => mock.table('bloodwork').length).toBe(1)
+  expect(mock.table('bloodwork')[0]).toMatchObject({ marker: 'Mein Laborwert', value: 4.2, unit: 'U/L', ref_min: 1, ref_max: 3.5 })
+  // mit eigenem Bereich beurteilt: 4,2 liegt darueber
+  await expect(page.locator('[data-bw-flagged]')).toContainText('Mein Laborwert')
+})
+
+test('Uebersicht: das Datum oben ist der Stand der letzten Messung', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 14, ref_min: 5, ref_max: 25 })
+  await page.goto('/blutwerte')
+  await expect(page.getByText('Stand 15. September')).toBeVisible()
+})
+
 test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne Werte ein Einstieg', async ({ page, mock }) => {
   await page.goto('/blutwerte')
   await expect(page.locator('[data-bw-flagged-empty]')).toContainText('Noch keine Blutwerte.')
@@ -246,9 +281,9 @@ test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mo
 
   await expect(page.getByRole('heading', { name: 'Wert bearbeiten' })).toBeVisible()
   // Marker ist fest, kein Auswahlfeld
-  await expect(page.locator('[data-app-modal] select')).toHaveCount(0)
+  await expect(page.locator('#bw-entry-marker')).toHaveCount(0)
   await page.locator('[data-app-modal] input[type="date"]').fill('2026-09-14')
-  await page.getByPlaceholder('42.5').fill('16,5')
+  await page.getByLabel('Wert', { exact: true }).fill('16,5')
   await page.getByRole('button', { name: 'Speichern' }).click()
 
   await expect(page.getByText('Wert geändert')).toBeVisible()
@@ -256,7 +291,7 @@ test('Bearbeiten: Einzelwert aendert Datum, Wert und Einheit', async ({ page, mo
   expect(zeile).toMatchObject({ id: eintrag.id, tested_at: '2026-09-14', value: 16.5, unit: 'µg/dL', notes: 'nuechtern' })
   // erneut geoeffnet: Dezimalkomma wie eingegeben
   await page.getByRole('button', { name: '16,5 µg/dL vom 14.09.2026 bearbeiten' }).click()
-  await expect(page.getByPlaceholder('42.5')).toHaveValue('16,5')
+  await expect(page.getByLabel('Wert', { exact: true })).toHaveValue('16,5')
 })
 
 test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz bleibt', async ({ page, mock }) => {
@@ -271,7 +306,7 @@ test('Bearbeiten: Wert aus einem Befund — Datum bleibt beim Befund, Referenz b
   await expect(datum).toBeDisabled()
   await expect(page.getByText('Das Datum gehört zum Befund, aus dem der Wert stammt.')).toBeVisible()
   if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/bearbeiten.png` })
-  await page.getByPlaceholder('42.5').fill('20')
+  await page.getByLabel('Wert', { exact: true }).fill('20')
   await page.getByRole('button', { name: 'Speichern' }).click()
 
   await expect(page.getByText('Wert geändert')).toBeVisible()
@@ -285,8 +320,8 @@ test('Bearbeiten: andere Einheit — Laborreferenz faellt weg, mit Hinweis', asy
   await page.getByRole('button', { name: '14 µg/dL vom 15.09.2026 bearbeiten' }).click()
 
   await expect(page.locator('[data-bw-unit-drops-range]')).toHaveCount(0)
-  await page.getByPlaceholder('42.5').fill('386')
-  await page.getByPlaceholder('ng/mL').fill('nmol/L')
+  await page.getByLabel('Wert', { exact: true }).fill('386')
+  await page.locator('[data-app-modal]').getByLabel('Einheit', { exact: true }).selectOption('nmol/L')
   await expect(page.locator('[data-bw-unit-drops-range]')).toContainText('Die Laborreferenz gilt für µg/dL.')
   await page.getByRole('button', { name: 'Speichern' }).click()
 

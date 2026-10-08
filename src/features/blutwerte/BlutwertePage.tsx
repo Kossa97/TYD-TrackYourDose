@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Camera, LayoutGrid, List, Plus, Trash2 } from 'lucide-react'
+import { LayoutGrid, List, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
 import { AUFFAELLIG, auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, ungepruefteWerte, type MarkerFilter, type SortMode } from './lib/bloodwork'
 import { formatDisplayDate, formatEingabe, formatLongDate } from './lib/format'
-import { SONSTIGE } from './lib/markerCatalog'
+import { SONSTIGE, normalizeMarker } from './lib/markerCatalog'
 import { CYAN, TEXT, MUTED } from './styles'
 import { markerName } from './lib/markerCatalog.en'
 import { Sheet } from '../compliance/components/Sheet'
@@ -16,7 +16,8 @@ import { MarkerDetail } from './components/MarkerDetail'
 import { GridControls } from './components/GridControls'
 import { AuffaelligeWerte } from './components/AuffaelligeWerte'
 import { BefundListe } from './components/BefundListe'
-import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal'
+import { EntryModal, emptyDraft, refText, sameRef, type EntryDraft, type ParsedEntry } from './components/EntryModal'
+import { AddSheet } from './components/AddSheet'
 import { ImportFlow } from './components/import/ImportFlow'
 import type { CycleTimeline } from '../../lib/planTimeline'
 import { loadCycleHistory } from '../my-stack/services/planLifecycle'
@@ -56,7 +57,9 @@ export function BlutwertePage() {
   const [saving, setSaving] = useState(false)
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
-  const [showImport, setShowImport] = useState(false)
+  // Import per KI: aus dem „+"-Blatt als Foto oder als Dokument.
+  const [importMode, setImportMode] = useState<'photo' | 'document' | null>(null)
+  const [showAdd, setShowAdd] = useState(false)
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft())
   // Vorausgewaehlt: der Filter „Auffällige“ — was Aufmerksamkeit braucht.
   const [kategorie, setKategorie] = useState<MarkerFilter>(AUFFAELLIG)
@@ -196,11 +199,14 @@ export function BlutwertePage() {
       id: entry.id,
       reportId: entry.report_id,
       originalUnit: entry.unit,
-      hasLabRange: entry.ref_min != null || entry.ref_max != null,
+      originalRef: { min: refText(entry.ref_min), max: refText(entry.ref_max) },
       tested_at: entry.tested_at,
       marker: entry.marker,
+      custom: !normalizeMarker(entry.marker),
       value: formatEingabe(entry.value),
       unit: entry.unit,
+      refMin: refText(entry.ref_min),
+      refMax: refText(entry.ref_max),
     })
     setShowForm(true)
   }
@@ -214,16 +220,22 @@ export function BlutwertePage() {
   // Notiz bleiben. Bei Werten aus einem Befund gehoert das Datum dem Befund
   // und wird nicht mitgeschickt. Die Laborreferenz gilt fuer ihre Einheit:
   // aendert sich die Einheit, faellt sie weg (dann gilt der Katalogbereich).
-  const save = async (parsed: { tested_at: string; marker: string; value: number; unit: string }) => {
+  const save = async (parsed: ParsedEntry) => {
     if (!user) return
     setSaving(true)
-    const { id, reportId, originalUnit, hasLabRange } = draft
+    const { id, reportId, originalUnit, originalRef } = draft
+    // Ein Laborbereich gilt fuer seine Einheit: aendert sich nur die Einheit,
+    // ohne dass der Bereich angepasst wurde, faellt er weg.
+    const refUnveraendert = !!originalRef && sameRef(draft, originalRef)
+    const ref = id && refUnveraendert && parsed.unit !== originalUnit
+      ? { ref_min: null, ref_max: null }
+      : { ref_min: parsed.ref_min, ref_max: parsed.ref_max }
     const { error } = id
       ? await supabase.from('bloodwork').update({
         ...(reportId ? {} : { tested_at: parsed.tested_at }),
         value: parsed.value,
         unit: parsed.unit,
-        ...(hasLabRange && parsed.unit !== originalUnit ? { ref_min: null, ref_max: null } : {}),
+        ...ref,
       }).eq('id', id).eq('user_id', user.id)
       : await supabase.from('bloodwork').insert({
         user_id: user.id,
@@ -231,6 +243,7 @@ export function BlutwertePage() {
         marker: parsed.marker,
         value: parsed.value,
         unit: parsed.unit,
+        ...ref,
         notes: null,
       })
     setSaving(false)
@@ -336,15 +349,13 @@ export function BlutwertePage() {
               {markerLayout === 'raster' ? <List size={20} /> : <LayoutGrid size={19} />}
             </button>
           )}
-          <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => setShowImport(true)} aria-label={t('bw_import')} title={t('bw_import')}>
-            <Camera size={20} />
-          </button>
-          <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => openNew()} aria-label={t('bw_new')} title={t('bw_new')}>
+          <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => setShowAdd(true)} aria-label={t('bw_add_title')} title={t('bw_add_title')} aria-haspopup="dialog">
             <Plus size={22} />
           </button>
         </div>
         <p className="col-span-2 truncate text-[1.5rem] font-extrabold leading-tight tracking-tight" style={{ color: MUTED }}>
-          {latestDate ? formatLongDate(latestDate, sprache) : t('bw_overview_empty_date')}
+          {/* Stand der Uebersicht: das Datum der letzten Messung. */}
+          {latestDate ? t('bw_as_of', { date: formatLongDate(latestDate, sprache) }) : t('bw_overview_empty_date')}
         </p>
       </header>
 
@@ -427,7 +438,17 @@ export function BlutwertePage() {
 
       {modal}
       {loeschenSheet}
-      {showImport && <ImportFlow onClose={() => setShowImport(false)} onSaved={load} />}
+      {showAdd && (
+        <AddSheet
+          onClose={() => setShowAdd(false)}
+          onPick={choice => {
+            setShowAdd(false)
+            if (choice === 'manual') openNew()
+            else setImportMode(choice)
+          }}
+        />
+      )}
+      {importMode && <ImportFlow mode={importMode} onClose={() => setImportMode(null)} onSaved={load} />}
     </div>
   )
 }

@@ -19,6 +19,8 @@ import { useKiEinwilligung } from '../useKiEinwilligung'
 type Phase = 'idle' | 'extracting' | 'review' | 'saving'
 
 interface Props {
+  /** Aus dem „+"-Blatt: nur Foto oder nur Dokument anbieten. Ohne: beides. */
+  mode?: 'photo' | 'document'
   onClose: () => void
   onSaved: () => void
 }
@@ -37,7 +39,7 @@ const toReviewRow = (item: MergeItem): ReviewRow => ({
   selected: true,
 })
 
-export function ImportFlow({ onClose, onSaved }: Props) {
+export function ImportFlow({ mode, onClose, onSaved }: Props) {
   const { user } = useAuth()
   const { t } = useTranslation()
   const [phase, setPhase] = useState<Phase>('idle')
@@ -249,7 +251,7 @@ export function ImportFlow({ onClose, onSaved }: Props) {
         {phase === 'idle' && einwilligung && (
           <>
             <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
-              {t('bw_import_desc')}
+              {t(mode === 'photo' ? 'bw_import_desc_photo' : mode === 'document' ? 'bw_import_desc_document' : 'bw_import_desc')}
             </p>
 
             <input
@@ -270,10 +272,16 @@ export function ImportFlow({ onClose, onSaved }: Props) {
 
             <p data-ai-consent-note className="text-xs leading-relaxed" style={{ color: MUTED }}>{t('ai_consent_note')}</p>
 
-            <div className="flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => fileInputRef.current?.click()}>{t('bw_file')}</button>
-              <button className="btn-primary flex-1" onClick={() => photoInputRef.current?.click()}>{t('bw_photo')}</button>
-            </div>
+            {mode === 'photo' ? (
+              <button className="btn-primary w-full" onClick={() => photoInputRef.current?.click()}>{t('bw_take_photo')}</button>
+            ) : mode === 'document' ? (
+              <button className="btn-primary w-full" onClick={() => fileInputRef.current?.click()}>{t('bw_choose_document')}</button>
+            ) : (
+              <div className="flex gap-3">
+                <button className="btn-secondary flex-1" onClick={() => fileInputRef.current?.click()}>{t('bw_file')}</button>
+                <button className="btn-primary flex-1" onClick={() => photoInputRef.current?.click()}>{t('bw_photo')}</button>
+              </div>
+            )}
             <button className="btn-secondary w-full" data-app-back-close onClick={onClose}>{t('cancel')}</button>
           </>
         )}
