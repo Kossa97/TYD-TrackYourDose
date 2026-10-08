@@ -967,7 +967,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1937,7 +1938,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2907,7 +2909,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3877,7 +3880,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4847,7 +4851,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5817,7 +5822,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6787,7 +6793,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7757,7 +7764,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8727,7 +8735,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9697,7 +9706,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -10667,7 +10677,8 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -11637,6 +11648,7 @@
     "bw_status_out": "out of range",
     "bw_status_unchecked": "not checked, no reference range",
     "bw_status_none": "no value yet",
-    "bw_untested_count": "Without a value ({{count}})"
+    "bw_untested_count": "Without a value ({{count}})",
+    "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
   }
 }

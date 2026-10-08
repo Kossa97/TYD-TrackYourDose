@@ -968,6 +968,7 @@ export const MY_STACK_EN = {
   bw_status_unchecked: "not checked, no reference range",
   bw_status_none: "no value yet",
   bw_untested_count: "Without a value ({{count}})",
+  bw_chart_aria: "History of {{name}}. Move along the chart or use the arrow keys to read values.",
 }
 
 export const MY_STACK_DE = {
@@ -1939,6 +1940,7 @@ export const MY_STACK_DE = {
   bw_status_unchecked: "nicht geprüft, ohne Referenzbereich",
   bw_status_none: "noch kein Wert",
   bw_untested_count: "Ohne Wert ({{count}})",
+  bw_chart_aria: "Verlauf von {{name}}. Über den Graph fahren oder Pfeiltasten nutzen, um Werte abzulesen.",
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

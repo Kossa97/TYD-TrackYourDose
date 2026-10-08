@@ -1945,5 +1945,6 @@
   "bw_status_out": "out of range",
   "bw_status_unchecked": "not checked, no reference range",
   "bw_status_none": "no value yet",
-  "bw_untested_count": "Without a value ({{count}})"
+  "bw_untested_count": "Without a value ({{count}})",
+  "bw_chart_aria": "History of {{name}}. Move along the chart or use the arrow keys to read values."
 }

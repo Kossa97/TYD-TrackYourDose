@@ -9,7 +9,6 @@ import {
   LineChart,
   ReferenceArea,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -20,11 +19,17 @@ import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
 import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, RED_WEAK, TEXT } from '../styles'
 import { TrendIcon, trendColor } from './trend'
 import { ReferenceBar } from './ReferenceBar'
+import { ScrubOverlay } from './ScrubOverlay'
 import { PLOT_LINKS, PLOT_RECHTS, ZyklusStreifen } from './ZyklusStreifen'
 import type { CycleTimeline } from '../../../lib/planTimeline'
 import { achse as zeitachse, achsenTicks, msTag, tagMs, zyklusZeilen } from '../lib/zyklusZeilen'
 
 export type RangeFilter = '3M' | '6M' | '1J' | 'ALL'
+
+const CHART_H = 264
+/** Feste Zeile fuer das Ablese-Schild ueber der Zeichenflaeche. */
+const CHART_TOP = 48
+const X_ACHSE_H = 30
 
 /** Messpunkt in der Mitte seines Tags — dort, wo der Tag auch in den Zyklus-Zeilen liegt. */
 const HALBER_TAG = 12 * 60 * 60 * 1000
@@ -43,8 +48,6 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
-  // Abgelesener Punkt: Schild ueber dem Graph wie in der Aktien-App.
-  const [aktiv, setAktiv] = useState<{ x: number; index: number } | null>(null)
 
   const { name, entries, latest, range, inRange, trend, diff } = summary
   const shownValue = summary.displayValue ?? (latest ? latest.value : null)
@@ -186,40 +189,28 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
       {/* Chart */}
       {chartData.length > 0 ? (
         <div className="p-4 mb-4" style={PANEL_STYLE}>
-          <div style={{ position: 'relative' }}>
-          {/* Feste Zeile fuer das Schild — leer, solange nichts abgelesen wird. */}
-          {(() => {
-            const punkt = aktiv ? chartData[aktiv.index] : undefined
-            if (!aktiv || !punkt) return null
-            return (
-              <div
-                aria-live="polite"
-                data-bw-scrub-label
-                style={{
-                  position: 'absolute', top: 0, zIndex: 1, pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
-                  left: `clamp(56px, ${aktiv.x}px, calc(100% - 56px))`, transform: 'translateX(-50%)',
-                }}
-              >
-                <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{formatDisplayDate(msTag(punkt.t))}</p>
+          <ScrubOverlay
+            points={chartData}
+            domain={achse}
+            plotLeft={PLOT_LINKS}
+            plotRight={PLOT_RECHTS}
+            plotTop={CHART_TOP}
+            plotBottom={CHART_H - X_ACHSE_H}
+            color="#00ccf5"
+            ariaLabel={t('bw_chart_aria', { name: markerName(name, sprache) })}
+            describe={p => `${formatDisplayDate(msTag(p.t))}: ${formatNumber(p.value)} ${shownUnit}`}
+            renderLabel={p => (
+              <>
+                <p className="text-[13px] font-semibold" style={{ color: TEXT }}>{formatDisplayDate(msTag(p.t))}</p>
                 <p className="text-base font-extrabold tabular-nums" style={{ color: '#00ccf5' }}>
-                  {formatNumber(punkt.value)} <span className="text-xs font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
+                  {formatNumber(p.value)} <span className="text-xs font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
                 </p>
-              </div>
-            )
-          })()}
-          <ResponsiveContainer width="100%" height={264}>
-            <LineChart
-              data={chartData}
-              margin={{ top: 48, right: PLOT_RECHTS, bottom: 0, left: 0 }}
-              onMouseMove={state => {
-                const index = Number(state.activeTooltipIndex)
-                if (state.isTooltipActive && state.activeCoordinate && Number.isInteger(index)) {
-                  setAktiv(prev => (prev?.index === index && prev.x === state.activeCoordinate!.x ? prev : { x: state.activeCoordinate!.x, index }))
-                }
-              }}
-              onMouseLeave={() => setAktiv(null)}
-              onTouchEnd={() => setAktiv(null)}
-            >
+              </>
+            )}
+          >
+          <ResponsiveContainer width="100%" height={CHART_H}>
+            {/* Oben eine feste Zeile fuer das Ablese-Schild, damit nichts springt. */}
+            <LineChart data={chartData} margin={{ top: CHART_TOP, right: PLOT_RECHTS, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis
                 dataKey="t"
@@ -227,20 +218,19 @@ export function MarkerDetail({ summary, zyklen, onBack, onAdd, onEdit, onDelete 
                 domain={achse}
                 ticks={ticks}
                 allowDataOverflow
+                height={X_ACHSE_H}
                 tickFormatter={(ms: number) => formatChartDate(msTag(ms))}
                 tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }}
               />
               <YAxis width={PLOT_LINKS} tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
-              {/* Nur die senkrechte Linie; der Wert steht im Schild ueber dem Graph. */}
-              <Tooltip content={() => null} cursor={{ stroke: '#00ccf5', strokeWidth: 1 }} />
               {range.min != null && range.max != null && (
                 <ReferenceArea y1={range.min} y2={range.max} fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)" />
               )}
               {/* Ohne Einblend-Animation: sonst startet sie beim Ablesen bei jedem Schritt neu und die Linie verschwindet. */}
-              <Line type="monotone" dataKey="value" stroke="#00ccf5" strokeWidth={2} dot={{ fill: '#00ccf5', r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="value" stroke="#00ccf5" strokeWidth={2} dot={{ fill: '#00ccf5', r: 3 }} activeDot={false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
-          </div>
+          </ScrubOverlay>
           <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
         </div>
       ) : (

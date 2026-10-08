@@ -389,7 +389,7 @@ export function BlutspiegelView({ variant, initialKey }: { variant: 'full' | 'co
       {!compact && <RangeControl value={range} onChange={changeRange} />}
 
       {/* Fuer Screenreader: der abgelesene Wert (sichtbar steht er im Schild im Graph). */}
-      <p className="sr-only" aria-live="polite">{scrub ? `${f.scrub(scrub.ts)}: ${f.pct(scrub.level)} %` : ''}</p>
+      <p className="sr-only" aria-live="polite">{scrub ? `${scrubLabel.date(scrub.ts)}: ${scrubLabel.value(scrub.level)}` : ''}</p>
       {points.length ? (
         <StocksChart
           points={points}

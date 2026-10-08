@@ -384,7 +384,7 @@ export const StocksChart = memo(function StocksChart({
     schedule()
   }, [points, start, end, seriesKey, accent, schedule])
 
-  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, schedule])
+  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, schedule])
 
   // Breite
   useEffect(() => {

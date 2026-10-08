@@ -75,6 +75,10 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
   }, [profile, multiDose, interval, numDoses])
 
   const result = run?.sim ?? null
+  const scrubLabel = useMemo(() => ({
+    date: (ts: number) => t('pk_hours_value', { h: f.num(Math.round((ts / HOUR) * 10) / 10) }),
+    value: (v: number) => `${f.pct(v)} %`,
+  }), [t, f])
   const points = useMemo(() => result?.data.map(p => ({ ts: p.t * HOUR, level: p.c })) ?? [], [result])
 
   const markers = useMemo((): ChartMarker[] => {
@@ -185,7 +189,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
                 <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{t('pk_curve_title', { name: profile.name })}</p>
                 <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 2 }}>{t('pk_curve_sub')}</p>
                 <p className="sr-only" aria-live="polite">
-                  {scrub ? `${t('pk_hours_value', { h: f.num(hours(scrub.ts / HOUR)) })}: ${f.pct(scrub.level)} %` : ''}
+                  {scrub ? `${scrubLabel.date(scrub.ts)}: ${scrubLabel.value(scrub.level)}` : ''}
                 </p>
               </div>
               <StocksChart
@@ -200,7 +204,7 @@ export function ManualSimulation({ preselectProfileId }: { preselectProfileId: s
                 xTicks={hourTicks}
                 formatValue={f.num}
                 onScrub={setScrub}
-                scrubLabel={{ date: ts => t('pk_hours_value', { h: f.num(hours(ts / HOUR)) }), value: v => `${f.pct(v)} %` }}
+                scrubLabel={scrubLabel}
                 ariaLabel={t('pk_curve_title', { name: profile.name })}
               />
 
