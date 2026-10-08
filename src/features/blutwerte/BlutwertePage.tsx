@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Camera, Plus, Trash2 } from 'lucide-react'
+import { Camera, LayoutGrid, List, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry, BloodworkReport } from './types'
@@ -11,7 +11,7 @@ import { SONSTIGE } from './lib/markerCatalog'
 import { CYAN, TEXT, MUTED } from './styles'
 import { markerName } from './lib/markerCatalog.en'
 import { Sheet } from '../compliance/components/Sheet'
-import { MarkerList, type PillMode } from './components/MarkerList'
+import { MarkerList, type MarkerLayout, type PillMode } from './components/MarkerList'
 import { MarkerDetail } from './components/MarkerDetail'
 import { GridControls } from './components/GridControls'
 import { AuffaelligeWerte } from './components/AuffaelligeWerte'
@@ -21,6 +21,16 @@ import { ImportFlow } from './components/import/ImportFlow'
 import type { CycleTimeline } from '../../lib/planTimeline'
 import { loadCycleHistory } from '../my-stack/services/planLifecycle'
 import { reportError } from '../../lib/monitoring'
+
+const MARKER_LAYOUT_KEY = 'blutwerte-marker-layout'
+
+const loadMarkerLayout = (): MarkerLayout => {
+  try {
+    return localStorage.getItem(MARKER_LAYOUT_KEY) === 'liste' ? 'liste' : 'raster'
+  } catch {
+    return 'raster'
+  }
+}
 
 export function BlutwertePage() {
   const { user } = useAuth()
@@ -52,6 +62,16 @@ export function BlutwertePage() {
   // zwischen Veraenderung und Referenzbereich.
   const [pillMode, setPillMode] = useState<PillMode>('change')
   const togglePill = useCallback(() => setPillMode(m => (m === 'change' ? 'range' : 'change')), [])
+  const [markerLayout, setMarkerLayout] = useState<MarkerLayout>(loadMarkerLayout)
+  const toggleLayout = () => {
+    const next: MarkerLayout = markerLayout === 'raster' ? 'liste' : 'raster'
+    setMarkerLayout(next)
+    try {
+      localStorage.setItem(MARKER_LAYOUT_KEY, next)
+    } catch {
+      /* localStorage nicht verfügbar – Wahl gilt nur für diese Sitzung */
+    }
+  }
 
   const load = useCallback(async () => {
     if (!user) return
@@ -253,14 +273,25 @@ export function BlutwertePage() {
   const headerButton = 'flex h-11 w-11 items-center justify-center rounded-full'
   return (
     <div>
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[2rem] font-black leading-tight tracking-tight" style={{ color: TEXT }}>{t('bw_title')}</h1>
-          <p className="text-[2rem] font-black leading-tight tracking-tight" style={{ color: MUTED }}>
-            {latestDate ? formatLongDate(latestDate, sprache) : t('bw_overview_empty_date')}
-          </p>
-        </div>
+      {/* Titel und Knoepfe in einer Reihe, das Datum darunter ueber die volle Breite —
+          so bricht „15. September" nicht neben den Knoepfen um. */}
+      <header className="mb-4 grid items-start gap-x-3" style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }}>
+        <h1 className="min-w-0 text-[2rem] font-black leading-tight tracking-tight" style={{ color: TEXT }}>{t('bw_title')}</h1>
         <div className="mt-1 flex shrink-0 items-center rounded-full px-1" style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+          {view === 'marker' && (
+            // Zeigt, wohin es geht: im Raster das Listen-Symbol und umgekehrt.
+            <button
+              type="button"
+              className={headerButton}
+              style={{ color: TEXT }}
+              onClick={toggleLayout}
+              aria-label={t(markerLayout === 'raster' ? 'bw_list_view' : 'bw_grid_view')}
+              title={t(markerLayout === 'raster' ? 'bw_list_view' : 'bw_grid_view')}
+              data-bw-layout-toggle={markerLayout}
+            >
+              {markerLayout === 'raster' ? <List size={20} /> : <LayoutGrid size={19} />}
+            </button>
+          )}
           <button type="button" className={headerButton} style={{ color: TEXT }} onClick={() => setShowImport(true)} aria-label={t('bw_import')} title={t('bw_import')}>
             <Camera size={20} />
           </button>
@@ -268,6 +299,9 @@ export function BlutwertePage() {
             <Plus size={22} />
           </button>
         </div>
+        <p className="col-span-2 text-[2rem] font-black leading-tight tracking-tight" style={{ color: MUTED }}>
+          {latestDate ? formatLongDate(latestDate, sprache) : t('bw_overview_empty_date')}
+        </p>
       </header>
 
       {/* Ansicht: Marker / Befunde; unter Marker der Filter „Auffällige“ (vorausgewählt) */}
@@ -323,12 +357,15 @@ export function BlutwertePage() {
               hatWerte={entries.length > 0}
               onSelect={setSelectedMarker}
               onAlleMarker={() => setKategorie(null)}
+              layout={markerLayout}
               pillMode={pillMode}
               onTogglePill={togglePill}
             />
           ) : (
             <MarkerList
               summaries={visibleSummaries}
+              layout={markerLayout}
+              grouped={sortMode === 'kategorie' && kategorie === null}
               pillMode={pillMode}
               onTogglePill={togglePill}
               onSelect={setSelectedMarker}

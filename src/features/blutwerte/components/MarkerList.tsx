@@ -1,23 +1,26 @@
 /**
- * Marker-Uebersicht als Karten, zwei nebeneinander: Name und Datum, der
- * Verlauf als Mini-Kurve mit den Grenzen des Referenzbereichs gestrichelt,
- * der neueste Wert und eine farbige Plakette (Gestaltung nach der Aktien-App).
+ * Marker-Uebersicht nach dem Vorbild der Aktien-App, wahlweise als Raster
+ * (Karten, zwei nebeneinander) oder als Liste (eine Zeile je Marker). Beide
+ * zeigen Name und Datum, den Verlauf als Mini-Kurve mit den Grenzen des
+ * Referenzbereichs gestrichelt, den neuesten Wert und eine farbige Plakette.
  *
  * Farbe heisst hier Befund, nicht Richtung: gruen im Bereich, rot ausserhalb,
  * grau ohne Referenz. Ein Anstieg ist nicht von sich aus gut oder schlecht.
  * Die Plakette zeigt die Veraenderung zur vorigen Messung oder — nach Tippen,
- * fuer alle Karten — den Referenzbereich.
+ * fuer alle Marker — den Referenzbereich.
  */
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
-import { markerName } from '../lib/markerCatalog.en'
+import { KATEGORIE_KEY, markerName } from '../lib/markerCatalog.en'
+import type { KategorieFilter } from '../lib/markerCatalog'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
 import { changeSincePrevious, markerStatus, sparklineGeometry, type MarkerStatus } from '../lib/sparkline'
 import { MUTED, PILL_GRAY, PILL_GREEN, PILL_RED, TEXT } from '../styles'
 
 export type PillMode = 'change' | 'range'
+export type MarkerLayout = 'raster' | 'liste'
 
 const STATUS_COLOR: Record<MarkerStatus, string> = {
   in: PILL_GREEN,
@@ -28,9 +31,12 @@ const STATUS_COLOR: Record<MarkerStatus, string> = {
 
 const SPARK_W = 140
 const SPARK_H = 44
+const ROW_SPARK_W = 56
+const ROW_SPARK_H = 36
+const HAIRLINE = '1px solid var(--border)'
 
 /** Mini-Kurve ueber die volle Kartenbreite; Linien bleiben beim Strecken gleich duenn. */
-function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }) {
+function CardSparkline({ summary, color }: { summary: MarkerSummary; color: string }) {
   const g = sparklineGeometry(summary, SPARK_W, SPARK_H)
   return (
     <div style={{ position: 'relative' }}>
@@ -56,6 +62,28 @@ function Sparkline({ summary, color }: { summary: MarkerSummary; color: string }
   )
 }
 
+/** Kleine Mini-Kurve fuer die Listenzeile, feste Groesse. */
+function RowSparkline({ summary, color }: { summary: MarkerSummary; color: string }) {
+  const gradId = useId()
+  const g = sparklineGeometry(summary, ROW_SPARK_W, ROW_SPARK_H)
+  return (
+    <svg width={ROW_SPARK_W} height={ROW_SPARK_H} viewBox={`0 0 ${ROW_SPARK_W} ${ROW_SPARK_H}`} aria-hidden="true" style={{ flexShrink: 0, overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      {g.bounds.map((y, i) => (
+        <line key={i} x1={0} x2={ROW_SPARK_W} y1={y} y2={y} stroke={color} strokeOpacity={0.75} strokeWidth={1} strokeDasharray="3 3" />
+      ))}
+      {g.area && <path d={g.area} fill={`url(#${gradId})`} />}
+      {g.line && <path d={g.line} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />}
+      {g.last && <circle cx={g.last.x} cy={g.last.y} r={2.5} fill={color} />}
+    </svg>
+  )
+}
+
 function signed(value: number): string {
   // Erst runden, dann vergleichen: Umrechnungen hinterlassen Reste wie 1e-15.
   const rounded = Math.round(value * 1000) / 1000
@@ -72,7 +100,8 @@ interface CardProps {
 
 const CARD_H = 180
 
-function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
+/** Was Karte und Zeile gleich zeigen: Wert, Farbe, Plakette, Vorleselabel. */
+function useMarkerView(summary: MarkerSummary, pillMode: PillMode) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const status = markerStatus(summary)
@@ -93,6 +122,13 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
   const ariaLabel = latest
     ? t('bw_row_aria', { name, value: `${formatNumber(shownValue!)} ${shownUnit ?? ''}`.trim(), status: statusText, date: formatDisplayDate(latest.tested_at) })
     : `${name}, ${t('bw_no_test').replace(/^[–-]\s*/, '')}`
+
+  const pillAria = t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })
+  return { t, status, color, latest, name, shownValue, shownUnit, pillText, pillAria, ariaLabel }
+}
+
+function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
+  const { t, status, color, latest, name, shownValue, shownUnit, pillText, pillAria, ariaLabel } = useMarkerView(summary, pillMode)
 
   // Die ganze Karte oeffnet den Marker (unsichtbare Flaeche darunter); die
   // Plakette liegt darueber und hat ihre eigene Aufgabe. So bleibt der Inhalt
@@ -121,7 +157,7 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
             {latest ? formatDisplayDate(latest.tested_at) : t('bw_no_test')}
           </p>
         </div>
-        {latest && <Sparkline summary={summary} color={color} />}
+        {latest && <CardSparkline summary={summary} color={color} />}
         {latest && (
           // Reicht der Platz nicht, rutscht die Plakette unter den Wert — nichts wird gekuerzt.
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
@@ -132,7 +168,7 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
             <button
               type="button"
               onClick={onTogglePill}
-              aria-label={t(pillMode === 'change' ? 'bw_pill_aria_change' : 'bw_pill_aria_range', { value: pillText, status: statusText })}
+              aria-label={pillAria}
               data-bw-status={status}
               style={{
                 pointerEvents: 'auto', flexShrink: 0, marginLeft: 'auto', minWidth: 56, minHeight: 32, padding: '0 8px',
@@ -149,8 +185,63 @@ function MarkerCard({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
   )
 }
 
+function MarkerRow({ summary, pillMode, onSelect, onTogglePill }: CardProps) {
+  const { t, status, color, latest, name, shownValue, shownUnit, pillText, pillAria, ariaLabel } = useMarkerView(summary, pillMode)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', borderBottom: HAIRLINE }}>
+      <button
+        type="button"
+        onClick={() => onSelect(summary.name)}
+        aria-label={ariaLabel}
+        style={{
+          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0',
+          background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+        }}
+      >
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 17, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {name}
+          </span>
+          <span style={{ display: 'block', marginTop: 2, fontSize: 14, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {latest ? formatDisplayDate(latest.tested_at) : t('bw_no_test')}
+          </span>
+        </span>
+        {latest && <RowSparkline summary={summary} color={color} />}
+        {latest && (
+          <span style={{ flexShrink: 0, minWidth: 44, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ display: 'block', fontSize: 18, fontWeight: 700, color: TEXT, whiteSpace: 'nowrap' }}>
+              {formatNumber(shownValue!)}
+            </span>
+            <span style={{ display: 'block', fontSize: 12, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {shownUnit}
+            </span>
+          </span>
+        )}
+      </button>
+      {latest && (
+        <button
+          type="button"
+          onClick={onTogglePill}
+          aria-label={pillAria}
+          data-bw-status={status}
+          style={{
+            marginLeft: 8, flexShrink: 0, minWidth: 66, minHeight: 32, padding: '0 8px', borderRadius: 7, border: 'none',
+            background: color, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap',
+          }}
+        >
+          {pillText}
+        </button>
+      )}
+    </div>
+  )
+}
+
 interface Props {
   summaries: MarkerSummary[]
+  layout: MarkerLayout
+  /** Nur in der Liste: Ueberschrift je Kategorie. */
+  grouped: boolean
   pillMode: PillMode
   onTogglePill: () => void
   onSelect: (name: string) => void
@@ -159,11 +250,12 @@ interface Props {
 const GRID = { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 } as const
 
 /**
- * Immer zwei Karten nebeneinander, gleich gross. Keine Kategorie-Ueberschriften:
- * sie liessen nach jeder ungeraden Kategorie eine halbe Reihe leer. Nach
- * Kategorie filtern die Tabs darueber.
+ * Raster: immer zwei Karten nebeneinander, gleich gross, ohne Kategorie-
+ * Ueberschriften — sie liessen nach jeder ungeraden Kategorie eine halbe Reihe
+ * leer; nach Kategorie filtern die Tabs darueber. Liste: eine Zeile je Marker,
+ * auf Wunsch nach Kategorie gruppiert.
  */
-export function MarkerList({ summaries, pillMode, onTogglePill, onSelect }: Props) {
+export function MarkerList({ summaries, layout, grouped, pillMode, onTogglePill, onSelect }: Props) {
   const { t } = useTranslation()
   const [showUntested, setShowUntested] = useState(false)
   const tested = summaries.filter(s => s.latest)
@@ -173,13 +265,34 @@ export function MarkerList({ summaries, pillMode, onTogglePill, onSelect }: Prop
     return <p style={{ padding: '32px 0', textAlign: 'center', fontSize: 14, color: MUTED }}>{t('bw_no_markers')}</p>
   }
 
-  const card = (s: MarkerSummary) => (
-    <MarkerCard key={s.name} summary={s} pillMode={pillMode} onSelect={onSelect} onTogglePill={onTogglePill} />
+  const raster = layout === 'raster'
+  const Item = raster ? MarkerCard : MarkerRow
+  const item = (s: MarkerSummary) => (
+    <Item key={s.name} summary={s} pillMode={pillMode} onSelect={onSelect} onTogglePill={onTogglePill} />
   )
+  const block = (items: MarkerSummary[]) => (raster ? <div style={GRID}>{items.map(item)}</div> : items.map(item))
+
+  const groups: Array<{ kategorie: string; items: MarkerSummary[] }> = []
+  if (grouped && !raster) {
+    for (const s of tested) {
+      const current = groups[groups.length - 1]
+      if (current && current.kategorie === s.kategorie) current.items.push(s)
+      else groups.push({ kategorie: s.kategorie, items: [s] })
+    }
+  }
 
   return (
     <div>
-      {tested.length > 0 && <div style={GRID}>{tested.map(card)}</div>}
+      {groups.length > 0
+        ? groups.map(group => (
+          <section key={group.kategorie} aria-label={t(KATEGORIE_KEY[group.kategorie as KategorieFilter] ?? group.kategorie)}>
+            <h3 style={{ margin: '18px 0 0', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: MUTED }}>
+              {t(KATEGORIE_KEY[group.kategorie as KategorieFilter] ?? group.kategorie)}
+            </h3>
+            {group.items.map(item)}
+          </section>
+        ))
+        : tested.length > 0 && block(tested)}
 
       {untested.length > 0 && (
         <div style={{ marginTop: tested.length ? 8 : 0 }}>
@@ -189,14 +302,14 @@ export function MarkerList({ summaries, pillMode, onTogglePill, onSelect }: Prop
             onClick={() => setShowUntested(v => !v)}
             style={{
               width: '100%', minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: 'none', border: 'none', padding: 0,
+              background: 'none', border: 'none', borderBottom: showUntested && !raster ? HAIRLINE : 'none', padding: 0,
               cursor: 'pointer', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, color: MUTED,
             }}
           >
             {t('bw_untested_count', { count: untested.length })}
             <ChevronDown size={18} style={{ transform: showUntested ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
           </button>
-          {showUntested && <div style={GRID}>{untested.map(card)}</div>}
+          {showUntested && block(untested)}
         </div>
       )}
     </div>

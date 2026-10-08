@@ -83,6 +83,33 @@ test('Marker: Filter „Auffällige" steht vorn und ist vorausgewaehlt, mit Anza
   await expect(page.getByRole('heading', { name: 'Kortisol' })).toBeVisible()
 })
 
+test('Uebersicht: Umschalter oben wechselt zwischen Raster und Liste und merkt sich die Wahl', async ({ page, mock }) => {
+  wert(mock, 'Kortisol', { value: 30, ref_min: 5, ref_max: 25 })
+  wert(mock, 'Ferritin', { value: 80, unit: 'ng/mL', ref_min: 30, ref_max: 400 })
+  await markerAnsicht(page)
+
+  // Vorgabe: Raster, Karten ohne Kategorie-Ueberschriften
+  await expect(page.locator('.bw-marker-card')).toHaveCount(2)
+  await expect(page.getByRole('heading', { name: 'Hormone' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Listenansicht' }).click()
+  await expect(page.locator('.bw-marker-card')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Hormone' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Kortisol/ })).toBeVisible()
+  if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.SCREENSHOT_DIR}/liste.png` })
+
+  // bleibt nach dem Neuladen, auch unter „Auffällige"
+  await page.reload()
+  await expect(page.locator('[data-bw-flagged]').getByRole('button', { name: /^Kortisol/ })).toBeVisible()
+  await expect(page.locator('.bw-marker-card')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Rasteransicht' }).click()
+  await expect(page.locator('.bw-marker-card')).toHaveCount(1)
+
+  // unter „Befunde" gibt es den Umschalter oben nicht
+  await page.getByRole('button', { name: 'Befunde', exact: true }).click()
+  await expect(page.locator('[data-bw-layout-toggle]')).toHaveCount(0)
+})
+
 test('Uebersicht: nichts auffaellig — Hinweis und Weg zu allen Markern; ohne Werte ein Einstieg', async ({ page, mock }) => {
   await page.goto('/blutwerte')
   await expect(page.locator('[data-bw-flagged-empty]')).toContainText('Noch keine Blutwerte.')

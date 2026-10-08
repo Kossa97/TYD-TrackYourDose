@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { CYAN, GREEN, MUTED, RED, TEXT } from '../styles'
-import { MarkerList, type PillMode } from './MarkerList'
+import { MarkerList, type MarkerLayout, type PillMode } from './MarkerList'
 
 interface Props {
   summaries: MarkerSummary[]
@@ -12,6 +12,7 @@ interface Props {
   hatWerte: boolean
   onSelect: (name: string) => void
   onAlleMarker: () => void
+  layout: MarkerLayout
   pillMode: PillMode
   onTogglePill: () => void
 }
@@ -20,7 +21,7 @@ interface Props {
  * Filter „Auffällige“ unter „Marker“: die zuletzt gemessenen Werte ausserhalb
  * des Referenzbereichs, mit Leerzustaenden.
  */
-export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, onAlleMarker, pillMode, onTogglePill }: Props) {
+export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, onAlleMarker, layout, pillMode, onTogglePill }: Props) {
   const { t } = useTranslation()
 
   const ungeprueftHinweis = ungeprueft > 0 && (
@@ -53,7 +54,7 @@ export function AuffaelligeWerte({ summaries, ungeprueft, hatWerte, onSelect, on
           <AlertTriangle size={15} style={{ color: RED }} aria-hidden="true" />
           {t('bw_flagged_hint')}
         </p>
-        <MarkerList summaries={summaries} pillMode={pillMode} onTogglePill={onTogglePill} onSelect={onSelect} />
+        <MarkerList summaries={summaries} layout={layout} grouped={false} pillMode={pillMode} onTogglePill={onTogglePill} onSelect={onSelect} />
       </div>
       {ungeprueftHinweis}
     </div>
