@@ -9335,7 +9335,7 @@
       "file_type": "code",
       "norm_label": "props",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L240"
+      "source_location": "L250"
     },
     {
       "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
@@ -30198,7 +30198,7 @@
       "file_type": "code",
       "norm_label": "markercard()",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L130"
+      "source_location": "L128"
     },
     {
       "id": "src_features_blutwerte_components_markerlist_markerrow",
@@ -30210,7 +30210,7 @@
       "file_type": "code",
       "norm_label": "markerrow()",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L188"
+      "source_location": "L198"
     },
     {
       "id": "src_features_blutwerte_components_markerlist_signed",
@@ -30234,7 +30234,7 @@
       "file_type": "code",
       "norm_label": "usemarkerview()",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L104"
+      "source_location": "L102"
     },
     {
       "id": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -33310,7 +33310,7 @@
       "file_type": "code",
       "norm_label": "markerlist()",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L258"
+      "source_location": "L268"
     },
     {
       "id": "src_features_blutwerte_components_markerlist_rowsparkline",
@@ -73868,7 +73868,7 @@
       "file_type": "code",
       "norm_label": "grid",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L250"
+      "source_location": "L260"
     },
     {
       "id": "src_features_blutwerte_components_markerlist_status_color",
@@ -85325,7 +85325,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L131",
+      "source_location": "L129",
       "weight": 1.0
     },
     {
@@ -85349,7 +85349,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L165",
+      "source_location": "L167",
       "weight": 1.0
     },
     {
@@ -85361,7 +85361,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L189",
+      "source_location": "L199",
       "weight": 1.0
     },
     {
@@ -85373,7 +85373,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L206",
+      "source_location": "L216",
       "weight": 1.0
     },
     {
@@ -85385,7 +85385,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L213",
+      "source_location": "L223",
       "weight": 1.0
     },
     {
@@ -85421,7 +85421,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L107",
+      "source_location": "L105",
       "weight": 1.0
     },
     {
@@ -85433,7 +85433,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L110",
+      "source_location": "L108",
       "weight": 1.0
     },
     {
@@ -85445,7 +85445,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L113",
+      "source_location": "L111",
       "weight": 1.0
     },
     {
@@ -85457,7 +85457,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L114",
+      "source_location": "L112",
       "weight": 1.0
     },
     {
@@ -85469,7 +85469,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L118",
+      "source_location": "L115",
       "weight": 1.0
     },
     {
@@ -85481,7 +85481,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L123",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -85493,7 +85493,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L123",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -108929,7 +108929,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L241",
+      "source_location": "L251",
       "weight": 1.0
     },
     {
@@ -214354,7 +214354,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L104",
+      "source_location": "L102",
       "weight": 1.0
     },
     {
@@ -214365,7 +214365,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L130",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -214376,7 +214376,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L188",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -214403,17 +214403,6 @@
     },
     {
       "source": "src_features_blutwerte_components_markerlist",
-      "target": "src_features_blutwerte_components_markerlist_props",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L240",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_blutwerte_components_markerlist",
       "target": "src_features_blutwerte_components_markerlist_status_color",
       "relation": "contains",
       "_origin": "ast",
@@ -214425,7 +214414,7 @@
     },
     {
       "source": "src_features_blutwerte_components_markerlist",
-      "target": "src_features_blutwerte_components_markerlist_grid",
+      "target": "src_features_blutwerte_components_markerlist_props",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -214436,13 +214425,24 @@
     },
     {
       "source": "src_features_blutwerte_components_markerlist",
+      "target": "src_features_blutwerte_components_markerlist_grid",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
+      "source_location": "L260",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_blutwerte_components_markerlist",
       "target": "src_features_blutwerte_components_markerlist_markerlist",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L258",
+      "source_location": "L268",
       "weight": 1.0
     },
     {
@@ -252538,5 +252538,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0729876d332d759e4ae9e2733327ee15d7db79b1"
+  "built_at_commit": "bfaabb250a2b761a534fe05736f0d2c391b69a0d"
 }
