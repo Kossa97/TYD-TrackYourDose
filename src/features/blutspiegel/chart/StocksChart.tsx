@@ -30,6 +30,21 @@ import {
 
 export interface ChartMarker { ts: number; label: string; color: string }
 
+/** Zyklus-Balken am Boden der Zeichenflaeche, je Zeile einer (Fortschritt-Verlauf). */
+export interface LaneBand {
+  id: string
+  color: string
+  /** Abgeschlossener Zyklus: gefuellt; laufende Substanz: gestrichelter Rahmen. */
+  filled: boolean
+  x1: number
+  x2: number
+  lane: number
+  /** Echter Start (fuer den Start-Strich); null, wenn er vor dem Fenster liegt. */
+  start: number | null
+}
+
+export interface LaneLayout { blockHeight: number; laneHeight: number; laneGap: number }
+
 export interface StocksChartProps {
   points: LevelPoint[]
   start: number
@@ -50,7 +65,12 @@ export interface StocksChartProps {
    * Wert darunter in der Linienfarbe. Haelt oben eine feste Zeile frei, damit
    * beim Antippen nichts springt.
    */
-  scrubLabel?: { date: (ts: number) => string; value: (level: number) => string }
+  scrubLabel?: {
+    date: (ts: number) => string
+    value: (level: number) => string
+    /** Zusatz hinter dem Wert, z. B. „BPC-157 · Start" (gedaempft). */
+    note?: (ts: number) => string | null
+  }
   ariaLabel: string
   /** Punkt am Kurvenende (Live). */
   liveEnd?: boolean
@@ -76,6 +96,10 @@ export interface StocksChartProps {
   pan?: { min: number; max: number; onPan: (end: number) => void; jumpLabel: string }
   /** Haltezeit bis zum Ablesen bei Beruehrung; Standard 180 ms. */
   holdMs?: number
+  /** Weitere Zeitpunkte, an denen das Ablesen einrastet (z. B. Zyklus-Starts). */
+  snapTimes?: number[]
+  /** Zyklus-Balken hinter der Kurve. */
+  lanes?: { items: LaneBand[]; count: number; layout: (plotHeight: number, count: number) => LaneLayout }
 }
 
 /** Breite der Werte-Achse rechts; Inhalte darunter richten sich danach aus. */
@@ -110,7 +134,7 @@ export const StocksChart = memo(function StocksChart({
   points, start, end, accent, height, seriesKey, intakes = [], markers = [],
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
   band, dots = false, yInclude, percentCap = true, minSpan = 2, intakeStrip = true,
-  axisWidth = AXIS_WIDTH, pan, holdMs = HOLD_MS,
+  axisWidth = AXIS_WIDTH, pan, holdMs = HOLD_MS, snapTimes, lanes,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -132,11 +156,11 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes })
   const onScrubRef = useRef(onScrub)
   const panRef = useRef(pan)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes }
     onScrubRef.current = onScrub
     panRef.current = pan
   })
@@ -240,6 +264,51 @@ export const StocksChart = memo(function StocksChart({
         ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke()
       }
       ctx.restore()
+    }
+
+    // Zyklus-Balken am Boden, hinter Raster und Kurve
+    const laneData = propsRef.current.lanes
+    if (laneData && laneData.count > 0 && laneData.items.length) {
+      const { laneHeight, laneGap, blockHeight } = laneData.layout(plotH, laneData.count)
+      const baseY = plotB - blockHeight
+      const scrubX = scrubTsRef.current != null ? xOf(scrubTsRef.current) : null
+      for (const b of laneData.items) {
+        const x1 = Math.max(plotL, xOf(b.x1))
+        const x2 = Math.min(plotR, xOf(b.x2))
+        if (x2 <= x1) continue
+        // Waechst beim ersten Auftritt von rechts nach links
+        const w = Math.max(3, (x2 - x1) * reveal)
+        const x = x2 - w
+        const y = baseY + b.lane * (laneHeight + laneGap)
+        ctx.save()
+        ctx.beginPath(); ctx.roundRect(x, y, w, laneHeight, 4)
+        ctx.globalAlpha = b.filled ? 0.16 : 0.1
+        ctx.fillStyle = b.color
+        ctx.fill()
+        if (!b.filled) {
+          ctx.globalAlpha = 0.4
+          ctx.strokeStyle = b.color
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([5, 4])
+          ctx.stroke()
+        }
+        ctx.restore()
+        if (b.start != null && reveal >= 1) {
+          const sx = xOf(b.start)
+          if (sx < plotL || sx > plotR) continue
+          const hi = scrubX != null && Math.abs(scrubX - sx) <= 14
+          ctx.save()
+          ctx.strokeStyle = b.color
+          ctx.globalAlpha = hi ? 1 : 0.55
+          ctx.lineWidth = hi ? 2.5 : 1.5
+          ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(sx, y + laneHeight); ctx.stroke()
+          ctx.globalAlpha = hi ? 1 : 0.8
+          ctx.fillStyle = hi ? b.color : surface
+          ctx.lineWidth = hi ? 2 : 1.25
+          ctx.beginPath(); ctx.arc(sx, y, hi ? 4.5 : 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
+          ctx.restore()
+        }
+      }
     }
 
     // Horizontale Linien + Werte rechts (die Ziel-Ticks, mit gleitender Lage)
@@ -402,9 +471,26 @@ export const StocksChart = memo(function StocksChart({
         ctx.fillStyle = cssVar(canvas, '--text', '#e2e8f0')
         ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
         ctx.fillText(dateText, cx, 14)
-        ctx.fillStyle = color
+        const note = label.note?.(scrubTs) ?? null
         ctx.font = '800 16px ui-sans-serif, system-ui, -apple-system, sans-serif'
-        ctx.fillText(valueText, cx, 33)
+        if (note) {
+          // Wert in Linienfarbe, Zusatz gedaempft dahinter — zusammen mittig
+          const noteText = `  ${note}`
+          ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+          const wNote = ctx.measureText(noteText).width
+          const total = wValue + wNote
+          const left = Math.min(Math.max(x - total / 2, plotL), width - total)
+          ctx.textAlign = 'left'
+          ctx.font = '800 16px ui-sans-serif, system-ui, -apple-system, sans-serif'
+          ctx.fillStyle = color
+          ctx.fillText(valueText, left, 33)
+          ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
+          ctx.fillStyle = muted
+          ctx.fillText(noteText, left + wValue, 33)
+        } else {
+          ctx.fillStyle = color
+          ctx.fillText(valueText, cx, 33)
+        }
       }
       if (lv != null) {
         const y = yOf(lv)
@@ -453,7 +539,7 @@ export const StocksChart = memo(function StocksChart({
     schedule()
   }, [points, start, end, seriesKey, accent, schedule, yIncludeKey, percentCap, minSpan])
 
-  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, band, dots, intakeStrip, schedule])
+  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, scrubLabel, band, dots, intakeStrip, lanes, schedule])
 
   // Breite
   useEffect(() => {
@@ -489,11 +575,17 @@ export const StocksChart = memo(function StocksChart({
     const frac = Math.min(1, Math.max(0, (clientX - rect.left - axisW) / plotW))
     let ts = view.start + frac * (view.end - view.start)
     ts = Math.min(Math.max(ts, pts[0].ts), pts[pts.length - 1].ts)
-    // auf den naechsten Datenpunkt einrasten (15-min-Raster)
+    // auf den naechsten Datenpunkt einrasten (15-min-Raster) — oder auf einen
+    // naeheren Zusatzpunkt wie einen Zyklus-Start
     const i = indexAtOrBefore(pts, ts)
     const a = pts[Math.max(0, i)]
     const b = pts[Math.min(pts.length - 1, i + 1)]
-    const snap = Math.abs(ts - a.ts) <= Math.abs(b.ts - ts) ? a : b
+    let snap = Math.abs(ts - a.ts) <= Math.abs(b.ts - ts) ? a : b
+    for (const extra of propsRef.current.snapTimes ?? []) {
+      if (extra < pts[0].ts || extra > pts[pts.length - 1].ts || Math.abs(extra - ts) >= Math.abs(snap.ts - ts)) continue
+      const lv = levelAt(pts, extra)
+      if (lv != null) snap = { ts: extra, level: lv }
+    }
     if (scrubTsRef.current === snap.ts) return
     scrubTsRef.current = snap.ts
     const bucket = Math.floor(snap.ts / timeStep(view.start, view.end, plotW))
