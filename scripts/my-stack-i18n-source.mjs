@@ -1048,7 +1048,9 @@ export const MY_STACK_EN = {
   bw_range_age_from: "ages {{min}}+",
   bw_range_no_standard_women: "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
   bw_bio_load_error: "Your details could not be loaded.",
-  bw_assessment_title: "Assessment",
+  bw_assessment_title: "Notes and causes",
+  bw_badge_above: "{{value}} above range",
+  bw_badge_below: "{{value}} below range",
 }
 
 export const MY_STACK_DE = {
@@ -2100,7 +2102,9 @@ export const MY_STACK_DE = {
   bw_range_age_from: "ab {{min}} J.",
   bw_range_no_standard_women: "Für Frauen gibt es hier keinen einzelnen Bereich – er hängt von Zyklusphase und Wechseljahren ab. Trag den Bereich aus deinem Laborbefund ein.",
   bw_bio_load_error: "Deine Angaben konnten nicht geladen werden.",
-  bw_assessment_title: "Einordnung",
+  bw_assessment_title: "Hinweise und Ursachen",
+  bw_badge_above: "{{value}} über dem Bereich",
+  bw_badge_below: "{{value}} unter dem Bereich",
 }
 
 export const MY_STACK_KEYS = Object.keys(MY_STACK_EN)

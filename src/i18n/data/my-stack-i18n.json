@@ -1048,7 +1048,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2099,7 +2101,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3150,7 +3154,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4201,7 +4207,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -5252,7 +5260,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -6303,7 +6313,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -7354,7 +7366,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -8405,7 +8419,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -9456,7 +9472,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -10507,7 +10525,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -11558,7 +11578,9 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -12609,6 +12631,8 @@
     "bw_range_age_from": "ages {{min}}+",
     "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
     "bw_bio_load_error": "Your details could not be loaded.",
-    "bw_assessment_title": "Assessment"
+    "bw_assessment_title": "Assessment",
+    "bw_badge_above": "{{value}} above range",
+    "bw_badge_below": "{{value}} below range"
   }
 }

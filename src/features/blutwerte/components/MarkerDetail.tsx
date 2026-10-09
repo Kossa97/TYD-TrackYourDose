@@ -9,12 +9,12 @@ import { format, subMonths, subYears } from 'date-fns'
 import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, Plus } from 'lucide-react'
 import { KATEGORIE_KEY, markerErklaerung, markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
-import { chooseDisplayUnit, entryInRange, toNumber } from '../lib/bloodwork'
+import { chooseDisplayUnit, entryInRange, roundConverted, toNumber } from '../lib/bloodwork'
 import type { BioProfile } from '../lib/bioProfile'
 import { unitChoices, type UnitSystem } from '../lib/unitConversion'
 import { GUIDANCE_STAND, markerGuidance, type GuidanceItem } from '../lib/markerGuidance'
 import type { BloodworkEntry, BloodworkReport } from '../types'
-import { formatDisplayDate, formatNumber, formatRange, formatSigned as signed } from '../lib/format'
+import { formatDisplayDate, formatNumber, formatSigned as signed } from '../lib/format'
 import { CYAN, GREEN, MUTED, PANEL_STYLE, PILL_GRAY, PILL_GREEN, PILL_RED, RED, RED_WEAK, TEXT } from '../styles'
 import { ReferenceBar } from './ReferenceBar'
 import { TrendIcon, trendColor } from './trend'
@@ -147,35 +147,17 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
   const groesster = values.length ? Math.max(...values.map(Math.abs)) : 0
   const minSpan = groesster > 0 ? groesster * 0.1 : 1
 
-  // Vorheriger umrechenbarer Wert (Kennzahlen)
-  const convertible = summary.points.filter(p => p.value != null)
-  const previous = convertible[1] ?? null
-
-  const rangeText = formatRange(range.min, range.max, '')
-
-  // Kennzahlen
-  const rangeLabel = t(RANGES.find(([k]) => k === rangeFilter)![1])
-  // Richtung nach der naeheren Grenze: das Urteil kommt aus ungerundeten Werten,
-  // ein gerundeter Wert kann genau auf der Grenze liegen.
-  const deviation = (() => {
+  // Abstand zur naeheren Grenze fuer die Plakette. Richtung nach der naeheren
+  // Grenze: das Urteil kommt aus ungerundeten Werten, ein gerundeter Wert kann
+  // genau auf der Grenze liegen.
+  const abstand = (() => {
     const v = summary.displayValue
     if (v == null || inRange !== false) return null
     const above = range.max != null && (range.min == null || Math.abs(v - range.max) <= Math.abs(v - range.min))
-    if (above) return { label: t('bw_stat_above'), value: signed(v - range.max!) }
-    return range.min != null ? { label: t('bw_stat_below'), value: signed(v - range.min) } : null
+    if (above) return { key: 'bw_badge_above', wert: v - range.max! }
+    return range.min != null ? { key: 'bw_badge_below', wert: range.min - v } : null
   })()
-  const firstDate = summary.entries.length ? summary.entries[summary.entries.length - 1].tested_at : null
   const monthYear = useMemo(() => new Intl.DateTimeFormat(sprache, { month: '2-digit', year: 'numeric' }), [sprache])
-  const stats: Array<{ label: string; value: string }> = [
-    { label: t('bw_stat_latest'), value: shownValue != null ? formatNumber(shownValue) : '–' },
-    { label: t('bw_stat_previous'), value: previous ? formatNumber(previous.value as number) : '–' },
-    { label: t('bw_stat_reference'), value: rangeText ?? '–' },
-    ...(deviation ? [deviation] : []),
-    { label: t('bw_stat_low', { range: rangeLabel }), value: inWindow.length ? formatNumber(Math.min(...inWindow.map(p => p.level))) : '–' },
-    { label: t('bw_stat_high', { range: rangeLabel }), value: inWindow.length ? formatNumber(Math.max(...inWindow.map(p => p.level))) : '–' },
-    { label: t('bw_stat_count'), value: String(summary.entries.length) },
-    { label: t('bw_stat_since'), value: firstDate ? monthYear.format(new Date(`${firstDate}T00:00:00`)) : '–' },
-  ]
 
   const guidance = def ? markerGuidance(def.name, sprache) : null
   const labNamen = useMemo(() => new Map(reports.map(r => [r.id, r.lab_name])), [reports])
@@ -267,7 +249,11 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
             )}
             <div data-bw-status>
               {inRange === true && <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>{t('bw_in_range')}</span>}
-              {inRange === false && <span className="badge" style={{ background: RED_WEAK, color: RED }}>{t('bw_out_range')}</span>}
+              {inRange === false && (
+                <span className="badge" style={{ background: RED_WEAK, color: RED }}>
+                  {abstand ? t(abstand.key, { value: `${formatNumber(roundConverted(abstand.wert))} ${shownUnit}` }) : t('bw_out_range')}
+                </span>
+              )}
               {inRange === null && <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>{t('bw_no_reference')}</span>}
             </div>
           </div>
@@ -342,26 +328,7 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
         </div>
       )}
 
-      {/* Kennzahlen */}
-      {latest && (
-        <section aria-labelledby="bw-stats-title" className="flex flex-col gap-2">
-          <h2 id="bw-stats-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_key_figures')}</h2>
-          <dl className="grid grid-cols-2 gap-x-5">
-            {stats.map(s => (
-              <div
-                key={s.label}
-                className="flex min-w-0 items-baseline justify-between gap-2 py-[11px] text-sm"
-                style={{ borderBottom: '1px solid var(--border)' }}
-              >
-                <dt className="min-w-0 truncate" style={{ color: MUTED }}>{s.label}</dt>
-                <dd className="shrink-0 text-right font-bold tabular-nums" style={{ color: TEXT }}>{s.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-
-      {/* Einordnung */}
+      {/* Hinweise und Ursachen */}
       <section aria-labelledby="bw-meaning-title" className="flex flex-col gap-2.5">
         <h2 id="bw-meaning-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_assessment_title')}</h2>
         {/* Die Kurzerklaerung steht oben unter dem Namen. */}
