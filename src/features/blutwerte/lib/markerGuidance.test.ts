@@ -57,3 +57,11 @@ describe('markerGuidance', () => {
     expect(GUIDANCE_MARKERS.length).toBeLessThanOrEqual(MARKER_CATALOG.length)
   })
 })
+
+describe('Einordnungs-Pakete', () => {
+  it('jeder Marker steht in genau einem Paket', async () => {
+    const { GUIDANCE_PAKETE } = await import('./guidance')
+    const namen = GUIDANCE_PAKETE.flatMap(paket => Object.keys(paket))
+    expect(new Set(namen).size).toBe(namen.length)
+  })
+})
