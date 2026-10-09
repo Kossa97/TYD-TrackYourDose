@@ -210,8 +210,11 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
 
       {/* Name und Kategorie */}
       <div className="-mt-2 flex flex-col gap-1">
-        <h1 className="text-[2rem] font-black leading-tight tracking-tight break-words" style={{ color: TEXT }}>{anzeigeName}</h1>
-        <p className="text-[15px]" style={{ color: MUTED }}>{t(KATEGORIE_KEY[summary.kategorie])}</p>
+        {/* Eine Zeile: Name links (laeuft durch, wenn er nicht passt), Kategorie rechts */}
+        <div className="flex items-baseline gap-3">
+          <LaufName text={anzeigeName} />
+          <p className="shrink-0 text-[15px]" style={{ color: MUTED }} data-bw-kategorie>{t(KATEGORIE_KEY[summary.kategorie])}</p>
+        </div>
         {def && <KurzErklaerung text={markerErklaerung(def, sprache)} />}
       </div>
 
@@ -509,5 +512,67 @@ function KurzErklaerung({ text }: { text: string }) {
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * Markername als Ueberschrift in einer Zeile. Passt er nicht, laeuft er
+ * langsam hin und zurueck (mit Pausen an den Enden); bei „weniger Bewegung“
+ * wird er stattdessen mit „…“ gekuerzt.
+ */
+function LaufName({ text }: { text: string }) {
+  const boxRef = useRef<HTMLHeadingElement>(null)
+  const textRef = useRef<HTMLSpanElement>(null)
+  const [ueber, setUeber] = useState(0)
+  const ruhig = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+  useLayoutEffect(() => {
+    const box = boxRef.current
+    const inner = textRef.current
+    if (!box || !inner) return
+    const messen = () => setUeber(Math.max(0, Math.ceil(inner.scrollWidth - box.clientWidth)))
+    messen()
+    const ro = new ResizeObserver(messen)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [text])
+
+  useLayoutEffect(() => {
+    const inner = textRef.current
+    if (!inner || ueber <= 0 || ruhig) return
+    // ~35 px/s, je 1,5 s Pause an beiden Enden
+    const fahrt = (ueber / 35) * 1000
+    const pause = 1500
+    const dauer = 2 * (fahrt + pause)
+    const a = pause / dauer
+    const b = (pause + fahrt) / dauer
+    const c = (2 * pause + fahrt) / dauer
+    const anim = inner.animate([
+      { transform: 'translateX(0)', offset: 0 },
+      { transform: 'translateX(0)', offset: a, easing: 'ease-in-out' },
+      { transform: `translateX(${-ueber}px)`, offset: b },
+      { transform: `translateX(${-ueber}px)`, offset: c, easing: 'ease-in-out' },
+      { transform: 'translateX(0)', offset: 1 },
+    ], { duration: dauer, iterations: Infinity })
+    return () => anim.cancel()
+  }, [ueber, ruhig])
+
+  const laeuft = ueber > 0 && !ruhig
+  return (
+    <h1
+      ref={boxRef}
+      className="min-w-0 flex-1 overflow-hidden whitespace-nowrap text-[2rem] font-black leading-tight tracking-tight"
+      style={{
+        color: TEXT,
+        ...(ruhig ? { textOverflow: 'ellipsis' } : {}),
+        // Weiche Kante rechts, damit der laufende Name nicht hart abgeschnitten wirkt
+        ...(laeuft ? { maskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)' } : {}),
+      }}
+      title={ueber > 0 ? text : undefined}
+      data-bw-name
+      data-bw-name-laeuft={laeuft || undefined}
+    >
+      <span ref={textRef} className={ruhig ? '' : 'inline-block'}>{text}</span>
+    </h1>
   )
 }
