@@ -4722,8 +4722,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1791496713.8240092,
-    "seen": 1791497742.796011,
+    "mtime": 1791556776.7723448,
+    "seen": 1791556855.5461626,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -6282,9 +6282,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerGuidance.test.ts": {
-    "mtime": 1791555831.4493532,
-    "seen": 1791555930.104961,
-    "ast_hash": "79163889618768f846cda9b64758798d",
+    "mtime": 1791556506.4643288,
+    "seen": 1791556855.5209372,
+    "ast_hash": "dcedb164fa6a2d2bc568588e363e39ab",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerGuidance.ts": {
@@ -6342,9 +6342,75 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/guidance/index.ts": {
-    "mtime": 1791555776.9284863,
-    "seen": 1791555930.1046438,
-    "ast_hash": "a789903a444891d52ee30885ccf0a0aa",
+    "mtime": 1791556459.1267192,
+    "seen": 1791556855.5206268,
+    "ast_hash": "9466ebdf87fbd26ffa975ead07d22cd3",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/blutbild1.ts": {
+    "mtime": 1791556196.4122272,
+    "seen": 1791556855.5206094,
+    "ast_hash": "d103416907775e3011b9e94904fb3804",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/blutbild2.ts": {
+    "mtime": 1791556054.7260866,
+    "seen": 1791556855.520614,
+    "ast_hash": "945847e1ef3d06e5da2110b28a9fcd14",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/elektrolyte.ts": {
+    "mtime": 1791556248.866722,
+    "seen": 1791556855.5206165,
+    "ast_hash": "83930e0e919d78cb4dce4e2b066b2207",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/enzyme.ts": {
+    "mtime": 1791556267.5085354,
+    "seen": 1791556855.5206184,
+    "ast_hash": "1da1e6838c6a71a7919a2c531d900140",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/hormone1.ts": {
+    "mtime": 1791556135.9600456,
+    "seen": 1791556855.5206208,
+    "ast_hash": "d8019ac55fa098a86a76055ff1f93986",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/hormone2.ts": {
+    "mtime": 1791556329.225963,
+    "seen": 1791556855.5206234,
+    "ast_hash": "5b5fa03dabc95526d0574ca46bd3529b",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/leber.ts": {
+    "mtime": 1791556160.8709695,
+    "seen": 1791556855.5206294,
+    "ast_hash": "2f65d55194ceafcceb71b0bdbac5c81c",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/lipide.ts": {
+    "mtime": 1791556273.005943,
+    "seen": 1791556855.520632,
+    "ast_hash": "cbbc03b83d771268125cc21ccc3e60fa",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/niere.ts": {
+    "mtime": 1791556381.847151,
+    "seen": 1791556855.5206342,
+    "ast_hash": "c464b4bdcf3b43ccafa740b4c7d91ec1",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/stoffwechsel.ts": {
+    "mtime": 1791556247.2539897,
+    "seen": 1791556855.5206358,
+    "ast_hash": "3fb5bbda4b679bbebb972b0dce999b3e",
+    "semantic_hash": ""
+  },
+  "src/features/blutwerte/lib/guidance/vitamine.ts": {
+    "mtime": 1791556445.4601939,
+    "seen": 1791556855.520638,
+    "ast_hash": "f6598a6c74c2c96480b874596f702596",
     "semantic_hash": ""
   }
 }
