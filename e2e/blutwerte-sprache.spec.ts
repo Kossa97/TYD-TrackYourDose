@@ -447,3 +447,49 @@ test('Detail: Zeitraum steht ueber dem Graph; Werte ausserhalb rot, innerhalb gr
     }
   }
 })
+
+test('Detail-Kopf: Kategorie hinter dem Namen, Kurzerklaerung mit „mehr“, langer Name laeuft', async ({ page, mock }) => {
+  wert(mock, 'Testosteron', { value: 600, unit: 'ng/dL' })
+  wert(mock, 'Alkalische Phosphatase', { value: 80, unit: 'U/L' })
+  await markerAnsicht(page)
+  await page.getByRole('button', { name: /Testosteron/ }).first().click()
+
+  const name = page.locator('[data-bw-name]')
+  await expect(page.getByRole('heading', { level: 1, name: 'Testosteron' })).toBeVisible()
+  const kategorie = page.locator('[data-bw-kategorie]')
+  await expect(kategorie).toHaveText('Hormone')
+  // Gleiche Zeile, dicht dahinter
+  const n = (await name.boundingBox())!
+  const k = (await kategorie.boundingBox())!
+  expect(Math.abs((k.y + k.height) - (n.y + n.height))).toBeLessThan(12)
+  expect(k.x - (n.x + n.width)).toBeLessThan(16)
+  await expect(name).not.toHaveAttribute('data-bw-name-laeuft')
+
+  // Kurzerklaerung oben, zwei Zeilen, aufklappbar; unten heisst es „Einordnung“
+  const intro = page.locator('[data-bw-intro] p')
+  await expect(intro).toContainText('Das wichtigste männliche Sexualhormon')
+  const zu = (await intro.boundingBox())!.height
+  await page.locator('[data-bw-intro-more]').click()
+  await expect(page.locator('[data-bw-intro-more]')).toHaveText('weniger')
+  expect((await intro.boundingBox())!.height).toBeGreaterThan(zu)
+  await expect(page.getByRole('heading', { name: 'Einordnung' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Was bedeutet der Wert?' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Zurück' }).click()
+  await page.getByRole('button', { name: /Alkalische Phosphatase/ }).first().click()
+  await expect(page.locator('[data-bw-name]')).toHaveAttribute('data-bw-name-laeuft', 'true')
+  await expect(page.locator('[data-bw-kategorie]')).toBeInViewport()
+})
+
+test.describe('weniger Bewegung', () => {
+  test('langer Name laeuft nicht, sondern wird gekuerzt', async ({ page, mock }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    wert(mock, 'Alkalische Phosphatase', { value: 80, unit: 'U/L' })
+    await markerAnsicht(page)
+    await page.getByRole('button', { name: /Alkalische Phosphatase/ }).first().click()
+    const name = page.locator('[data-bw-name]')
+    await expect(name).toBeVisible()
+    await expect(name).not.toHaveAttribute('data-bw-name-laeuft')
+    await expect(name).toHaveCSS('text-overflow', 'ellipsis')
+  })
+})
