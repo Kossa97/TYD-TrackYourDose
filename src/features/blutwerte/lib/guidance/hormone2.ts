@@ -13,10 +13,11 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       ],
       bereich: [{ text: 'Der Wert liegt im Referenzbereich des Labors. Ein Wachstumshormonmangel bei Erwachsenen ist damit allein nicht sicher ausgeschlossen.' }],
       hoch: [
-        { label: 'Mögliche Ursachen', text: 'Meist ein gutartiger Tumor der Hirnanhangdrüse, der zu viel Wachstumshormon bildet. Bei Erwachsenen heißt das Akromegalie, bei Kindern Riesenwuchs. Selten regen Tumoren in Bauchspeicheldrüse oder Lunge die Hirnanhangdrüse dazu an.' },
+        { label: 'Mögliche Ursachen', text: 'Zugeführtes Wachstumshormon (Somatropin) erhöht IGF-1, ebenso Substanzen, die die körpereigene Ausschüttung anregen (z. B. manche Peptide). Ohne Zufuhr meist ein gutartiger Tumor der Hirnanhangdrüse, der zu viel Wachstumshormon bildet. Bei Erwachsenen heißt das Akromegalie, bei Kindern Riesenwuchs. Selten regen Tumoren in Bauchspeicheldrüse oder Lunge die Hirnanhangdrüse dazu an.' },
         { label: 'Typische Anzeichen', text: 'Gröbere Gesichtszüge, größere Hände und Füße (Ring- oder Schuhgröße ändert sich), tiefe, raue Stimme, starkes Schwitzen, dicke, ölige Haut, Gelenkschmerzen, Kopfschmerzen, Sehstörungen; bei Frauen unregelmäßige Regelblutungen, bei Männern Erektionsprobleme. Die Veränderungen kommen langsam und bleiben oft jahrelang unbemerkt.' },
         { label: 'Mögliche Folgen auf Dauer', text: 'Diabetes, Bluthochdruck, ein vergrößertes und geschwächtes Herz, nächtliche Atemaussetzer (Schlafapnoe) und Polypen im Dickdarm. Unbehandelt ist die Lebenserwartung verkürzt.' },
-        { text: 'Ärztlich abklären; zeitnah bei Sehstörungen oder anhaltend starken Kopfschmerzen.' },
+        { label: 'Bei Zufuhr', text: 'Zu viel zugeführtes Wachstumshormon kann ähnliche Veränderungen auslösen wie eine Akromegalie: Schwellungen an Händen, Füßen und Beinen, größere Hände, Füße, Lippen, Nase und Zunge, starkes Schwitzen, Gelenk- oder Muskelschwäche.' },
+        { text: 'Ärztlich abklären, besonders bei Zufuhr solcher Substanzen; zeitnah bei Sehstörungen oder anhaltend starken Kopfschmerzen.' },
       ],
     },
     en: {
@@ -29,10 +30,11 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       ],
       bereich: [{ text: 'The value is within the lab’s reference range. On its own, this does not reliably rule out growth hormone deficiency in adults.' }],
       hoch: [
-        { label: 'Possible causes', text: 'Usually a benign tumour of the pituitary gland that makes too much growth hormone. In adults this is called acromegaly, in children gigantism. Rarely, tumours in the pancreas or lungs stimulate the pituitary gland to do so.' },
+        { label: 'Possible causes', text: 'Supplied growth hormone (somatropin) raises IGF-1, as do substances that stimulate the body’s own release (e.g. some peptides). Without supply, usually a benign tumour of the pituitary gland that makes too much growth hormone. In adults this is called acromegaly, in children gigantism. Rarely, tumours in the pancreas or lungs stimulate the pituitary gland to do so.' },
         { label: 'Typical signs', text: 'Coarser facial features, larger hands and feet (ring or shoe size changes), deep, husky voice, heavy sweating, thick, oily skin, joint pain, headaches, vision problems; irregular periods in women, erection problems in men. The changes come slowly and often go unnoticed for years.' },
         { label: 'Possible long-term consequences', text: 'Diabetes, high blood pressure, an enlarged and weakened heart, pauses in breathing at night (sleep apnoea) and polyps in the large bowel. Untreated, life expectancy is reduced.' },
-        { text: 'Have it checked by a doctor; promptly with vision problems or persistent severe headaches.' },
+        { label: 'When supplied', text: 'Too much supplied growth hormone can cause changes similar to acromegaly: swelling of the hands, feet and legs, enlarged hands, feet, lips, nose and tongue, heavy sweating, joint or muscle weakness.' },
+        { text: 'Have it checked by a doctor, especially when supplying such substances; promptly with vision problems or persistent severe headaches.' },
       ],
     },
     quellen: [
@@ -42,6 +44,8 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       { label: 'MedlinePlus: IGF-1 Test', url: 'https://medlineplus.gov/lab-tests/igf-1-insulin-like-growth-factor-1-test/' },
       { label: 'MedlinePlus: Acromegaly', url: 'https://medlineplus.gov/ency/article/000321.htm' },
       { label: 'NHS: Acromegaly', url: 'https://www.nhs.uk/conditions/acromegaly/' },
+      { label: 'MedlinePlus: Somatropin Injection', url: 'https://medlineplus.gov/druginfo/meds/a622022.html' },
+      { label: 'MSD Manual: Growth Hormone Deficiency in Children', url: 'https://www.msdmanuals.com/professional/pediatrics/endocrine-disorders-in-children/growth-hormone-deficiency-in-children' },
     ],
   },
 
@@ -55,9 +59,10 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       ],
       bereich: [{ text: 'Der Wert liegt im Referenzbereich des Labors. Als Einzelmessung ist er allein wenig aussagekräftig.' }],
       hoch: [
-        { label: 'Mögliche Ursachen', text: 'Oft ein Schub zum Zeitpunkt der Blutentnahme. Dauerhaft zu viel Wachstumshormon kommt meist von einem gutartigen Tumor der Hirnanhangdrüse (bei Erwachsenen Akromegalie, bei Kindern Riesenwuchs). Selten ist der Körper unempfindlich für Wachstumshormon.' },
+        { label: 'Mögliche Ursachen', text: 'Oft ein Schub zum Zeitpunkt der Blutentnahme. Dauerhaft zu viel Wachstumshormon kommt meist von einem gutartigen Tumor der Hirnanhangdrüse (bei Erwachsenen Akromegalie, bei Kindern Riesenwuchs). Selten ist der Körper unempfindlich für Wachstumshormon. Außerdem zugeführtes Wachstumshormon (Somatropin) oder Substanzen, die die körpereigene Ausschüttung anregen (z. B. manche Peptide).' },
         { label: 'Typische Anzeichen bei dauerhaftem Überschuss', text: 'Gröbere Gesichtszüge, größere Hände und Füße, tiefe Stimme, starkes Schwitzen, Gelenkschmerzen, Kopfschmerzen.' },
-        { text: 'Ein einzelner hoher Wert reicht für eine Diagnose nicht. Zusammen mit IGF-1 ärztlich einordnen lassen, besonders bei solchen Anzeichen.' },
+        { label: 'Bei Zufuhr', text: 'Zu viel zugeführtes Wachstumshormon kann ähnliche Veränderungen auslösen wie eine Akromegalie: Schwellungen an Händen, Füßen und Beinen, größere Hände, Füße, Lippen, Nase und Zunge, starkes Schwitzen, Gelenk- oder Muskelschwäche.' },
+        { text: 'Ein einzelner hoher Wert reicht für eine Diagnose nicht. Zusammen mit IGF-1 ärztlich einordnen lassen, besonders bei solchen Anzeichen oder bei Zufuhr.' },
       ],
     },
     en: {
@@ -69,9 +74,10 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       ],
       bereich: [{ text: 'The value is within the lab’s reference range. As a single measurement, it says little on its own.' }],
       hoch: [
-        { label: 'Possible causes', text: 'Often a burst at the time the blood was taken. Persistent excess growth hormone usually comes from a benign tumour of the pituitary gland (acromegaly in adults, gigantism in children). Rarely the body is insensitive to growth hormone.' },
+        { label: 'Possible causes', text: 'Often a burst at the time the blood was taken. Persistent excess growth hormone usually comes from a benign tumour of the pituitary gland (acromegaly in adults, gigantism in children). Rarely the body is insensitive to growth hormone. Also supplied growth hormone (somatropin) or substances that stimulate the body’s own release (e.g. some peptides).' },
         { label: 'Typical signs of persistent excess', text: 'Coarser facial features, larger hands and feet, deep voice, heavy sweating, joint pain, headaches.' },
-        { text: 'A single high value is not enough for a diagnosis. Have it assessed by a doctor together with IGF-1, especially with such signs.' },
+        { label: 'When supplied', text: 'Too much supplied growth hormone can cause changes similar to acromegaly: swelling of the hands, feet and legs, enlarged hands, feet, lips, nose and tongue, heavy sweating, joint or muscle weakness.' },
+        { text: 'A single high value is not enough for a diagnosis. Have it assessed by a doctor together with IGF-1, especially with such signs or when supplying it.' },
       ],
     },
     quellen: [
@@ -79,6 +85,8 @@ export const GUIDANCE_HORMONE2: Record<string, MarkerGuidance> = {
       { label: 'MSD Manual: Hypopituitarismus', url: 'https://www.msdmanuals.com/de/heim/hormon-und-stoffwechselerkrankungen/erkrankungen-der-hirnanhangdr%C3%BCse-hypophyse/hypopituitarismus' },
       { label: 'MedlinePlus: Growth Hormone Tests', url: 'https://medlineplus.gov/lab-tests/growth-hormone-tests/' },
       { label: 'MedlinePlus: Growth hormone test', url: 'https://medlineplus.gov/ency/article/003706.htm' },
+      { label: 'MedlinePlus: Somatropin Injection', url: 'https://medlineplus.gov/druginfo/meds/a622022.html' },
+      { label: 'MSD Manual: Growth Hormone Deficiency in Children', url: 'https://www.msdmanuals.com/professional/pediatrics/endocrine-disorders-in-children/growth-hormone-deficiency-in-children' },
     ],
   },
 
