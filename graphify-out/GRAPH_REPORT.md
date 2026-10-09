@@ -1,16 +1,16 @@
 # Graph Report - TYD-TrackYourDose  (2026-10-09)
 
 ## Corpus Check
-- 1021 files · ~1,294,974 words
+- 1021 files · ~1,295,031 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6922 nodes · 15112 edges · 505 communities (327 shown, 130 thin omitted)
+- 6922 nodes · 15112 edges · 504 communities (326 shown, 130 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d29d1432`
+- Built from commit: `5da49716`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,7 +36,6 @@
 - InjectionLogSheet.tsx
 - InjectionMapCanvas.tsx
 - PeptideVialVisual.tsx
-- markerCatalog.ts
 - planTimeline.js
 - devDependencies
 - graphify add <url> (ingest)
@@ -465,7 +464,7 @@
 - BlutwertePage.tsx
 - Home.test.ts
 - catalogDosageForms.test.ts
-- BefundListe.tsx
+- BioProfil.tsx
 - colorMigration.ts
 - insights.ts
 - intakeFrequency.ts
@@ -500,7 +499,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (505 total, 130 thin omitted)
+## Communities (504 total, 130 thin omitted)
 
 ### Community 0 - "renderProtocolPdf.ts"
 Cohesion: 0.10
@@ -543,8 +542,8 @@ Cohesion: 0.15
 Nodes (18): slotSchluessel(), slotSchluesselFuerZeitpunkt(), slotSchluesselGrenze(), zweistellig(), imBereich(), SchluesselFenster, slotKeyBereiche(), schluessel() (+10 more)
 
 ### Community 10 - "MarkerList.tsx"
-Cohesion: 0.15
-Nodes (25): BefundListe(), CardSparkline(), GRID, MarkerCard(), MarkerRow(), RowSparkline(), STATUS_COLOR, useMarkerView() (+17 more)
+Cohesion: 0.11
+Nodes (38): BefundListe(), bewertung(), Layout, loadLayout(), CardProps, CardSparkline(), GRID, MarkerCard() (+30 more)
 
 ### Community 11 - "BlutspiegelView.tsx"
 Cohesion: 0.15
@@ -585,10 +584,6 @@ Nodes (26): three, @react-three/drei, @react-three/fiber, three, CameraRig(), fo
 ### Community 20 - "PeptideVialVisual.tsx"
 Cohesion: 0.07
 Nodes (35): clamp01(), clampFill(), clampSlosh(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop(), AMPOULE_ASPECT (+27 more)
-
-### Community 21 - "markerCatalog.ts"
-Cohesion: 0.14
-Nodes (20): GridControls(), PILL, Props, SORT_LABELS, CardProps, Props, MarkerFilter, MarkerSummary (+12 more)
 
 ### Community 22 - "planTimeline.js"
 Cohesion: 0.07
@@ -848,7 +843,7 @@ Nodes (14): Anforderungen, Bewusst außerhalb des Scope (YAGNI), Daten, Gezeichn
 
 ### Community 109 - "BefundEditor.tsx"
 Cohesion: 0.07
-Nodes (52): react-hot-toast, BefundEditor(), entryToMergeItem(), toMergeItem(), toReviewRow(), ConflictResolver(), Props, ImportFlow() (+44 more)
+Nodes (50): BefundEditor(), entryToMergeItem(), toMergeItem(), toReviewRow(), ConflictResolver(), Props, ImportFlow(), Phase (+42 more)
 
 ### Community 110 - "The Lab Premium Redesign Implementation Plan"
 Cohesion: 0.14
@@ -1195,8 +1190,8 @@ Cohesion: 0.17
 Nodes (21): ./features/my-stack/MyStackPage, assertIsoDay(), assertMatchingUnit(), assertPlannable(), assertPositiveDose(), buildDosePlanVersion(), buildOneOffActualDose(), buildPermanentScheduleChange() (+13 more)
 
 ### Community 281 - "bloodwork.ts"
-Cohesion: 0.11
-Nodes (32): bewertung(), T, BioSex, AUFFAELLIG, auffaelligeWerte(), buildMarkerSummaries(), chooseDisplayUnit(), computeTrend() (+24 more)
+Cohesion: 0.08
+Nodes (43): Props, Props, bereichsHerkunft(), T, BioSex, AUFFAELLIG, auffaelligeWerte(), buildMarkerSummaries() (+35 more)
 
 ### Community 282 - "Peptipedia: Fakten- und Aktualitätsaudit des Gesamtkatalogs"
 Cohesion: 0.10
@@ -1447,8 +1442,8 @@ Cohesion: 0.25
 Nodes (7): 1. Bild für Bild nachfassen, bis eine Messung zustande kommt, 2. Ohne Maße wird nichts gesetzt, 3. Das Ergebnis geht zuerst an den DOM, Der Befund, Drei Änderungen, Farbschritt — die Messung, die nie stattfand, Verifikation
 
 ### Community 345 - "MarkerDetail.tsx"
-Cohesion: 0.09
-Nodes (33): MarkerDetail(), RangeFilter, RANGES, Props, ReferenceBar(), trendColor(), TrendIcon(), ZyklusStreifen() (+25 more)
+Cohesion: 0.08
+Nodes (38): PILL, Props, SORT_LABELS, MarkerDetail(), Props, RangeFilter, RANGES, Props (+30 more)
 
 ### Community 346 - "merge-my-stack-i18n.mjs"
 Cohesion: 0.21
@@ -1780,7 +1775,7 @@ Nodes (5): magBewegen(), StageDetailSheet(), StageDetailSheetProps, rechteck(), 
 
 ### Community 499 - "lucide-react"
 Cohesion: 0.06
-Nodes (46): lucide-react, @supabase/supabase-js, PK_PROFILES, PkSeed, PublicProfile, ProtectedRoute(), AuthContext, AuthContextType (+38 more)
+Nodes (47): lucide-react, react-hot-toast, @supabase/supabase-js, PK_PROFILES, PkSeed, PublicProfile, ProtectedRoute(), AuthContext (+39 more)
 
 ### Community 500 - "BlutwertePage.tsx"
 Cohesion: 0.12
@@ -1790,9 +1785,9 @@ Nodes (29): bioHinweisAus(), BlutwertePage(), loadMarkerLayout(), AddChoice, Add
 Cohesion: 0.19
 Nodes (8): createHomeClient(), intakeOnlyHomeCycle(), normalizedCycle(), pageMocks, quantifiedHomeCycle(), resolvedQuery(), query, startFixFixture()
 
-### Community 509 - "BefundListe.tsx"
-Cohesion: 0.13
-Nodes (25): Props, Layout, loadLayout(), Props, BioProfilFelder(), BioProfilFormular(), BioProfilHinweis(), BioProfilKarte() (+17 more)
+### Community 509 - "BioProfil.tsx"
+Cohesion: 0.19
+Nodes (17): BioProfilFelder(), BioProfilFormular(), BioProfilHinweis(), BioProfilKarte(), BioProfilSheet(), FelderProps, heuteIso(), useBioProfil() (+9 more)
 
 ### Community 510 - "colorMigration.ts"
 Cohesion: 0.26
@@ -1818,11 +1813,11 @@ Nodes (3): A, GUIDANCE_LEBER, U
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `react` to `faq/types.ts`, `Protokoll.tsx`, `AdminPanel.tsx`, `StocksChart.tsx`, `MarkerList.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `StackItemWizard.tsx`, `routing.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `IntakePlanEditor.tsx`, `usePushNotifications.ts`, `DoseCalculator.tsx`, `__VialPreview.tsx`, `PowderVisual.tsx`, `react-i18next`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `package.json`, `Layout.tsx`, `stage/types.ts`, `useFortschrittData.ts`, `PatchVisual.tsx`, `PenVisual.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `OnboardingContext.tsx`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `ArticleCards.tsx`, `TodayLogSheet.tsx`, `substances.ts`, `SubstanceCatalogEntry`, `Home.tsx`, `GelVisual.tsx`, `PeptideLibrary.tsx`, `SyringeScale.test.tsx`, `Onboarding.tsx`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `SprayVisual.tsx`, `dosePlan.ts`, `TubeVisual.tsx`, `stageLightDirection.test.ts`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `monitoring.ts`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `ProtocolPdfModal.tsx`, `__DevPreviews.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `StageLabel.tsx`, `DesignSystem.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `my-stack/types.ts`, `PeptideCalculatorPanel.tsx`, `ColorField.tsx`, `Health.tsx`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `StageFit.test.tsx`, `ManualSimulation.tsx`, `planTimeline.ts`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `BefundListe.tsx`?**
+- **Why does `react` connect `react` to `faq/types.ts`, `Protokoll.tsx`, `AdminPanel.tsx`, `StocksChart.tsx`, `MarkerList.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `StackItemWizard.tsx`, `routing.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `IntakePlanEditor.tsx`, `usePushNotifications.ts`, `DoseCalculator.tsx`, `__VialPreview.tsx`, `PowderVisual.tsx`, `react-i18next`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `package.json`, `Layout.tsx`, `stage/types.ts`, `useFortschrittData.ts`, `PatchVisual.tsx`, `PenVisual.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `OnboardingContext.tsx`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `ArticleCards.tsx`, `TodayLogSheet.tsx`, `substances.ts`, `SubstanceCatalogEntry`, `Home.tsx`, `GelVisual.tsx`, `PeptideLibrary.tsx`, `SyringeScale.test.tsx`, `Onboarding.tsx`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `SprayVisual.tsx`, `dosePlan.ts`, `TubeVisual.tsx`, `stageLightDirection.test.ts`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `monitoring.ts`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `ProtocolPdfModal.tsx`, `__DevPreviews.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `StageLabel.tsx`, `DesignSystem.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `my-stack/types.ts`, `PeptideCalculatorPanel.tsx`, `ColorField.tsx`, `Health.tsx`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `StageFit.test.tsx`, `ManualSimulation.tsx`, `planTimeline.ts`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `BioProfil.tsx`?**
   _High betweenness centrality (0.133) - this node is a cross-community bridge._
-- **Why does `vitest` connect `vitest` to `intakeFrequency.ts`, `denyFeedback.ts`, `DoseUnitControl.tsx`, `injectionPersistence.ts`, `StocksChart.tsx`, `intakeConfirmation.ts`, `MarkerList.tsx`, `bestand.ts`, `StackItemWizard.tsx`, `routing.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `markerCatalog.ts`, `planTimeline.js`, `IntakePlanEditor.tsx`, `usePushNotifications.ts`, `DoseCalculator.tsx`, `PowderVisual.tsx`, `react-i18next`, `content/types.ts`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `ScheduleCycle`, `package.json`, `chartMath.ts`, `valueOverview.ts`, `Layout.tsx`, `chartData.test.ts`, `stage/types.ts`, `useFortschrittData.ts`, `InjectionHistorySheet.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `injectionLogTypes.ts`, `substances.ts`, `SubstanceCatalogEntry`, `Home.tsx`, `intakeSchedule.ts`, `substanceCatalog.ts`, `GelVisual.tsx`, `SyringeScale.test.tsx`, `produktAngaben.ts`, `konzentration.ts`, `objektSkala.ts`, `legacyMyStackPersistence.ts`, `bloodwork-extract/index.ts`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `protocolPdf/types.ts`, `SprayVisual.tsx`, `unitConversion.ts`, `dosePlan.ts`, `bloodwork.ts`, `TubeVisual.tsx`, `audit-peptipedia.ts`, `stageLightDirection.test.ts`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `wellnessBuckets.ts`, `monitoring.ts`, `i18nMerge.test.ts`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `liquidCalculation.ts`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `StackItemWizard.interaction.test.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `mockSupabase.ts`, `StageLabel.tsx`, `legacyPlanTimeline.ts`, `my-stack/types.ts`, `stackSources.test.ts`, `inventoryMath.ts`, `PeptideCalculatorPanel.tsx`, `ColorField.tsx`, `i18n.test.ts`, `chartTooltip.ts`, `react`, `rechnerVial.ts`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `StageFit.test.tsx`, `units.ts`, `ManualSimulation.tsx`, `planTimeline.ts`, `trackingDepthSchema.test.ts`, `stackItems.ts`, `my-stack/lib/colors.ts`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `catalogDosageForms.test.ts`, `colorMigration.ts`, `insights.ts`?**
+- **Why does `vitest` connect `vitest` to `intakeFrequency.ts`, `denyFeedback.ts`, `DoseUnitControl.tsx`, `injectionPersistence.ts`, `StocksChart.tsx`, `intakeConfirmation.ts`, `MarkerList.tsx`, `bestand.ts`, `StackItemWizard.tsx`, `routing.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `planTimeline.js`, `IntakePlanEditor.tsx`, `usePushNotifications.ts`, `DoseCalculator.tsx`, `PowderVisual.tsx`, `react-i18next`, `content/types.ts`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `ScheduleCycle`, `package.json`, `chartMath.ts`, `valueOverview.ts`, `Layout.tsx`, `chartData.test.ts`, `stage/types.ts`, `useFortschrittData.ts`, `InjectionHistorySheet.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `injectionLogTypes.ts`, `substances.ts`, `SubstanceCatalogEntry`, `Home.tsx`, `intakeSchedule.ts`, `substanceCatalog.ts`, `GelVisual.tsx`, `SyringeScale.test.tsx`, `produktAngaben.ts`, `konzentration.ts`, `objektSkala.ts`, `legacyMyStackPersistence.ts`, `bloodwork-extract/index.ts`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `protocolPdf/types.ts`, `SprayVisual.tsx`, `unitConversion.ts`, `dosePlan.ts`, `bloodwork.ts`, `TubeVisual.tsx`, `audit-peptipedia.ts`, `stageLightDirection.test.ts`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `wellnessBuckets.ts`, `monitoring.ts`, `i18nMerge.test.ts`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `liquidCalculation.ts`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `StackItemWizard.interaction.test.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `mockSupabase.ts`, `StageLabel.tsx`, `legacyPlanTimeline.ts`, `my-stack/types.ts`, `stackSources.test.ts`, `inventoryMath.ts`, `PeptideCalculatorPanel.tsx`, `ColorField.tsx`, `i18n.test.ts`, `chartTooltip.ts`, `react`, `rechnerVial.ts`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `StageFit.test.tsx`, `units.ts`, `ManualSimulation.tsx`, `planTimeline.ts`, `trackingDepthSchema.test.ts`, `stackItems.ts`, `my-stack/lib/colors.ts`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `catalogDosageForms.test.ts`, `colorMigration.ts`, `insights.ts`?**
   _High betweenness centrality (0.113) - this node is a cross-community bridge._
-- **Why does `lucide-react` connect `lucide-react` to `TodayLogSheet.tsx`, `my-stack/types.ts`, `faq/types.ts`, `Protokoll.tsx`, `AdminPanel.tsx`, `UnitConverter.tsx`, `MarkerList.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `StackItemWizard.tsx`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `markerCatalog.ts`, `dosePlan.ts`, `IntakePlanEditor.tsx`, `DoseCalculator.tsx`, `react-i18next`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `InjektionsTracker.tsx`, `package.json`, `valueOverview.ts`, `Layout.tsx`, `ProtocolPdfModal.tsx`, `react`, `Health.tsx`, `InjectionHistorySheet.tsx`, `MyStackPage.tsx`, `MarkerDetail.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `ManualSimulation.tsx`, `OnboardingContext.tsx`, `planTimeline.ts`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `SubstanceCatalogEntry`, `Home.tsx`, `DesignSystem.tsx`, `BlutwertePage.tsx`, `StageDetailSheet.tsx`, `ArticleCards.tsx`, `FilterSheet.tsx`, `PeptideLibrary.tsx`, `BefundListe.tsx`, `Onboarding.tsx`, `TheLab.tsx`?**
+- **Why does `lucide-react` connect `lucide-react` to `TodayLogSheet.tsx`, `my-stack/types.ts`, `faq/types.ts`, `Protokoll.tsx`, `AdminPanel.tsx`, `UnitConverter.tsx`, `MarkerList.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `StackItemWizard.tsx`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `dosePlan.ts`, `IntakePlanEditor.tsx`, `DoseCalculator.tsx`, `react-i18next`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `InjectionTrackerTabs.tsx`, `Tagebuch.tsx`, `FotosTab.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `InjektionsTracker.tsx`, `package.json`, `valueOverview.ts`, `Layout.tsx`, `ProtocolPdfModal.tsx`, `react`, `Health.tsx`, `InjectionHistorySheet.tsx`, `MyStackPage.tsx`, `MarkerDetail.tsx`, `Rechner.tsx`, `ConsentGate.tsx`, `ManualSimulation.tsx`, `OnboardingContext.tsx`, `planTimeline.ts`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `SubstanceCatalogEntry`, `Home.tsx`, `DesignSystem.tsx`, `BlutwertePage.tsx`, `StageDetailSheet.tsx`, `ArticleCards.tsx`, `FilterSheet.tsx`, `PeptideLibrary.tsx`, `BioProfil.tsx`, `Onboarding.tsx`, `TheLab.tsx`?**
   _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **What connects `WEEKDAYS_DE`, `SLOT_TIMES`, `SLOT_GROUPS` to the rest of the system?**
   _2334 weakly-connected nodes found - possible documentation gaps or missing edges._

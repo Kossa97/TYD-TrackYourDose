@@ -56,6 +56,84 @@
       "source_location": "L23"
     },
     {
+      "id": "src_features_blutwerte_components_befundliste_layout",
+      "label": "Layout",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "layout",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_features_blutwerte_components_markerlist_cardprops",
+      "label": "CardProps",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "cardprops",
+      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
+      "source_location": "L88"
+    },
+    {
+      "id": "src_features_blutwerte_components_markerlist_props",
+      "label": "Props",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
+      "source_location": "L244"
+    },
+    {
+      "id": "src_features_blutwerte_lib_bloodwork_markersummary",
+      "label": "MarkerSummary",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markersummary",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_kategoriefilter",
+      "label": "KategorieFilter",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "kategoriefilter",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_markerdef",
+      "label": "MarkerDef",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markerdef",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L31"
+    },
+    {
       "id": "src_features_blutwerte_lib_sparkline_markerstatus",
       "label": "markerStatus",
       "_callable": true,
@@ -1707,123 +1785,6 @@
       "source_location": "L58"
     },
     {
-      "id": "src_features_blutwerte_components_gridcontrols_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/features/blutwerte/components/GridControls.tsx",
-      "source_location": "L19"
-    },
-    {
-      "id": "src_features_blutwerte_components_markerlist_cardprops",
-      "label": "CardProps",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "cardprops",
-      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L88"
-    },
-    {
-      "id": "src_features_blutwerte_components_markerlist_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/features/blutwerte/components/MarkerList.tsx",
-      "source_location": "L244"
-    },
-    {
-      "id": "src_features_blutwerte_lib_bloodwork_markerfilter",
-      "label": "MarkerFilter",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markerfilter",
-      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L270"
-    },
-    {
-      "id": "src_features_blutwerte_lib_bloodwork_markersummary",
-      "label": "MarkerSummary",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markersummary",
-      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L37"
-    },
-    {
-      "id": "src_features_blutwerte_lib_bloodwork_sortmode",
-      "label": "SortMode",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "sortmode",
-      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L29"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_kategorie",
-      "label": "Kategorie",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "kategorie",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_kategoriefilter",
-      "label": "KategorieFilter",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "kategoriefilter",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L29"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_markerdef",
-      "label": "MarkerDef",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markerdef",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L31"
-    },
-    {
       "id": "src_features_fortschritt_types_cyclerow",
       "label": "CycleRow",
       "_callable": true,
@@ -3449,6 +3410,32 @@
       "source_location": "L146"
     },
     {
+      "id": "src_features_blutwerte_components_befundeditor_props",
+      "label": "Props",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L23"
+    },
+    {
+      "id": "src_features_blutwerte_components_befundliste_props",
+      "label": "Props",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L25"
+    },
+    {
       "id": "src_features_blutwerte_lib_bereichsherkunft_t",
       "label": "T",
       "_callable": true,
@@ -3486,6 +3473,32 @@
       "norm_label": "effectiverange",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
       "source_location": "L66"
+    },
+    {
+      "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
+      "label": "MarkerPoint",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "markerpoint",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_kategorie",
+      "label": "Kategorie",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "kategorie",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L1"
     },
     {
       "id": "src_features_blutwerte_lib_referenzbereiche_profilbereich",
@@ -3538,6 +3551,32 @@
       "norm_label": "rangeset",
       "source_file": "src/features/blutwerte/lib/referenzbereiche.ts",
       "source_location": "L27"
+    },
+    {
+      "id": "src_features_blutwerte_types_bloodworkentry",
+      "label": "BloodworkEntry",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "bloodworkentry",
+      "source_file": "src/features/blutwerte/types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_types_bloodworkreport",
+      "label": "BloodworkReport",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "bloodworkreport",
+      "source_file": "src/features/blutwerte/types.ts",
+      "source_location": "L18"
     },
     {
       "id": "src_features_my_stack_extensions_tube_tubevisual_tubevisualprops",
@@ -4918,6 +4957,32 @@
       "source_location": "L9"
     },
     {
+      "id": "src_features_blutwerte_components_gridcontrols_props",
+      "label": "Props",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "src/features/blutwerte/components/GridControls.tsx",
+      "source_location": "L19"
+    },
+    {
+      "id": "src_features_blutwerte_components_markerdetail_props",
+      "label": "Props",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
+      "source_location": "L39"
+    },
+    {
       "id": "src_features_blutwerte_components_markerdetail_rangefilter",
       "label": "RangeFilter",
       "_callable": true,
@@ -4944,6 +5009,32 @@
       "source_location": "L8"
     },
     {
+      "id": "src_features_blutwerte_lib_bloodwork_markerfilter",
+      "label": "MarkerFilter",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "markerfilter",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L270"
+    },
+    {
+      "id": "src_features_blutwerte_lib_bloodwork_sortmode",
+      "label": "SortMode",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "sortmode",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L29"
+    },
+    {
       "id": "src_features_blutwerte_lib_bloodwork_trend",
       "label": "Trend",
       "_callable": true,
@@ -4968,6 +5059,19 @@
       "norm_label": "referencebargeometry",
       "source_file": "src/features/blutwerte/lib/referenceBar.ts",
       "source_location": "L23"
+    },
+    {
+      "id": "src_features_blutwerte_lib_unitconversion_unitsystem",
+      "label": "UnitSystem",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "unitsystem",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L128"
     },
     {
       "id": "src_features_blutwerte_lib_zykluszeilen_zyklusabschnitt",
@@ -8766,82 +8870,17 @@
       "source_location": "L150"
     },
     {
-      "id": "src_features_blutwerte_lib_unitconversion_unitsystem",
-      "label": "UnitSystem",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 500,
-      "community_name": "BlutwertePage.tsx",
-      "file_type": "code",
-      "norm_label": "unitsystem",
-      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
-      "source_location": "L128"
-    },
-    {
-      "id": "src_features_blutwerte_components_befundeditor_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
-      "source_location": "L23"
-    },
-    {
-      "id": "src_features_blutwerte_components_befundliste_layout",
-      "label": "Layout",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "layout",
-      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L13"
-    },
-    {
-      "id": "src_features_blutwerte_components_befundliste_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L25"
-    },
-    {
       "id": "src_features_blutwerte_components_bioprofil_felderprops",
       "label": "FelderProps",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "felderprops",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
       "source_location": "L20"
-    },
-    {
-      "id": "src_features_blutwerte_components_markerdetail_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L39"
     },
     {
       "id": "src_features_blutwerte_lib_bioprofile_bioprofile",
@@ -8850,50 +8889,11 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofile",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
       "source_location": "L11"
-    },
-    {
-      "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
-      "label": "MarkerPoint",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "markerpoint",
-      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L31"
-    },
-    {
-      "id": "src_features_blutwerte_types_bloodworkentry",
-      "label": "BloodworkEntry",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "bloodworkentry",
-      "source_file": "src/features/blutwerte/types.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_types_bloodworkreport",
-      "label": "BloodworkReport",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "bloodworkreport",
-      "source_file": "src/features/blutwerte/types.ts",
-      "source_location": "L18"
     },
     {
       "id": "src_features_fortschritt_components_overview_activesubstancessection_props",
@@ -10521,6 +10521,30 @@
       "source_location": "L42"
     },
     {
+      "id": "src_features_blutwerte_components_befundliste_bewertung",
+      "label": "bewertung()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "bewertung()",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L34"
+    },
+    {
+      "id": "src_features_blutwerte_components_befundliste_loadlayout",
+      "label": "loadLayout()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "loadlayout()",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L17"
+    },
+    {
       "id": "src_features_blutwerte_components_markerlist_cardsparkline",
       "label": "CardSparkline()",
       "_callable": true,
@@ -10579,6 +10603,18 @@
       "norm_label": "usemarkerview()",
       "source_file": "src/features/blutwerte/components/MarkerList.tsx",
       "source_location": "L96"
+    },
+    {
+      "id": "src_features_blutwerte_components_referencebar_referencebar",
+      "label": "ReferenceBar()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "referencebar()",
+      "source_file": "src/features/blutwerte/components/ReferenceBar.tsx",
+      "source_location": "L15"
     },
     {
       "id": "src_features_blutwerte_lib_format_alsdatum",
@@ -10689,6 +10725,30 @@
       "source_location": "L21"
     },
     {
+      "id": "src_features_blutwerte_lib_markercatalog_en_markererklaerung",
+      "label": "markerErklaerung()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markererklaerung()",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
+      "source_location": "L121"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_en_markername",
+      "label": "markerName()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markername()",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
+      "source_location": "L114"
+    },
+    {
       "id": "src_features_blutwerte_lib_sparkline_changesinceprevious",
       "label": "changeSincePrevious()",
       "_callable": true,
@@ -10701,30 +10761,6 @@
       "source_location": "L54"
     },
     {
-      "id": "src_features_blutwerte_lib_sparkline_test_eintrag",
-      "label": "eintrag()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "MarkerList.tsx",
-      "file_type": "code",
-      "norm_label": "eintrag()",
-      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_features_blutwerte_lib_sparkline_test_kortisol",
-      "label": "kortisol()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "MarkerList.tsx",
-      "file_type": "code",
-      "norm_label": "kortisol()",
-      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
-      "source_location": "L13"
-    },
-    {
       "id": "src_features_blutwerte_lib_sprache_aktivesprache",
       "label": "aktiveSprache()",
       "_callable": true,
@@ -10735,6 +10771,18 @@
       "norm_label": "aktivesprache()",
       "source_file": "src/features/blutwerte/lib/sprache.ts",
       "source_location": "L8"
+    },
+    {
+      "id": "src_features_blutwerte_lib_sprache_istdeutsch",
+      "label": "istDeutsch()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "istdeutsch()",
+      "source_file": "src/features/blutwerte/lib/sprache.ts",
+      "source_location": "L10"
     },
     {
       "id": "src_features_blutwerte_lib_sprache_uebersetze",
@@ -15021,54 +15069,6 @@
       "source_location": "L19"
     },
     {
-      "id": "src_features_blutwerte_components_gridcontrols_gridcontrols",
-      "label": "GridControls()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "gridcontrols()",
-      "source_file": "src/features/blutwerte/components/GridControls.tsx",
-      "source_location": "L35"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en_markererklaerung",
-      "label": "markerErklaerung()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markererklaerung()",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
-      "source_location": "L121"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en_markername",
-      "label": "markerName()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markername()",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
-      "source_location": "L114"
-    },
-    {
-      "id": "src_features_blutwerte_lib_sprache_istdeutsch",
-      "label": "istDeutsch()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "istdeutsch()",
-      "source_file": "src/features/blutwerte/lib/sprache.ts",
-      "source_location": "L10"
-    },
-    {
       "id": "api_lib_plantimeline_cycleappliestoday",
       "label": "cycleAppliesToDay()",
       "_callable": true,
@@ -19053,16 +19053,16 @@
       "source_location": "L117"
     },
     {
-      "id": "src_features_blutwerte_components_befundliste_bewertung",
-      "label": "bewertung()",
+      "id": "src_features_blutwerte_lib_bereichsherkunft_bereichsherkunft",
+      "label": "bereichsHerkunft()",
       "_callable": true,
       "_origin": "ast",
       "community": 281,
       "community_name": "bloodwork.ts",
       "file_type": "code",
-      "norm_label": "bewertung()",
-      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L34"
+      "norm_label": "bereichsherkunft()",
+      "source_file": "src/features/blutwerte/lib/bereichsHerkunft.ts",
+      "source_location": "L9"
     },
     {
       "id": "src_features_blutwerte_lib_bloodwork_auffaelligewerte",
@@ -19363,6 +19363,30 @@
       "norm_label": "entry()",
       "source_file": "src/features/blutwerte/lib/referenzbereiche.test.ts",
       "source_location": "L9"
+    },
+    {
+      "id": "src_features_blutwerte_lib_sparkline_test_eintrag",
+      "label": "eintrag()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "eintrag()",
+      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_features_blutwerte_lib_sparkline_test_kortisol",
+      "label": "kortisol()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "kortisol()",
+      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
+      "source_location": "L13"
     },
     {
       "id": "src_features_my_stack_extensions_tube_tubevisual_clamp01",
@@ -23214,7 +23238,7 @@
       "file_type": "code",
       "norm_label": "kurzerklaerung()",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L486"
+      "source_location": "L453"
     },
     {
       "id": "src_features_blutwerte_components_markerdetail_laufname",
@@ -23226,7 +23250,7 @@
       "file_type": "code",
       "norm_label": "laufname()",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L497"
+      "source_location": "L464"
     },
     {
       "id": "src_features_blutwerte_components_markerdetail_markerdetail",
@@ -23239,18 +23263,6 @@
       "norm_label": "markerdetail()",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
       "source_location": "L78"
-    },
-    {
-      "id": "src_features_blutwerte_components_referencebar_referencebar",
-      "label": "ReferenceBar()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 345,
-      "community_name": "MarkerDetail.tsx",
-      "file_type": "code",
-      "norm_label": "referencebar()",
-      "source_file": "src/features/blutwerte/components/ReferenceBar.tsx",
-      "source_location": "L15"
     },
     {
       "id": "src_features_blutwerte_components_trend_trendcolor",
@@ -23287,18 +23299,6 @@
       "norm_label": "zyklusstreifen()",
       "source_file": "src/features/blutwerte/components/ZyklusStreifen.tsx",
       "source_location": "L11"
-    },
-    {
-      "id": "src_features_blutwerte_lib_bereichsherkunft_bereichsherkunft",
-      "label": "bereichsHerkunft()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 345,
-      "community_name": "MarkerDetail.tsx",
-      "file_type": "code",
-      "norm_label": "bereichsherkunft()",
-      "source_file": "src/features/blutwerte/lib/bereichsHerkunft.ts",
-      "source_location": "L9"
     },
     {
       "id": "src_features_blutwerte_lib_referencebar_clamp",
@@ -27426,7 +27426,7 @@
       "file_type": "code",
       "norm_label": "canonicalhash()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1117"
+      "source_location": "L1119"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_interpolationtokens",
@@ -27438,7 +27438,7 @@
       "file_type": "code",
       "norm_label": "interpolationtokens()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1130"
+      "source_location": "L1132"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadlocale",
@@ -27450,7 +27450,7 @@
       "file_type": "code",
       "norm_label": "loadlocale()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1110"
+      "source_location": "L1112"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadsource",
@@ -27462,7 +27462,7 @@
       "file_type": "code",
       "norm_label": "loadsource()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1102"
+      "source_location": "L1104"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_withoutmystackoverlay",
@@ -27474,7 +27474,7 @@
       "file_type": "code",
       "norm_label": "withoutmystackoverlay()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1124"
+      "source_location": "L1126"
     },
     {
       "id": "src_features_fortschritt_lib_charttooltip_buildsnapanchors",
@@ -32133,6 +32133,18 @@
       "source_location": "L293"
     },
     {
+      "id": "src_features_blutwerte_components_gridcontrols_gridcontrols",
+      "label": "GridControls()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 500,
+      "community_name": "BlutwertePage.tsx",
+      "file_type": "code",
+      "norm_label": "gridcontrols()",
+      "source_file": "src/features/blutwerte/components/GridControls.tsx",
+      "source_location": "L35"
+    },
+    {
       "id": "src_features_blutwerte_components_markerlist_markerlist",
       "label": "MarkerList()",
       "_callable": true,
@@ -32349,24 +32361,12 @@
       "source_location": "L33"
     },
     {
-      "id": "src_features_blutwerte_components_befundliste_loadlayout",
-      "label": "loadLayout()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "loadlayout()",
-      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L17"
-    },
-    {
       "id": "src_features_blutwerte_components_bioprofil_bioprofilfelder",
       "label": "BioProfilFelder()",
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofilfelder()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32378,7 +32378,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofilformular()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32390,7 +32390,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofilhinweis()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32402,7 +32402,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofilkarte()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32414,7 +32414,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofilsheet()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32426,7 +32426,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "heuteiso()",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -32438,7 +32438,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "usebioprofil()",
       "source_file": "src/features/blutwerte/components/useBioProfil.ts",
@@ -32450,7 +32450,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "biovollstaendig()",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -32462,7 +32462,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "geburtsdatumgueltig()",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -32474,7 +32474,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "loadbioprofile()",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -32486,7 +32486,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "parsebioprofile()",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -32498,7 +32498,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "savebioprofile()",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -32510,7 +32510,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "reporterror()",
       "source_file": "src/lib/monitoring.ts",
@@ -35317,6 +35317,17 @@
       "source_location": "L29"
     },
     {
+      "id": "src_features_blutwerte_components_befundliste",
+      "label": "BefundListe.tsx",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "befundliste.tsx",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L1"
+    },
+    {
       "id": "src_features_blutwerte_components_markerlist",
       "label": "MarkerList.tsx",
       "_origin": "ast",
@@ -35383,6 +35394,50 @@
       "source_location": "L8"
     },
     {
+      "id": "src_features_blutwerte_lib_markercatalog_en",
+      "label": "markerCatalog.en.ts",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markercatalog.en.ts",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_en_kategorie_key",
+      "label": "KATEGORIE_KEY",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "kategorie_key",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
+      "source_location": "L95"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_en_marker_en",
+      "label": "MARKER_EN",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "marker_en",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
+      "source_location": "L14"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_en_test",
+      "label": "markerCatalog.en.test.ts",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "MarkerList.tsx",
+      "file_type": "code",
+      "norm_label": "markercatalog.en.test.ts",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.en.test.ts",
+      "source_location": "L1"
+    },
+    {
       "id": "src_features_blutwerte_lib_sparkline",
       "label": "sparkline.ts",
       "_origin": "ast",
@@ -35391,17 +35446,6 @@
       "file_type": "code",
       "norm_label": "sparkline.ts",
       "source_file": "src/features/blutwerte/lib/sparkline.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_lib_sparkline_test",
-      "label": "sparkline.test.ts",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "MarkerList.tsx",
-      "file_type": "code",
-      "norm_label": "sparkline.test.ts",
-      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
       "source_location": "L1"
     },
     {
@@ -37427,28 +37471,6 @@
       "source_location": "L1"
     },
     {
-      "id": "src_features_blutwerte_lib_markercatalog_catalog_marker_names",
-      "label": "CATALOG_MARKER_NAMES",
-      "_origin": "ast",
-      "community": 109,
-      "community_name": "BefundEditor.tsx",
-      "file_type": "code",
-      "norm_label": "catalog_marker_names",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L844"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_test",
-      "label": "markerCatalog.test.ts",
-      "_origin": "ast",
-      "community": 109,
-      "community_name": "BefundEditor.tsx",
-      "file_type": "code",
-      "norm_label": "markercatalog.test.ts",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.test.ts",
-      "source_location": "L1"
-    },
-    {
       "id": "src_features_blutwerte_lib_mergerows",
       "label": "mergeRows.ts",
       "_origin": "ast",
@@ -37469,17 +37491,6 @@
       "norm_label": "mergerows.test.ts",
       "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
       "source_location": "L1"
-    },
-    {
-      "id": "ref_react_hot_toast",
-      "label": "react-hot-toast",
-      "_origin": "ast",
-      "community": 109,
-      "community_name": "BefundEditor.tsx",
-      "file_type": "concept",
-      "norm_label": "react-hot-toast",
-      "source_file": "package.json",
-      "source_location": "L50"
     },
     {
       "id": "src_features_blutspiegel_blutspiegelview",
@@ -43139,138 +43150,6 @@
       "file_type": "code",
       "norm_label": "usestagelight.test.ts",
       "source_file": "src/features/my-stack/stage/useStageLight.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_components_gridcontrols",
-      "label": "GridControls.tsx",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "gridcontrols.tsx",
-      "source_file": "src/features/blutwerte/components/GridControls.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_components_gridcontrols_pill",
-      "label": "PILL",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "pill",
-      "source_file": "src/features/blutwerte/components/GridControls.tsx",
-      "source_location": "L10"
-    },
-    {
-      "id": "src_features_blutwerte_components_gridcontrols_sort_labels",
-      "label": "SORT_LABELS",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "sort_labels",
-      "source_file": "src/features/blutwerte/components/GridControls.tsx",
-      "source_location": "L12"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog",
-      "label": "markerCatalog.ts",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markercatalog.ts",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en",
-      "label": "markerCatalog.en.ts",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markercatalog.en.ts",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en_kategorie_key",
-      "label": "KATEGORIE_KEY",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "kategorie_key",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
-      "source_location": "L95"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en_marker_en",
-      "label": "MARKER_EN",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "marker_en",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.ts",
-      "source_location": "L14"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_en_test",
-      "label": "markerCatalog.en.test.ts",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markercatalog.en.test.ts",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.en.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_kategorien",
-      "label": "KATEGORIEN",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "kategorien",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L13"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_lookup",
-      "label": "LOOKUP",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "lookup",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L837"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markercatalog_sonstige",
-      "label": "SONSTIGE",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "sonstige",
-      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L27"
-    },
-    {
-      "id": "src_features_blutwerte_lib_markerguidance_test",
-      "label": "markerGuidance.test.ts",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "markerCatalog.ts",
-      "file_type": "code",
-      "norm_label": "markerguidance.test.ts",
-      "source_file": "src/features/blutwerte/lib/markerGuidance.test.ts",
       "source_location": "L1"
     },
     {
@@ -51180,6 +51059,50 @@
       "source_location": "L1"
     },
     {
+      "id": "src_features_blutwerte_lib_markercatalog",
+      "label": "markerCatalog.ts",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "markercatalog.ts",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_catalog_marker_names",
+      "label": "CATALOG_MARKER_NAMES",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "catalog_marker_names",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L844"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_kategorien",
+      "label": "KATEGORIEN",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "kategorien",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_lookup",
+      "label": "LOOKUP",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "lookup",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L837"
+    },
+    {
       "id": "src_features_blutwerte_lib_markercatalog_marker_catalog",
       "label": "MARKER_CATALOG",
       "_origin": "ast",
@@ -51189,6 +51112,39 @@
       "norm_label": "marker_catalog",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
       "source_location": "L47"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_sonstige",
+      "label": "SONSTIGE",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "sonstige",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markercatalog_test",
+      "label": "markerCatalog.test.ts",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "markercatalog.test.ts",
+      "source_file": "src/features/blutwerte/lib/markerCatalog.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_lib_markerguidance_test",
+      "label": "markerGuidance.test.ts",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "markerguidance.test.ts",
+      "source_file": "src/features/blutwerte/lib/markerGuidance.test.ts",
+      "source_location": "L1"
     },
     {
       "id": "src_features_blutwerte_lib_referenzbereiche",
@@ -51244,6 +51200,28 @@
       "norm_label": "mann",
       "source_file": "src/features/blutwerte/lib/referenzbereiche.test.ts",
       "source_location": "L15"
+    },
+    {
+      "id": "src_features_blutwerte_lib_sparkline_test",
+      "label": "sparkline.test.ts",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "sparkline.test.ts",
+      "source_file": "src/features/blutwerte/lib/sparkline.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_types",
+      "label": "blutwerte/types.ts",
+      "_origin": "ast",
+      "community": 281,
+      "community_name": "bloodwork.ts",
+      "file_type": "code",
+      "norm_label": "blutwerte/types.ts",
+      "source_file": "src/features/blutwerte/types.ts",
+      "source_location": "L1"
     },
     {
       "id": "docs_research_2026_09_14_peptipedia_catalogue_audit",
@@ -60723,6 +60701,39 @@
       "source_location": "L67"
     },
     {
+      "id": "src_features_blutwerte_components_gridcontrols",
+      "label": "GridControls.tsx",
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "gridcontrols.tsx",
+      "source_file": "src/features/blutwerte/components/GridControls.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_blutwerte_components_gridcontrols_pill",
+      "label": "PILL",
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "pill",
+      "source_file": "src/features/blutwerte/components/GridControls.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_features_blutwerte_components_gridcontrols_sort_labels",
+      "label": "SORT_LABELS",
+      "_origin": "ast",
+      "community": 345,
+      "community_name": "MarkerDetail.tsx",
+      "file_type": "code",
+      "norm_label": "sort_labels",
+      "source_file": "src/features/blutwerte/components/GridControls.tsx",
+      "source_location": "L12"
+    },
+    {
       "id": "src_features_blutwerte_components_markerdetail",
       "label": "MarkerDetail.tsx",
       "_origin": "ast",
@@ -61072,7 +61083,7 @@
       "file_type": "code",
       "norm_label": "my_stack_de",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1054"
+      "source_location": "L1056"
     },
     {
       "id": "scripts_my_stack_i18n_source_my_stack_en",
@@ -61094,7 +61105,7 @@
       "file_type": "code",
       "norm_label": "my_stack_keys",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L2106"
+      "source_location": "L2110"
     },
     {
       "id": "docs_superpowers_checklists_my_stack_backup_manifest",
@@ -69303,7 +69314,7 @@
       "file_type": "code",
       "norm_label": "expectedkeyset",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1100"
+      "source_location": "L1102"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_localecodes",
@@ -69325,7 +69336,7 @@
       "file_type": "code",
       "norm_label": "manual_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1080"
+      "source_location": "L1082"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_manuallocalecodes",
@@ -69358,7 +69369,7 @@
       "file_type": "code",
       "norm_label": "translated_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1086"
+      "source_location": "L1088"
     },
     {
       "id": "src_features_fortschritt_lib_charttooltip",
@@ -72577,6 +72588,17 @@
       "source_location": "L47"
     },
     {
+      "id": "ref_react_hot_toast",
+      "label": "react-hot-toast",
+      "_origin": "ast",
+      "community": 499,
+      "community_name": "lucide-react",
+      "file_type": "concept",
+      "norm_label": "react-hot-toast",
+      "source_file": "package.json",
+      "source_location": "L50"
+    },
+    {
       "id": "ref_supabase_supabase_js",
       "label": "@supabase/supabase-js",
       "_origin": "ast",
@@ -73471,22 +73493,11 @@
       "source_location": "L5"
     },
     {
-      "id": "src_features_blutwerte_components_befundliste",
-      "label": "BefundListe.tsx",
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "befundliste.tsx",
-      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L1"
-    },
-    {
       "id": "src_features_blutwerte_components_bioprofil",
       "label": "BioProfil.tsx",
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofil.tsx",
       "source_file": "src/features/blutwerte/components/BioProfil.tsx",
@@ -73497,7 +73508,7 @@
       "label": "useBioProfil.ts",
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "usebioprofil.ts",
       "source_file": "src/features/blutwerte/components/useBioProfil.ts",
@@ -73508,7 +73519,7 @@
       "label": "bioProfile.ts",
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "bioprofile.ts",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -73519,7 +73530,7 @@
       "label": "GEBURTSDATUM_MIN",
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "geburtsdatum_min",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
@@ -73530,22 +73541,11 @@
       "label": "LEERES_BIO_PROFIL",
       "_origin": "ast",
       "community": 509,
-      "community_name": "BefundListe.tsx",
+      "community_name": "BioProfil.tsx",
       "file_type": "code",
       "norm_label": "leeres_bio_profil",
       "source_file": "src/features/blutwerte/lib/bioProfile.ts",
       "source_location": "L17"
-    },
-    {
-      "id": "src_features_blutwerte_types",
-      "label": "blutwerte/types.ts",
-      "_origin": "ast",
-      "community": 509,
-      "community_name": "BefundListe.tsx",
-      "file_type": "code",
-      "norm_label": "blutwerte/types.ts",
-      "source_file": "src/features/blutwerte/types.ts",
-      "source_location": "L1"
     },
     {
       "id": "src_features_fortschritt_components_verlauf_verlaufsetup",
@@ -86822,18 +86822,6 @@
     },
     {
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
-      "target": "src_features_blutwerte_lib_format_formatrange",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L154",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_lib_markerguidance_markerguidance",
       "relation": "calls",
       "_origin": "ast",
@@ -86841,7 +86829,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L180",
+      "source_location": "L162",
       "weight": 1.0
     },
     {
@@ -86853,7 +86841,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L218",
+      "source_location": "L200",
       "weight": 1.0
     },
     {
@@ -86865,7 +86853,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L231",
+      "source_location": "L213",
       "weight": 1.0
     },
     {
@@ -86877,7 +86865,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L241",
+      "source_location": "L223",
       "weight": 1.0
     },
     {
@@ -86889,7 +86877,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L244",
+      "source_location": "L226",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_blutwerte_components_markerdetail_markerdetail",
+      "target": "src_features_blutwerte_lib_bloodwork_roundconverted",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
+      "source_location": "L254",
       "weight": 1.0
     },
     {
@@ -86901,7 +86901,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L447",
+      "source_location": "L414",
       "weight": 1.0
     },
     {
@@ -121481,6 +121481,18 @@
     },
     {
       "source": "src_features_blutwerte_components_markerdetail",
+      "target": "src_features_blutwerte_lib_bloodwork_roundconverted",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_blutwerte_components_markerdetail",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
       "relation": "imports",
       "_origin": "ast",
@@ -121602,18 +121614,6 @@
     {
       "source": "src_features_blutwerte_components_markerdetail",
       "target": "src_features_blutwerte_lib_format_formatnumber",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L17",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_blutwerte_components_markerdetail",
-      "target": "src_features_blutwerte_lib_format_formatrange",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -212697,7 +212697,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1054",
+      "source_location": "L1056",
       "weight": 1.0
     },
     {
@@ -212719,7 +212719,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L2106",
+      "source_location": "L2110",
       "weight": 1.0
     },
     {
@@ -218384,7 +218384,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L486",
+      "source_location": "L453",
       "weight": 1.0
     },
     {
@@ -218395,7 +218395,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L497",
+      "source_location": "L464",
       "weight": 1.0
     },
     {
@@ -232222,7 +232222,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1080",
+      "source_location": "L1082",
       "weight": 1.0
     },
     {
@@ -232233,7 +232233,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1086",
+      "source_location": "L1088",
       "weight": 1.0
     },
     {
@@ -232255,7 +232255,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1100",
+      "source_location": "L1102",
       "weight": 1.0
     },
     {
@@ -232266,7 +232266,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1102",
+      "source_location": "L1104",
       "weight": 1.0
     },
     {
@@ -232277,7 +232277,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1110",
+      "source_location": "L1112",
       "weight": 1.0
     },
     {
@@ -232288,7 +232288,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1117",
+      "source_location": "L1119",
       "weight": 1.0
     },
     {
@@ -232299,7 +232299,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1124",
+      "source_location": "L1126",
       "weight": 1.0
     },
     {
@@ -232310,7 +232310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1130",
+      "source_location": "L1132",
       "weight": 1.0
     },
     {
@@ -257397,5 +257397,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d29d14323669e8ba28cfbb7798c0ab84d01c6489"
+  "built_at_commit": "5da4971648be513e35b352d54099f91a4ba86241"
 }

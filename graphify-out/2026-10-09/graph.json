@@ -23226,7 +23226,7 @@
       "file_type": "code",
       "norm_label": "laufname()",
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L523"
+      "source_location": "L497"
     },
     {
       "id": "src_features_blutwerte_components_markerdetail_markerdetail",
@@ -27426,7 +27426,7 @@
       "file_type": "code",
       "norm_label": "canonicalhash()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1119"
+      "source_location": "L1117"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_interpolationtokens",
@@ -27438,7 +27438,7 @@
       "file_type": "code",
       "norm_label": "interpolationtokens()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1132"
+      "source_location": "L1130"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadlocale",
@@ -27450,7 +27450,7 @@
       "file_type": "code",
       "norm_label": "loadlocale()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1112"
+      "source_location": "L1110"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadsource",
@@ -27462,7 +27462,7 @@
       "file_type": "code",
       "norm_label": "loadsource()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1104"
+      "source_location": "L1102"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_withoutmystackoverlay",
@@ -27474,7 +27474,7 @@
       "file_type": "code",
       "norm_label": "withoutmystackoverlay()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1126"
+      "source_location": "L1124"
     },
     {
       "id": "src_features_fortschritt_lib_charttooltip_buildsnapanchors",
@@ -61072,7 +61072,7 @@
       "file_type": "code",
       "norm_label": "my_stack_de",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1056"
+      "source_location": "L1054"
     },
     {
       "id": "scripts_my_stack_i18n_source_my_stack_en",
@@ -61094,7 +61094,7 @@
       "file_type": "code",
       "norm_label": "my_stack_keys",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L2110"
+      "source_location": "L2106"
     },
     {
       "id": "docs_superpowers_checklists_my_stack_backup_manifest",
@@ -69303,7 +69303,7 @@
       "file_type": "code",
       "norm_label": "expectedkeyset",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1102"
+      "source_location": "L1100"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_localecodes",
@@ -69325,7 +69325,7 @@
       "file_type": "code",
       "norm_label": "manual_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1082"
+      "source_location": "L1080"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_manuallocalecodes",
@@ -69358,7 +69358,7 @@
       "file_type": "code",
       "norm_label": "translated_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1088"
+      "source_location": "L1086"
     },
     {
       "id": "src_features_fortschritt_lib_charttooltip",
@@ -212697,7 +212697,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L1056",
+      "source_location": "L1054",
       "weight": 1.0
     },
     {
@@ -212719,7 +212719,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L2110",
+      "source_location": "L2106",
       "weight": 1.0
     },
     {
@@ -218395,7 +218395,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L523",
+      "source_location": "L497",
       "weight": 1.0
     },
     {
@@ -232222,7 +232222,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1082",
+      "source_location": "L1080",
       "weight": 1.0
     },
     {
@@ -232233,7 +232233,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1088",
+      "source_location": "L1086",
       "weight": 1.0
     },
     {
@@ -232255,7 +232255,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1102",
+      "source_location": "L1100",
       "weight": 1.0
     },
     {
@@ -232266,7 +232266,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1104",
+      "source_location": "L1102",
       "weight": 1.0
     },
     {
@@ -232277,7 +232277,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1112",
+      "source_location": "L1110",
       "weight": 1.0
     },
     {
@@ -232288,7 +232288,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1119",
+      "source_location": "L1117",
       "weight": 1.0
     },
     {
@@ -232299,7 +232299,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1126",
+      "source_location": "L1124",
       "weight": 1.0
     },
     {
@@ -232310,7 +232310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L1132",
+      "source_location": "L1130",
       "weight": 1.0
     },
     {
@@ -257397,5 +257397,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4ae87aa3f859e1f86547df4cb0f88c4f91a0903a"
+  "built_at_commit": "d29d14323669e8ba28cfbb7798c0ab84d01c6489"
 }
