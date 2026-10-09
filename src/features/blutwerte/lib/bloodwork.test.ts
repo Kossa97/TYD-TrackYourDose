@@ -72,7 +72,7 @@ describe('effectiveRange', () => {
 
   it('übernimmt einen einseitigen Katalog-Bereich', () => {
     const range = effectiveRange(entry({ marker: 'CRP' }), normalizeMarker('CRP'))
-    expect(range).toEqual({ min: null, max: 1.0, source: 'catalog' })
+    expect(range).toEqual({ min: null, max: 5, source: 'catalog' })
   })
 
   it('meldet "none" ohne Eintrag und ohne Katalog-Definition', () => {
