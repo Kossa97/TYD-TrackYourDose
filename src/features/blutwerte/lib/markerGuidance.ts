@@ -8,6 +8,7 @@
  * wurde gestrichen. Nur Deutsch und Englisch.
  */
 import { istDeutsch } from './sprache'
+import { GUIDANCE_PAKETE } from './guidance'
 
 export interface GuidanceItem {
   /** Fettgedruckte Ueberschrift, z. B. „Mögliche Ursachen". */
@@ -366,12 +367,15 @@ const GUIDANCE: Record<string, MarkerGuidance> = {
   },
 }
 
+/** Alle Marker mit Einordnung: die ersten acht hier, die uebrigen je Kategorie in ./guidance. */
+const ALLE: Record<string, MarkerGuidance> = Object.assign({}, GUIDANCE, ...GUIDANCE_PAKETE)
+
 /** Einordnung fuer einen Katalogmarker in der Anzeigesprache; null, wenn es (noch) keine gibt. */
 export function markerGuidance(name: string, sprache: string): { text: GuidanceText; quellen: MarkerGuidance['quellen'] } | null {
-  const g = GUIDANCE[name]
+  const g = ALLE[name]
   if (!g) return null
   return { text: istDeutsch(sprache) ? g.de : g.en, quellen: g.quellen }
 }
 
 /** Fuer Tests: alle Marker mit Einordnung. */
-export const GUIDANCE_MARKERS = Object.keys(GUIDANCE)
+export const GUIDANCE_MARKERS = Object.keys(ALLE)
