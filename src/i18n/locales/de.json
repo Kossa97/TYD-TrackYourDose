@@ -2256,7 +2256,5 @@
   "bw_range_age_from": "ab {{min}} J.",
   "bw_range_no_standard_women": "Für Frauen gibt es hier keinen einzelnen Bereich – er hängt von Zyklusphase und Wechseljahren ab. Trag den Bereich aus deinem Laborbefund ein.",
   "bw_bio_load_error": "Deine Angaben konnten nicht geladen werden.",
-  "bw_assessment_title": "Einordnung",
-  "bw_intro_more": "mehr",
-  "bw_intro_less": "weniger"
+  "bw_assessment_title": "Einordnung"
 }

@@ -448,7 +448,7 @@ test('Detail: Zeitraum steht ueber dem Graph; Werte ausserhalb rot, innerhalb gr
   }
 })
 
-test('Detail-Kopf: Kategorie hinter dem Namen, Kurzerklaerung mit „mehr“, langer Name laeuft', async ({ page, mock }) => {
+test('Detail-Kopf: Kategorie hinter dem Namen, Kurzerklaerung ausgeschrieben, langer Name laeuft', async ({ page, mock }) => {
   wert(mock, 'Testosteron', { value: 600, unit: 'ng/dL' })
   wert(mock, 'Alkalische Phosphatase', { value: 80, unit: 'U/L' })
   await markerAnsicht(page)
@@ -465,13 +465,11 @@ test('Detail-Kopf: Kategorie hinter dem Namen, Kurzerklaerung mit „mehr“, la
   expect(k.x - (n.x + n.width)).toBeLessThan(16)
   await expect(name).not.toHaveAttribute('data-bw-name-laeuft')
 
-  // Kurzerklaerung oben, zwei Zeilen, aufklappbar; unten heisst es „Einordnung“
-  const intro = page.locator('[data-bw-intro] p')
+  // Kurzerklaerung oben, ganz ausgeschrieben; kein „mehr“
+  const intro = page.locator('[data-bw-intro]')
   await expect(intro).toContainText('Das wichtigste männliche Sexualhormon')
-  const zu = (await intro.boundingBox())!.height
-  await page.locator('[data-bw-intro-more]').click()
-  await expect(page.locator('[data-bw-intro-more]')).toHaveText('weniger')
-  expect((await intro.boundingBox())!.height).toBeGreaterThan(zu)
+  await expect(intro).toContainText('Muskelabbau zeigen.')
+  await expect(page.getByRole('button', { name: 'mehr' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Einordnung' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Was bedeutet der Wert?' })).toHaveCount(0)
 

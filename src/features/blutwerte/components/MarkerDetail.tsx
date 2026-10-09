@@ -482,36 +482,10 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
   )
 }
 
-/** Kurzerklaerung unter dem Namen: hoechstens zwei Zeilen, bei mehr mit „mehr“ zum Aufklappen. */
+/** Kurzerklaerung unter dem Namen, immer ganz ausgeschrieben. */
 function KurzErklaerung({ text }: { text: string }) {
-  const { t } = useTranslation()
-  const ref = useRef<HTMLParagraphElement>(null)
-  const [offen, setOffen] = useState(false)
-  const [laenger, setLaenger] = useState(false)
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el || offen) return
-    const pruefen = () => setLaenger(el.scrollHeight > el.clientHeight + 1)
-    pruefen()
-    const ro = new ResizeObserver(pruefen)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [text, offen])
   return (
-    <div className="mt-1" data-bw-intro>
-      <p
-        ref={ref}
-        className="text-sm leading-relaxed"
-        style={{ color: MUTED, ...(offen ? {} : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}
-      >
-        {text}
-      </p>
-      {(laenger || offen) && (
-        <button type="button" onClick={() => setOffen(o => !o)} aria-expanded={offen} className="min-h-9 text-sm font-semibold" style={{ color: CYAN }} data-bw-intro-more>
-          {offen ? t('bw_intro_less') : t('bw_intro_more')}
-        </button>
-      )}
-    </div>
+    <p className="mt-1 text-sm leading-relaxed" style={{ color: MUTED }} data-bw-intro>{text}</p>
   )
 }
 
