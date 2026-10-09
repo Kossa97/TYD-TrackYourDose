@@ -6,8 +6,8 @@
 -- profile"); die Spalten erben das. Das oeffentliche Profil (/u/<name>) und
 -- der PDF-Export lesen sie nicht.
 --
--- Die alten, nicht mehr genutzten Spalten "age" und "gender" bleiben, wie sie
--- sind — nichts wird geloescht oder umgeschrieben.
+-- Die alten Spalten "age" und "gender" (genutzt von /health und dem PDF)
+-- bleiben, wie sie sind — nichts wird geloescht oder umgeschrieben.
 --
 -- Rein additiv und idempotent: zwei neue Spalten ohne Standardwert und je
 -- eine Pruefung. Keine Zeile wird inhaltlich geaendert.

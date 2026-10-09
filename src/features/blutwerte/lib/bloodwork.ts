@@ -4,12 +4,24 @@ import { KATEGORIEN, MARKER_CATALOG, SONSTIGE, normalizeMarker } from './markerC
 import { convert, normalizeUnitString, systemUnit, type UnitSystem } from './unitConversion'
 import { markerName } from './markerCatalog.en'
 import { aktiveSprache } from './sprache'
+import type { BioProfile } from './bioProfile'
+import { profilBereich, type RangeGroup } from './referenzbereiche'
 
 export interface EffectiveRange {
   min: number | null
   max: number | null
   /** Woher der Bereich stammt: Labor-Referenz, Katalog oder gar nicht vorhanden. */
   source: 'lab' | 'catalog' | 'none'
+  /**
+   * Nur bei source 'catalog': der Bereich gilt für diese Gruppe (Geschlecht,
+   * Alter). Fehlt sie, ist es der allgemeine Bereich.
+   */
+  gruppe?: RangeGroup
+  /**
+   * Für diese Gruppe gibt es keinen einzelnen Standardbereich (etwa
+   * Östradiol bei Frauen); dann ist source 'none'.
+   */
+  keinStandard?: RangeGroup
 }
 
 export type Trend = 'up' | 'down' | 'same' | null
@@ -46,11 +58,18 @@ export function toNumber(value: number | string): number {
   return typeof value === 'number' ? value : Number(String(value).replace(',', '.'))
 }
 
-/** Labor-Referenz am Eintrag schlägt Katalog-Standard; sonst kein Bereich. */
-export function effectiveRange(entry: BloodworkEntry | null, def: MarkerDef | null): EffectiveRange {
+/**
+ * Reihenfolge: Labor-Referenz am Eintrag, dann der Bereich für Geschlecht und
+ * Alter am Messtag (wenn im Profil angegeben), dann der allgemeine
+ * Katalogbereich; sonst kein Bereich.
+ */
+export function effectiveRange(entry: BloodworkEntry | null, def: MarkerDef | null, profil?: BioProfile | null): EffectiveRange {
   if (entry && (entry.ref_min != null || entry.ref_max != null)) {
     return { min: entry.ref_min ?? null, max: entry.ref_max ?? null, source: 'lab' }
   }
+  const gruppe = def && entry ? profilBereich(def.name, profil, entry.tested_at) : null
+  if (gruppe?.art === 'keinStandard') return { min: null, max: null, source: 'none', keinStandard: gruppe.gruppe }
+  if (gruppe?.art === 'bereich') return { min: gruppe.min, max: gruppe.max, source: 'catalog', gruppe: gruppe.gruppe }
   if (def && (def.refMin != null || def.refMax != null)) {
     return { min: def.refMin ?? null, max: def.refMax ?? null, source: 'catalog' }
   }
@@ -166,19 +185,24 @@ function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: s
   if ((range.min != null && min == null) || (range.max != null && max == null)) {
     return { min: null, max: null, source: 'none' }
   }
-  return { min, max, source: range.source }
+  return { ...range, min, max }
+}
+
+/** Bereich eines einzelnen Eintrags (Labor, Gruppe oder Katalog) in toUnit. */
+export function entryRange(entry: BloodworkEntry, def: MarkerDef | null, toUnit: string, profil?: BioProfile | null, rounded = true): EffectiveRange {
+  const raw = effectiveRange(entry, def, profil)
+  const sourceUnit = raw.source === 'lab' ? entry.unit : (def?.einheit ?? '')
+  return rangeInDisplayUnit(raw, sourceUnit, toUnit, def?.name, rounded)
 }
 
 /**
  * Lage eines einzelnen Eintrags gegenueber seinem eigenen Bereich (Labor am
  * Eintrag, sonst Katalog) — in displayUnit, aus ungerundeten Werten.
  */
-export function entryInRange(entry: BloodworkEntry, def: MarkerDef | null, displayUnit: string): boolean | null {
+export function entryInRange(entry: BloodworkEntry, def: MarkerDef | null, displayUnit: string, profil?: BioProfile | null): boolean | null {
   // Ungerundet: die Rundung ist nur Anzeige und darf einen knapp auffaelligen
   // Wert nicht in den Bereich schieben.
-  const raw = effectiveRange(entry, def)
-  const sourceUnit = raw.source === 'lab' ? entry.unit : (def?.einheit ?? '')
-  const range = rangeInDisplayUnit(raw, sourceUnit, displayUnit, def?.name, false)
+  const range = entryRange(entry, def, displayUnit, profil, false)
   const value = convert(toNumber(entry.value), entry.unit, displayUnit, def?.name)
   return value != null ? isInRange(value, range) : null
 }
@@ -187,7 +211,7 @@ export function entryInRange(entry: BloodworkEntry, def: MarkerDef | null, displ
  * Baut je eine Zusammenfassung pro Katalog-Marker plus je eine pro Custom-Marker,
  * für den Einträge existieren.
  */
-export function buildMarkerSummaries(entries: BloodworkEntry[], prefs: UnitPrefs = {}): MarkerSummary[] {
+export function buildMarkerSummaries(entries: BloodworkEntry[], prefs: UnitPrefs = {}, profil?: BioProfile | null): MarkerSummary[] {
   const byName = new Map<string, { def: MarkerDef | null; entries: BloodworkEntry[] }>()
 
   MARKER_CATALOG.forEach(def => byName.set(def.name, { def, entries: [] }))
@@ -214,15 +238,15 @@ export function buildMarkerSummaries(entries: BloodworkEntry[], prefs: UnitPrefs
     // Der neueste Wert ist per Konstruktion von chooseDisplayUnit immer umrechenbar.
     const displayValue = latest ? convertForDisplay(toNumber(latest.value), latest.unit, displayUnit, markerKey) : null
 
-    const rawRange = effectiveRange(latest, bucket.def)
-    const rangeSourceUnit = rawRange.source === 'lab' ? (latest?.unit ?? '') : (bucket.def?.einheit ?? '')
-    const range = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit, markerKey)
+    const range = latest
+      ? entryRange(latest, bucket.def, displayUnit, profil)
+      : rangeInDisplayUnit(effectiveRange(null, bucket.def), bucket.def?.einheit ?? '', displayUnit, markerKey)
 
     const { trend, diff } = computeTrend(sorted, displayUnit, markerKey)
 
     // Urteil aus ungerundeten Werten in displayUnit; ein nicht umrechenbarer
     // Bereich liefert kein (falsches) Urteil.
-    const inRange = latest ? entryInRange(latest, bucket.def, displayUnit) : null
+    const inRange = latest ? entryInRange(latest, bucket.def, displayUnit, profil) : null
 
     return {
       name,

@@ -25,6 +25,19 @@ import { reportError } from '../../lib/monitoring'
 import { loadUnitPrefs, saveUnitPrefs, withMarkerUnit } from './lib/unitPrefs'
 import type { UnitPrefs } from './lib/bloodwork'
 import type { UnitSystem } from './lib/unitConversion'
+import { bioVollstaendig } from './lib/bioProfile'
+import { REFERENZBEREICHE } from './lib/referenzbereiche'
+import { useBioProfil } from './components/useBioProfil'
+import { BioProfilHinweis, BioProfilSheet } from './components/BioProfil'
+
+const BIO_HINWEIS_KEY = 'blutwerte-bio-hinweis-aus'
+const bioHinweisAus = (): boolean => {
+  try {
+    return localStorage.getItem(BIO_HINWEIS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 const MARKER_LAYOUT_KEY = 'blutwerte-marker-layout'
 
@@ -170,7 +183,24 @@ export function BlutwertePage() {
   const setUnitSystem = (system: UnitSystem) => changeUnitPrefs({ ...unitPrefs, system })
   const setMarkerUnit = (name: string, unit: string | null) => changeUnitPrefs(withMarkerUnit(unitPrefs, name, unit))
 
-  const summaries = useMemo(() => buildMarkerSummaries(entries, unitPrefs), [entries, unitPrefs])
+  // Geschlecht und Alter waehlen den Bereich, wenn ein Befund keinen eigenen hat.
+  const { profil: bioProfil, speichern: speichereBio } = useBioProfil()
+  const [bioSheet, setBioSheet] = useState(false)
+  const [bioHinweisWeg, setBioHinweisWeg] = useState(bioHinweisAus)
+  const bioHinweisAusblenden = () => {
+    setBioHinweisWeg(true)
+    try {
+      localStorage.setItem(BIO_HINWEIS_KEY, '1')
+    } catch {
+      /* localStorage nicht verfuegbar – gilt nur fuer diese Sitzung */
+    }
+  }
+
+  const summaries = useMemo(() => buildMarkerSummaries(entries, unitPrefs, bioProfil), [entries, unitPrefs, bioProfil])
+  // Hinweis nur, wenn er etwas aendern wuerde: ein Wert ohne Laborbereich bei
+  // einem Marker mit Bereichen nach Geschlecht/Alter — und eine Angabe fehlt.
+  const zeigeBioHinweis = !!bioProfil && !bioVollstaendig(bioProfil) && !bioHinweisWeg
+    && entries.some(e => e.ref_min == null && e.ref_max == null && REFERENZBEREICHE[normalizeMarker(e.marker)?.name ?? ''])
 
   const zeigtAuffaellige = kategorie === AUFFAELLIG
   const showSonstige = useMemo(() => summaries.some(s => s.kategorie === SONSTIGE), [summaries])
@@ -336,6 +366,7 @@ export function BlutwertePage() {
             unitSystem={unitPrefs.system ?? 'konventionell'}
             markerUnit={unitPrefs.marker?.[summary.name] ?? null}
             onMarkerUnit={unitsReady ? unit => setMarkerUnit(summary.name, unit) : undefined}
+            profil={bioProfil}
             onBack={() => setSelectedMarker(null)}
             onAdd={() => openNew(selectedMarker)}
             onEdit={openEdit}
@@ -403,8 +434,15 @@ export function BlutwertePage() {
         </div>
       )}
 
+      {!erstLaden && zeigeBioHinweis && (
+        <BioProfilHinweis onOeffnen={() => setBioSheet(true)} onAusblenden={bioHinweisAusblenden} />
+      )}
+      {bioSheet && bioProfil && (
+        <BioProfilSheet start={bioProfil} speichern={speichereBio} onClose={() => setBioSheet(false)} />
+      )}
+
       {!erstLaden && view === 'befunde' && (
-        <BefundListe reports={reports} entries={entries} onChanged={load} />
+        <BefundListe reports={reports} entries={entries} profil={bioProfil} onChanged={load} />
       )}
 
       {!erstLaden && view === 'marker' && (

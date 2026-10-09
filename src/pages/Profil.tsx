@@ -12,6 +12,7 @@ import { usePushNotifications } from '../lib/usePushNotifications'
 import { useTheme, type ThemeMode } from '../lib/theme'
 import { AccountSection } from '../features/compliance/components/AccountSection'
 import { KiEinwilligungProfil } from '../features/blutwerte/components/KiEinwilligung'
+import { BioProfilKarte } from '../features/blutwerte/components/BioProfil'
 import { filterFehlerSchluessel } from '../features/compliance/lib/moderation'
 
 interface Profile {
@@ -236,8 +237,13 @@ export function Profil() {
         <OnboardingRestartButton />
       </div>
 
-      {/* ── Einwilligung KI-Auswertung von Befunden (Widerruf) ── */}
+      {/* ── Alter und Geschlecht für die Blutwerte-Bereiche (eigenes Speichern) ── */}
       <div className="mt-6">
+        <BioProfilKarte />
+      </div>
+
+      {/* ── Einwilligung KI-Auswertung von Befunden (Widerruf) ── */}
+      <div>
         <KiEinwilligungProfil />
       </div>
 

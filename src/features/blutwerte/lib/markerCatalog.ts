@@ -564,7 +564,8 @@ export const MARKER_CATALOG: MarkerDef[] = [
     synonyme: ['TSAT', 'Transferrin-Sättigung'],
     kategorie: 'Vitamine & Mineralstoffe',
     einheit: '%',
-    refMin: 20,
+    // IQWiG (gesundheitsinformation.de): 16–45 % für Frauen und Männer.
+    refMin: 16,
     refMax: 45,
     erklaerung: 'Zeigt, wie gut das Eisentransportprotein beladen ist, und ergänzt die Beurteilung des Eisenstatus.',
   },

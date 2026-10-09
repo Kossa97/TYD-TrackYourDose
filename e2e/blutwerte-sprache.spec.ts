@@ -122,6 +122,8 @@ test('Raster: Tippen auf die Plakette aendert die Kartengroesse nicht', async ({
   const groessen = () => karten.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().height)))
   const vorher = await groessen()
   const plakette = karten.filter({ hasText: 'Testosteron' }).locator('[data-bw-status]')
+  // Auf kleinen Bildschirmen liegt die Karte unter dem Rand; erst hinscrollen, dann messen.
+  await plakette.scrollIntoViewIfNeeded()
   const breite = (await plakette.boundingBox())!
 
   // Beide Texte liegen in der Plakette, sichtbar ist immer nur einer

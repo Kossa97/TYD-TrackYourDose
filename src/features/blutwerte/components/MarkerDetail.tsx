@@ -10,6 +10,7 @@ import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, Plus } from 'lucid
 import { KATEGORIE_KEY, markerErklaerung, markerName } from '../lib/markerCatalog.en'
 import type { MarkerSummary } from '../lib/bloodwork'
 import { chooseDisplayUnit, entryInRange, toNumber } from '../lib/bloodwork'
+import type { BioProfile } from '../lib/bioProfile'
 import { unitChoices, type UnitSystem } from '../lib/unitConversion'
 import { GUIDANCE_STAND, markerGuidance, type GuidanceItem } from '../lib/markerGuidance'
 import type { BloodworkEntry, BloodworkReport } from '../types'
@@ -48,6 +49,8 @@ interface Props {
   unitSystem?: UnitSystem
   markerUnit?: string | null
   onMarkerUnit?: (unit: string | null) => void
+  /** Geschlecht/Alter für den Bereich je Messung, wenn sie keinen Laborbereich hat. */
+  profil?: BioProfile | null
 }
 
 /** Monats-Ticks (1., 2., 3., 6. oder 12. Monat), so fein, wie die Breite erlaubt. */
@@ -72,7 +75,7 @@ function monthTicks(start: number, end: number, widthPx: number): { ticks: numbe
   return { ticks, step: every * 30 * TAG_MS }
 }
 
-export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onEdit, unitSystem = 'konventionell', markerUnit = null, onMarkerUnit }: Props) {
+export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onEdit, unitSystem = 'konventionell', markerUnit = null, onMarkerUnit, profil }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
@@ -254,7 +257,9 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
             {range.source !== 'none' ? (
               <ReferenceBar value={shownValue} unit={shownUnit} range={range} inRange={inRange} />
             ) : (
-              <p className="text-xs" style={{ color: MUTED }}>{t('bw_no_reference_set')}</p>
+              <p className="text-xs" style={{ color: MUTED }} data-bw-no-range>
+                {range.keinStandard ? t('bw_range_no_standard_women') : t('bw_no_reference_set')}
+              </p>
             )}
             <div data-bw-status>
               {inRange === true && <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>{t('bw_in_range')}</span>}
@@ -436,7 +441,7 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
             // Veraenderung zum naechstaelteren umrechenbaren Wert
             const older = p.value != null ? summary.points.slice(i + 1).find(o => o.value != null) : undefined
             const diff = older && p.value != null ? p.value - (older.value as number) : null
-            const status = entryInRange(e, def, unit)
+            const status = entryInRange(e, def, unit, profil)
             const pillColor = status === false ? PILL_RED : status === true ? PILL_GREEN : PILL_GRAY
             const lab = e.report_id ? labNamen.get(e.report_id) : null
             const source = e.report_id ? [t('bw_source_report'), lab].filter(Boolean).join(' · ') : t('bw_source_manual')

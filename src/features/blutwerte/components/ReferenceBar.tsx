@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { EffectiveRange } from '../lib/bloodwork'
 import { referenceBarGeometry } from '../lib/referenceBar'
+import { bereichsHerkunft } from '../lib/bereichsHerkunft'
 import { formatNumber, formatRange } from '../lib/format'
 import { GREEN, MUTED, RED, TEXT } from '../styles'
 
@@ -15,6 +16,7 @@ export function ReferenceBar({ value, unit, range, inRange }: Props) {
   const { t } = useTranslation()
   const geo = referenceBarGeometry(value, range)
   const referenzText = formatRange(range.min, range.max, unit)
+  const herkunft = bereichsHerkunft(range, t)
 
   if (!geo) {
     // Kein Balken darstellbar (z.B. einseitige Untergrenze wie eGFR "ab 90") —
@@ -24,7 +26,7 @@ export function ReferenceBar({ value, unit, range, inRange }: Props) {
         <p className="text-xs font-semibold" style={{ color: TEXT }}>{t('bw_reference_range')}</p>
         <p className="text-xs" style={{ color: MUTED }}>
           {referenzText}
-          {range.source === 'lab' && ` (${t('bw_lab_source')})`}
+          {herkunft && <span data-bw-range-source> ({herkunft})</span>}
         </p>
       </div>
     )
@@ -36,7 +38,7 @@ export function ReferenceBar({ value, unit, range, inRange }: Props) {
         <p className="text-xs font-semibold" style={{ color: TEXT }}>{t('bw_reference_range')}</p>
         <p className="text-xs" style={{ color: MUTED }}>
           {referenzText}
-          {range.source === 'lab' && ` (${t('bw_lab_source')})`}
+          {herkunft && <span data-bw-range-source> ({herkunft})</span>}
         </p>
       </div>
 

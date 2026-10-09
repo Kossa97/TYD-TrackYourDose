@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { markerName } from '../lib/markerCatalog.en'
 import { ArrowLeft, ChevronRight, LayoutGrid, List } from 'lucide-react'
 import type { BloodworkEntry, BloodworkReport } from '../types'
-import { effectiveRange, isInRange, toNumber } from '../lib/bloodwork'
+import { entryInRange, entryRange } from '../lib/bloodwork'
+import type { BioProfile } from '../lib/bioProfile'
 import { normalizeMarker } from '../lib/markerCatalog'
 import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
 import { CYAN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
@@ -24,13 +25,21 @@ const loadLayout = (): Layout => {
 interface Props {
   reports: BloodworkReport[]
   entries: BloodworkEntry[]
+  /** Geschlecht/Alter für den Bereich, wenn der Befund keinen eigenen hat. */
+  profil?: BioProfile | null
   onChanged: () => void
 }
 
-const isAuffaellig = (entry: BloodworkEntry): boolean =>
-  isInRange(toNumber(entry.value), effectiveRange(entry, normalizeMarker(entry.marker))) === false
+/** Bereich und Urteil in der Einheit des Eintrags (Katalogbereiche werden umgerechnet). */
+const bewertung = (entry: BloodworkEntry, profil?: BioProfile | null) => {
+  const def = normalizeMarker(entry.marker)
+  return {
+    range: entryRange(entry, def, entry.unit, profil),
+    auffaellig: entryInRange(entry, def, entry.unit, profil) === false,
+  }
+}
 
-export function BefundListe({ reports, entries, onChanged }: Props) {
+export function BefundListe({ reports, entries, profil, onChanged }: Props) {
   const { t, i18n } = useTranslation()
   const sprache = i18n.resolvedLanguage ?? i18n.language
   const werteLabel = (n: number) => (n === 1 ? t('bw_values_one') : t('bw_values_many', { count: n }))
@@ -118,9 +127,8 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
           ) : layout === 'raster' ? (
             <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
               {values.map(entry => {
-                const range = effectiveRange(entry, normalizeMarker(entry.marker))
+                const { range, auffaellig } = bewertung(entry, profil)
                 const referenz = formatRange(range.min, range.max, entry.unit)
-                const auffaellig = isAuffaellig(entry)
                 return (
                   <div
                     key={entry.id}
@@ -139,9 +147,8 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
           ) : (
             <div style={PANEL_STYLE}>
               {values.map((entry, i) => {
-                const range = effectiveRange(entry, normalizeMarker(entry.marker))
+                const { range, auffaellig } = bewertung(entry, profil)
                 const referenz = formatRange(range.min, range.max, entry.unit)
-                const auffaellig = isAuffaellig(entry)
                 return (
                   <div
                     key={entry.id}
@@ -179,7 +186,7 @@ export function BefundListe({ reports, entries, onChanged }: Props) {
     <div style={PANEL_STYLE}>
       {reports.map((report, i) => {
         const values = byReport.get(report.id) ?? []
-        const auffaelligCount = values.filter(isAuffaellig).length
+        const auffaelligCount = values.filter(e => bewertung(e, profil).auffaellig).length
         return (
           <button
             key={report.id}
