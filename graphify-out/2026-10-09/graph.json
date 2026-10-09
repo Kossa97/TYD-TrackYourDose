@@ -26529,7 +26529,7 @@
       "file_type": "code",
       "norm_label": "normalizemarker()",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L844"
+      "source_location": "L849"
     },
     {
       "id": "src_features_blutwerte_lib_sprache_istdeutsch",
@@ -66711,7 +66711,7 @@
       "file_type": "code",
       "norm_label": "catalog_marker_names",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L838"
+      "source_location": "L843"
     },
     {
       "id": "src_features_blutwerte_lib_markercatalog_en",
@@ -66777,7 +66777,7 @@
       "file_type": "code",
       "norm_label": "lookup",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L831"
+      "source_location": "L836"
     },
     {
       "id": "src_features_blutwerte_lib_markercatalog_marker_catalog",
@@ -108972,7 +108972,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L847",
+      "source_location": "L852",
       "weight": 1.0
     },
     {
@@ -218025,7 +218025,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L831",
+      "source_location": "L836",
       "weight": 1.0
     },
     {
@@ -218036,7 +218036,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L838",
+      "source_location": "L843",
       "weight": 1.0
     },
     {
@@ -218047,7 +218047,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L844",
+      "source_location": "L849",
       "weight": 1.0
     },
     {
@@ -255131,5 +255131,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "44ab6cf2a2e22a655d0be53f223df815bc2ad57c"
+  "built_at_commit": "d0dbc17bfa12cc8fdb50db1d17a3eb2ce7381615"
 }
