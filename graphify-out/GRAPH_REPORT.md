@@ -1,41 +1,41 @@
 # Graph Report - TYD-TrackYourDose  (2026-10-09)
 
 ## Corpus Check
-- 1021 files · ~1,294,343 words
+- 1021 files · ~1,294,667 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6920 nodes · 15110 edges · 519 communities (339 shown, 132 thin omitted)
+- 6921 nodes · 15111 edges · 519 communities (342 shown, 129 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `799e41db`
+- Built from commit: `e481e647`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - renderProtocolPdf.ts
-- DoseCalculator.tsx
+- denyFeedback.ts
 - faq/types.ts
 - Protokoll.tsx
-- markerCatalog.ts
+- injectionPersistence.ts
 - AdminPanel.tsx
 - health.ts
 - StocksChart.tsx
 - write-json.mjs
-- Auswertung.tsx
-- focusSummary.ts
+- intakeConfirmation.ts
+- VerlaufSection.tsx
 - BlutspiegelView.tsx
-- Bestand.tsx
+- bestand.ts
 - StudyCard.tsx
 - wizardState.ts
-- routing.ts
+- seo.ts
 - Dashboard.tsx
 - dependencies
-- injectionPersistence.ts
+- InjectionLogSheet.tsx
 - InjectionMapCanvas.tsx
-- stageLightDirection.test.ts
+- PeptideVialVisual.tsx
 - zyklusZeilen.ts
 - planTimeline.js
 - devDependencies
@@ -59,7 +59,7 @@
 - pubmed/index.ts
 - planLifecycle.ts
 - Tagebuch.tsx
-- FotosCard.tsx
+- fortschritt/types.ts
 - Content Studio Sub-Projekt 1 (Content-Engine + Social-Posts) — Implementation Plan
 - Biohacking Dashboard (KPI + Presets)
 - scripts
@@ -69,7 +69,7 @@
 - chartVisibility.ts
 - The Lab — Premium Redesign Spec
 - Evidence Scoring & Study Type Classification
-- useAuth
+- fortschritt/styles.ts
 - DosageFormCarousel
 - package.json
 - peptide-ai.js
@@ -79,7 +79,7 @@
 - ExampleInstrumentedTest.java
 - valueOverview.ts
 - Field-by-Field Onboarding Guidance
-- planCard.ts
+- date-fns
 - Zyklus Planung Versionierung Plan
 - add-peptipedia-i18n.mjs
 - my-stack-plan-integrity-dry-run.test.sql
@@ -91,24 +91,24 @@
 - Package.swift
 - graphify --watch (auto-rebuild)
 - __VialPreview.tsx
-- FotosTab.tsx
+- useFortschrittData.ts
 - Öffentliche Peptipedia mit horizontaler Tab-Navigation
 - InjectionTrackerTabs.tsx
 - My Stack: die Tracking-Stufen aufgeräumt
 - My Stack: Farbe wird ein eigener Schritt
 - PatchVisual.tsx
 - PenVisual.tsx
-- StackItemWizard.tsx
+- ProductInventorySection.tsx
 - texts.ts
 - File Structure
-- Profil.tsx
+- OnboardingContext.tsx
 - Design
 - Injektionstracker Pro - 3D Injektionskarte (Design)
 - Architektur
 - Werteübersicht in Fortschritt
 - metrics.ts
 - The Lab — Redesign Spec
-- FortschrittPage.tsx
+- FortschrittDashboard.tsx
 - My Stack Generalisierung – Teilprojekt 1: Grundlage
 - UI-Fundament: Theming, Motion & Icons — Implementation Plan
 - UI-Fundament: Theming, Motion & Icons (Phase 1)
@@ -127,7 +127,7 @@
 - Onboarding-Rework Implementation Plan
 - Live-Blutspiegel-Graph Neubau — Implementation Plan
 - Onboarding-Rework: Substanz → Zyklus → Dosiserhöhung → Kalender → simulierte Bestätigung
-- Peptide
+- injectionLogTypes.ts
 - graphify reference: extra exports and benchmark
 - The Lab Redesign Implementation Plan
 - File Map
@@ -237,14 +237,14 @@
 - File Structure
 - File Structure
 - Animation der größten Veränderungen
-- fortschritt/types.ts
+- substances.ts
 - Fortschritt-Fotos: adaptives Vorschau-Raster – Design
 - Global Constraints
 - Global Constraints
 - Active Add-Vial Glow
 - Active Add-Vial Glow Implementation Plan
 - vialStock.ts
-- StackCategory
+- my-stack/types.ts
 - generate-my-stack-i18n.mjs
 - Home.tsx
 - intakeSchedule.ts
@@ -261,7 +261,7 @@
 - Onboarding.tsx
 - supabase-my-stack-plan-integrity.sql
 - planLabels.ts
-- catalogue-profile.ts
+- StackItemWizard.tsx
 - legacyMyStackPersistence.ts
 - supabase-store-compliance-2.sql
 - Wertevergleich: metrikspezifischer Fallback
@@ -308,15 +308,15 @@
 - validate.ts
 - File and Responsibility Map
 - e2e/tsconfig.json
-- denyFeedback.ts
-- StackListView.tsx
+- monitoring.ts
+- react-i18next
 - Dashboard.test.ts
 - Gel als elfte Bühnenform
 - Die Entscheidungen
 - Peptipedia Publication Readiness
-- account.ts
-- liquidCalculation.ts
-- liquidGeometry.ts
+- InjektionsTracker.tsx
+- DoseCalculator.tsx
+- LiquidGraphic.tsx
 - Kategorie „Sonstiges"
 - Einnahmeplan: Enddatum, mehrmals täglich, bei Bedarf
 - my-stack-plan-integrity.test.sql
@@ -358,7 +358,7 @@
 - Substanzkatalog — Welle „Apotheke"
 - mockSupabase.ts
 - StageLabel.tsx
-- planSegments.ts
+- legacyPlanTimeline.ts
 - Peptipedia — externe medizinische und juristische Prüfung
 - Public Peptipedia — implementation handoff
 - My Stack — Formauswahl auf einer Fläche
@@ -392,7 +392,7 @@
 - generate-onboarding-i18n.mjs
 - dosageForms.ts
 - supabase-store-compliance.sql
-- BioProfil.tsx
+- ConsentGate.tsx
 - merge-onboarding-i18n.mjs
 - stackSources.test.ts
 - inventoryMath.ts
@@ -419,7 +419,7 @@
 - bloodwork
 - ColorField.tsx
 - public.cycles
-- MarkerList.tsx
+- kombination.ts
 - public.substance_catalog
 - public.stack_items
 - public.substance_catalog
@@ -436,14 +436,14 @@
 - i18n.test.ts
 - useMyStackData.ts
 - chartTooltip.ts
-- @testing-library/react
+- react-router-dom
 - Health.tsx
 - public.stack_item_ingredients
 - rechnerVial.ts
 - LiveBlutspiegelChart.tsx
 - MyStackPage.tsx
 - useWischZeile.ts
-- SubstanceCatalogEntry
+- substanceCatalog.ts
 - sw.ts
 - Liquid calculator implementation plan
 - StageFit.test.tsx
@@ -457,7 +457,7 @@
 - blutbild1.ts
 - lipide.ts
 - Vor dem Einreichen — von dir
-- bestand.ts
+- PlanManagementSection
 - public.public_profile_reviews
 - supabase-reviews-v2.sql
 - public.profiles
@@ -467,25 +467,25 @@
 - WorkflowBanner.tsx
 - generate-effect-duration-sql.mjs
 - StageDetailSheet.tsx
-- react-i18next
+- lucide-react
 - BlutwertePage.tsx
 - Home.test.ts
 - ResearchSnapshot.tsx
-- metricDefaults.ts
+- staleChunkReload.ts
 - planAdoption.ts
 - catalogDosageForms.test.ts
 - stagePreview.ts
-- i18nMerge.test.ts
-- referenzbereiche.test.ts
+- StackStage.test.ts
+- BioProfil.tsx
 - getStableStackItemColor
 - insights.ts
-- LevelPoint
-- enzyme.ts
-- niere.ts
-- CourseTimezoneReview.tsx
+- intakeFrequency.ts
+- stackTabs.ts
+- stage/types.ts
+- createSloshEngine
 - DoseUnitControl.tsx
-- UnitConverter.test.tsx
-- StackArchive.tsx
+- leber.ts
+- capacitor.config.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `vitest` - 239 edges
@@ -514,15 +514,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (519 total, 132 thin omitted)
+## Communities (519 total, 129 thin omitted)
 
 ### Community 0 - "renderProtocolPdf.ts"
 Cohesion: 0.10
 Nodes (43): jspdf, applyCoachCopy(), applyForumCopy(), applyMedicalCopy(), AutoTableOpts, autoTableSafe(), bodyText(), coverPage() (+35 more)
 
-### Community 1 - "DoseCalculator.tsx"
-Cohesion: 0.15
-Nodes (14): CopyCalculation(), DoseCalculator(), initialValues, inputNumber(), NumericField, sourceUnits, presets, SyringeFields() (+6 more)
+### Community 1 - "denyFeedback.ts"
+Cohesion: 0.32
+Nodes (4): DENY_SELECTOR, flashDeny(), installDenyFeedback(), timers
 
 ### Community 2 - "faq/types.ts"
 Cohesion: 0.07
@@ -532,41 +532,41 @@ Nodes (30): outDir, root, FAQ, FAQ_LOADERS, loadFaqBundle(), arCategories, deCat
 Cohesion: 0.07
 Nodes (47): Protokoll, DailyLogField, DailyLogRow, isWellnessMarker(), WELLNESS_MARKER_FIELD, WELLNESS_MARKERS, WellnessMarker, wellnessMarkersWithData() (+39 more)
 
-### Community 4 - "markerCatalog.ts"
-Cohesion: 0.19
-Nodes (15): CardProps, Props, MarkerSummary, CATALOG_MARKER_NAMES, KATEGORIE_KEY, MARKER_EN, markerErklaerung(), markerName() (+7 more)
+### Community 4 - "injectionPersistence.ts"
+Cohesion: 0.12
+Nodes (32): SelectableInjectionCycle, assertInjectionProSchema(), buildInjectionInsertPayload(), buildSelectableInjectionIntakes(), buildTimelineInjectionIntakes(), confirmIntakeDoseLog(), cycleName(), doseLogSlotKey() (+24 more)
 
 ### Community 5 - "AdminPanel.tsx"
 Cohesion: 0.07
 Nodes (32): AdminPanel, ModerationQueue(), AdminPanel(), getFinalResult(), handleCreate(), handleUpdate(), persistLibrary(), saveNew() (+24 more)
 
 ### Community 6 - "health.ts"
-Cohesion: 0.10
-Nodes (27): capacitor-health-connect, @perfood/capacitor-healthkit, ANDROID_READ_PERMISSIONS, getHealthKitSource(), getHeartRate(), getSleep(), getWeight(), HealthConnectHeartRateRecord (+19 more)
+Cohesion: 0.09
+Nodes (30): @capacitor/core, capacitor-health-connect, @perfood/capacitor-healthkit, ANDROID_READ_PERMISSIONS, getHealthKitSource(), getHeartRate(), getSleep(), getSteps() (+22 more)
 
 ### Community 7 - "StocksChart.tsx"
 Cohesion: 0.11
-Nodes (36): BarDatum, Props, resolveColor(), StocksBars, AXIS_WIDTH, cssVar(), domainTicks, hexAlpha() (+28 more)
+Nodes (37): @capacitor/haptics, BlutspiegelView(), BarDatum, Props, resolveColor(), StocksBars, AXIS_WIDTH, cssVar() (+29 more)
 
 ### Community 8 - "write-json.mjs"
 Cohesion: 0.16
 Nodes (16): es, fr, it, pt, id, ja, ko, zh (+8 more)
 
-### Community 9 - "Auswertung.tsx"
-Cohesion: 0.14
-Nodes (22): Auswertung(), ChartDatum, COLOR, loadRows(), RANGE_LABEL, RANGES, Bucket, bySubstance() (+14 more)
+### Community 9 - "intakeConfirmation.ts"
+Cohesion: 0.15
+Nodes (18): istSlotSchluessel(), slotSchluessel(), slotSchluesselFuerZeitpunkt(), slotSchluesselGrenze(), zweistellig(), imBereich(), SchluesselFenster, slotKeyBereiche() (+10 more)
 
-### Community 10 - "focusSummary.ts"
-Cohesion: 0.23
-Nodes (13): buildFocusSummary(), FocusSummary, FocusSummaryRow, formatDelta(), formatMetricValue(), pointsInWindow(), substanceBarEnd(), summaryRow() (+5 more)
+### Community 10 - "VerlaufSection.tsx"
+Cohesion: 0.14
+Nodes (21): ChartSettingsButton(), Props, ChartPanHandle, MetricChart, Props, MetricChipBar(), Props, Props (+13 more)
 
 ### Community 11 - "BlutspiegelView.tsx"
-Cohesion: 0.18
-Nodes (9): BlutspiegelView(), DetailStats, lastDay(), MUTED, TickerStrip, rangeBounds(), UnsupportedEntry, formatOffset() (+1 more)
+Cohesion: 0.12
+Nodes (10): lastDay(), MUTED, TickerStrip, ExtraSeries, StocksChartProps, CHART_RANGES, ChartRange, LevelPoint (+2 more)
 
-### Community 12 - "Bestand.tsx"
-Cohesion: 0.09
-Nodes (41): BestandActions, BestandCard(), BestandCardProps, BestandEditor(), BestandEditorArt, BestandEditorHost(), BestandEditorHostProps, EditorProps (+33 more)
+### Community 12 - "bestand.ts"
+Cohesion: 0.06
+Nodes (54): BestandActions, BestandCard(), BestandCardProps, BestandEditor(), BestandEditorArt, BestandEditorHost(), BestandEditorHostProps, EditorProps (+46 more)
 
 ### Community 13 - "StudyCard.tsx"
 Cohesion: 0.12
@@ -574,35 +574,35 @@ Nodes (27): StudyDetail, EvidenceScore, getDefaultLimitationKey(), getEvidenceCo
 
 ### Community 14 - "wizardState.ts"
 Cohesion: 0.10
-Nodes (34): completeIngredient, defaultMethodFor(), validateStackItemDraft(), powderVialIngredientsForEdit(), basisVorbelegung(), canContinue(), didIdentityChange(), draftFromStackItem() (+26 more)
+Nodes (35): completeIngredient, defaultIntakeUnitFor(), defaultMethodFor(), getIntakePlanUnitSuggestions(), methodChoicesFor(), validateIngredient(), validateStackItemDraft(), powderVialIngredientsForEdit() (+27 more)
 
-### Community 15 - "routing.ts"
-Cohesion: 0.26
-Nodes (12): escape(), prerenderPeptipedia(), LegacyPeptipediaRedirect(), PeptipediaPublicLayout(), publicPeptipediaRoutes(), legacySlug(), PEPTIPEDIA_TAB_IDS, peptipediaDetailPath() (+4 more)
+### Community 15 - "seo.ts"
+Cohesion: 0.19
+Nodes (12): escape(), prerenderPeptipedia(), getPublishedPeptide(), getPublishedPeptides(), PUBLISHED_PEPTIDES, BLEND_SLUGS, EXPECTED_SLUGS, toView() (+4 more)
 
 ### Community 16 - "Dashboard.tsx"
-Cohesion: 0.06
-Nodes (73): InventoryConfirmationError, RoutineGroup, ConfirmedIntake, GROUP_LABEL_KEYS, RoutineConfirmationSheet(), RoutineConfirmationSheetProps, group(), intake() (+65 more)
+Cohesion: 0.08
+Nodes (49): debitPeptideStockForDoseById(), getStackItemColor(), InventoryConfirmationError, RoutineGroup, ConfirmedIntake, GROUP_LABEL_KEYS, RoutineConfirmationSheet(), RoutineConfirmationSheetProps (+41 more)
 
 ### Community 17 - "dependencies"
 Cohesion: 0.07
 Nodes (27): dependencies, @capacitor/android, @capacitor/cli, @capacitor/core, @capacitor/haptics, capacitor-health-connect, @capacitor/ios, date-fns (+19 more)
 
-### Community 18 - "injectionPersistence.ts"
-Cohesion: 0.07
-Nodes (53): INJECTION_INTRO_VERSION, InjectionIntroSheet(), InjectionLogSheet(), InjectionSaveInput, InjectionSaveMode, METHOD_OPTIONS, toLocalInput(), UNIT_OPTIONS (+45 more)
+### Community 18 - "InjectionLogSheet.tsx"
+Cohesion: 0.12
+Nodes (21): InjectionLogSheet(), InjectionSaveInput, InjectionSaveMode, METHOD_OPTIONS, toLocalInput(), UNIT_OPTIONS, findTargetInjectionIntake(), getOpenInjectionIntakeKey() (+13 more)
 
 ### Community 19 - "InjectionMapCanvas.tsx"
-Cohesion: 0.06
-Nodes (49): three, @react-three/drei, @react-three/fiber, three, CameraRig(), focusTargetForRequest(), INJECTION_MAP_LIGHTS, InjectionFocusRequest (+41 more)
+Cohesion: 0.11
+Nodes (25): three, @react-three/drei, @react-three/fiber, three, CameraRig(), focusTargetForRequest(), INJECTION_MAP_LIGHTS, InjectionFocusRequest (+17 more)
 
-### Community 20 - "stageLightDirection.test.ts"
-Cohesion: 0.05
-Nodes (51): clamp01(), clampFill(), clampSlosh(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop(), useSloshSubscribe() (+43 more)
+### Community 20 - "PeptideVialVisual.tsx"
+Cohesion: 0.08
+Nodes (33): clamp01(), clampFill(), clampSlosh(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop(), AMPOULE_ASPECT (+25 more)
 
 ### Community 21 - "zyklusZeilen.ts"
-Cohesion: 0.21
-Nodes (14): MarkerDetail(), achse(), achsenTicks(), MAX_ZEILEN, msTag(), ohnePausen(), TAG_MS, tagMs() (+6 more)
+Cohesion: 0.22
+Nodes (13): achse(), achsenTicks(), MAX_ZEILEN, ohnePausen(), TAG_MS, tagMs(), fenster, namen (+5 more)
 
 ### Community 22 - "planTimeline.js"
 Cohesion: 0.07
@@ -621,12 +621,12 @@ Cohesion: 0.18
 Nodes (21): batchInsert(), batchUpsertDaily(), buildDoseLogsForCycle(), buildPlannedCycles(), clamp(), CycleRow, END_STR, fail() (+13 more)
 
 ### Community 27 - "IntakePlanEditor.tsx"
-Cohesion: 0.05
-Nodes (56): IntakePlanEditor(), addSlot(), changeRhythm(), removeLastSlot(), removeSlot(), selectKind(), toggleWeekday(), IntakePlanEditorProps (+48 more)
+Cohesion: 0.06
+Nodes (46): IntakePlanEditor(), addSlot(), changeRhythm(), planSatz(), removeLastSlot(), removeSlot(), selectKind(), toggleWeekday() (+38 more)
 
 ### Community 28 - "Layout.tsx"
 Cohesion: 0.10
-Nodes (20): @capacitor/core, Layout(), QUICK_ACTIONS, QUICK_TILES, routeLayoutMode, PushNotificationListener(), PushPayloadMessage, PushPayloadMessage (+12 more)
+Nodes (19): Layout(), QUICK_ACTIONS, QUICK_TILES, routeLayoutMode, PushNotificationListener(), PushPayloadMessage, PushPayloadMessage, showPageNotification() (+11 more)
 
 ### Community 29 - "AppDelegate"
 Cohesion: 0.13
@@ -641,8 +641,8 @@ Cohesion: 0.27
 Nodes (7): buildDuplicateFingerprint(), ingredientFingerprint(), normalizeNumber(), normalizeText(), d3Capsule1000, d3Capsule5000, d3Drops1000
 
 ### Community 32 - "StackItemWizard"
-Cohesion: 0.16
-Nodes (27): fehlerText(), pkIntentSteps(), planBaseFor(), StackItemWizard(), backToOverview(), chooseEffective(), chooseSaveMode(), editSectionLabel() (+19 more)
+Cohesion: 0.18
+Nodes (25): fehlerText(), pkIntentSteps(), planBaseFor(), StackItemWizard(), backToOverview(), chooseEffective(), chooseSaveMode(), editSectionLabel() (+17 more)
 
 ### Community 33 - "compilerOptions"
 Cohesion: 0.11
@@ -653,16 +653,16 @@ Cohesion: 0.14
 Nodes (27): POWDER_ASPECT, POWDER_BODY, POWDER_BODY_PATH, POWDER_GROUND_SHIFT, POWDER_LABEL, POWDER_LABEL_BOX, POWDER_LID, POWDER_LID_PATH (+19 more)
 
 ### Community 35 - "react"
-Cohesion: 0.08
-Nodes (58): react, VialStageLightHandle, SloshContext, SloshProvider(), clamp(), createSloshEngine(), SloshEngine, SloshState (+50 more)
+Cohesion: 0.12
+Nodes (42): react, VialStageLightHandle, SloshContext, SloshProvider(), SloshEngine, SloshState, Subscriber, DosageFormPreviewProps (+34 more)
 
 ### Community 36 - "content/types.ts"
-Cohesion: 0.11
-Nodes (30): PEPTIPEDIA_EDITORIAL_POLICY, bpc157, BlendDefinition, blendProfiles, cagriSemaSources, definitions, cjc1295, epithalon (+22 more)
+Cohesion: 0.08
+Nodes (42): PEPTIPEDIA_EDITORIAL_POLICY, bpc157, bioregulatorProfiles, unresolvedProfiles, BlendDefinition, blendProfiles, cagriSemaSources, definitions (+34 more)
 
 ### Community 37 - "Bewertungen.tsx"
-Cohesion: 0.10
-Nodes (40): ReviewSheet(), ReviewSubstanz, BewertungsGruppe, datum(), dauerText(), dosisVon(), entwurfAus(), entwurfGueltig() (+32 more)
+Cohesion: 0.08
+Nodes (43): filterFehlerSchluessel(), useMinuteClock(), ReviewDeleteSheet(), ReviewSheet(), ReviewSubstanz, BewertungsGruppe, datum(), dauerText() (+35 more)
 
 ### Community 38 - "seed-test-data.mjs"
 Cohesion: 0.14
@@ -681,16 +681,16 @@ Cohesion: 0.15
 Nodes (11): buildEutilsUrl(), corsHeaders, ESearchResponse, ESummaryArticle, ESummaryResponse, ESummaryResult, fetchPubMedAbstracts(), fetchPubMedSummaries() (+3 more)
 
 ### Community 42 - "planLifecycle.ts"
-Cohesion: 0.07
-Nodes (37): callRpc(), createPlanVersion(), CycleFilter, CycleTimelineRow, hasOpenConflict(), HISTORY_SELECT, lifecycleError(), loadCycleHistory() (+29 more)
+Cohesion: 0.08
+Nodes (39): callRpc(), createPlanVersion(), CycleFilter, CycleTimelineRow, endCycle(), hasOpenConflict(), HISTORY_SELECT, lifecycleError() (+31 more)
 
 ### Community 43 - "Tagebuch.tsx"
-Cohesion: 0.13
-Nodes (21): Tagebuch, DURATION_KEYS, DurationKey, durationKeyOf(), durationLabel(), isDurationKey(), Effect, INTAKE_OPTIONS (+13 more)
+Cohesion: 0.07
+Nodes (42): Auswertung(), ChartDatum, COLOR, loadRows(), RANGE_LABEL, RANGES, DURATION_KEYS, DurationKey (+34 more)
 
-### Community 44 - "FotosCard.tsx"
-Cohesion: 0.29
-Nodes (8): FotosCard(), Props, Props, buildPhotoSlots(), photoPreviewColumns(), PhotoPreviewSlot, sortNewestFirst(), ProgressPhotoEntry
+### Community 44 - "fortschritt/types.ts"
+Cohesion: 0.14
+Nodes (22): FotosCard(), Props, fmtDate(), FotosTab(), Props, todayStr(), PHOTO_BUCKET, isPhotoGridSize() (+14 more)
 
 ### Community 45 - "Content Studio Sub-Projekt 1 (Content-Engine + Social-Posts) — Implementation Plan"
 Cohesion: 0.10
@@ -709,24 +709,24 @@ Cohesion: 0.04
 Nodes (46): 10. UX, 11. Migration, 12. Fehlerbehandlung, 13. Teststrategie, 14. Rollout, 15. Abnahmekriterien, 16. Gemessene Abschlussprüfung — 2026-09-19 (Task 14), 1. Anlass (+38 more)
 
 ### Community 51 - "chartVisibility.ts"
-Cohesion: 0.14
-Nodes (28): buildSubstancesSummary(), CycleRow(), formatCycleLabel(), groupDefaultCounts(), Props, VerlaufSetup(), inventoryKey(), useChartVisibility() (+20 more)
+Cohesion: 0.13
+Nodes (31): Props, buildSubstancesSummary(), CycleRow(), formatCycleLabel(), groupDefaultCounts(), Props, VerlaufSetup(), inventoryKey() (+23 more)
 
 ### Community 52 - "The Lab — Premium Redesign Spec"
 Cohesion: 0.06
 Nodes (33): 1. Back-Navigation, 2. Header, 3. Zusammenfassung (Card), 4. Key Findings (Card), 5. Evidence Analyse (Card), 6. Originaler Abstract (Accordion), 7. PubMed Button, App.tsx Änderung (+25 more)
 
-### Community 54 - "useAuth"
+### Community 54 - "fortschritt/styles.ts"
 Cohesion: 0.12
-Nodes (16): PdfProtokoll, ProtectedRoute(), AuthContext, AuthContextType, AuthProvider(), useAuth(), client, Stand (+8 more)
+Nodes (16): ActiveSubstancesSection(), ChangeCard(), formatDelta(), formatValue(), Props, TopChangesSection(), MAX_VISIBLE_SUBSTANCES, formatSubstanceEnd() (+8 more)
 
 ### Community 55 - "DosageFormCarousel"
-Cohesion: 0.29
-Nodes (13): DosageFormCarousel(), beendeZug(), beiKlick(), beiRad(), beiScroll(), buehnenlichtMessen(), buehnenlichtPlanen(), fuehreZug() (+5 more)
+Cohesion: 0.17
+Nodes (18): DosageFormCarousel(), beendeZug(), beiKlick(), beiRad(), beiScroll(), buehnenlichtMessen(), buehnenlichtPlanen(), fuehreZug() (+10 more)
 
 ### Community 56 - "package.json"
-Cohesion: 0.06
-Nodes (35): config, engines, node, name, private, type, version, autoprefixer (+27 more)
+Cohesion: 0.07
+Nodes (31): engines, node, name, private, type, version, autoprefixer, @capacitor/android (+23 more)
 
 ### Community 57 - "peptide-ai.js"
 Cohesion: 0.60
@@ -745,12 +745,12 @@ Cohesion: 0.33
 Nodes (5): ExampleInstrumentedTest, ExampleUnitTest, androidx.test.ext.junit.runners.AndroidJUnit4, org.junit.runner.RunWith, org.junit.Test
 
 ### Community 62 - "valueOverview.ts"
-Cohesion: 0.13
-Nodes (22): Props, ARROWS, number(), Props, TONE_COLORS, valueWithUnit(), WerteCard(), average() (+14 more)
+Cohesion: 0.14
+Nodes (20): ARROWS, number(), Props, TONE_COLORS, valueWithUnit(), WerteCard(), average(), buildValueOverview() (+12 more)
 
-### Community 64 - "planCard.ts"
-Cohesion: 0.12
-Nodes (35): CurrentSlotRow(), DayChips(), drawUnits(), einnahmeHinweis(), RoutineIcon(), StepSlotRow(), PlannedStepsReview(), PlannedStepsReviewProps (+27 more)
+### Community 64 - "date-fns"
+Cohesion: 0.15
+Nodes (23): date-fns, RoutineIcon(), PlannedStepsReview(), ReviewStepErrors, planNoteTexts(), formatLocalDay(), laterLocalDay(), einnahmeSchluessel() (+15 more)
 
 ### Community 66 - "add-peptipedia-i18n.mjs"
 Cohesion: 0.50
@@ -772,17 +772,17 @@ Nodes (6): averageByWeek(), ChartPoint, isoWeekStartMs(), MAX_RAW_CHART_POINTS, 
 Cohesion: 0.08
 Nodes (33): CAPSULE_ASPECT, CAPSULE_CAP_INNER_OUTLINE_PATH, CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_OUTLINE_PATH, CAPSULE_CAP_PATH, CAPSULE_SEAM_X, CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_INNER_PATH_NORMALIZED (+25 more)
 
-### Community 85 - "FotosTab.tsx"
-Cohesion: 0.10
-Nodes (26): BatchDateiLink(), Link, reportError, sign, fmtDate(), FotosTab(), todayStr(), isLegacyPhotoUrl() (+18 more)
+### Community 85 - "useFortschrittData.ts"
+Cohesion: 0.12
+Nodes (19): BatchDateiLink(), Link, reportError, sign, isLegacyPhotoUrl(), resolvePhotoDisplayUrls(), collectPagedRows(), PageResult (+11 more)
 
 ### Community 86 - "Öffentliche Peptipedia mit horizontaler Tab-Navigation"
 Cohesion: 0.06
 Nodes (33): 1. Kopfbereich, 2. Horizontale Tab-Leiste, 3. Inhalte der Tabs, Automatisierte Prüfungen, Barrierefreiheit und mobile Bedienung, Bestehende interne Links, Build-Ausgabe, Datenfluss (+25 more)
 
 ### Community 87 - "InjectionTrackerTabs.tsx"
-Cohesion: 0.14
-Nodes (19): HistoryDaysSelect(), InjectionHistorySheet(), InjectionTrackerTabs(), OPEN_DAYS_OPTIONS, openAgeLabel(), openDaysLabel(), OpenIntakeRow(), filterInjectionHistory() (+11 more)
+Cohesion: 0.11
+Nodes (25): HistoryDaysSelect(), InjectionHistorySheet(), InjectionTrackerTabs(), OPEN_DAYS_OPTIONS, openAgeLabel(), openDaysLabel(), OpenIntakeRow(), filterInjectionHistory() (+17 more)
 
 ### Community 88 - "My Stack: die Tracking-Stufen aufgeräumt"
 Cohesion: 0.06
@@ -800,21 +800,21 @@ Nodes (32): DOT_ROWS, PATCH_ASPECT, PATCH_BEND_MAX, PATCH_BODY, PATCH_DOT_R, PAT
 Cohesion: 0.12
 Nodes (31): PEN_ASPECT, PEN_BODY, PEN_BODY_SHOULDER_X, PEN_CAP_PATH, PEN_CLIP_PATH, PEN_DOSE_TEXT, PEN_DOSE_WINDOW, PEN_DOSE_WINDOW_PCT (+23 more)
 
-### Community 93 - "StackItemWizard.tsx"
-Cohesion: 0.09
-Nodes (24): ReviewStepErrors, dateiname(), inventory, numberValue(), ProductInventorySection(), ProductInventorySectionProps, emptyInventory, FOCUSABLE_SELECTOR (+16 more)
+### Community 93 - "ProductInventorySection.tsx"
+Cohesion: 0.22
+Nodes (10): dateiname(), inventory, numberValue(), ProductInventorySection(), ProductInventorySectionProps, emptyInventory, gueltigeFluessigkeit(), gueltigeHaltbarkeit() (+2 more)
 
 ### Community 95 - "texts.ts"
-Cohesion: 0.22
-Nodes (13): LegalDocument(), BEDINGUNGEN_DE, BEDINGUNGEN_EN, DATENSCHUTZ_DE, DATENSCHUTZ_EN, hatPlatzhalter(), IMPRESSUM_DE, IMPRESSUM_EN (+5 more)
+Cohesion: 0.14
+Nodes (19): Legal, ConsentChecks(), LegalDocument(), LegalLinks(), BEDINGUNGEN_DE, BEDINGUNGEN_EN, DATENSCHUTZ_DE, DATENSCHUTZ_EN (+11 more)
 
 ### Community 96 - "File Structure"
 Cohesion: 0.11
 Nodes (18): Blutwerte-Feinschliff Implementation Plan, File Structure, Rollout-Reihenfolge, Task 10: Extraktions-Ergebnis validieren, Task 11: Bildverkleinerung, Task 12: Edge Function `bloodwork-extract`, Task 13: Import-Flow, Task 14: Befund-Ansicht (+10 more)
 
-### Community 97 - "Profil.tsx"
-Cohesion: 0.11
-Nodes (30): Profil, LanguageGate(), OnboardingRestartButton(), Ctx, getKeys(), OnboardingCtx, OnboardingProvider(), useOnboarding() (+22 more)
+### Community 97 - "OnboardingContext.tsx"
+Cohesion: 0.15
+Nodes (19): i18next-browser-languagedetector, LanguageGate(), OnboardingRestartButton(), ONBOARDING_STEP_COUNT, Ctx, getKeys(), OnboardingCtx, OnboardingProvider() (+11 more)
 
 ### Community 98 - "Design"
 Cohesion: 0.13
@@ -833,16 +833,16 @@ Cohesion: 0.17
 Nodes (11): Abgenommene Darstellung, Energie, Schlaf, Wohlbefinden und Libido, KFA, Mindestdaten und Leerzustände, Nicht in diesem Umfang, Statusfarben, Technischer Zuschnitt, Tests und Verifikation (+3 more)
 
 ### Community 102 - "metrics.ts"
-Cohesion: 0.09
-Nodes (41): FortschrittDashboard(), Props, EmptyOverview(), NoSubstancesBanner(), Props, ChartPanHandle, MetricChart, Props (+33 more)
+Cohesion: 0.11
+Nodes (34): MAX_TOP_CHANGES, METRIC_THRESHOLDS, MIN_POINTS_FOR_DELTA, MIN_POINTS_FOR_SPARKLINE, MIN_POINTS_FOR_TREND, SIGNED_URL_TTL_SECONDS, WELLNESS_FIELDS, buildFocusSummary() (+26 more)
 
 ### Community 103 - "The Lab — Redesign Spec"
 Cohesion: 0.11
 Nodes (18): Architektur, `ArticleCards.tsx`, Bekannte Constraints, Chart-Count-Fetch, Dateien die geändert werden, Datenfluss, Design-Tokens (App-konform), Entschiedene Design-Richtung (+10 more)
 
-### Community 104 - "FortschrittPage.tsx"
-Cohesion: 0.19
-Nodes (11): FortschrittHeader(), Props, Props, RANGE_BAR_CONTENT_HEIGHT, StickyRangeBar(), FortschrittPage(), DEFAULT_RANGE_CHIP, RANGE_CHIPS (+3 more)
+### Community 104 - "FortschrittDashboard.tsx"
+Cohesion: 0.13
+Nodes (17): Progress, FortschrittDashboard(), Props, FortschrittHeader(), Props, EmptyOverview(), NoSubstancesBanner(), Props (+9 more)
 
 ### Community 105 - "My Stack Generalisierung – Teilprojekt 1: Grundlage"
 Cohesion: 0.06
@@ -861,8 +861,8 @@ Cohesion: 0.13
 Nodes (14): Anforderungen, Bewusst außerhalb des Scope (YAGNI), Daten, Gezeichnete Elemente, Halten zum Ablesen, Interaktion, Live-Blutspiegel-Graph — Neubau (Design), Live-Wachstum (10 s) (+6 more)
 
 ### Community 109 - "BefundEditor.tsx"
-Cohesion: 0.08
-Nodes (45): BefundEditor(), entryToMergeItem(), toMergeItem(), toReviewRow(), ConflictResolver(), Props, ImportFlow(), Phase (+37 more)
+Cohesion: 0.07
+Nodes (47): BefundEditor(), entryToMergeItem(), toMergeItem(), toReviewRow(), ConflictResolver(), Props, ImportFlow(), Phase (+39 more)
 
 ### Community 110 - "The Lab Premium Redesign Implementation Plan"
 Cohesion: 0.14
@@ -916,9 +916,9 @@ Nodes (9): File Structure, Live-Blutspiegel-Graph Neubau — Implementation Plan
 Cohesion: 0.20
 Nodes (9): Engine-Erweiterungen (klein, additiv), i18n, Kontext, Neue `data-ob`-Anker (im JSX zu ergänzen), Onboarding-Rework: Substanz → Zyklus → Dosiserhöhung → Kalender → simulierte Bestätigung, Risiken & Annahmen, Schritt-Liste (Reihenfolge, Target, Advance), Verifikation (+1 more)
 
-### Community 123 - "Peptide"
-Cohesion: 0.13
-Nodes (11): sortAbilities(), SortAbility, StackItemLike, DeleteSubstanceDialog(), useBewertungsZahl(), Peptide, PeptideSortKey, presentedTimelines() (+3 more)
+### Community 123 - "injectionLogTypes.ts"
+Cohesion: 0.17
+Nodes (16): PIN_AXIS, distance(), filterRecentInjectionLogs(), inferBodyRegion(), proximityWarning(), regionFromPoint(), sideFromX(), BodyRegion (+8 more)
 
 ### Community 124 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -937,8 +937,8 @@ Cohesion: 0.22
 Nodes (8): 0. Projektstatus, 11. Häufige Fehler & Fixes, 12. Entwicklungs-Workflow, 1. Tech-Stack, 3. Dateistruktur, 9. Bekannte Limitierungen, TYD — Track Your Dose · Handoff-Dokument, Zugang
 
 ### Community 128 - "TodayLogSheet.tsx"
-Cohesion: 0.07
-Nodes (35): react-dom, buildDecimalRange(), formatDecimal(), indexForValue(), METRIC_WHEEL_CSS, MetricWheelPicker(), Props, ChangeCard() (+27 more)
+Cohesion: 0.09
+Nodes (37): react-dom, buildDecimalRange(), formatDecimal(), indexForValue(), METRIC_WHEEL_CSS, MetricWheelPicker(), Props, nullableNumber() (+29 more)
 
 ### Community 129 - "Global Constraints"
 Cohesion: 0.25
@@ -1016,9 +1016,9 @@ Nodes (9): Bekannter Fremd-Bug (nicht Teil dieses Plans), File Structure, Fortsc
 Cohesion: 0.25
 Nodes (7): Animation der größten Veränderungen, Sonderfälle und Bedienung, Technischer Zuschnitt, Verhalten beim Zeitraumwechsel, Verhalten beim Öffnen, Verifikation, Ziel
 
-### Community 233 - "fortschritt/types.ts"
-Cohesion: 0.10
-Nodes (24): ActiveSubstancesSection(), Props, MAX_VISIBLE_SUBSTANCES, mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), substanceColor(), buildCycleLegendItems() (+16 more)
+### Community 233 - "substances.ts"
+Cohesion: 0.17
+Nodes (13): mapDailyLogs(), useFortschrittData(), METRIC_COLORS, SUBSTANCE_COLORS, substanceColor(), substanceBarEnd(), cycleEndDate(), embedName() (+5 more)
 
 ### Community 234 - "Fortschritt-Fotos: adaptives Vorschau-Raster – Design"
 Cohesion: 0.33
@@ -1041,12 +1041,12 @@ Cohesion: 0.50
 Nodes (3): Active Add-Vial Glow Implementation Plan, Global Constraints, Task 1: Persist the Add-Vial Glow While Centered
 
 ### Community 239 - "vialStock.ts"
-Cohesion: 0.20
-Nodes (11): @supabase/supabase-js, bloodworkEntries, sb, startDate, weightAtWeek(), weightLogs, computeNextVialStock(), debitPeptideStockForDoseById() (+3 more)
+Cohesion: 0.21
+Nodes (10): @supabase/supabase-js, bloodworkEntries, sb, startDate, weightAtWeek(), weightLogs, computeNextVialStock(), doseToVialDelta() (+2 more)
 
-### Community 240 - "StackCategory"
-Cohesion: 0.07
-Nodes (33): renderSearch(), SubstanceBrowser(), KATALOG, SubstanceSearch(), SubstanceSearchProps, STACK_CATEGORIES, StackCategoryDefinition, anfangsbuchstabe() (+25 more)
+### Community 240 - "my-stack/types.ts"
+Cohesion: 0.06
+Nodes (48): IngredientCatalogPicker(), IngredientCatalogPickerProps, IngredientChanges, IngredientEditor(), IngredientEditorProps, Aenderung, KATALOG, mitZweiter() (+40 more)
 
 ### Community 241 - "generate-my-stack-i18n.mjs"
 Cohesion: 0.25
@@ -1054,11 +1054,11 @@ Nodes (13): batches(), __dirname, interpolationTokens(), main(), outDir, outPath
 
 ### Community 242 - "Home.tsx"
 Cohesion: 0.05
-Nodes (39): alertMessage(), ExpiryWarningBanners(), expiryDaysLeft(), ExpiryStatus, getPeptideExpiryAlerts(), PeptideExpiryAlert, PeptideExpirySource, expirySources() (+31 more)
+Nodes (43): alertMessage(), ExpiryWarningBanners(), ResolvedRoutineGroup, expiryDaysLeft(), ExpiryStatus, getPeptideExpiryAlerts(), PeptideExpiryAlert, PeptideExpirySource (+35 more)
 
 ### Community 243 - "intakeSchedule.ts"
-Cohesion: 0.06
-Nodes (50): date-fns, adjustmentStartDay(), buildDoseAdjustmentBackfillUpdates(), DoseAdjustmentBackfillLog, DoseAdjustmentBackfillUpdate, earliestAdjustmentStartDay(), logDay(), adjustment (+42 more)
+Cohesion: 0.09
+Nodes (41): treffer(), collectMissedIntakes(), collectMissedTimelineIntakes(), collectOpenIntakes(), collectOpenTimelineIntakes(), collectOpenTimelineIntakesForDate(), cycleAppliesToDay(), cycleDaySlots() (+33 more)
 
 ### Community 244 - "Global Constraints"
 Cohesion: 0.40
@@ -1086,35 +1086,35 @@ Nodes (3): Global Constraints, Task 1: Add staggered entrance and compact range 
 
 ### Community 250 - "PeptideLibrary.tsx"
 Cohesion: 0.18
-Nodes (17): PeptideSummary(), labels, peptipediaText(), PeptipediaLocale, PeptipediaView, ResearchStatus, CATEGORY_COLORS, CATEGORY_LABEL_KEYS (+9 more)
+Nodes (18): PeptideSummary(), labels, peptipediaText(), PeptipediaLocale, PeptipediaView, ResearchStatus, CATEGORY_COLORS, CATEGORY_LABEL_KEYS (+10 more)
 
 ### Community 251 - "File Structure"
 Cohesion: 0.08
 Nodes (24): Bestehende Consumer mit neutraler DB-Benennung, Datenbank-Matrix, Definition of Done, File Structure, Global Constraints, My Stack Foundation Implementation Plan, Neu, Task 0: Backup- und Restore-Gate abschließen (+16 more)
 
 ### Community 252 - "SyringeScale.test.tsx"
-Cohesion: 0.18
-Nodes (4): i18next, defaultProps, i18n, ScaleProps
+Cohesion: 0.13
+Nodes (5): i18next, i18n, defaultProps, i18n, ScaleProps
 
 ### Community 253 - "produktAngaben.ts"
-Cohesion: 0.16
-Nodes (19): AltSpalten, Angabe, AngabenQuellen, haltbarkeit(), Herkunft, leer(), LeerGrund, OHNE_NEUE_ENTSPRECHUNG (+11 more)
+Cohesion: 0.14
+Nodes (22): AltSpalten, Angabe, AngabenQuellen, haltbarkeit(), Herkunft, leer(), LeerGrund, OHNE_NEUE_ENTSPRECHUNG (+14 more)
 
 ### Community 254 - "Onboarding.tsx"
-Cohesion: 0.14
-Nodes (21): isPanelNode(), Onboarding(), OB_Z, CalloutLayout, CalloutLayoutOptions, CalloutPlacement, computeCalloutLayout(), getViewportReserves() (+13 more)
+Cohesion: 0.15
+Nodes (20): isPanelNode(), Onboarding(), OB_Z, CalloutLayout, CalloutLayoutOptions, CalloutPlacement, computeCalloutLayout(), getViewportReserves() (+12 more)
 
 ### Community 255 - "supabase-my-stack-plan-integrity.sql"
 Cohesion: 0.08
 Nodes (9): public.push_subscriptions, public.reject_referenced_plan_version_mutation, public.confirm_intake_group(), public.legacy_schedule_snapshot(), public.replace_future_plan_version(), reject_referenced_plan_version_mutation, reject_referenced_plan_version_mutation_at_commit, pg_timezone_names (+1 more)
 
 ### Community 256 - "planLabels.ts"
-Cohesion: 0.10
-Nodes (37): planSatz(), SyringeNote(), DialogState, PlanManagementSection(), PlanManagementSectionProps, callbacks(), now, timeline() (+29 more)
+Cohesion: 0.14
+Nodes (37): CurrentSlotRow(), DayChips(), drawUnits(), einnahmeHinweis(), StepSlotRow(), SyringeNote(), DialogState, PlanSummaryCard() (+29 more)
 
-### Community 257 - "catalogue-profile.ts"
-Cohesion: 0.15
-Nodes (12): bioregulatorProfiles, unresolvedProfiles, experimentalProfiles, hormoneProfiles, metabolicProfiles, neuroProfiles, catalogueProfile(), CatalogueSource (+4 more)
+### Community 257 - "StackItemWizard.tsx"
+Cohesion: 0.16
+Nodes (18): PlannedStepsReviewProps, FOCUSABLE_SELECTOR, samePlanIgnoringMethod(), STEP_LABELS, OBJEKT_DECKUNG, ObjektMasse, objektSkala(), LaterPlanStep (+10 more)
 
 ### Community 258 - "legacyMyStackPersistence.ts"
 Cohesion: 0.29
@@ -1145,8 +1145,8 @@ Cohesion: 0.25
 Nodes (7): File Map, Fortschritt: Ruhige 3M-Messreihen Implementation Plan, Global Constraints, Task 1: Reine Modus- und Messpunktauswahl, Task 2: Tooltip und temporärer echter Messpunkt, Task 3: Reduzierten 3M-Modus im Chart verdrahten, Task 4: Gesamte Regression und Browser-Abnahme
 
 ### Community 265 - "UnitConverter.tsx"
-Cohesion: 0.29
-Nodes (13): CONVERSION_SOURCES, MARKER_BRIDGES, MarkerBridge, UnitConverter(), BLOOD_MARKERS, compatibleUnits(), convertMedicalUnit(), defaultMarkerUnit() (+5 more)
+Cohesion: 0.22
+Nodes (15): CONVERSION_SOURCES, MARKER_BRIDGES, MarkerBridge, enter(), enterAmount(), UnitConverter(), BLOOD_MARKERS, compatibleUnits() (+7 more)
 
 ### Community 266 - "Testaccount-Jahresverlauf: Design"
 Cohesion: 0.33
@@ -1162,7 +1162,7 @@ Nodes (3): Global Constraints, Task 1: Metrikspezifischen Vergleichs-Fallback im
 
 ### Community 269 - "App.tsx"
 Cohesion: 0.09
-Nodes (22): App(), Bewertungen, BlutspiegelSimulation, Blutwerte, Dashboard, Home, InjektionsTracker, Legal (+14 more)
+Nodes (18): App(), Bewertungen, BlutspiegelSimulation, Blutwerte, Dashboard, Home, InjektionsTracker, MyStackPage (+10 more)
 
 ### Community 270 - "My Stack — Substanzkatalog, Welle 1: Fundament und Ernte"
 Cohesion: 0.08
@@ -1197,20 +1197,20 @@ Cohesion: 0.10
 Nodes (20): Das war schon für eine EINZELNE Substanz kaputt, Der Ausgangspunkt, Der Vertrag, Die Datenbank, Ein Fund nebenbei: der Katalog war auf zwanzig Einträge gedeckelt, Kombi-Substanzen — Stufe 1: jede Zutat am Katalog, Nachtrag: Stufe 2 umgesetzt — Kombis stehen im Katalog, Nachtrag: Stufe 3 umgesetzt — die Konzentration war der fehlende Schritt (+12 more)
 
 ### Community 278 - "vitest"
-Cohesion: 0.07
-Nodes (8): vitest, css(), wert(), source, migration, sql, seedSources, sql
+Cohesion: 0.06
+Nodes (10): vitest, css(), wert(), source, mergeLibraryPath, MergeOptions, migration, sql (+2 more)
 
 ### Community 279 - "unitConversion.ts"
 Cohesion: 0.25
 Nodes (13): Props, ReviewTable(), conversionHint(), canConvert(), convert(), factorOf(), FAMILIES, Family (+5 more)
 
 ### Community 280 - "dosePlan.ts"
-Cohesion: 0.12
-Nodes (27): ./features/my-stack/MyStackPage, assertIsoDay(), assertMatchingUnit(), assertPlannable(), assertPositiveDose(), buildDosePlanVersion(), buildOneOffActualDose(), buildPermanentScheduleChange() (+19 more)
+Cohesion: 0.13
+Nodes (27): assertIsoDay(), assertMatchingUnit(), assertPlannable(), assertPositiveDose(), buildDosePlanVersion(), buildOneOffActualDose(), buildPermanentScheduleChange(), buildTitrationStep() (+19 more)
 
 ### Community 281 - "bloodwork.ts"
-Cohesion: 0.23
-Nodes (19): bewertung(), auffaelligeWerte(), buildMarkerSummaries(), chooseDisplayUnit(), computeTrend(), convertForDisplay(), entryInRange(), entryRange() (+11 more)
+Cohesion: 0.13
+Nodes (31): Props, BefundListe(), bewertung(), Layout, loadLayout(), Props, Props, AUFFAELLIG (+23 more)
 
 ### Community 282 - "Peptipedia: Fakten- und Aktualitätsaudit des Gesamtkatalogs"
 Cohesion: 0.10
@@ -1241,8 +1241,8 @@ Cohesion: 0.14
 Nodes (21): TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_HALF_CHORD, TABLET_NAME_INSET_PCT, TABLET_NAME_TOP_PCT, TABLET_ROLL_MAX_DEG, TABLET_ROLL_SHIFT, TABLET_SCORE (+13 more)
 
 ### Community 289 - "NasalSprayVisual.tsx"
-Cohesion: 0.16
-Nodes (20): NASAL_SPRAY_ASPECT, NASAL_SPRAY_BODY_INNER_PATH, NASAL_SPRAY_BODY_PATH, NASAL_SPRAY_COLLAR, NASAL_SPRAY_COLLAR_GROOVE_PATH, NASAL_SPRAY_COLLAR_PATH, NASAL_SPRAY_FILL, NASAL_SPRAY_FLANGE (+12 more)
+Cohesion: 0.13
+Nodes (22): NASAL_SPRAY_ASPECT, NASAL_SPRAY_BODY_INNER_PATH, NASAL_SPRAY_BODY_PATH, NASAL_SPRAY_COLLAR, NASAL_SPRAY_COLLAR_GROOVE_PATH, NASAL_SPRAY_COLLAR_PATH, NASAL_SPRAY_FILL, NASAL_SPRAY_FLANGE (+14 more)
 
 ### Community 290 - "blutspiegelHistory.ts"
 Cohesion: 0.04
@@ -1265,8 +1265,8 @@ Cohesion: 0.20
 Nodes (16): applyTranslations(), CACHE_PATH, collectStrings(), dataDir, __dirname, escapeTsString(), formatAnswer(), loadCache() (+8 more)
 
 ### Community 295 - "pubmed.ts"
-Cohesion: 0.14
-Nodes (22): buildEutilsUrl(), buildQuery(), CHART_PEPTIDES, countActiveFilters(), ESearchResponse, ESummaryArticle, ESummaryResponse, ESummaryResult (+14 more)
+Cohesion: 0.18
+Nodes (14): buildEutilsUrl(), CHART_PEPTIDES, ESearchResponse, ESummaryArticle, ESummaryResponse, ESummaryResult, fetchAbstracts(), fetchChartCounts() (+6 more)
 
 ### Community 296 - "MyStackPage.visibility.test.tsx"
 Cohesion: 0.13
@@ -1300,13 +1300,13 @@ Nodes (14): File and Responsibility Map, Final Acceptance Criteria, Global Const
 Cohesion: 0.25
 Nodes (7): compilerOptions, allowJs, lib, tsBuildInfoFile, extends, include, ../tsconfig.node.json
 
-### Community 304 - "denyFeedback.ts"
-Cohesion: 0.15
-Nodes (17): @sentry/react, DENY_SELECTOR, installDenyFeedback(), timers, codeKey(), initMonitoring(), platformTags(), reactRootErrorOptions (+9 more)
+### Community 304 - "monitoring.ts"
+Cohesion: 0.25
+Nodes (13): @sentry/react, codeKey(), initMonitoring(), platformTags(), reactRootErrorOptions, sdk, RUNTIME_KEY_MESSAGES, SAFE_MESSAGES (+5 more)
 
-### Community 305 - "StackListView.tsx"
-Cohesion: 0.11
-Nodes (25): ExpiredBadge(), expiredLabel(), expiredSinceLabel(), block, css, Translate, haltbarBis(), ABLAUF_BALD_TAGE (+17 more)
+### Community 305 - "react-i18next"
+Cohesion: 0.09
+Nodes (17): react-i18next, ExpiredBadge(), expiredLabel(), expiredSinceLabel(), block, css, Translate, ./features/my-stack/MyStackPage (+9 more)
 
 ### Community 306 - "Dashboard.test.ts"
 Cohesion: 0.13
@@ -1324,17 +1324,17 @@ Nodes (12): A–Z, Umlaute falten auf ihren Grundbuchstaben, Aufteilung, Das Kat
 Cohesion: 0.15
 Nodes (12): Evidenzmatrix, Identitätsmodell, Inhaltsstandard für alle Profile, Medizinische und juristische Freigabe, Oberfläche, Peptipedia Publication Readiness, Qualitätsgrenzen, Quellen und Aktualität (+4 more)
 
-### Community 310 - "account.ts"
-Cohesion: 0.29
-Nodes (8): AccountSection(), AccountClient, from(), loescheKonto(), loescheNutzerDateien(), nutzerOrdner(), signOut(), StorageError
+### Community 310 - "InjektionsTracker.tsx"
+Cohesion: 0.21
+Nodes (9): INJECTION_INTRO_VERSION, InjectionIntroSheet(), formatInjectionPinAge(), getInjectionPinAgeColor(), getInjectionPinAgeDays(), getInjectionPinSubstance(), now, NO_WARNING (+1 more)
 
-### Community 311 - "liquidCalculation.ts"
-Cohesion: 0.23
-Nodes (13): baseFactor(), calculateLiquid(), completeWithdrawals(), convertLiquidValue(), exceeds(), FieldError, InputField, LiquidResult (+5 more)
+### Community 311 - "DoseCalculator.tsx"
+Cohesion: 0.14
+Nodes (20): CopyCalculation(), DoseCalculator(), initialValues, inputNumber(), NumericField, sourceUnits, baseFactor(), calculateLiquid() (+12 more)
 
-### Community 312 - "liquidGeometry.ts"
-Cohesion: 0.26
-Nodes (14): buildLiquid(), clamp(), fillSloshResponse(), finite(), LIQUID_VB_H, LIQUID_VB_W, LiquidGeometry, LiquidParams (+6 more)
+### Community 312 - "LiquidGraphic.tsx"
+Cohesion: 0.14
+Nodes (24): useSloshSubscribe(), buildLiquid(), clamp(), fillSloshResponse(), finite(), LIQUID_VB_H, LIQUID_VB_W, LiquidGeometry (+16 more)
 
 ### Community 313 - "Kategorie „Sonstiges""
 Cohesion: 0.17
@@ -1373,8 +1373,8 @@ Cohesion: 0.18
 Nodes (10): Beschriftung, Betroffene Dateien, Das Modell, Die drei Stellen, die normalisieren, Die Form, Die Obergrenze zählt je Tag, Ein Reiter je Tag, Warum die Chips nicht reichten (+2 more)
 
 ### Community 322 - "MetricChart.tsx"
-Cohesion: 0.09
-Nodes (33): LaneBand, ChartSettingsButton(), Props, ChartWindowToggle(), Props, dateToTs(), fmtDate(), formatTooltipValue() (+25 more)
+Cohesion: 0.12
+Nodes (24): LaneBand, ChartWindowToggle(), Props, dateToTs(), fmtDate(), formatTooltipValue(), MetricChartInner, roundValue() (+16 more)
 
 ### Community 323 - "ProtocolPdfModal.tsx"
 Cohesion: 0.13
@@ -1401,8 +1401,8 @@ Cohesion: 0.20
 Nodes (9): Betroffene Dateien, Das Modell: Zeitpunkt zuerst, Tage daran, Der Anlass, Einnahmezeitpunkte je Wochentag, Migration, Speicherform, Was bewusst nicht drin ist, Was geprüft wird (+1 more)
 
 ### Community 329 - "StackItemWizard.interaction.test.tsx"
-Cohesion: 0.17
-Nodes (18): advanceToPlanStep(), advanceToReview(), completeCatalogFlow(), completeCustomFlow(), continueWizard(), d3k2, existingPlan, existingVitaminD (+10 more)
+Cohesion: 0.16
+Nodes (19): advanceToPlanStep(), advanceToReview(), completeCatalogFlow(), completeCustomFlow(), continueWizard(), d3k2, existingPlan, existingVitaminD (+11 more)
 
 ### Community 330 - "Global Constraints"
 Cohesion: 0.22
@@ -1465,8 +1465,8 @@ Cohesion: 0.25
 Nodes (7): 1. Bild für Bild nachfassen, bis eine Messung zustande kommt, 2. Ohne Maße wird nichts gesetzt, 3. Das Ergebnis geht zuerst an den DOM, Der Befund, Drei Änderungen, Farbschritt — die Messung, die nie stattfand, Verifikation
 
 ### Community 345 - "MarkerDetail.tsx"
-Cohesion: 0.12
-Nodes (31): AddChoice, AddSheet(), OPTIONS, Props, Props, Props, Layout, Props (+23 more)
+Cohesion: 0.08
+Nodes (44): AddChoice, AddSheet(), OPTIONS, Props, MarkerDetail(), RangeFilter, RANGES, MarkerCard() (+36 more)
 
 ### Community 346 - "merge-my-stack-i18n.mjs"
 Cohesion: 0.21
@@ -1494,15 +1494,15 @@ Nodes (6): Der Befund, Substanzkatalog — Welle „Apotheke", Verifikation, War
 
 ### Community 352 - "mockSupabase.ts"
 Cohesion: 0.05
-Nodes (60): mitDokument(), beende(), bewertung(), BEFUND, eigenesProfil(), testosteron(), wert(), fremdesProfil() (+52 more)
+Nodes (59): mitDokument(), beende(), bewertung(), BEFUND, eigenesProfil(), testosteron(), wert(), fremdesProfil() (+51 more)
 
 ### Community 353 - "StageLabel.tsx"
 Cohesion: 0.27
 Nodes (8): buildMarqueeMotion(), MARQUEE_MIN_OVERFLOW, MarqueeMotion, marqueeRestOffset(), DivProps, StageLabel(), StageLabelProps, StageMarquee()
 
-### Community 354 - "planSegments.ts"
-Cohesion: 0.10
-Nodes (24): flacheStufe(), kuenftigeStufen(), PlanSegment, planSegments(), PlanVersionSegment, SegmentStatus, SLOT_ZEITEN, stufenText() (+16 more)
+### Community 354 - "legacyPlanTimeline.ts"
+Cohesion: 0.17
+Nodes (16): PlanSegment, ScheduleSegment, escalationBoundary(), flatSegment(), legacyCycleToTimeline(), LegacyEscalationRow, LegacyScheduleCycle, LegacyTimelineConversion (+8 more)
 
 ### Community 355 - "Peptipedia — externe medizinische und juristische Prüfung"
 Cohesion: 0.33
@@ -1569,16 +1569,16 @@ Cohesion: 0.40
 Nodes (5): Eine Tabelle statt zwölf Konstanten, Gegengeprüft, Nachtrag 2026-09-11, vierter Teil: realistische Füllfarben, Was die Auswahl jetzt markiert, Was vorher da stand
 
 ### Community 371 - "DesignSystem.tsx"
-Cohesion: 0.21
-Nodes (13): accentAlpha(), ActionTile(), combineClassNames(), GlassPanel(), IconBadge(), paddingMap, PaddingSize, PageHero() (+5 more)
+Cohesion: 0.13
+Nodes (18): accentAlpha(), ActionTile(), combineClassNames(), GlassPanel(), IconBadge(), paddingMap, PaddingSize, PageHero() (+10 more)
 
 ### Community 372 - "FilterSheet.tsx"
-Cohesion: 0.16
-Nodes (12): ALL_PEPTIDES, FilterSheetProps, FilterState, PubMedArticle, SortMode, StudyTypeFilter, YearFilter, StudyCardProps (+4 more)
+Cohesion: 0.13
+Nodes (14): ALL_PEPTIDES, FilterSheet(), FilterSheetProps, DEFAULT_FILTER_STATE, FilterState, PubMedArticle, SortMode, StudyTypeFilter (+6 more)
 
 ### Community 373 - "guidance/index.ts"
-Cohesion: 0.23
-Nodes (9): GUIDANCE_BLUTBILD2, GUIDANCE_ELEKTROLYTE, GUIDANCE_HORMONE1, GUIDANCE_HORMONE2, A, GUIDANCE_LEBER, U, GUIDANCE_VITAMINE (+1 more)
+Cohesion: 0.18
+Nodes (12): GUIDANCE_BLUTBILD2, GUIDANCE_ELEKTROLYTE, F, GUIDANCE_ENZYME, U, GUIDANCE_HORMONE1, GUIDANCE_HORMONE2, A (+4 more)
 
 ### Community 374 - "my-stack-bestand.test.sql"
 Cohesion: 0.15
@@ -1617,8 +1617,8 @@ Cohesion: 0.14
 Nodes (14): entry_timezone, public.cycle_pause_periods, public.confirm_intake_group(), public.tyd_is_valid_timezone(), public.tyd_timezone_names, entry_dose_log_id, entry_method, entry_slot_key (+6 more)
 
 ### Community 383 - "TheLab.tsx"
-Cohesion: 0.16
-Nodes (9): TheLab, LabLoader(), LabLoaderProps, FilterSheet(), LabHero(), LabHeroProps, QUICK_TAGS, DEFAULT_FILTER_STATE (+1 more)
+Cohesion: 0.17
+Nodes (15): TheLab, LabLoader(), LabLoaderProps, LabHero(), LabHeroProps, QUICK_TAGS, buildQuery(), countActiveFilters() (+7 more)
 
 ### Community 385 - "generate-onboarding-i18n.mjs"
 Cohesion: 0.25
@@ -1626,15 +1626,15 @@ Nodes (7): @vitalets/google-translate-api, __dirname, main(), outDir, outPath, s
 
 ### Community 386 - "dosageForms.ts"
 Cohesion: 0.08
-Nodes (38): skalenMessen(), DosageFormCarouselProps, COMMON_DOSAGE_FORMS, DosageFormPicker(), DosageFormPickerProps, DosageFormPreview(), HINWEIS_FALLBACK, IngredientChanges (+30 more)
+Nodes (33): DosageFormCarouselProps, DosageFormIcon(), DosageFormIconProps, COMMON_DOSAGE_FORMS, DosageFormPicker(), DosageFormPickerProps, DosageFormPreview(), HINWEIS_FALLBACK (+25 more)
 
 ### Community 387 - "supabase-store-compliance.sql"
 Cohesion: 0.15
 Nodes (10): pg_policies, public.moderation_terms, public.public_profile_reviews(), public.report_public_review(), public.resolve_content_report(), public.set_profile_block(), public.profiles, public.reviews (+2 more)
 
-### Community 388 - "BioProfil.tsx"
-Cohesion: 0.29
-Nodes (11): BioProfilFelder(), BioProfilFormular(), BioProfilKarte(), heuteIso(), useBioProfil(), GEBURTSDATUM_MIN, geburtsdatumGueltig(), LEERES_BIO_PROFIL (+3 more)
+### Community 388 - "ConsentGate.tsx"
+Cohesion: 0.33
+Nodes (11): ConsentGate(), speichereZustimmung(), MedicalNotice(), ConsentRow, KEINE_ZUSTIMMUNG, TERMS_VERSION, vollstaendig(), zustimmungAusMetadaten() (+3 more)
 
 ### Community 390 - "merge-onboarding-i18n.mjs"
 Cohesion: 0.24
@@ -1692,9 +1692,9 @@ Nodes (3): progress_photos, auth, weight_logs
 Cohesion: 0.35
 Nodes (9): ColorField(), ColorFieldProps, anteil(), clamp01(), FELD_START, hexToHsv(), HSV, hsvToHex() (+1 more)
 
-### Community 431 - "MarkerList.tsx"
-Cohesion: 0.13
-Nodes (27): BefundListe(), loadLayout(), CardSparkline(), GRID, MarkerCard(), MarkerList(), MarkerRow(), RowSparkline() (+19 more)
+### Community 431 - "kombination.ts"
+Cohesion: 0.18
+Nodes (10): renderSearch(), SubstanceSearch(), bestandteileAufloesen(), istKombination(), Kombinationsbestandteil, schluessel(), blend, cjc (+2 more)
 
 ### Community 462 - "supabase-slot-key-wall-clock.sql"
 Cohesion: 0.50
@@ -1705,20 +1705,20 @@ Cohesion: 0.15
 Nodes (7): EXPECTED_MY_STACK_KEYS, expectedKeySet, localeCodes, MANUAL_OUTSIDE_OVERLAY_HASHES, manualLocaleCodes, sourcePath, TRANSLATED_OUTSIDE_OVERLAY_HASHES
 
 ### Community 464 - "useMyStackData.ts"
-Cohesion: 0.29
-Nodes (8): asPeptide(), Escalation, InventoryItem, mergeCatalogEntries(), withVialInventory(), useMyStackData(), loadStackItems(), searchSubstanceCatalog()
+Cohesion: 0.53
+Nodes (5): asPeptide(), InventoryItem, mergeCatalogEntries(), useMyStackData(), searchSubstanceCatalog()
 
 ### Community 465 - "chartTooltip.ts"
 Cohesion: 0.14
 Nodes (27): BandWithStart, buildSnapAnchors(), buildTooltipSnapDates(), CURSOR_HARD_SNAP_PX, CURSOR_MAX_SNAP_PULL, CURSOR_SOFT_SNAP_RADIUS_PX, cycleStartsAtHover(), cycleStartsOnDate() (+19 more)
 
-### Community 466 - "@testing-library/react"
-Cohesion: 0.09
-Nodes (23): @testing-library/react, MechanismPanel(), OverviewPanel(), ProtocolsPanel(), SafetyPanel(), SourcesPanel(), PeptipediaTabs(), getPublishedPeptide() (+15 more)
+### Community 466 - "react-router-dom"
+Cohesion: 0.11
+Nodes (23): react-router-dom, @testing-library/react, MechanismPanel(), OverviewPanel(), ProtocolsPanel(), SafetyPanel(), SourcesPanel(), PeptipediaTabs() (+15 more)
 
 ### Community 467 - "Health.tsx"
-Cohesion: 0.11
-Nodes (21): Health, getSteps(), isNative, platform(), requestPermissions(), startOfToday(), bmiLabel(), calcBMI() (+13 more)
+Cohesion: 0.12
+Nodes (19): Health, isNative, platform(), requestPermissions(), bmiLabel(), calcBMI(), cardStyle, DeviceMetric (+11 more)
 
 ### Community 469 - "rechnerVial.ts"
 Cohesion: 0.38
@@ -1726,19 +1726,19 @@ Nodes (5): Bestand, inMg(), RechnerQuelle, rechnerVial, Zutat
 
 ### Community 470 - "LiveBlutspiegelChart.tsx"
 Cohesion: 0.17
-Nodes (12): lerp(), LiveBlutspiegelChart(), PAD, context, currentDash, currentPoints, StrokeRecord, strokes (+4 more)
+Nodes (11): lerp(), LiveBlutspiegelChart(), PAD, context, currentDash, currentPoints, StrokeRecord, strokes (+3 more)
 
 ### Community 471 - "MyStackPage.tsx"
 Cohesion: 0.06
-Nodes (63): useSloshEngine(), vialBuchtUeberBestand(), daysLabel(), backfillMessageKey(), formatInstantDay(), detailAbschnitte(), LEER_AUSBLENDEN, wirkstoffBezug (+55 more)
+Nodes (60): useSloshEngine(), CourseTimezoneReview(), confirm(), StackArchive, StackArchiveProps, daysLabel(), backfillMessageKey(), dosePlanQuantitiesForDay() (+52 more)
 
 ### Community 472 - "useWischZeile.ts"
 Cohesion: 0.35
 Nodes (10): federSchritt(), Geste, gummiband(), lageAusStrecke(), loslassGeschwindigkeit(), OFFEN_BREITE, useWischZeile(), VOLL_ANTEIL (+2 more)
 
-### Community 473 - "SubstanceCatalogEntry"
-Cohesion: 0.09
-Nodes (26): IngredientCatalogPicker(), IngredientCatalogPickerProps, IngredientChanges, IngredientEditor(), IngredientEditorProps, Aenderung, KATALOG, mitZweiter() (+18 more)
+### Community 473 - "substanceCatalog.ts"
+Cohesion: 0.21
+Nodes (9): CATALOG_COLUMNS, filterCatalog(), normalize(), ServiceError, SubstanceCatalogClient, SubstanceCatalogQueryResult, SubstanceCatalogSearchResult, magnesium (+1 more)
 
 ### Community 474 - "sw.ts"
 Cohesion: 0.33
@@ -1757,24 +1757,24 @@ Cohesion: 0.18
 Nodes (10): GUIDANCE_PAKETE, A, ALLE, F, GUIDANCE, GUIDANCE_MARKERS, GUIDANCE_STAND, GuidanceItem (+2 more)
 
 ### Community 478 - "units.ts"
-Cohesion: 0.53
-Nodes (7): checkedResult(), convertMass(), convertSyringe(), convertVolume(), MassUnit, validateValue(), VolumeUnit
+Cohesion: 0.28
+Nodes (12): presets, SyringeFields(), SyringeScale(), checkedResult(), convertMass(), convertSyringe(), convertVolume(), formatCalculatorNumber() (+4 more)
 
 ### Community 479 - "stoffwechsel.ts"
 Cohesion: 0.22
 Nodes (8): A, AH, AU, E, F, FD, GUIDANCE_STOFFWECHSEL, U
 
 ### Community 480 - "ManualSimulation.tsx"
-Cohesion: 0.25
-Nodes (14): ChartMarker, INPUT, LABEL, ManualSimulation(), levelsAt(), PkProfile, runSimulation(), SimResult (+6 more)
+Cohesion: 0.20
+Nodes (17): DetailStats, ChartMarker, formatOffset(), useBlutspiegelFormat(), INPUT, LABEL, ManualSimulation(), levelsAt() (+9 more)
 
 ### Community 481 - "Einnahmeabläufe und automatisierte Freigabeprüfung"
 Cohesion: 0.18
 Nodes (9): Abdeckung, CI und Grenzen, Einnahmeabläufe und automatisierte Freigabeprüfung, Gefundene und behobene Produktfehler, Lokale Ergebnisse, Intake release verification implementation plan, Ownership / interfaces, Progress / rulings (+1 more)
 
 ### Community 482 - "planTimeline.ts"
-Cohesion: 0.13
-Nodes (21): CycleLifecycleStatus, hasReachedInstant(), instantMillis(), LOCAL_DATE_TIME_KEY_CACHE_MAX, localDateBoundaryCache, localDateBoundaryInstant(), localDateKey(), localDateTimeFormatter() (+13 more)
+Cohesion: 0.07
+Nodes (47): nextLocalDate(), haltbarBis(), ABLAUF_BALD_TAGE, Gruppe, GRUPPEN, gruppeVon(), Haltbarkeit, haltbarkeitFuer() (+39 more)
 
 ### Community 483 - "trackingDepthSchema.test.ts"
 Cohesion: 0.33
@@ -1792,21 +1792,21 @@ Nodes (4): A, F, GUIDANCE_LIPIDE, U
 Cohesion: 0.22
 Nodes (8): App Store Connect (Apple), Google Play Console, In der App erledigt, Rechtstexte, Restrisiken, Store-Checkliste: App Store Connect und Google Play Console, Supabase, Vor dem Einreichen — von dir
 
-### Community 487 - "bestand.ts"
-Cohesion: 0.10
-Nodes (20): PlanSummaryCardProps, now, timeline(), version(), Behaelter, bestandAufteilen(), BestandAufteilung, bestandZusammensetzen() (+12 more)
+### Community 487 - "PlanManagementSection"
+Cohesion: 0.14
+Nodes (11): PlanManagementSection(), PlanManagementSectionProps, callbacks(), now, timeline(), version(), wallClockToIso(), now (+3 more)
 
 ### Community 488 - "public.public_profile_reviews"
 Cohesion: 0.40
 Nodes (4): public.public_profile_reviews(), public.profiles, public.reviews, public.stack_items
 
 ### Community 493 - "stackItems.ts"
-Cohesion: 0.07
-Nodes (47): rhythmToStorage(), powderVialForSave(), PlanEditTarget, PlanEffectiveDraft, archiveStackItem(), deleteStackItem(), findDuplicate(), hatEigeneMengen() (+39 more)
+Cohesion: 0.06
+Nodes (52): rhythmToStorage(), powderVialForSave(), PlanEditTarget, PlanEffectiveDraft, archiveStackItem(), deleteStackItem(), findDuplicate(), hatEigeneMengen() (+44 more)
 
 ### Community 494 - "my-stack/lib/colors.ts"
-Cohesion: 0.36
-Nodes (5): PeptideColorPalette(), PeptideColorPaletteProps, getRandomStackItemColor(), getStackItemColor(), STACK_ITEM_COLORS
+Cohesion: 0.42
+Nodes (4): PeptideColorPalette(), PeptideColorPaletteProps, getRandomStackItemColor(), STACK_ITEM_COLORS
 
 ### Community 495 - "WorkflowBanner.tsx"
 Cohesion: 0.29
@@ -1820,13 +1820,13 @@ Nodes (6): buildAppTable(), buildSql(), DURATION_KEYS, quote(), SPRACHEN, textZu
 Cohesion: 0.43
 Nodes (5): magBewegen(), StageDetailSheet(), StageDetailSheetProps, rechteck(), zeichne()
 
-### Community 499 - "react-i18next"
-Cohesion: 0.09
-Nodes (36): lucide-react, react-hot-toast, react-i18next, react-router-dom, PK_PROFILES, PkSeed, PublicProfile, BlockSheet() (+28 more)
+### Community 499 - "lucide-react"
+Cohesion: 0.07
+Nodes (44): lucide-react, react-hot-toast, PK_PROFILES, PkSeed, PublicProfile, ProtectedRoute(), AuthContext, AuthContextType (+36 more)
 
 ### Community 500 - "BlutwertePage.tsx"
-Cohesion: 0.12
-Nodes (31): bioHinweisAus(), BlutwertePage(), loadMarkerLayout(), AuffaelligeWerte(), BioProfilHinweis(), BioProfilSheet(), COMMON_UNITS, emptyDraft() (+23 more)
+Cohesion: 0.08
+Nodes (54): bioHinweisAus(), BlutwertePage(), loadMarkerLayout(), AuffaelligeWerte(), Props, COMMON_UNITS, emptyDraft(), EntryDraft (+46 more)
 
 ### Community 501 - "Home.test.ts"
 Cohesion: 0.19
@@ -1836,21 +1836,25 @@ Nodes (8): createHomeClient(), intakeOnlyHomeCycle(), normalizedCycle(), pageMoc
 Cohesion: 0.24
 Nodes (6): recharts, LabStatsProps, ChartEntry, ResearchSnapshot(), ResearchSnapshotProps, SnapshotCardProps
 
-### Community 504 - "metricDefaults.ts"
-Cohesion: 0.37
-Nodes (11): bodyFatForDate(), hasAnyProgressLog(), hasLogForDate(), lastBodyFatBefore(), lastWeightBefore(), loadLogFormValues(), LogFormValues, logHasProgressData() (+3 more)
+### Community 504 - "staleChunkReload.ts"
+Cohesion: 0.33
+Nodes (8): CHUNK_LOAD_MESSAGES, importWithReload(), isChunkLoadError(), lazyPage(), markChunkLoaded(), reloadForStaleChunk(), ReloadOnUpdate(), storage()
 
 ### Community 505 - "planAdoption.ts"
-Cohesion: 0.16
-Nodes (26): adoptSchedule(), amountsOf(), buildReview(), byDate(), carryOverReview(), doseAt(), LaterPlanStep, parseAmount() (+18 more)
+Cohesion: 0.18
+Nodes (23): adoptSchedule(), amountsOf(), buildReview(), byDate(), carryOverReview(), doseAt(), parseAmount(), planBaseAt() (+15 more)
 
 ### Community 507 - "stagePreview.ts"
 Cohesion: 0.70
 Nodes (3): istFarbe(), STAGE_PREVIEW_ID, stagePreviewItem()
 
-### Community 509 - "referenzbereiche.test.ts"
-Cohesion: 0.12
-Nodes (17): Props, ReferenceBar(), bereichsHerkunft(), T, BioSex, effectiveRange, clamp(), referenceBarGeometry (+9 more)
+### Community 508 - "StackStage.test.ts"
+Cohesion: 0.20
+Nodes (10): StackStage(), ampouleItem, capsuleItem, nasalSprayItem, otherItem, penItem, renderStage(), tabletItem (+2 more)
+
+### Community 509 - "BioProfil.tsx"
+Cohesion: 0.10
+Nodes (25): BioProfilFelder(), BioProfilFormular(), BioProfilHinweis(), BioProfilKarte(), BioProfilSheet(), FelderProps, heuteIso(), useBioProfil() (+17 more)
 
 ### Community 510 - "getStableStackItemColor"
 Cohesion: 0.25
@@ -1860,31 +1864,39 @@ Nodes (7): ColorMigrationClient, ColorMigrationItem, ColorMigrationStorage, isLo
 Cohesion: 0.21
 Nodes (9): EffectRow, effectsByPeptide(), normalizeDescription(), PeptideEffectStat, PeptideReviewStat, ReviewRow, reviewsByPeptide(), SideEffectStat (+1 more)
 
-### Community 512 - "LevelPoint"
-Cohesion: 0.50
-Nodes (4): ExtraSeries, StocksChartProps, LevelPoint, SmallMultipleSeriesProps
+### Community 512 - "intakeFrequency.ts"
+Cohesion: 0.29
+Nodes (8): INTAKE_FREQUENCIES, IntakeFrequency, isOnDemand(), LEGACY_DAILY_FREQUENCIES, MAX_INTAKE_SLOTS, needsInterval(), needsWeekdays(), slotCountForFrequency()
 
-### Community 513 - "enzyme.ts"
-Cohesion: 0.50
-Nodes (3): F, GUIDANCE_ENZYME, U
+### Community 513 - "stackTabs.ts"
+Cohesion: 0.27
+Nodes (7): filterByTab(), KATEGORIE_REITER, STACK_TABS, StackTab, StackTabKey, tabCounts(), StackTabBar()
 
-### Community 514 - "niere.ts"
+### Community 514 - "stage/types.ts"
+Cohesion: 0.36
+Nodes (6): carriesLabel(), StageBox, StageChamber, StageFormSpec, withChamber, withoutChamber
+
+### Community 515 - "createSloshEngine"
+Cohesion: 0.33
+Nodes (4): clamp(), createSloshEngine(), SpringState, stepSlosh()
+
+### Community 517 - "leber.ts"
 Cohesion: 0.50
-Nodes (3): A, GUIDANCE_NIERE, U
+Nodes (3): A, GUIDANCE_LEBER, U
 
 ## Knowledge Gaps
 - **2334 isolated node(s):** `WEEKDAYS_DE`, `SLOT_TIMES`, `SLOT_GROUPS`, `CASES`, `FREQUENCY_CASES` (+2329 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3040 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **132 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3041 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **129 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `react` to `DoseCalculator.tsx`, `faq/types.ts`, `CourseTimezoneReview.tsx`, `Protokoll.tsx`, `UnitConverter.test.tsx`, `StackArchive.tsx`, `StocksChart.tsx`, `AdminPanel.tsx`, `Auswertung.tsx`, `BlutspiegelView.tsx`, `Bestand.tsx`, `StudyCard.tsx`, `routing.ts`, `Dashboard.tsx`, `injectionPersistence.ts`, `InjectionMapCanvas.tsx`, `stageLightDirection.test.ts`, `IntakePlanEditor.tsx`, `Layout.tsx`, `PowderVisual.tsx`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `Tagebuch.tsx`, `FotosCard.tsx`, `chartVisibility.ts`, `useAuth`, `package.json`, `__VialPreview.tsx`, `FotosTab.tsx`, `InjectionTrackerTabs.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `StackItemWizard.tsx`, `Profil.tsx`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `ArticleCards.tsx`, `Peptide`, `TodayLogSheet.tsx`, `fortschritt/types.ts`, `StackCategory`, `Home.tsx`, `GelVisual.tsx`, `PeptideLibrary.tsx`, `SyringeScale.test.tsx`, `Onboarding.tsx`, `planLabels.ts`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `SprayVisual.tsx`, `dosePlan.ts`, `TubeVisual.tsx`, `useStageLight`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `denyFeedback.ts`, `StackListView.tsx`, `Dashboard.test.ts`, `MetricChart.tsx`, `ProtocolPdfModal.tsx`, `__DevPreviews.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `StageLabel.tsx`, `DesignSystem.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `dosageForms.ts`, `BioProfil.tsx`, `uiCopy.ts`, `ColorField.tsx`, `MarkerList.tsx`, `useMyStackData.ts`, `@testing-library/react`, `Health.tsx`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `useWischZeile.ts`, `SubstanceCatalogEntry`, `StageFit.test.tsx`, `ManualSimulation.tsx`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `StageDetailSheet.tsx`, `react-i18next`, `BlutwertePage.tsx`, `Home.test.ts`?**
-  _High betweenness centrality (0.133) - this node is a cross-community bridge._
-- **Why does `vitest` connect `vitest` to `DoseCalculator.tsx`, `CourseTimezoneReview.tsx`, `markerCatalog.ts`, `DoseUnitControl.tsx`, `UnitConverter.test.tsx`, `StocksChart.tsx`, `Auswertung.tsx`, `Bestand.tsx`, `wizardState.ts`, `routing.ts`, `Dashboard.tsx`, `injectionPersistence.ts`, `InjectionMapCanvas.tsx`, `stageLightDirection.test.ts`, `zyklusZeilen.ts`, `planTimeline.js`, `IntakePlanEditor.tsx`, `Layout.tsx`, `duplicateFingerprint.test.ts`, `PowderVisual.tsx`, `react`, `content/types.ts`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `planLifecycle.ts`, `Tagebuch.tsx`, `FotosCard.tsx`, `stackInventory.ts`, `chartVisibility.ts`, `useAuth`, `package.json`, `chartMath.ts`, `valueOverview.ts`, `planCard.ts`, `chartData.test.ts`, `__VialPreview.tsx`, `FotosTab.tsx`, `InjectionTrackerTabs.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `StackItemWizard.tsx`, `texts.ts`, `metrics.ts`, `FortschrittPage.tsx`, `BefundEditor.tsx`, `Peptide`, `fortschritt/types.ts`, `vialStock.ts`, `StackCategory`, `Home.tsx`, `intakeSchedule.ts`, `progress-year-data.ts`, `GelVisual.tsx`, `SyringeScale.test.tsx`, `produktAngaben.ts`, `planLabels.ts`, `legacyMyStackPersistence.ts`, `bloodwork-extract/index.ts`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `protocolPdf/types.ts`, `SprayVisual.tsx`, `unitConversion.ts`, `dosePlan.ts`, `bloodwork.ts`, `TubeVisual.tsx`, `audit-peptipedia.ts`, `useStageLight`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `wellnessBuckets.ts`, `denyFeedback.ts`, `StackListView.tsx`, `Dashboard.test.ts`, `account.ts`, `liquidCalculation.ts`, `liquidGeometry.ts`, `MetricChart.tsx`, `StackItemWizard.interaction.test.tsx`, `AppBackNavigation.test.tsx`, `mockSupabase.ts`, `StageLabel.tsx`, `planSegments.ts`, `dosageForms.ts`, `stackSources.test.ts`, `inventoryMath.ts`, `uiCopy.ts`, `ColorField.tsx`, `MarkerList.tsx`, `i18n.test.ts`, `chartTooltip.ts`, `@testing-library/react`, `rechnerVial.ts`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `useWischZeile.ts`, `SubstanceCatalogEntry`, `StageFit.test.tsx`, `markerGuidance.ts`, `units.ts`, `ManualSimulation.tsx`, `planTimeline.ts`, `trackingDepthSchema.test.ts`, `bestand.ts`, `stackItems.ts`, `my-stack/lib/colors.ts`, `StageDetailSheet.tsx`, `react-i18next`, `Home.test.ts`, `metricDefaults.ts`, `planAdoption.ts`, `catalogDosageForms.test.ts`, `stagePreview.ts`, `i18nMerge.test.ts`, `referenzbereiche.test.ts`, `getStableStackItemColor`, `insights.ts`?**
-  _High betweenness centrality (0.108) - this node is a cross-community bridge._
-- **Why does `date-fns` connect `intakeSchedule.ts` to `TodayLogSheet.tsx`, `planLabels.ts`, `dateLocales.ts`, `Protokoll.tsx`, `Auswertung.tsx`, `focusSummary.ts`, `Bestand.tsx`, `wizardState.ts`, `Dashboard.tsx`, `injectionPersistence.ts`, `InjectionMapCanvas.tsx`, `planTimeline.js`, `dosePlan.ts`, `seed-test-data.ts`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `Tagebuch.tsx`, `StackListView.tsx`, `useAuth`, `package.json`, `valueOverview.ts`, `planCard.ts`, `MetricChart.tsx`, `chartTooltip.ts`, `Health.tsx`, `FotosTab.tsx`, `LiveBlutspiegelChart.tsx`, `InjectionTrackerTabs.tsx`, `MyStackPage.tsx`, `MarkerDetail.tsx`, `planSegments.ts`, `bestand.ts`, `FortschrittPage.tsx`, `fortschritt/types.ts`, `vialStock.ts`, `Home.tsx`, `BlutwertePage.tsx`, `progress-year-data.ts`?**
+- **Why does `react` connect `react` to `faq/types.ts`, `Protokoll.tsx`, `AdminPanel.tsx`, `StocksChart.tsx`, `VerlaufSection.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `seo.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `IntakePlanEditor.tsx`, `Layout.tsx`, `PowderVisual.tsx`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `Tagebuch.tsx`, `fortschritt/types.ts`, `chartVisibility.ts`, `fortschritt/styles.ts`, `package.json`, `__VialPreview.tsx`, `useFortschrittData.ts`, `InjectionTrackerTabs.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `ProductInventorySection.tsx`, `texts.ts`, `OnboardingContext.tsx`, `FortschrittDashboard.tsx`, `BefundEditor.tsx`, `ArticleCards.tsx`, `injectionLogTypes.ts`, `TodayLogSheet.tsx`, `my-stack/types.ts`, `Home.tsx`, `GelVisual.tsx`, `PeptideLibrary.tsx`, `SyringeScale.test.tsx`, `Onboarding.tsx`, `planLabels.ts`, `StackItemWizard.tsx`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `SprayVisual.tsx`, `bloodwork.ts`, `TubeVisual.tsx`, `useStageLight`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `react-i18next`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `DoseCalculator.tsx`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `ProtocolPdfModal.tsx`, `__DevPreviews.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `StageLabel.tsx`, `DesignSystem.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `dosageForms.ts`, `ConsentGate.tsx`, `uiCopy.ts`, `ColorField.tsx`, `useMyStackData.ts`, `react-router-dom`, `Health.tsx`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `useWischZeile.ts`, `StageFit.test.tsx`, `units.ts`, `ManualSimulation.tsx`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `staleChunkReload.ts`, `StackStage.test.ts`, `BioProfil.tsx`?**
+  _High betweenness centrality (0.131) - this node is a cross-community bridge._
+- **Why does `vitest` connect `vitest` to `intakeFrequency.ts`, `stackTabs.ts`, `stage/types.ts`, `createSloshEngine`, `DoseUnitControl.tsx`, `denyFeedback.ts`, `injectionPersistence.ts`, `StocksChart.tsx`, `intakeConfirmation.ts`, `bestand.ts`, `wizardState.ts`, `seo.ts`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `PeptideVialVisual.tsx`, `zyklusZeilen.ts`, `planTimeline.js`, `IntakePlanEditor.tsx`, `Layout.tsx`, `duplicateFingerprint.test.ts`, `PowderVisual.tsx`, `content/types.ts`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `planLifecycle.ts`, `Tagebuch.tsx`, `fortschritt/types.ts`, `stackInventory.ts`, `chartVisibility.ts`, `package.json`, `chartMath.ts`, `valueOverview.ts`, `date-fns`, `chartData.test.ts`, `__VialPreview.tsx`, `useFortschrittData.ts`, `InjectionTrackerTabs.tsx`, `PatchVisual.tsx`, `PenVisual.tsx`, `ProductInventorySection.tsx`, `texts.ts`, `metrics.ts`, `FortschrittDashboard.tsx`, `BefundEditor.tsx`, `injectionLogTypes.ts`, `TodayLogSheet.tsx`, `substances.ts`, `vialStock.ts`, `my-stack/types.ts`, `Home.tsx`, `intakeSchedule.ts`, `progress-year-data.ts`, `GelVisual.tsx`, `SyringeScale.test.tsx`, `produktAngaben.ts`, `StackItemWizard.tsx`, `legacyMyStackPersistence.ts`, `bloodwork-extract/index.ts`, `UnitConverter.tsx`, `App.tsx`, `DropsVisual.tsx`, `protocolPdf/types.ts`, `SprayVisual.tsx`, `unitConversion.ts`, `dosePlan.ts`, `bloodwork.ts`, `TubeVisual.tsx`, `audit-peptipedia.ts`, `useStageLight`, `NasalSprayVisual.tsx`, `blutspiegelHistory.ts`, `MyStackPage.visibility.test.tsx`, `wellnessBuckets.ts`, `monitoring.ts`, `react-i18next`, `Dashboard.test.ts`, `InjektionsTracker.tsx`, `DoseCalculator.tsx`, `LiquidGraphic.tsx`, `MetricChart.tsx`, `StackItemWizard.interaction.test.tsx`, `AppBackNavigation.test.tsx`, `MarkerDetail.tsx`, `mockSupabase.ts`, `StageLabel.tsx`, `legacyPlanTimeline.ts`, `DesignSystem.tsx`, `dosageForms.ts`, `ConsentGate.tsx`, `stackSources.test.ts`, `inventoryMath.ts`, `uiCopy.ts`, `ColorField.tsx`, `kombination.ts`, `i18n.test.ts`, `chartTooltip.ts`, `react-router-dom`, `rechnerVial.ts`, `LiveBlutspiegelChart.tsx`, `MyStackPage.tsx`, `useWischZeile.ts`, `substanceCatalog.ts`, `StageFit.test.tsx`, `units.ts`, `ManualSimulation.tsx`, `planTimeline.ts`, `trackingDepthSchema.test.ts`, `PlanManagementSection`, `stackItems.ts`, `my-stack/lib/colors.ts`, `StageDetailSheet.tsx`, `lucide-react`, `BlutwertePage.tsx`, `Home.test.ts`, `staleChunkReload.ts`, `planAdoption.ts`, `catalogDosageForms.test.ts`, `stagePreview.ts`, `StackStage.test.ts`, `BioProfil.tsx`, `getStableStackItemColor`, `insights.ts`?**
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `lucide-react` connect `lucide-react` to `TodayLogSheet.tsx`, `planLabels.ts`, `StackItemWizard.tsx`, `dosageForms.ts`, `ConsentGate.tsx`, `faq/types.ts`, `AdminPanel.tsx`, `Protokoll.tsx`, `UnitConverter.tsx`, `VerlaufSection.tsx`, `BlutspiegelView.tsx`, `bestand.ts`, `StudyCard.tsx`, `Dashboard.tsx`, `InjectionLogSheet.tsx`, `InjectionMapCanvas.tsx`, `bloodwork.ts`, `IntakePlanEditor.tsx`, `Layout.tsx`, `react`, `Bewertungen.tsx`, `BottomNavigation.tsx`, `Tagebuch.tsx`, `fortschritt/types.ts`, `react-i18next`, `chartVisibility.ts`, `InjektionsTracker.tsx`, `DoseCalculator.tsx`, `package.json`, `valueOverview.ts`, `date-fns`, `ProtocolPdfModal.tsx`, `react-router-dom`, `Health.tsx`, `InjectionTrackerTabs.tsx`, `MyStackPage.tsx`, `MarkerDetail.tsx`, `ProductInventorySection.tsx`, `texts.ts`, `ManualSimulation.tsx`, `OnboardingContext.tsx`, `FortschrittDashboard.tsx`, `BefundEditor.tsx`, `my-stack/lib/colors.ts`, `WorkflowBanner.tsx`, `my-stack/types.ts`, `Home.tsx`, `DesignSystem.tsx`, `BlutwertePage.tsx`, `StageDetailSheet.tsx`, `ArticleCards.tsx`, `FilterSheet.tsx`, `PeptideLibrary.tsx`, `BioProfil.tsx`, `Onboarding.tsx`, `TheLab.tsx`?**
   _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **What connects `WEEKDAYS_DE`, `SLOT_TIMES`, `SLOT_GROUPS` to the rest of the system?**
   _2334 weakly-connected nodes found - possible documentation gaps or missing edges._
