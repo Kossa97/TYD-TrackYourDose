@@ -423,3 +423,25 @@ test('Loeschen aus dem Formular: Abbrechen fuehrt mit den Eingaben zurueck', asy
   await expect(page.getByLabel('Wert', { exact: true })).toHaveValue('15')
   expect(mock.table('bloodwork')).toHaveLength(1)
 })
+
+test('Detail: Zeitraum steht ueber dem Graph; Werte ausserhalb rot, innerhalb gruen', async ({ page, mock }) => {
+  for (const [tested_at, value] of [['2025-11-12', 290], ['2026-01-20', 520], ['2026-04-12', 980], ['2026-06-15', 1340], ['2026-09-15', 1310]] as const) {
+    wert(mock, 'Testosteron', { tested_at, value, unit: 'ng/dL', ref_min: 349, ref_max: 1110 })
+  }
+  await markerAnsicht(page)
+  await page.locator('.bw-marker-card').filter({ hasText: 'Testosteron' }).getByRole('button', { name: /^Testosteron/ }).click()
+  const zeitraum = page.getByRole('group', { name: 'Zeitraum' })
+  const graph = page.getByRole('img', { name: /Testosteron/ })
+  await expect(graph).toBeVisible()
+  // Leiste liegt oberhalb des Graphen
+  expect((await zeitraum.boundingBox())!.y).toBeLessThan((await graph.boundingBox())!.y)
+  if (process.env.SCREENSHOT_DIR) {
+    await graph.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(900)
+    for (const thema of ['dark', 'light']) {
+      await page.evaluate(wert => document.documentElement.setAttribute('data-theme', wert), thema)
+      await page.waitForTimeout(100)
+      await graph.locator('..').locator('..').screenshot({ path: `${process.env.SCREENSHOT_DIR}/bw-zonen-${thema}.png` })
+    }
+  }
+})

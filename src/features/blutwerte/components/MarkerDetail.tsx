@@ -134,6 +134,10 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
   }), [unit])
   const formatValue = useCallback((v: number) => formatNumber(v), [])
   const band = useMemo(() => (range.source !== 'none' ? { lo: range.min, hi: range.max, color: '#10b981' } : undefined), [range])
+  // Im Referenzbereich gruen, darueber und darunter rot — Linie, Punkte und Ablesen
+  const zoneColors = useMemo(() => (range.source !== 'none'
+    ? { lo: range.min, hi: range.max, inside: '#10b981', outside: '#ef4444' }
+    : undefined), [range])
   const yInclude = [range.min, range.max].filter((v): v is number => v != null)
   const values = allPoints.map(p => p.level)
   // Mindesthoehe der Achse: 10 % des groessten Werts, damit Rauschen flach bleibt.
@@ -266,39 +270,11 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
       {/* Verlauf */}
       {allPoints.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          {inWindow.length > 0 ? (
-            <StocksChart
-              points={allPoints}
-              start={start}
-              end={end}
-              accent={lineColor}
-              height={CHART_H}
-              seriesKey={`${name}|${unit}`}
-              formatTick={formatTick}
-              xTicks={monthTicks}
-              formatValue={formatValue}
-              scrubLabel={scrubLabel}
-              ariaLabel={t('bw_chart_aria', { name: anzeigeName })}
-              band={band}
-              dots
-              yInclude={yInclude}
-              percentCap={false}
-              minSpan={minSpan}
-              intakeStrip={false}
-            />
-          ) : (
-            <div className="flex items-center justify-center text-center text-sm" style={{ height: CHART_H, color: MUTED }}>
-              {t('bw_no_values_period')}
-            </div>
-          )}
-          {/* Die Zyklus-Zeilen enden vor der Werte-Achse — auf derselben Zeitachse wie der Graph. */}
-          <div style={{ marginLeft: AXIS_WIDTH, marginRight: AXIS_WIDTH }}>
-            <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
-          </div>
+          {/* Zeitraum ueber dem Graph */}
           <div
             role="group"
             aria-label={t('bw_period_aria')}
-            className="mt-1.5 grid grid-cols-5 gap-1 rounded-[10px] p-[3px]"
+            className="mb-1.5 grid grid-cols-5 gap-1 rounded-[10px] p-[3px]"
             style={{ background: 'var(--surface-raised)' }}
           >
             {RANGES.map(([key, label]) => {
@@ -318,6 +294,36 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
                 </button>
               )
             })}
+          </div>
+          {inWindow.length > 0 ? (
+            <StocksChart
+              points={allPoints}
+              start={start}
+              end={end}
+              accent={lineColor}
+              height={CHART_H}
+              seriesKey={`${name}|${unit}`}
+              formatTick={formatTick}
+              xTicks={monthTicks}
+              formatValue={formatValue}
+              scrubLabel={scrubLabel}
+              ariaLabel={t('bw_chart_aria', { name: anzeigeName })}
+              band={band}
+              dots
+              yInclude={yInclude}
+              percentCap={false}
+              minSpan={minSpan}
+              intakeStrip={false}
+              zoneColors={zoneColors}
+            />
+          ) : (
+            <div className="flex items-center justify-center text-center text-sm" style={{ height: CHART_H, color: MUTED }}>
+              {t('bw_no_values_period')}
+            </div>
+          )}
+          {/* Die Zyklus-Zeilen enden vor der Werte-Achse — auf derselben Zeitachse wie der Graph. */}
+          <div style={{ marginLeft: AXIS_WIDTH, marginRight: AXIS_WIDTH }}>
+            <ZyklusStreifen zeilen={streifen.zeilen} weitere={streifen.weitere} />
           </div>
           {excludedCount > 0 && (
             <p className="text-xs" style={{ color: MUTED }}>

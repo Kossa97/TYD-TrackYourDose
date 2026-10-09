@@ -80,6 +80,12 @@ export interface StocksChartProps {
   liveEnd?: boolean
   /** Schattiertes Band (z. B. Referenzbereich) mit gestrichelten Grenzen. */
   band?: { lo: number | null; hi: number | null; color: string }
+  /**
+   * Hauptlinie nach Bereich faerben: innerhalb [lo, hi] `inside`, darueber und
+   * darunter `outside` — Linie, Flaeche, Punkte und Ablesen. Die Farbe wechselt
+   * genau dort, wo die Linie eine Grenze kreuzt.
+   */
+  zoneColors?: { lo: number | null; hi: number | null; inside: string; outside: string }
   /** Jeden Datenpunkt als Punkt zeigen (Messwerte statt Kurve). */
   dots?: boolean
   /** Werte, die die Y-Achse immer enthalten soll (z. B. die Bandgrenzen). */
@@ -153,7 +159,7 @@ export const StocksChart = memo(function StocksChart({
   formatTick, xTicks, formatValue = v => String(Math.round(v)), onScrub, scrubLabel, ariaLabel, liveEnd = false,
   band, dots = false, yInclude, percentCap = true, minSpan = 2, intakeStrip = true,
   axisWidth = AXIS_WIDTH, pan, holdMs = HOLD_MS, snapTimes, lanes,
-  seriesName, others, xBands, xLines, xAxis = true, syncTs = null, yTicks = 4,
+  seriesName, others, xBands, xLines, xAxis = true, syncTs = null, yTicks = 4, zoneColors,
 }: StocksChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -178,11 +184,11 @@ export const StocksChart = memo(function StocksChart({
   const seriesKeyRef = useRef(seriesKey)
   const revealStartRef = useRef<number | null>(null)
 
-  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs })
+  const propsRef = useRef({ intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs, zoneColors })
   const onScrubRef = useRef(onScrub)
   const panRef = useRef(pan)
   useLayoutEffect(() => {
-    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs }
+    propsRef.current = { intakes, markers, formatTick, xTicks, formatValue, liveEnd, height, scrubLabel, band, dots, intakeStrip, axisWidth, snapTimes, lanes, seriesName, others, xBands, xLines, xAxis, syncTs, zoneColors }
     onScrubRef.current = onScrub
     panRef.current = pan
   })
@@ -417,7 +423,7 @@ export const StocksChart = memo(function StocksChart({
     // Ein Zeitpunkt ausserhalb des Fensters (gekoppelter Graph) wird nicht gezeichnet.
     const scrubTs = wantedScrub != null && wantedScrub >= view.start && wantedScrub <= view.end ? wantedScrub : null
     const revealX = plotL + plotW * reveal
-    const drawSeries = (pts: LevelPoint[], stroke: string, alpha: number) => {
+    const drawSeries = (pts: LevelPoint[], stroke: string, alpha: number, clipY?: [number, number]) => {
       const slice = visibleSlice(pts, view.start, view.end)
       if (slice.length < 2 || alpha <= 0) return
       const path = new Path2D()
@@ -449,7 +455,8 @@ export const StocksChart = memo(function StocksChart({
 
       ctx.save()
       ctx.globalAlpha = alpha
-      ctx.beginPath(); ctx.rect(plotL, 0, Math.max(0, Math.min(plotR, revealX) - plotL), plotB); ctx.clip()
+      const [clipTop, clipBottom] = clipY ?? [0, plotB]
+      ctx.beginPath(); ctx.rect(plotL, clipTop, Math.max(0, Math.min(plotR, revealX) - plotL), Math.max(0, clipBottom - clipTop)); ctx.clip()
       if (scrubTs != null) {
         const sx = xOf(scrubTs)
         ctx.save(); ctx.beginPath(); ctx.rect(plotL, 0, sx - plotL, plotB); ctx.clip(); paint(false); ctx.restore()
@@ -464,15 +471,30 @@ export const StocksChart = memo(function StocksChart({
     const pts = pointsRef.current
     const otherList = propsRef.current.others ?? []
     for (const o of otherList) drawSeries(o.points, o.color, fade)
-    drawSeries(pts, color, fade)
+    const zones = propsRef.current.zoneColors
+    // Farbe eines Werts: im Bereich `inside`, sonst `outside` — ohne Bereich die Linienfarbe.
+    const colorOf = (level: number) => (zones
+      ? ((zones.lo != null && level < zones.lo) || (zones.hi != null && level > zones.hi) ? zones.outside : zones.inside)
+      : color)
+    if (zones) {
+      // Dreimal gezeichnet, je in einem waagrechten Streifen geschnitten
+      const yHi = zones.hi != null ? Math.min(plotB, Math.max(0, yOf(zones.hi))) : 0
+      const yLo = zones.lo != null ? Math.min(plotB, Math.max(0, yOf(zones.lo))) : plotB
+      drawSeries(pts, zones.outside, fade, [0, yHi])
+      drawSeries(pts, zones.inside, fade, [yHi, yLo])
+      drawSeries(pts, zones.outside, fade, [yLo, plotB])
+    } else {
+      drawSeries(pts, color, fade)
+    }
 
     // Messpunkte
     if (showDots && reveal >= 1) {
-      for (const [list, c] of [...otherList.map(o => [o.points, o.color] as const), [pts, color] as const]) {
+      for (const [list, base] of [...otherList.map(o => [o.points, o.color] as const), [pts, null] as const]) {
         for (const p of visibleSlice(list, view.start, view.end)) {
           if (p.ts < view.start || p.ts > view.end) continue
           const x = xOf(p.ts)
           const y = yOf(p.level)
+          const c = base ?? colorOf(p.level)
           ctx.fillStyle = surface
           ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill()
           ctx.fillStyle = scrubTs != null && p.ts > scrubTs ? hexAlpha(c, 0.45) : c
@@ -518,7 +540,8 @@ export const StocksChart = memo(function StocksChart({
     if (scrubTs != null) {
       const lv = levelAt(pts, scrubTs)
       const x = Math.round(xOf(scrubTs)) + 0.5
-      ctx.strokeStyle = label ? color : muted
+      const scrubColor = lv != null ? colorOf(lv) : color
+      ctx.strokeStyle = label ? scrubColor : muted
       ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(x, label ? LABEL_H : plotT - 4); ctx.lineTo(x, plotB + INTAKE_STRIP); ctx.stroke()
       if (label && otherList.length) {
@@ -574,17 +597,17 @@ export const StocksChart = memo(function StocksChart({
           const left = Math.min(Math.max(x - total / 2, plotL), width - total)
           ctx.textAlign = 'left'
           ctx.font = '800 16px ui-sans-serif, system-ui, -apple-system, sans-serif'
-          ctx.fillStyle = color
+          ctx.fillStyle = scrubColor
           ctx.fillText(valueText, left, 33)
           ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, sans-serif'
           ctx.fillStyle = muted
           ctx.fillText(noteText, left + wValue, 33)
         } else {
-          ctx.fillStyle = color
+          ctx.fillStyle = scrubColor
           ctx.fillText(valueText, cx, 33)
         }
       }
-      for (const [v, c] of [...otherList.map(o => [levelAt(o.points, scrubTs), o.color] as const), [lv, color] as const]) {
+      for (const [v, c] of [...otherList.map(o => [levelAt(o.points, scrubTs), o.color] as const), [lv, scrubColor] as const]) {
         if (v == null) continue
         const y = yOf(v)
         ctx.fillStyle = surface
@@ -632,7 +655,7 @@ export const StocksChart = memo(function StocksChart({
     schedule()
   }, [points, start, end, seriesKey, accent, schedule, yIncludeKey, percentCap, minSpan, yTicks])
 
-  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, formatValue, xTicks, axisWidth, seriesName, snapTimes, scrubLabel, band, dots, intakeStrip, lanes, others, xBands, xLines, xAxis, syncTs, schedule])
+  useEffect(() => { schedule() }, [intakes, markers, height, liveEnd, formatTick, formatValue, xTicks, axisWidth, seriesName, snapTimes, scrubLabel, band, dots, intakeStrip, lanes, others, xBands, xLines, xAxis, syncTs, zoneColors, schedule])
   useThemeRedraw(schedule)
 
   // Breite
