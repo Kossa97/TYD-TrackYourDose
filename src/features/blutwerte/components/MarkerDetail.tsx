@@ -3,7 +3,7 @@
  * Name, Kasten mit Wert und Referenzbereich, Verlauf (derselbe Graph
  * wie im Blutspiegel), Zeitraum, Kennzahlen, Einordnung und die Messungen.
  */
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, subMonths, subYears } from 'date-fns'
 import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, Plus } from 'lucide-react'
@@ -212,6 +212,7 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
       <div className="-mt-2 flex flex-col gap-1">
         <h1 className="text-[2rem] font-black leading-tight tracking-tight break-words" style={{ color: TEXT }}>{anzeigeName}</h1>
         <p className="text-[15px]" style={{ color: MUTED }}>{t(KATEGORIE_KEY[summary.kategorie])}</p>
+        {def && <KurzErklaerung text={markerErklaerung(def, sprache)} />}
       </div>
 
       {/* Wert, Einheit und Referenzbereich — der Kasten wie in der ersten Fassung */}
@@ -359,10 +360,9 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
 
       {/* Einordnung */}
       <section aria-labelledby="bw-meaning-title" className="flex flex-col gap-2.5">
-        <h2 id="bw-meaning-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_meaning_title')}</h2>
-        <p className="text-[15px] leading-relaxed" style={{ color: 'var(--text-dim, var(--text-muted))' }}>
-          {def ? markerErklaerung(def, sprache) : t('bw_no_explanation')}
-        </p>
+        <h2 id="bw-meaning-title" className={sectionTitle} style={{ color: TEXT }}>{t('bw_assessment_title')}</h2>
+        {/* Die Kurzerklaerung steht oben unter dem Namen. */}
+        {!def && <p className="text-[15px] leading-relaxed" style={{ color: 'var(--text-dim, var(--text-muted))' }}>{t('bw_no_explanation')}</p>}
         {guidance && (
           <>
             <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{guidance.text.hinweis}</p>
@@ -475,6 +475,39 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
           })}
         </ul>
       </section>
+    </div>
+  )
+}
+
+/** Kurzerklaerung unter dem Namen: hoechstens zwei Zeilen, bei mehr mit „mehr“ zum Aufklappen. */
+function KurzErklaerung({ text }: { text: string }) {
+  const { t } = useTranslation()
+  const ref = useRef<HTMLParagraphElement>(null)
+  const [offen, setOffen] = useState(false)
+  const [laenger, setLaenger] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || offen) return
+    const pruefen = () => setLaenger(el.scrollHeight > el.clientHeight + 1)
+    pruefen()
+    const ro = new ResizeObserver(pruefen)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [text, offen])
+  return (
+    <div className="mt-1" data-bw-intro>
+      <p
+        ref={ref}
+        className="text-sm leading-relaxed"
+        style={{ color: MUTED, ...(offen ? {} : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}
+      >
+        {text}
+      </p>
+      {(laenger || offen) && (
+        <button type="button" onClick={() => setOffen(o => !o)} aria-expanded={offen} className="min-h-9 text-sm font-semibold" style={{ color: CYAN }} data-bw-intro-more>
+          {offen ? t('bw_intro_less') : t('bw_intro_more')}
+        </button>
+      )}
     </div>
   )
 }

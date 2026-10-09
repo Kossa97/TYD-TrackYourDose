@@ -2023,5 +2023,8 @@
   "bw_range_age": "ages {{min}}–{{max}}",
   "bw_range_age_from": "ages {{min}}+",
   "bw_range_no_standard_women": "For women there is no single range here — it depends on cycle phase and menopause. Enter the range from your lab report.",
-  "bw_bio_load_error": "Your details could not be loaded."
+  "bw_bio_load_error": "Your details could not be loaded.",
+  "bw_assessment_title": "Assessment",
+  "bw_intro_more": "more",
+  "bw_intro_less": "less"
 }
