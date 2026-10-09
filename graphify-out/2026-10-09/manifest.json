@@ -2286,9 +2286,9 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerDetail.tsx": {
-    "mtime": 1791547965.7494118,
-    "seen": 1791548183.3491428,
-    "ast_hash": "4c3be9f1e40cffb4193f1ba70f3b41f0",
+    "mtime": 1791498998.504563,
+    "seen": 1791499251.2010205,
+    "ast_hash": "75e5a197bcdcd7d2419e4a90503ce127",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/bloodwork.test.ts": {
@@ -6084,9 +6084,9 @@
     "semantic_hash": ""
   },
   "e2e/blutwerte-sprache.spec.ts": {
-    "mtime": 1791548015.1858091,
-    "seen": 1791548183.3420792,
-    "ast_hash": "7996af3c5d24ad36c095b6ed9de75a7d",
+    "mtime": 1791495424.482347,
+    "seen": 1791497742.7738872,
+    "ast_hash": "f2d42dd5481615132d31931c1936c97a",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerCatalog.en.test.ts": {
@@ -6192,9 +6192,9 @@
     "semantic_hash": ""
   },
   "src/features/blutspiegel/chart/StocksChart.tsx": {
-    "mtime": 1791547907.7933207,
-    "seen": 1791548183.3472116,
-    "ast_hash": "49620be97e49cf13f0936d9297be794f",
+    "mtime": 1791499004.374265,
+    "seen": 1791499251.2005801,
+    "ast_hash": "20c40e87f4b1cce1726a025f8ee24d56",
     "semantic_hash": ""
   },
   "src/features/blutspiegel/chart/stocksChartMath.test.ts": {
