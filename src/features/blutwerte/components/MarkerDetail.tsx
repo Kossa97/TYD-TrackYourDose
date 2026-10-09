@@ -211,7 +211,7 @@ export function MarkerDetail({ summary, zyklen, reports = [], onBack, onAdd, onE
       {/* Name und Kategorie */}
       <div className="-mt-2 flex flex-col gap-1">
         {/* Eine Zeile: Name links (laeuft durch, wenn er nicht passt), Kategorie rechts */}
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-baseline gap-2">
           <LaufName text={anzeigeName} />
           <p className="shrink-0 text-[15px]" style={{ color: MUTED }} data-bw-kategorie>{t(KATEGORIE_KEY[summary.kategorie])}</p>
         </div>
@@ -561,7 +561,7 @@ function LaufName({ text }: { text: string }) {
   return (
     <h1
       ref={boxRef}
-      className="min-w-0 flex-1 overflow-hidden whitespace-nowrap text-[2rem] font-black leading-tight tracking-tight"
+      className="min-w-0 shrink overflow-hidden whitespace-nowrap text-[2rem] font-black leading-tight tracking-tight"
       style={{
         color: TEXT,
         ...(ruhig ? { textOverflow: 'ellipsis' } : {}),
