@@ -164,3 +164,41 @@ export function timeTicks(start: number, end: number, step: number): number[] {
 export function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
+
+/** Abschnitt der Kurve (in ts), der ganz innerhalb oder ganz ausserhalb eines Bereichs liegt. */
+export interface ZoneRun { from: number; to: number; inside: boolean }
+
+/**
+ * Teilt die Kurve dort, wo sie eine Bereichsgrenze kreuzt (linear zwischen den
+ * Punkten). Nebeneinanderliegende Abschnitte gleicher Lage werden zusammengefasst;
+ * der erste beginnt bei -Infinity, der letzte endet bei +Infinity.
+ */
+export function zoneRuns(points: LevelPoint[], lo: number | null, hi: number | null): ZoneRun[] {
+  if (!points.length) return []
+  const inside = (v: number) => !((lo != null && v < lo) || (hi != null && v > hi))
+  const runs: ZoneRun[] = []
+  const push = (from: number, to: number, ins: boolean) => {
+    const last = runs[runs.length - 1]
+    if (last && last.inside === ins) last.to = to
+    else runs.push({ from, to, inside: ins })
+  }
+  if (points.length === 1) return [{ from: -Infinity, to: Infinity, inside: inside(points[0].level) }]
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i]
+    const cuts = [lo, hi]
+      .filter((g): g is number => g != null && (a.level - g) * (b.level - g) < 0)
+      .map(g => a.ts + ((g - a.level) / (b.level - a.level)) * (b.ts - a.ts))
+      .sort((x, y) => x - y)
+    const marks = [a.ts, ...cuts, b.ts]
+    for (let k = 1; k < marks.length; k++) {
+      if (marks[k] <= marks[k - 1]) continue
+      const t = (marks[k - 1] + marks[k]) / 2
+      const v = a.level + ((b.level - a.level) * (t - a.ts)) / (b.ts - a.ts)
+      push(marks[k - 1], marks[k], inside(v))
+    }
+  }
+  if (!runs.length) return [{ from: -Infinity, to: Infinity, inside: inside(points[0].level) }]
+  runs[0].from = -Infinity
+  runs[runs.length - 1].to = Infinity
+  return runs
+}

@@ -8,6 +8,7 @@ import {
   timeTicks,
   visibleSlice,
   yDomainFor,
+  zoneRuns,
 } from './stocksChartMath'
 
 const H = 3_600_000
@@ -83,5 +84,31 @@ describe('niceYDomain mit negativen Werten', () => {
   it('Laborwerte duerfen unter 0, der Spiegel nicht', () => {
     expect(niceYDomain(-3, 1, 4, { percentCap: false }).lo).toBeLessThanOrEqual(-3)
     expect(niceYDomain(-3, 1).lo).toBe(0)
+  })
+})
+
+describe('zoneRuns', () => {
+  const p = (ts: number, level: number) => ({ ts, level })
+
+  it('teilt genau an der Grenze und fasst gleiche Lage zusammen', () => {
+    // 500, 620, 740 im Bereich 349–1110, dann 1310 darüber
+    const runs = zoneRuns([p(0, 500), p(10, 620), p(20, 740), p(30, 1310)], 349, 1110)
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toMatchObject({ from: -Infinity, inside: true })
+    expect(runs[0].to).toBeCloseTo(20 + (1110 - 740) / (1310 - 740) * 10)
+    expect(runs[1]).toMatchObject({ from: runs[0].to, to: Infinity, inside: false })
+  })
+
+  it('kreuzt ein Stück beide Grenzen, gibt es drei Abschnitte', () => {
+    const runs = zoneRuns([p(0, 0), p(100, 200)], 50, 150)
+    expect(runs.map(r => r.inside)).toEqual([false, true, false])
+    expect(runs[1].from).toBeCloseTo(25)
+    expect(runs[1].to).toBeCloseTo(75)
+  })
+
+  it('einseitige Grenze, ein Punkt, keine Punkte', () => {
+    expect(zoneRuns([p(0, 30), p(10, 70)], 40, null).map(r => r.inside)).toEqual([false, true])
+    expect(zoneRuns([p(0, 5)], 1, 3)).toEqual([{ from: -Infinity, to: Infinity, inside: false }])
+    expect(zoneRuns([], 1, 3)).toEqual([])
   })
 })

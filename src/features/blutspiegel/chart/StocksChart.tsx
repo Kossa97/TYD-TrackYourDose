@@ -24,6 +24,7 @@ import {
   timeStep,
   timeTicks,
   visibleSlice,
+  zoneRuns,
   yDomainFor,
   type LevelPoint,
   type YDomain,
@@ -423,7 +424,7 @@ export const StocksChart = memo(function StocksChart({
     // Ein Zeitpunkt ausserhalb des Fensters (gekoppelter Graph) wird nicht gezeichnet.
     const scrubTs = wantedScrub != null && wantedScrub >= view.start && wantedScrub <= view.end ? wantedScrub : null
     const revealX = plotL + plotW * reveal
-    const drawSeries = (pts: LevelPoint[], stroke: string, alpha: number, clipY?: [number, number]) => {
+    const drawSeries = (pts: LevelPoint[], stroke: string, alpha: number, clipX?: [number, number]) => {
       const slice = visibleSlice(pts, view.start, view.end)
       if (slice.length < 2 || alpha <= 0) return
       const path = new Path2D()
@@ -455,8 +456,9 @@ export const StocksChart = memo(function StocksChart({
 
       ctx.save()
       ctx.globalAlpha = alpha
-      const [clipTop, clipBottom] = clipY ?? [0, plotB]
-      ctx.beginPath(); ctx.rect(plotL, clipTop, Math.max(0, Math.min(plotR, revealX) - plotL), Math.max(0, clipBottom - clipTop)); ctx.clip()
+      const clipL = Math.max(plotL, clipX ? clipX[0] : plotL)
+      const clipR = Math.min(plotR, revealX, clipX ? clipX[1] : plotR)
+      ctx.beginPath(); ctx.rect(clipL, 0, Math.max(0, clipR - clipL), plotB); ctx.clip()
       if (scrubTs != null) {
         const sx = xOf(scrubTs)
         ctx.save(); ctx.beginPath(); ctx.rect(plotL, 0, sx - plotL, plotB); ctx.clip(); paint(false); ctx.restore()
@@ -477,12 +479,13 @@ export const StocksChart = memo(function StocksChart({
       ? ((zones.lo != null && level < zones.lo) || (zones.hi != null && level > zones.hi) ? zones.outside : zones.inside)
       : color)
     if (zones) {
-      // Dreimal gezeichnet, je in einem waagrechten Streifen geschnitten
-      const yHi = zones.hi != null ? Math.min(plotB, Math.max(0, yOf(zones.hi))) : 0
-      const yLo = zones.lo != null ? Math.min(plotB, Math.max(0, yOf(zones.lo))) : plotB
-      drawSeries(pts, zones.outside, fade, [0, yHi])
-      drawSeries(pts, zones.inside, fade, [yHi, yLo])
-      drawSeries(pts, zones.outside, fade, [yLo, plotB])
+      // In senkrechten Streifen gezeichnet, getrennt dort, wo die Linie eine
+      // Grenze kreuzt: Linie und Schleier darunter haben dieselbe Farbe.
+      for (const run of zoneRuns(visibleSlice(pts, view.start, view.end), zones.lo, zones.hi)) {
+        const x1 = Number.isFinite(run.from) ? xOf(run.from) : plotL
+        const x2 = Number.isFinite(run.to) ? xOf(run.to) : plotR
+        drawSeries(pts, run.inside ? zones.inside : zones.outside, fade, [x1, x2])
+      }
     } else {
       drawSeries(pts, color, fade)
     }
