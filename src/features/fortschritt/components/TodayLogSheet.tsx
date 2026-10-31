@@ -12,7 +12,10 @@ import { fieldLabel } from '../styles'
 import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
 import { METRIC_WHEEL_CSS, MetricWheelPicker } from './MetricWheelPicker'
 import {
+  isValidMuscleMass,
   loadLogFormValues,
+  MUSCLE_MASS_MAX_KG,
+  MUSCLE_MASS_MIN_KG,
   type SavedLogFormValues,
 } from '../lib/metricDefaults'
 import { useScrollLock } from '../hooks/useScrollLock'
@@ -53,6 +56,7 @@ function readStoredSavedValues(userId: string | undefined): SavedLogFormValues |
       wohlbefinden: nullableNumber(parsed.wohlbefinden),
       libido: nullableNumber(parsed.libido),
       bodyFat: nullableNumber(parsed.bodyFat),
+      muscleMass: nullableNumber(parsed.muscleMass),
       weight: nullableNumber(parsed.weight),
       weightRowId: typeof parsed.weightRowId === 'string' ? parsed.weightRowId : null,
     }
@@ -101,6 +105,7 @@ export function TodayLogSheet({
   const [weight, setWeight] = useState<number | null>(null)
   const [weightRowId, setWeightRowId] = useState<string | null>(null)
   const [bodyFat, setBodyFat] = useState<number | null>(null)
+  const [muscleMass, setMuscleMass] = useState<number | null>(null)
   /** Nur was heute getippt wurde — der letzte Wert steht nur als Platzhalter da. */
   const [typed, setTyped] = useState<TypedMeasurements>({})
   const [saving, setSaving] = useState(false)
@@ -109,7 +114,7 @@ export function TodayLogSheet({
   /** Tageswerte stehen schon in der DB, das Gewicht noch nicht — beim Schließen neu laden. */
   const partiallySavedRef = useRef(false)
   const onSavedRef = useRef(onSaved)
-  const [openMetric, setOpenMetric] = useState<'weight' | 'bodyFat' | null>(null)
+  const [openMetric, setOpenMetric] = useState<'weight' | 'bodyFat' | 'muscleMass' | null>(null)
   const [savedValues, setSavedValues] = useState<SavedLogFormValues | null>(null)
 
   const { mounted, shown } = useSheetPresence(open)
@@ -155,6 +160,7 @@ export function TodayLogSheet({
     setWohlbefinden(values.wohlbefinden)
     setLibido(values.libido)
     setBodyFat(values.bodyFat)
+    setMuscleMass(values.muscleMass)
     setWeight(values.weight)
     setWeightRowId(values.weightRowId)
   }, [date, logs, weightLogs, open, savedValues])
@@ -166,12 +172,18 @@ export function TodayLogSheet({
 
     const hasWellness =
       energie != null || schlaf != null || wohlbefinden != null || libido != null || bodyFat != null
+      || muscleMass != null
     const hasWeight = weight != null
     const parsed = parseTypedMeasurements(typed, measurementSites)
     const hasMeasurements = Object.keys(parsed.values).length > 0
 
     if (parsed.invalid) {
       toast.error(t('umfaenge_invalid'))
+      return
+    }
+
+    if (muscleMass != null && !isValidMuscleMass(muscleMass)) {
+      toast.error(t('fortschritt_muscle_mass_invalid'))
       return
     }
 
@@ -199,6 +211,9 @@ export function TodayLogSheet({
         libido,
         body_fat_pct: bodyFat,
       }
+      // Nur mit Wert senden: vor der Migration Profil 2a fehlt die Spalte, und
+      // ein Upsert ohne den Schluessel laesst einen gespeicherten Wert stehen.
+      if (muscleMass != null) payload.muscle_mass_kg = muscleMass
       const { error } = await supabase
         .from('daily_logs')
         .upsert(payload, { onConflict: 'user_id,log_date' })
@@ -290,6 +305,7 @@ export function TodayLogSheet({
       wohlbefinden,
       libido,
       bodyFat,
+      muscleMass,
       weight,
       weightRowId: savedWeightRowId,
     }
@@ -392,7 +408,7 @@ export function TodayLogSheet({
               />
             ))}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'end', gap: 8, marginTop: 4 }}>
               <MetricWheelPicker
                 label={t('fortschritt_metric_weight')}
                 unit="kg"
@@ -417,6 +433,18 @@ export function TodayLogSheet({
                 wheelSuffix="%"
                 open={openMetric === 'bodyFat'}
                 onOpenChange={next => setOpenMetric(next ? 'bodyFat' : null)}
+              />
+              <MetricWheelPicker
+                label={t('fortschritt_metric_muscle_mass')}
+                unit="kg"
+                value={muscleMass}
+                onChange={setMuscleMass}
+                min={MUSCLE_MASS_MIN_KG}
+                max={MUSCLE_MASS_MAX_KG}
+                placeholder={formatNumber(38.5)}
+                defaultValue={38.5}
+                open={openMetric === 'muscleMass'}
+                onOpenChange={next => setOpenMetric(next ? 'muscleMass' : null)}
               />
             </div>
 
