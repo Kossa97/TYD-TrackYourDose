@@ -20,6 +20,7 @@ import {
 } from '../lib/metricDefaults'
 import { useScrollLock } from '../hooks/useScrollLock'
 import { useSheetPresence } from '../hooks/useSheetPresence'
+import { requestProfileSnapshot } from '../../profil/hooks/useProfileSnapshotSync'
 import { formatNumber } from '../lib/dates'
 import { measurementRowsToSave, type MeasurementSite } from '../lib/measurements'
 import {
@@ -311,6 +312,8 @@ export function TodayLogSheet({
     }
     setSavedValues(nextSavedValues)
     writeStoredSavedValues(user.id, nextSavedValues)
+    // Profilwerte (Gewicht, KFA, Muskelmasse, Umfaenge, Streak) neu rechnen lassen.
+    requestProfileSnapshot()
     toast.success(t('fortschritt_saved'))
     await onSaved()
     partiallySavedRef.current = false
