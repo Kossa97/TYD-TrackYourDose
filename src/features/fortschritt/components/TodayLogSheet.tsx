@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import { reportError } from '../../../lib/monitoring'
+import { isMissingColumn } from '../../../lib/dbErrors'
 import type { BodyMeasurementEntry, DailyLogEntry, WeightLogEntry } from '../types'
 import { fieldLabel } from '../styles'
 import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
@@ -212,12 +213,12 @@ export function TodayLogSheet({
         libido,
         body_fat_pct: bodyFat,
       }
-      // Nur mit Wert senden: vor der Migration Profil 2a fehlt die Spalte, und
-      // ein Upsert ohne den Schluessel laesst einen gespeicherten Wert stehen.
-      if (muscleMass != null) payload.muscle_mass_kg = muscleMass
-      const { error } = await supabase
+      const upsertDaily = (row: Record<string, unknown>) => supabase
         .from('daily_logs')
-        .upsert(payload, { onConflict: 'user_id,log_date' })
+        .upsert(row, { onConflict: 'user_id,log_date' })
+      let { error } = await upsertDaily({ ...payload, muscle_mass_kg: muscleMass })
+      // Vor der Migration Profil 2a fehlt die Spalte: ohne Muskelmasse geht es trotzdem.
+      if (isMissingColumn(error) && muscleMass == null) ({ error } = await upsertDaily(payload))
       if (error) {
         setSaving(false)
         reportError(error, 'fortschritt.daily-log-save')

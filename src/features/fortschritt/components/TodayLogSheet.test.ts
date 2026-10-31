@@ -56,6 +56,7 @@ describe('TodayLogSheet save flow', () => {
     expect(source).toContain('max={MUSCLE_MASS_MAX_KG}')
     expect(source).toContain("t('fortschritt_muscle_mass_invalid')")
     expect(source.indexOf("t('fortschritt_muscle_mass_invalid')")).toBeLessThan(source.indexOf('setSaving(true)'))
-    expect(source).toContain('payload.muscle_mass_kg = muscleMass')
+    expect(source).toContain('upsertDaily({ ...payload, muscle_mass_kg: muscleMass })')
+    expect(source).toContain('isMissingColumn(error) && muscleMass == null')
   })
 })

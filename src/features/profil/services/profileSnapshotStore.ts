@@ -9,6 +9,7 @@
  * gelesen, und das Schreiben scheitert (der Aufrufer schluckt das still).
  */
 import { supabase } from '../../../lib/supabase'
+import { isMissingColumn } from '../../../lib/dbErrors'
 import { collectPagedRows } from '../../fortschritt/lib/pagination'
 import type { BodyMeasurementEntry, DailyLogEntry, WeightLogEntry } from '../../fortschritt/types'
 import type { BloodworkEntry } from '../../blutwerte/types'
@@ -22,9 +23,6 @@ import {
 } from '../lib/profileSnapshot'
 
 type QueryError = { code?: string; message?: string } | null
-
-/** Postgres 42703: Spalte gibt es (noch) nicht. */
-const isUndefinedColumn = (error: QueryError | undefined): boolean => error?.code === '42703'
 
 function fail(error: QueryError, what: string): never {
   throw new Error(`profileSnapshot.${what}: ${error?.message ?? 'unbekannt'}`)
@@ -47,7 +45,7 @@ async function withFallback<T>(
   fallbackColumns: string,
 ): Promise<{ data: T | null; error: QueryError }> {
   const first = await query(columns)
-  return isUndefinedColumn(first.error) ? query(fallbackColumns) : first
+  return isMissingColumn(first.error) ? query(fallbackColumns) : first
 }
 
 export async function loadProfileSnapshotInput(userId: string, now: Date, lang: 'de' | 'en'): Promise<ProfileSnapshotInput> {

@@ -22,6 +22,7 @@ import { collectPagedRows } from '../lib/pagination'
 import { PHOTO_BUCKET, SIGNED_URL_TTL_SECONDS } from '../constants'
 import { BATCH_LINK_ERNEUERN_MS, istAdresse, signiereBatchDateien } from '../../../lib/batchFiles'
 import { reportError } from '../../../lib/monitoring'
+import { isMissingColumn } from '../../../lib/dbErrors'
 
 /**
  * Dauerhafte Substanzen (ohne Zyklus) haben noch keine Datenquelle — die
@@ -45,9 +46,6 @@ const DAILY_LOG_COLUMNS = 'log_date, energie, schlaf, wohlbefinden, libido, body
 /** Vor der Migration Profil 2a fehlt `muscle_mass_kg` — dann ohne die Spalte laden. */
 const DAILY_LOG_COLUMNS_V1 = 'log_date, energie, schlaf, wohlbefinden, libido, body_fat_pct'
 
-/** Postgres 42703: Spalte gibt es nicht. */
-const isUndefinedColumn = (error: unknown): boolean =>
-  !!error && typeof error === 'object' && (error as { code?: unknown }).code === '42703'
 
 /** Legacy-Fotos tragen eine volle Public-URL; neue Fotos nur den Storage-Pfad. */
 export function isLegacyPhotoUrl(photoUrl: string): boolean {
@@ -168,7 +166,7 @@ export function useFortschrittData() {
 
     const [dailyRes, weightRes, bloodRes, measurementRes, photoRes, doseRes] = await Promise.all([
       loadDailyLogs(DAILY_LOG_COLUMNS).then(res =>
-        isUndefinedColumn(res.error) ? loadDailyLogs(DAILY_LOG_COLUMNS_V1) : res),
+        isMissingColumn(res.error) ? loadDailyLogs(DAILY_LOG_COLUMNS_V1) : res),
       collectPagedRows((from, to) =>
         supabase
           .from('weight_logs')
