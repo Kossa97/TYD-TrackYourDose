@@ -1,7 +1,7 @@
 # Graph Report - HOKU-Health-Hub  (2026-10-31)
 
 ## Corpus Check
-- 1451 files · ~2,839,635 words
+- 1451 files · ~2,839,742 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 70 file(s) not represented in the graph (top: (none) 27, .xml 10, .css 10)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c2d4c822`
+- Built from commit: `f5bdeb38`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

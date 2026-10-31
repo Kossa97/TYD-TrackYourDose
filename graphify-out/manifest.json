@@ -954,9 +954,9 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1793435172.228936,
-    "seen": 1793436958.0050125,
-    "ast_hash": "e3343048bfacad72e5e4ab4937192bd2",
+    "mtime": 1793467380.497516,
+    "seen": 1793469297.0919416,
+    "ast_hash": "1ef6d23d03f7533e748f1f22da942eab",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -6960,9 +6960,9 @@
     "semantic_hash": ""
   },
   "e2e/erscheinungsbild.spec.ts": {
-    "mtime": 1793433367.7476976,
-    "seen": 1793434364.123144,
-    "ast_hash": "9949936800bcec8c98a07a01e8c02e62",
+    "mtime": 1793467579.8213437,
+    "seen": 1793469297.0528855,
+    "ast_hash": "0f1f01fbf115fa285928c70915c57bc9",
     "semantic_hash": ""
   },
   "e2e/fortschritt-sprache.spec.ts": {
@@ -7722,9 +7722,9 @@
     "semantic_hash": ""
   },
   "memory/projects/erscheinungsbild.md": {
-    "mtime": 1793433360.6148977,
-    "seen": 1793434364.125593,
-    "ast_hash": "c8b9cd039a1db9f7c768db8c4dfcf8a8",
+    "mtime": 1793468158.7756302,
+    "seen": 1793469297.1035633,
+    "ast_hash": "8f2366b54fa76bd02c6b6f3a5d90d21b",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/FormUndFarbe.tsx": {
